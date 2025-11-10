@@ -5,6 +5,7 @@ import { MalunitaVoice } from "@/components/MalunitaVoice";
 import { TaskList } from "@/components/TaskList";
 import { ProfileSettings } from "@/components/ProfileSettings";
 import { RunwayReviewButton } from "@/components/RunwayReviewButton";
+import { InstallPromptBanner } from "@/components/InstallPromptBanner";
 import { Button } from "@/components/ui/button";
 import { Settings, LogOut } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -68,6 +69,9 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Install Banner */}
+      <InstallPromptBanner />
+      
       {/* Header */}
       <header className="fixed top-0 left-0 right-0 z-40 bg-background/80 backdrop-blur-sm border-b border-secondary">
         <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
