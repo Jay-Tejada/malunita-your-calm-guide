@@ -99,11 +99,11 @@ const Index = () => {
       </header>
 
       {/* Main content */}
-      <div className="pt-24 pb-8 px-6">
-        <div className="max-w-3xl mx-auto">
+      <div className="pt-24 pb-32 px-6">
+        <div className="max-w-3xl mx-auto space-y-12">
           <MalunitaVoice onSaveNote={handleSaveNote} />
           
-          <div className="mt-12">
+          <div className="border-t border-secondary pt-8">
             <h2 className="text-xl font-light mb-4 text-foreground">Your Tasks</h2>
             <TaskList />
           </div>

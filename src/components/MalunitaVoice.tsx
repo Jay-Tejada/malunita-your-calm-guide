@@ -430,7 +430,7 @@ export const MalunitaVoice = ({ onSaveNote }: MalunitaVoiceProps) => {
   };
 
   return (
-    <div className="fixed inset-0 flex flex-col items-center justify-center px-6">
+    <div className="flex flex-col items-center justify-center px-6 py-8">
       <div className="w-full max-w-2xl flex flex-col items-center gap-8">
         
         {/* Transcription and Response Display */}
