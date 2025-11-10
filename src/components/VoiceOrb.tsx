@@ -1,5 +1,7 @@
-import { useState } from "react";
-import { Mic, MicOff } from "lucide-react";
+import { useState, useRef } from "react";
+import { Mic } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface VoiceOrbProps {
   onVoiceInput?: (text: string) => void;
@@ -8,15 +10,95 @@ interface VoiceOrbProps {
 export const VoiceOrb = ({ onVoiceInput }: VoiceOrbProps) => {
   const [isListening, setIsListening] = useState(false);
   const [isResponding, setIsResponding] = useState(false);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const { toast } = useToast();
 
-  const handleClick = () => {
+  const handleClick = async () => {
     if (isListening) {
-      setIsListening(false);
-      // In next version, stop recording
+      // Stop recording
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
+        mediaRecorderRef.current.stop();
+      }
     } else {
-      setIsListening(true);
-      setIsResponding(false);
-      // In next version, start recording
+      // Start recording
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const mediaRecorder = new MediaRecorder(stream);
+        mediaRecorderRef.current = mediaRecorder;
+        audioChunksRef.current = [];
+
+        mediaRecorder.ondataavailable = (event) => {
+          if (event.data.size > 0) {
+            audioChunksRef.current.push(event.data);
+          }
+        };
+
+        mediaRecorder.onstop = async () => {
+          setIsListening(false);
+          setIsResponding(true);
+
+          const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+          
+          // Convert blob to base64
+          const reader = new FileReader();
+          reader.readAsDataURL(audioBlob);
+          reader.onloadend = async () => {
+            const base64Audio = reader.result?.toString().split(',')[1];
+            
+            if (!base64Audio) {
+              toast({
+                title: "Error",
+                description: "Failed to process audio",
+                variant: "destructive",
+              });
+              setIsResponding(false);
+              return;
+            }
+
+            try {
+              const { data, error } = await supabase.functions.invoke('transcribe-audio', {
+                body: { audio: base64Audio }
+              });
+
+              if (error) throw error;
+
+              const transcribedText = data.text;
+              
+              if (transcribedText && onVoiceInput) {
+                onVoiceInput(transcribedText);
+                toast({
+                  title: "Task captured",
+                  description: transcribedText,
+                });
+              }
+            } catch (error) {
+              console.error('Transcription error:', error);
+              toast({
+                title: "Error",
+                description: "Failed to transcribe audio",
+                variant: "destructive",
+              });
+            } finally {
+              setIsResponding(false);
+            }
+          };
+
+          // Stop all tracks
+          stream.getTracks().forEach(track => track.stop());
+        };
+
+        mediaRecorder.start();
+        setIsListening(true);
+        setIsResponding(false);
+      } catch (error) {
+        console.error('Error accessing microphone:', error);
+        toast({
+          title: "Error",
+          description: "Failed to access microphone",
+          variant: "destructive",
+        });
+      }
     }
   };
 

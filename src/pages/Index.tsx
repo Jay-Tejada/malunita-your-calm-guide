@@ -53,6 +53,21 @@ const Index = () => {
     }));
   };
 
+  const handleVoiceInput = (text: string) => {
+    const newTask = {
+      id: Date.now().toString(),
+      title: text,
+      time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+      context: "Voice",
+      completed: false,
+    };
+    
+    setTasks((prev) => ({
+      ...prev,
+      [selectedDomain]: [...prev[selectedDomain as keyof typeof prev], newTask],
+    }));
+  };
+
   const currentTasks = tasks[selectedDomain as keyof typeof tasks] || [];
   const completedCount = currentTasks.filter((t) => t.completed).length;
   const totalCount = currentTasks.length;
@@ -136,7 +151,7 @@ const Index = () => {
       </div>
 
       {/* Voice Orb - Always visible */}
-      <VoiceOrb />
+      <VoiceOrb onVoiceInput={handleVoiceInput} />
     </div>
   );
 };
