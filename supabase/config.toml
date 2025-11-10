@@ -10,6 +10,12 @@ max_rows = 1000
 [functions.transcribe-audio]
 verify_jwt = false
 
+[functions.chat-completion]
+verify_jwt = false
+
+[functions.text-to-speech]
+verify_jwt = false
+
 [functions.categorize-task]
 verify_jwt = false
 
