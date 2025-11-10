@@ -109,49 +109,64 @@ export const VoiceOrb = ({ onVoiceInput }: VoiceOrbProps) => {
         {isResponding && (
           <div className="mb-2 px-6 py-3 bg-card rounded-2xl shadow-lg border border-secondary animate-in fade-in duration-300">
             <p className="text-sm text-foreground max-w-xs text-center">
-              Good morning. Here's what's on your list today...
+              Transcribing your task...
             </p>
           </div>
         )}
 
         {/* Voice Orb */}
-        <button
-          onClick={handleClick}
-          className={`relative w-20 h-20 rounded-full transition-all duration-500 ease-in-out shadow-xl
-            ${isListening 
-              ? 'bg-background border-4 border-orb-listening scale-110' 
-              : isResponding
-              ? 'bg-orb-responding border-4 border-orb-listening animate-breathing'
-              : 'bg-card border-2 border-secondary hover:scale-105 hover:border-accent'
-            }`}
-        >
-          {/* Waveform animation when listening */}
+        <div className="relative">
+          {/* Pulsing ring when listening */}
           {isListening && (
-            <div className="absolute inset-0 flex items-center justify-center gap-1">
-              {[...Array(5)].map((_, i) => (
-                <div
-                  key={i}
-                  className="w-1 bg-orb-waveform rounded-full animate-waveform"
-                  style={{
-                    height: '40%',
-                    animationDelay: `${i * 0.1}s`,
-                  }}
-                />
-              ))}
-            </div>
+            <div className="absolute inset-0 rounded-full border-2 border-orb-listening animate-ping opacity-75" />
           )}
+          
+          <button
+            onClick={handleClick}
+            className={`relative w-20 h-20 rounded-full transition-all duration-500 ease-in-out shadow-xl
+              ${isListening 
+                ? 'bg-background border-4 border-orb-listening scale-110 shadow-2xl' 
+                : isResponding
+                ? 'bg-orb-responding border-4 border-orb-listening animate-breathing'
+                : 'bg-card border-2 border-secondary hover:scale-105 hover:border-accent'
+              }`}
+          >
+            {/* Enhanced waveform animation when listening */}
+            {isListening && (
+              <div className="absolute inset-0 flex items-center justify-center gap-1">
+                {[...Array(7)].map((_, i) => (
+                  <div
+                    key={i}
+                    className="w-1 bg-orb-waveform rounded-full animate-waveform"
+                    style={{
+                      height: i === 3 ? '60%' : i === 2 || i === 4 ? '50%' : '35%',
+                      animationDelay: `${i * 0.15}s`,
+                      animationDuration: i % 2 === 0 ? '1.2s' : '1.5s',
+                    }}
+                  />
+                ))}
+              </div>
+            )}
 
-          {/* Microphone icon when not active */}
-          {!isListening && !isResponding && (
-            <div className="flex items-center justify-center w-full h-full">
-              <Mic className="w-8 h-8 text-foreground" />
-            </div>
-          )}
-        </button>
+            {/* Microphone icon when not active */}
+            {!isListening && !isResponding && (
+              <div className="flex items-center justify-center w-full h-full">
+                <Mic className="w-8 h-8 text-foreground" />
+              </div>
+            )}
+
+            {/* Processing spinner when responding */}
+            {isResponding && (
+              <div className="flex items-center justify-center w-full h-full">
+                <div className="w-8 h-8 border-3 border-foreground border-t-transparent rounded-full animate-spin" />
+              </div>
+            )}
+          </button>
+        </div>
 
         {/* Status text */}
-        <p className="text-xs text-muted-foreground">
-          {isListening ? 'Listening...' : isResponding ? 'Thinking...' : 'Tap to speak'}
+        <p className="text-xs text-muted-foreground font-medium">
+          {isListening ? 'Listening...' : isResponding ? 'Transcribing...' : 'Tap to speak'}
         </p>
       </div>
     </div>
