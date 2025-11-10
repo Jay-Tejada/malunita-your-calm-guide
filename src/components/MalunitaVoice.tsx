@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { Mic, Volume2, VolumeX } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useProfile } from "@/hooks/useProfile";
 
 interface Message {
   role: 'user' | 'assistant';
@@ -18,9 +19,12 @@ export const MalunitaVoice = ({ onSaveNote }: MalunitaVoiceProps) => {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [transcribedText, setTranscribedText] = useState("");
   const [gptResponse, setGptResponse] = useState("");
-  const [audioEnabled, setAudioEnabled] = useState(true);
   const [audioLevels, setAudioLevels] = useState<number[]>(new Array(7).fill(0));
   const [conversationHistory, setConversationHistory] = useState<Message[]>([]);
+  const [sessionId] = useState(() => Date.now().toString());
+  
+  const { profile } = useProfile();
+  const audioEnabled = profile?.wants_voice_playback ?? true;
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -190,8 +194,22 @@ export const MalunitaVoice = ({ onSaveNote }: MalunitaVoiceProps) => {
             setTranscribedText(transcribed);
             console.log('Transcribed:', transcribed);
 
-            // Step 2: Send to ChatGPT with full conversation history
+            // Step 2: Send to ChatGPT with full conversation history and user profile
             console.log('Processing with ChatGPT...');
+            
+            // Get user profile for personalization
+            const { data: { user: currentUser } } = await supabase.auth.getUser();
+            let userProfileData = null;
+            
+            if (currentUser) {
+              const { data: profileData } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', currentUser.id)
+                .single();
+              
+              userProfileData = profileData;
+            }
             
             // Build messages array with conversation history
             const messages: Message[] = [
@@ -200,7 +218,10 @@ export const MalunitaVoice = ({ onSaveNote }: MalunitaVoiceProps) => {
             ];
 
             const { data: chatData, error: chatError } = await supabase.functions.invoke('chat-completion', {
-              body: { messages }
+              body: { 
+                messages,
+                userProfile: userProfileData 
+              }
             });
 
             if (chatError) throw chatError;
@@ -209,12 +230,33 @@ export const MalunitaVoice = ({ onSaveNote }: MalunitaVoiceProps) => {
             setGptResponse(response);
             console.log('GPT Response:', response);
 
-            // Update conversation history
+            // Update conversation history and save to database
+            const { data: { user } } = await supabase.auth.getUser();
+            
             setConversationHistory(prev => [
               ...prev,
               { role: 'user', content: transcribed },
               { role: 'assistant', content: response }
             ]);
+
+            // Save conversation to database
+            if (user) {
+              await supabase.from('conversation_history').insert([
+                {
+                  user_id: user.id,
+                  session_id: sessionId,
+                  role: 'user',
+                  content: transcribed,
+                },
+                {
+                  user_id: user.id,
+                  session_id: sessionId,
+                  role: 'assistant',
+                  content: response,
+                  audio_played: audioEnabled,
+                }
+              ]);
+            }
 
             // Step 3: Convert to speech and play
             if (audioEnabled) {
@@ -257,9 +299,21 @@ export const MalunitaVoice = ({ onSaveNote }: MalunitaVoiceProps) => {
     }
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (transcribedText && gptResponse && onSaveNote) {
       onSaveNote(transcribedText, gptResponse);
+      
+      // Mark conversation as saved in database
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase
+          .from('conversation_history')
+          .update({ was_saved: true })
+          .eq('user_id', user.id)
+          .eq('session_id', sessionId)
+          .eq('content', transcribedText);
+      }
+      
       toast({
         title: "Saved",
         description: "Note saved to your inbox",
@@ -322,15 +376,6 @@ export const MalunitaVoice = ({ onSaveNote }: MalunitaVoiceProps) => {
         <div className="flex flex-col items-center gap-6">
           {/* Controls row */}
           <div className="flex items-center gap-6">
-            {/* Audio toggle */}
-            <button
-              onClick={() => setAudioEnabled(!audioEnabled)}
-              className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              {audioEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
-              <span>{audioEnabled ? 'Voice on' : 'Text only'}</span>
-            </button>
-
             {/* Conversation counter */}
             {conversationHistory.length > 0 && (
               <div className="flex items-center gap-2">

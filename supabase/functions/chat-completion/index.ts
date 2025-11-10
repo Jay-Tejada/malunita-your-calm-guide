@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const { messages } = await req.json();
+    const { messages, userProfile } = await req.json();
     
     if (!messages || !Array.isArray(messages) || messages.length === 0) {
       throw new Error('No messages provided');
@@ -25,16 +25,48 @@ serve(async (req) => {
 
     console.log('Processing chat completion with', messages.length, 'messages');
 
-    // System message with Malunita personality
+    // Build personalized system message based on user profile
+    let systemContent = 'You are Malunita, a minimalist productivity assistant. You help users think clearly, capture thoughts, and reduce overwhelm. Keep responses brief, focused, and non-distracting. Your tone is calm, focused, and encouraging.';
+    
+    if (userProfile) {
+      systemContent += '\n\n**User Context:**';
+      
+      if (userProfile.peak_activity_time) {
+        systemContent += '\n- Most active during ' + userProfile.peak_activity_time;
+      }
+      
+      if (userProfile.common_prefixes && userProfile.common_prefixes.length > 0) {
+        systemContent += '\n- Common task patterns: ' + userProfile.common_prefixes.join(', ');
+      }
+      
+      if (userProfile.uses_reminders) {
+        systemContent += '\n- Often uses reminders - suggest time-based follow-ups when appropriate';
+      }
+      
+      if (userProfile.uses_names) {
+        systemContent += '\n- Mentions people by name - acknowledge relationships and context';
+      }
+      
+      if (userProfile.often_time_based) {
+        systemContent += '\n- Prefers time-specific tasks - help with scheduling when relevant';
+      }
+
+      if (userProfile.total_tasks_logged > 50) {
+        systemContent += '\n- Experienced user (' + userProfile.total_tasks_logged + ' tasks logged) - provide concise, advanced insights';
+      } else if (userProfile.total_tasks_logged > 0) {
+        systemContent += '\n- Getting started - be encouraging and provide gentle guidance';
+      }
+    }
+
     const systemMessage = {
       role: 'system',
-      content: 'You are Malunita, a minimalist productivity assistant. You help users think clearly, capture thoughts, and reduce overwhelm. Keep responses brief, focused, and non-distracting. If the user shares a task or thought, acknowledge it warmly and help them clarify or organize it. Your tone is calm, focused, and encouraging. Remember the conversation context to provide relevant, personalized assistance.'
+      content: systemContent
     };
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${openAIApiKey}`,
+        'Authorization': 'Bearer ' + openAIApiKey,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -48,7 +80,7 @@ serve(async (req) => {
     if (!response.ok) {
       const error = await response.text();
       console.error('OpenAI API error:', error);
-      throw new Error(`OpenAI API error: ${response.status}`);
+      throw new Error('OpenAI API error: ' + response.status);
     }
 
     const data = await response.json();

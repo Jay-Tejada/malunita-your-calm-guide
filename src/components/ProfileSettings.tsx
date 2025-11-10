@@ -1,0 +1,166 @@
+import { useProfile } from "@/hooks/useProfile";
+import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Loader2, TrendingUp, Clock, MessageSquare } from "lucide-react";
+
+interface ProfileSettingsProps {
+  onClose?: () => void;
+}
+
+export const ProfileSettings = ({ onClose }: ProfileSettingsProps) => {
+  const { profile, isLoading, updateProfile } = useProfile();
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (!profile) return null;
+
+  return (
+    <div className="w-full max-w-2xl mx-auto px-6 py-8">
+      <div className="bg-card rounded-3xl border border-secondary shadow-lg">
+        <div className="p-6 border-b border-secondary">
+          <h2 className="text-2xl font-light">Settings & Insights</h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            Customize how Malunita works for you
+          </p>
+        </div>
+
+        <ScrollArea className="h-[500px]">
+          <div className="p-6 space-y-8">
+            {/* Analytics Section */}
+            <div>
+              <h3 className="text-lg font-medium mb-4 flex items-center gap-2">
+                <TrendingUp className="w-5 h-5" />
+                Your Activity
+              </h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-background rounded-xl p-4 border border-secondary">
+                  <p className="text-sm text-muted-foreground">Total Tasks</p>
+                  <p className="text-3xl font-light mt-1">{profile.total_tasks_logged}</p>
+                </div>
+                <div className="bg-background rounded-xl p-4 border border-secondary">
+                  <p className="text-sm text-muted-foreground">Daily Average</p>
+                  <p className="text-3xl font-light mt-1">{profile.average_tasks_per_day}</p>
+                </div>
+              </div>
+              <div className="mt-4 bg-background rounded-xl p-4 border border-secondary">
+                <div className="flex items-center gap-2 mb-2">
+                  <Clock className="w-4 h-4 text-muted-foreground" />
+                  <p className="text-sm text-muted-foreground">Peak Activity Time</p>
+                </div>
+                <p className="text-lg capitalize">{profile.peak_activity_time}</p>
+              </div>
+            </div>
+
+            {/* Voice Preferences */}
+            <div>
+              <h3 className="text-lg font-medium mb-4 flex items-center gap-2">
+                <MessageSquare className="w-5 h-5" />
+                Voice Preferences
+              </h3>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label htmlFor="voice-playback">Voice Playback</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Hear Malunita's responses out loud
+                    </p>
+                  </div>
+                  <Switch
+                    id="voice-playback"
+                    checked={profile.wants_voice_playback}
+                    onCheckedChange={(checked) =>
+                      updateProfile({ wants_voice_playback: checked })
+                    }
+                  />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label htmlFor="auto-categorize">Auto-Categorize Tasks</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Let AI sort tasks automatically
+                    </p>
+                  </div>
+                  <Switch
+                    id="auto-categorize"
+                    checked={profile.autocategorize_enabled}
+                    onCheckedChange={(checked) =>
+                      updateProfile({ autocategorize_enabled: checked })
+                    }
+                  />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label htmlFor="routine-nudges">Routine Nudges</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Get suggestions based on your patterns
+                    </p>
+                  </div>
+                  <Switch
+                    id="routine-nudges"
+                    checked={profile.likes_routine_nudges}
+                    onCheckedChange={(checked) =>
+                      updateProfile({ likes_routine_nudges: checked })
+                    }
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Task Patterns */}
+            <div>
+              <h3 className="text-lg font-medium mb-4">Your Task Patterns</h3>
+              <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className={`w-3 h-3 rounded-full ${profile.uses_reminders ? 'bg-success' : 'bg-muted'}`} />
+                  <span className="text-sm">Uses reminders</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className={`w-3 h-3 rounded-full ${profile.uses_names ? 'bg-success' : 'bg-muted'}`} />
+                  <span className="text-sm">Mentions people's names</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className={`w-3 h-3 rounded-full ${profile.often_time_based ? 'bg-success' : 'bg-muted'}`} />
+                  <span className="text-sm">Creates time-based tasks</span>
+                </div>
+              </div>
+
+              {profile.common_prefixes && profile.common_prefixes.length > 0 && (
+                <div className="mt-4">
+                  <p className="text-sm text-muted-foreground mb-2">Common phrases:</p>
+                  <div className="flex flex-wrap gap-2">
+                    {profile.common_prefixes.map((prefix, i) => (
+                      <span
+                        key={i}
+                        className="px-3 py-1 bg-secondary/50 rounded-full text-xs"
+                      >
+                        "{prefix}"
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </ScrollArea>
+
+        {onClose && (
+          <div className="p-6 border-t border-secondary">
+            <Button onClick={onClose} variant="outline" className="w-full">
+              Close
+            </Button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
