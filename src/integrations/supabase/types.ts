@@ -14,7 +14,141 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      conversation_history: {
+        Row: {
+          audio_played: boolean | null
+          content: string
+          created_at: string
+          id: string
+          role: string
+          session_id: string
+          user_id: string
+          was_saved: boolean | null
+        }
+        Insert: {
+          audio_played?: boolean | null
+          content: string
+          created_at?: string
+          id?: string
+          role: string
+          session_id: string
+          user_id: string
+          was_saved?: boolean | null
+        }
+        Update: {
+          audio_played?: boolean | null
+          content?: string
+          created_at?: string
+          id?: string
+          role?: string
+          session_id?: string
+          user_id?: string
+          was_saved?: boolean | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          autocategorize_enabled: boolean | null
+          average_tasks_per_day: number | null
+          common_prefixes: string[] | null
+          created_at: string
+          id: string
+          likes_routine_nudges: boolean | null
+          often_time_based: boolean | null
+          peak_activity_time: string | null
+          preferred_input_style: string | null
+          total_tasks_logged: number | null
+          updated_at: string
+          uses_names: boolean | null
+          uses_reminders: boolean | null
+          wants_voice_playback: boolean | null
+        }
+        Insert: {
+          autocategorize_enabled?: boolean | null
+          average_tasks_per_day?: number | null
+          common_prefixes?: string[] | null
+          created_at?: string
+          id: string
+          likes_routine_nudges?: boolean | null
+          often_time_based?: boolean | null
+          peak_activity_time?: string | null
+          preferred_input_style?: string | null
+          total_tasks_logged?: number | null
+          updated_at?: string
+          uses_names?: boolean | null
+          uses_reminders?: boolean | null
+          wants_voice_playback?: boolean | null
+        }
+        Update: {
+          autocategorize_enabled?: boolean | null
+          average_tasks_per_day?: number | null
+          common_prefixes?: string[] | null
+          created_at?: string
+          id?: string
+          likes_routine_nudges?: boolean | null
+          often_time_based?: boolean | null
+          peak_activity_time?: string | null
+          preferred_input_style?: string | null
+          total_tasks_logged?: number | null
+          updated_at?: string
+          uses_names?: boolean | null
+          uses_reminders?: boolean | null
+          wants_voice_playback?: boolean | null
+        }
+        Relationships: []
+      }
+      tasks: {
+        Row: {
+          category: string | null
+          completed: boolean | null
+          completed_at: string | null
+          context: string | null
+          created_at: string
+          has_person_name: boolean | null
+          has_reminder: boolean | null
+          id: string
+          input_method: string | null
+          is_time_based: boolean | null
+          keywords: string[] | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category?: string | null
+          completed?: boolean | null
+          completed_at?: string | null
+          context?: string | null
+          created_at?: string
+          has_person_name?: boolean | null
+          has_reminder?: boolean | null
+          id?: string
+          input_method?: string | null
+          is_time_based?: boolean | null
+          keywords?: string[] | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category?: string | null
+          completed?: boolean | null
+          completed_at?: string | null
+          context?: string | null
+          created_at?: string
+          has_person_name?: boolean | null
+          has_reminder?: boolean | null
+          id?: string
+          input_method?: string | null
+          is_time_based?: boolean | null
+          keywords?: string[] | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
