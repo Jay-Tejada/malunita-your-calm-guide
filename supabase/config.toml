@@ -21,3 +21,6 @@ verify_jwt = false
 
 [functions.suggest-tasks]
 verify_jwt = false
+
+[functions.split-tasks]
+verify_jwt = false

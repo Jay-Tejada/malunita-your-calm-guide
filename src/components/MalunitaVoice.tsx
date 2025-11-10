@@ -300,26 +300,79 @@ export const MalunitaVoice = ({ onSaveNote }: MalunitaVoiceProps) => {
   };
 
   const handleSave = async () => {
-    if (transcribedText && gptResponse && onSaveNote) {
-      onSaveNote(transcribedText, gptResponse);
-      
-      // Mark conversation as saved in database
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        await supabase
-          .from('conversation_history')
-          .update({ was_saved: true })
-          .eq('user_id', user.id)
-          .eq('session_id', sessionId)
-          .eq('content', transcribedText);
-      }
-      
-      toast({
-        title: "Saved",
-        description: "Note saved to your inbox",
+    if (!transcribedText || !gptResponse) return;
+    
+    setIsProcessing(true);
+    
+    try {
+      // Split tasks using AI
+      const { data: splitData, error: splitError } = await supabase.functions.invoke('split-tasks', {
+        body: { text: transcribedText }
       });
+
+      if (splitError) throw splitError;
+
+      const tasks = splitData.tasks || [];
+
+      if (tasks.length === 0) {
+        toast({
+          title: "No tasks detected",
+          description: "Try rephrasing with actionable items.",
+          variant: "destructive",
+        });
+        setIsProcessing(false);
+        return;
+      }
+
+      // Save tasks to database
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      const tasksToInsert = tasks.map((task: any) => ({
+        title: task.title,
+        context: gptResponse,
+        has_reminder: task.has_reminder || false,
+        has_person_name: task.has_person_name || false,
+        is_time_based: task.is_time_based || false,
+        keywords: task.keywords || [],
+        input_method: 'voice' as const,
+        user_id: user.id,
+      }));
+
+      const { error: insertError } = await supabase
+        .from('tasks')
+        .insert(tasksToInsert);
+
+      if (insertError) throw insertError;
+
+      // Mark conversation as saved
+      await supabase
+        .from('conversation_history')
+        .update({ was_saved: true })
+        .eq('user_id', user.id)
+        .eq('session_id', sessionId)
+        .eq('content', transcribedText);
+
+      toast({
+        title: "Tasks saved",
+        description: `${tasks.length} task${tasks.length > 1 ? 's' : ''} created successfully.`,
+      });
+
       setTranscribedText("");
       setGptResponse("");
+      
+      // Call legacy onSaveNote for backwards compatibility
+      if (onSaveNote) {
+        onSaveNote(transcribedText, gptResponse);
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error saving tasks",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsProcessing(false);
     }
   };
 
