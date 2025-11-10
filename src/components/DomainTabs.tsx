@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { cn } from "@/lib/utils";
-import { Heart, Dumbbell, Briefcase, Home } from "lucide-react";
+import { Home, Briefcase, Dumbbell, FolderKanban } from "lucide-react";
 
 const domains = [
-  { id: "personal", label: "Personal", icon: Home },
-  { id: "health", label: "Health", icon: Dumbbell },
-  { id: "enterprises", label: "Enterprises", icon: Briefcase },
+  { id: "home", label: "Home", icon: Home },
+  { id: "work", label: "Work", icon: Briefcase },
+  { id: "gym", label: "Gym", icon: Dumbbell },
+  { id: "projects", label: "Projects", icon: FolderKanban },
 ];
 
 interface DomainTabsProps {

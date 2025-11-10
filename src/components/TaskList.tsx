@@ -1,11 +1,14 @@
+import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Trash2, User, Clock, Bell } from "lucide-react";
 import { useTasks, Task } from "@/hooks/useTasks";
+import { DomainTabs } from "@/components/DomainTabs";
 
 export const TaskList = () => {
   const { tasks, isLoading, updateTask, deleteTask } = useTasks();
+  const [selectedDomain, setSelectedDomain] = useState("home");
 
   if (isLoading) {
     return (
@@ -17,11 +20,17 @@ export const TaskList = () => {
     );
   }
 
+  // Filter tasks by selected domain
+  const filteredTasks = tasks?.filter(task => task.category === selectedDomain) || [];
+
   if (!tasks || tasks.length === 0) {
     return (
-      <Card className="p-8 text-center text-muted-foreground">
-        <p>No tasks yet. Start by speaking into Malunita.</p>
-      </Card>
+      <>
+        <DomainTabs value={selectedDomain} onChange={setSelectedDomain} />
+        <Card className="p-8 text-center text-muted-foreground mt-4">
+          <p>No tasks yet. Start by speaking into Malunita.</p>
+        </Card>
+      </>
     );
   }
 
@@ -40,8 +49,16 @@ export const TaskList = () => {
   };
 
   return (
-    <div className="space-y-2">
-      {tasks.map((task) => (
+    <div className="space-y-4">
+      <DomainTabs value={selectedDomain} onChange={setSelectedDomain} />
+      
+      {filteredTasks.length === 0 ? (
+        <Card className="p-8 text-center text-muted-foreground">
+          <p>No {selectedDomain} tasks yet.</p>
+        </Card>
+      ) : (
+        <div className="space-y-2">
+          {filteredTasks.map((task) => (
         <Card
           key={task.id}
           className={`p-4 transition-all hover:shadow-md ${
@@ -105,7 +122,9 @@ export const TaskList = () => {
             </Button>
           </div>
         </Card>
-      ))}
+          ))}
+        </div>
+      )}
     </div>
   );
 };

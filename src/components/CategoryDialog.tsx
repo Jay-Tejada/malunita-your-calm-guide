@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 interface CategoryDialogProps {
   open: boolean;
   taskText: string;
-  onSelectCategory: (category: 'personal' | 'health' | 'enterprises') => void;
+  onSelectCategory: (category: 'home' | 'work' | 'gym' | 'projects') => void;
   onCancel: () => void;
 }
 
@@ -29,25 +29,32 @@ export const CategoryDialog = ({ open, taskText, onSelectCategory, onCancel }: C
         </AlertDialogHeader>
         <AlertDialogFooter className="flex-col sm:flex-col gap-2">
           <Button
-            onClick={() => onSelectCategory('personal')}
+            onClick={() => onSelectCategory('home')}
             variant="outline"
             className="w-full"
           >
-            Personal
+            Home
           </Button>
           <Button
-            onClick={() => onSelectCategory('health')}
+            onClick={() => onSelectCategory('work')}
             variant="outline"
             className="w-full"
           >
-            Health
+            Work
           </Button>
           <Button
-            onClick={() => onSelectCategory('enterprises')}
+            onClick={() => onSelectCategory('gym')}
             variant="outline"
             className="w-full"
           >
-            Enterprises
+            Gym
+          </Button>
+          <Button
+            onClick={() => onSelectCategory('projects')}
+            variant="outline"
+            className="w-full"
+          >
+            Projects
           </Button>
           <AlertDialogAction onClick={onCancel} className="w-full">
             Cancel

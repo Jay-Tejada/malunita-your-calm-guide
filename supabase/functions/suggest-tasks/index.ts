@@ -94,7 +94,7 @@ Return suggestions with appropriate priority levels:
                         },
                         category: {
                           type: "string",
-                          enum: ["personal", "health", "enterprises"],
+                          enum: ["home", "work", "gym", "projects"],
                           description: "Category that best fits this task"
                         },
                         context: {

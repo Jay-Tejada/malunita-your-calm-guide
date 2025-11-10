@@ -17,7 +17,7 @@ interface Task {
 interface TaskSuggestion {
   title: string;
   priority: 'low' | 'medium' | 'high';
-  category: 'personal' | 'health' | 'enterprises';
+  category: 'home' | 'work' | 'gym' | 'projects';
   context: string;
 }
 
