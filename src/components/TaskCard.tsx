@@ -7,12 +7,13 @@ interface TaskCardProps {
   context?: string;
   completed?: boolean;
   onToggle?: () => void;
+  onEdit?: () => void;
 }
 
-export const TaskCard = ({ title, time, context, completed, onToggle }: TaskCardProps) => {
+export const TaskCard = ({ title, time, context, completed, onToggle, onEdit }: TaskCardProps) => {
   return (
     <div
-      onClick={onToggle}
+      onClick={onEdit}
       className={cn(
         "group flex items-start gap-3 p-4 rounded-2xl border transition-all duration-300 cursor-pointer",
         completed

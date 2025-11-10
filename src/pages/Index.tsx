@@ -5,8 +5,17 @@ import { TaskCard } from "@/components/TaskCard";
 import { VoiceOrb } from "@/components/VoiceOrb";
 import { Inbox } from "@/components/Inbox";
 import { TaskSuggestions } from "@/components/TaskSuggestions";
+import { TaskEditDialog } from "@/components/TaskEditDialog";
 import { Button } from "@/components/ui/button";
 import { Inbox as InboxIcon } from "lucide-react";
+
+interface Task {
+  id: string;
+  title: string;
+  time?: string;
+  context: string;
+  completed: boolean;
+}
 
 // Sample data - will be replaced with real data from backend
 const sampleTasks = {
@@ -29,6 +38,8 @@ const Index = () => {
   const [selectedDomain, setSelectedDomain] = useState("personal");
   const [tasks, setTasks] = useState(sampleTasks);
   const [showInbox, setShowInbox] = useState(false);
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
 
   const handleToggleTask = (taskId: string) => {
     setTasks((prev) => ({
@@ -87,12 +98,41 @@ const Index = () => {
     }));
   };
 
+  const handleEditTask = (taskId: string) => {
+    const task = currentTasks.find((t) => t.id === taskId);
+    if (task) {
+      setEditingTask(task);
+      setEditDialogOpen(true);
+    }
+  };
+
+  const handleSaveTask = (taskId: string, updates: Partial<Task>) => {
+    setTasks((prev) => ({
+      ...prev,
+      [selectedDomain]: prev[selectedDomain as keyof typeof prev].map((task) =>
+        task.id === taskId ? { ...task, ...updates } : task
+      ),
+    }));
+  };
+
+  const handleCloseEditDialog = () => {
+    setEditDialogOpen(false);
+    setEditingTask(null);
+  };
+
   const currentTasks = tasks[selectedDomain as keyof typeof tasks] || [];
   const completedCount = currentTasks.filter((t) => t.completed).length;
   const totalCount = currentTasks.length;
 
   return (
     <div className="min-h-screen bg-background pb-32">
+      <TaskEditDialog
+        open={editDialogOpen}
+        task={editingTask}
+        onSave={handleSaveTask}
+        onClose={handleCloseEditDialog}
+      />
+      
       <div className="max-w-2xl mx-auto px-4 py-8">
         <Header />
 
@@ -161,6 +201,7 @@ const Index = () => {
                 context={task.context}
                 completed={task.completed}
                 onToggle={() => handleToggleTask(task.id)}
+                onEdit={() => handleEditTask(task.id)}
               />
             ))
           )}
