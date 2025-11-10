@@ -24,3 +24,6 @@ verify_jwt = false
 
 [functions.split-tasks]
 verify_jwt = false
+
+[functions.runway-review]
+verify_jwt = true

@@ -4,6 +4,7 @@ import { Auth } from "@/components/Auth";
 import { MalunitaVoice } from "@/components/MalunitaVoice";
 import { TaskList } from "@/components/TaskList";
 import { ProfileSettings } from "@/components/ProfileSettings";
+import { RunwayReviewButton } from "@/components/RunwayReviewButton";
 import { Button } from "@/components/ui/button";
 import { Settings, LogOut } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -104,6 +105,9 @@ const Index = () => {
           </div>
         </div>
       </div>
+
+      {/* Runway Review Button */}
+      <RunwayReviewButton />
     </div>
   );
 };
