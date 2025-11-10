@@ -12,10 +12,10 @@ serve(async (req) => {
   }
 
   try {
-    const { text } = await req.json();
+    const { messages } = await req.json();
     
-    if (!text) {
-      throw new Error('No text provided');
+    if (!messages || !Array.isArray(messages) || messages.length === 0) {
+      throw new Error('No messages provided');
     }
 
     const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
@@ -23,7 +23,13 @@ serve(async (req) => {
       throw new Error('OpenAI API key not configured');
     }
 
-    console.log('Processing chat completion for:', text);
+    console.log('Processing chat completion with', messages.length, 'messages');
+
+    // System message with Malunita personality
+    const systemMessage = {
+      role: 'system',
+      content: 'You are Malunita, a minimalist productivity assistant. You help users think clearly, capture thoughts, and reduce overwhelm. Keep responses brief, focused, and non-distracting. If the user shares a task or thought, acknowledge it warmly and help them clarify or organize it. Your tone is calm, focused, and encouraging. Remember the conversation context to provide relevant, personalized assistance.'
+    };
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -33,16 +39,7 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         model: 'gpt-4o',
-        messages: [
-          {
-            role: 'system',
-            content: 'You are Malunita, a minimalist productivity assistant. You help users think clearly, capture thoughts, and reduce overwhelm. Keep responses brief, focused, and non-distracting. If the user shares a task or thought, acknowledge it warmly and help them clarify or organize it. Your tone is calm, focused, and encouraging.'
-          },
-          {
-            role: 'user',
-            content: text
-          }
-        ],
+        messages: [systemMessage, ...messages],
         temperature: 0.7,
         max_tokens: 150,
       }),

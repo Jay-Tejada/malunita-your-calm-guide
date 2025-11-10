@@ -3,6 +3,11 @@ import { Mic, Volume2, VolumeX } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
+interface Message {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
 interface MalunitaVoiceProps {
   onSaveNote?: (text: string, response: string) => void;
 }
@@ -15,6 +20,7 @@ export const MalunitaVoice = ({ onSaveNote }: MalunitaVoiceProps) => {
   const [gptResponse, setGptResponse] = useState("");
   const [audioEnabled, setAudioEnabled] = useState(true);
   const [audioLevels, setAudioLevels] = useState<number[]>(new Array(7).fill(0));
+  const [conversationHistory, setConversationHistory] = useState<Message[]>([]);
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -184,10 +190,17 @@ export const MalunitaVoice = ({ onSaveNote }: MalunitaVoiceProps) => {
             setTranscribedText(transcribed);
             console.log('Transcribed:', transcribed);
 
-            // Step 2: Send to ChatGPT
+            // Step 2: Send to ChatGPT with full conversation history
             console.log('Processing with ChatGPT...');
+            
+            // Build messages array with conversation history
+            const messages: Message[] = [
+              ...conversationHistory,
+              { role: 'user', content: transcribed }
+            ];
+
             const { data: chatData, error: chatError } = await supabase.functions.invoke('chat-completion', {
-              body: { text: transcribed }
+              body: { messages }
             });
 
             if (chatError) throw chatError;
@@ -195,6 +208,13 @@ export const MalunitaVoice = ({ onSaveNote }: MalunitaVoiceProps) => {
             const response = chatData.reply;
             setGptResponse(response);
             console.log('GPT Response:', response);
+
+            // Update conversation history
+            setConversationHistory(prev => [
+              ...prev,
+              { role: 'user', content: transcribed },
+              { role: 'assistant', content: response }
+            ]);
 
             // Step 3: Convert to speech and play
             if (audioEnabled) {
@@ -255,6 +275,16 @@ export const MalunitaVoice = ({ onSaveNote }: MalunitaVoiceProps) => {
     handleVoiceLoop();
   };
 
+  const handleNewConversation = () => {
+    setConversationHistory([]);
+    setTranscribedText("");
+    setGptResponse("");
+    toast({
+      title: "New conversation started",
+      description: "Context has been cleared",
+    });
+  };
+
   return (
     <div className="fixed inset-0 flex flex-col items-center justify-center px-6">
       <div className="w-full max-w-2xl flex flex-col items-center gap-8">
@@ -290,14 +320,32 @@ export const MalunitaVoice = ({ onSaveNote }: MalunitaVoiceProps) => {
 
         {/* Voice Control */}
         <div className="flex flex-col items-center gap-6">
-          {/* Audio toggle */}
-          <button
-            onClick={() => setAudioEnabled(!audioEnabled)}
-            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            {audioEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
-            <span>{audioEnabled ? 'Voice on' : 'Text only'}</span>
-          </button>
+          {/* Controls row */}
+          <div className="flex items-center gap-6">
+            {/* Audio toggle */}
+            <button
+              onClick={() => setAudioEnabled(!audioEnabled)}
+              className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              {audioEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+              <span>{audioEnabled ? 'Voice on' : 'Text only'}</span>
+            </button>
+
+            {/* Conversation counter */}
+            {conversationHistory.length > 0 && (
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground">
+                  {conversationHistory.length / 2} exchanges
+                </span>
+                <button
+                  onClick={handleNewConversation}
+                  className="text-xs text-muted-foreground hover:text-foreground transition-colors underline"
+                >
+                  Clear
+                </button>
+              </div>
+            )}
+          </div>
 
           {/* Main voice button */}
           <div className="relative">
