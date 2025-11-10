@@ -8,9 +8,9 @@ const corsHeaders = {
 };
 
 // VAPID keys - Generate these with: web-push generate-vapid-keys
-const VAPID_PUBLIC_KEY = 'BEl62iUYgUivxIkv69yViEuiBIa-Ib9-SkvMeAtA3LFgDzkrxZJjSgSnfckjBJuBkr3qBUYIHBQFLXYp5Nksh8U';
+const VAPID_PUBLIC_KEY = 'BIsP3dA-qEvFd9zkXb48wFpv3mQWO-upuheOmnaUjIU0Etszc8PgpygsNYXmfUoyFZ0MZ4YE2a-GUO0Ewlr1sFo';
 const VAPID_PRIVATE_KEY = Deno.env.get('VAPID_PRIVATE_KEY') || '';
-const VAPID_SUBJECT = 'mailto:support@malunita.app';
+const VAPID_SUBJECT = 'mailto:jaytejadamgmt@gmail.com';
 
 interface PushNotificationPayload {
   title: string;

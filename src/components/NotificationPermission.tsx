@@ -84,8 +84,8 @@ export const NotificationPermission = () => {
     try {
       const registration = await navigator.serviceWorker.ready;
       
-      // VAPID public key - you'll need to generate this
-      const publicVapidKey = 'BEl62iUYgUivxIkv69yViEuiBIa-Ib9-SkvMeAtA3LFgDzkrxZJjSgSnfckjBJuBkr3qBUYIHBQFLXYp5Nksh8U';
+      // VAPID public key
+      const publicVapidKey = 'BIsP3dA-qEvFd9zkXb48wFpv3mQWO-upuheOmnaUjIU0Etszc8PgpygsNYXmfUoyFZ0MZ4YE2a-GUO0Ewlr1sFo';
       
       const subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
