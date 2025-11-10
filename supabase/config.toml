@@ -12,3 +12,6 @@ verify_jwt = false
 
 [functions.categorize-task]
 verify_jwt = false
+
+[functions.suggest-tasks]
+verify_jwt = false

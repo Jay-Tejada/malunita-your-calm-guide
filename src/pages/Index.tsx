@@ -4,6 +4,7 @@ import { DomainTabs } from "@/components/DomainTabs";
 import { TaskCard } from "@/components/TaskCard";
 import { VoiceOrb } from "@/components/VoiceOrb";
 import { Inbox } from "@/components/Inbox";
+import { TaskSuggestions } from "@/components/TaskSuggestions";
 import { Button } from "@/components/ui/button";
 import { Inbox as InboxIcon } from "lucide-react";
 
@@ -71,6 +72,21 @@ const Index = () => {
     }));
   };
 
+  const handleAddSuggestedTask = (title: string, context: string, category: string) => {
+    const newTask = {
+      id: Date.now().toString(),
+      title,
+      time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+      context,
+      completed: false,
+    };
+    
+    setTasks((prev) => ({
+      ...prev,
+      [category]: [...prev[category as keyof typeof prev], newTask],
+    }));
+  };
+
   const currentTasks = tasks[selectedDomain as keyof typeof tasks] || [];
   const completedCount = currentTasks.filter((t) => t.completed).length;
   const totalCount = currentTasks.length;
@@ -105,6 +121,13 @@ const Index = () => {
         <div className="mb-8">
           <DomainTabs value={selectedDomain} onChange={setSelectedDomain} />
         </div>
+
+        {/* AI Task Suggestions */}
+        <TaskSuggestions
+          tasks={currentTasks}
+          domain={selectedDomain}
+          onAddTask={handleAddSuggestedTask}
+        />
 
         {/* Progress Summary */}
         <div className="mb-6 p-4 bg-card rounded-2xl border border-secondary">
