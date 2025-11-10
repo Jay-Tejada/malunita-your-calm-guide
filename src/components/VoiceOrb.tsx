@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Mic } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -10,15 +10,61 @@ interface VoiceOrbProps {
 export const VoiceOrb = ({ onVoiceInput }: VoiceOrbProps) => {
   const [isListening, setIsListening] = useState(false);
   const [isResponding, setIsResponding] = useState(false);
+  const [audioLevels, setAudioLevels] = useState<number[]>(new Array(7).fill(0));
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const animationFrameRef = useRef<number | null>(null);
   const { toast } = useToast();
+
+  const analyzeAudio = () => {
+    if (!analyserRef.current) return;
+
+    const dataArray = new Uint8Array(analyserRef.current.frequencyBinCount);
+    analyserRef.current.getByteFrequencyData(dataArray);
+
+    // Split frequency data into 7 bands
+    const bands = 7;
+    const bandSize = Math.floor(dataArray.length / bands);
+    const newLevels = [];
+
+    for (let i = 0; i < bands; i++) {
+      const start = i * bandSize;
+      const end = start + bandSize;
+      const bandData = dataArray.slice(start, end);
+      const average = bandData.reduce((sum, val) => sum + val, 0) / bandData.length;
+      // Normalize to 0-1 range and add a minimum height
+      newLevels.push(Math.max(0.2, Math.min(1, average / 128)));
+    }
+
+    setAudioLevels(newLevels);
+    animationFrameRef.current = requestAnimationFrame(analyzeAudio);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+      if (audioContextRef.current) {
+        audioContextRef.current.close();
+      }
+    };
+  }, []);
 
   const handleClick = async () => {
     if (isListening) {
       // Stop recording
       if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
         mediaRecorderRef.current.stop();
+      }
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+      if (audioContextRef.current) {
+        audioContextRef.current.close();
+        audioContextRef.current = null;
       }
     } else {
       // Start recording
@@ -27,6 +73,18 @@ export const VoiceOrb = ({ onVoiceInput }: VoiceOrbProps) => {
         const mediaRecorder = new MediaRecorder(stream);
         mediaRecorderRef.current = mediaRecorder;
         audioChunksRef.current = [];
+
+        // Set up audio analysis
+        const audioContext = new AudioContext();
+        audioContextRef.current = audioContext;
+        const source = audioContext.createMediaStreamSource(stream);
+        const analyser = audioContext.createAnalyser();
+        analyser.fftSize = 256;
+        analyserRef.current = analyser;
+        source.connect(analyser);
+
+        // Start analyzing audio
+        analyzeAudio();
 
         mediaRecorder.ondataavailable = (event) => {
           if (event.data.size > 0) {
@@ -131,17 +189,15 @@ export const VoiceOrb = ({ onVoiceInput }: VoiceOrbProps) => {
                 : 'bg-card border-2 border-secondary hover:scale-105 hover:border-accent'
               }`}
           >
-            {/* Enhanced waveform animation when listening */}
+            {/* Real-time waveform responding to audio levels */}
             {isListening && (
               <div className="absolute inset-0 flex items-center justify-center gap-1">
-                {[...Array(7)].map((_, i) => (
+                {audioLevels.map((level, i) => (
                   <div
                     key={i}
-                    className="w-1 bg-orb-waveform rounded-full animate-waveform"
+                    className="w-1 bg-orb-waveform rounded-full transition-all duration-75"
                     style={{
-                      height: i === 3 ? '60%' : i === 2 || i === 4 ? '50%' : '35%',
-                      animationDelay: `${i * 0.15}s`,
-                      animationDuration: i % 2 === 0 ? '1.2s' : '1.5s',
+                      height: `${level * 60}%`,
                     }}
                   />
                 ))}
