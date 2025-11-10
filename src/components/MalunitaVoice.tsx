@@ -445,7 +445,7 @@ export const MalunitaVoice = ({ onSaveNote }: MalunitaVoiceProps) => {
           {gptResponse && (
             <div className="bg-accent/30 rounded-2xl p-6 border border-accent shadow-sm animate-in fade-in duration-300">
               <p className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Malunita:</p>
-              <p className="text-foreground leading-relaxed">{gptResponse}</p>
+              <p className="text-foreground leading-relaxed whitespace-pre-wrap break-words">{gptResponse}</p>
             </div>
           )}
 
