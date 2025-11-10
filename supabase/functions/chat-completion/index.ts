@@ -26,36 +26,38 @@ serve(async (req) => {
     console.log('Processing chat completion with', messages.length, 'messages');
 
     // Build personalized system message based on user profile
-    let systemContent = 'You are Malunita, a minimalist productivity assistant. You help users think clearly, capture thoughts, and reduce overwhelm. Keep responses brief, focused, and non-distracting. Your tone is calm, focused, and encouraging.';
+    let systemContent = 'You are Malunita, a calm voice-based productivity assistant. This user prefers speaking tasks aloud.';
     
     if (userProfile) {
-      systemContent += '\n\n**User Context:**';
+      // Time-based guidance
+      const timePref = userProfile.peak_activity_time === "morning"
+        ? "Offer short planning guidance in the morning"
+        : userProfile.peak_activity_time === "afternoon"
+        ? "Focus on wrap-up or follow-ups in the afternoon"
+        : "Adapt to their current time context";
       
-      if (userProfile.peak_activity_time) {
-        systemContent += '\n- Most active during ' + userProfile.peak_activity_time;
-      }
+      systemContent += '\n' + timePref + '.';
       
+      // Task patterns and action bias
       if (userProfile.common_prefixes && userProfile.common_prefixes.length > 0) {
-        systemContent += '\n- Common task patterns: ' + userProfile.common_prefixes.join(', ');
+        systemContent += ' They commonly log tasks like: ' + userProfile.common_prefixes.join(', ') + '.';
+        
+        const hasEmailTasks = userProfile.common_prefixes.some((prefix: string) => 
+          prefix.toLowerCase().includes('email') || prefix.toLowerCase().includes('mail')
+        );
+        
+        if (hasEmailTasks) {
+          systemContent += '\nSuggest email batching if multiple related tasks are detected.';
+        } else {
+          systemContent += '\nFocus on general thought organization.';
+        }
       }
       
-      if (userProfile.uses_reminders) {
-        systemContent += '\n- Often uses reminders - suggest time-based follow-ups when appropriate';
-      }
-      
-      if (userProfile.uses_names) {
-        systemContent += '\n- Mentions people by name - acknowledge relationships and context';
-      }
-      
-      if (userProfile.often_time_based) {
-        systemContent += '\n- Prefers time-specific tasks - help with scheduling when relevant';
-      }
-
-      if (userProfile.total_tasks_logged > 50) {
-        systemContent += '\n- Experienced user (' + userProfile.total_tasks_logged + ' tasks logged) - provide concise, advanced insights';
-      } else if (userProfile.total_tasks_logged > 0) {
-        systemContent += '\n- Getting started - be encouraging and provide gentle guidance';
-      }
+      systemContent += '\nUse concise, clear responses — avoid long summaries.';
+      systemContent += '\nThey prefer when you auto-tag or group similar ideas.';
+      systemContent += '\nDo not suggest complex project management — keep everything frictionless.';
+    } else {
+      systemContent += '\nKeep responses brief, focused, and non-distracting. Your tone is calm, focused, and encouraging.';
     }
 
     const systemMessage = {
