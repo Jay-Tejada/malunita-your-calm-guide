@@ -53,7 +53,7 @@ const Index = () => {
     }));
   };
 
-  const handleVoiceInput = (text: string) => {
+  const handleVoiceInput = (text: string, category?: 'personal' | 'health' | 'enterprises') => {
     const newTask = {
       id: Date.now().toString(),
       title: text,
@@ -62,9 +62,12 @@ const Index = () => {
       completed: false,
     };
     
+    // Use AI-suggested category or current domain
+    const targetDomain = category || selectedDomain;
+    
     setTasks((prev) => ({
       ...prev,
-      [selectedDomain]: [...prev[selectedDomain as keyof typeof prev], newTask],
+      [targetDomain]: [...prev[targetDomain as keyof typeof prev], newTask],
     }));
   };
 

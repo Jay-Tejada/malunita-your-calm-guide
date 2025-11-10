@@ -2,15 +2,18 @@ import { useState, useRef, useEffect } from "react";
 import { Mic } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { CategoryDialog } from "./CategoryDialog";
 
 interface VoiceOrbProps {
-  onVoiceInput?: (text: string) => void;
+  onVoiceInput?: (text: string, category?: 'personal' | 'health' | 'enterprises') => void;
 }
 
 export const VoiceOrb = ({ onVoiceInput }: VoiceOrbProps) => {
   const [isListening, setIsListening] = useState(false);
   const [isResponding, setIsResponding] = useState(false);
   const [audioLevels, setAudioLevels] = useState<number[]>(new Array(7).fill(0));
+  const [showCategoryDialog, setShowCategoryDialog] = useState(false);
+  const [pendingTask, setPendingTask] = useState<string>("");
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -123,12 +126,40 @@ export const VoiceOrb = ({ onVoiceInput }: VoiceOrbProps) => {
 
               const transcribedText = data.text;
               
-              if (transcribedText && onVoiceInput) {
-                onVoiceInput(transcribedText);
-                toast({
-                  title: "Task captured",
-                  description: transcribedText,
+              if (transcribedText) {
+                // Categorize the task using AI
+                const { data: categoryData, error: categoryError } = await supabase.functions.invoke('categorize-task', {
+                  body: { text: transcribedText }
                 });
+
+                if (categoryError) {
+                  console.error('Categorization error:', categoryError);
+                  // If categorization fails, add task without category
+                  if (onVoiceInput) {
+                    onVoiceInput(transcribedText);
+                  }
+                  toast({
+                    title: "Task captured",
+                    description: transcribedText,
+                  });
+                } else {
+                  const { category, confidence } = categoryData;
+                  
+                  if (confidence === 'low') {
+                    // Ask user to choose category
+                    setPendingTask(transcribedText);
+                    setShowCategoryDialog(true);
+                  } else {
+                    // Use AI suggested category
+                    if (onVoiceInput) {
+                      onVoiceInput(transcribedText, category);
+                    }
+                    toast({
+                      title: "Task captured",
+                      description: `${transcribedText} (${category})`,
+                    });
+                  }
+                }
               }
             } catch (error) {
               console.error('Transcription error:', error);
@@ -160,8 +191,36 @@ export const VoiceOrb = ({ onVoiceInput }: VoiceOrbProps) => {
     }
   };
 
+  const handleCategorySelect = (category: 'personal' | 'health' | 'enterprises') => {
+    if (onVoiceInput && pendingTask) {
+      onVoiceInput(pendingTask, category);
+      toast({
+        title: "Task captured",
+        description: `${pendingTask} (${category})`,
+      });
+    }
+    setShowCategoryDialog(false);
+    setPendingTask("");
+  };
+
+  const handleCategoryCancel = () => {
+    setShowCategoryDialog(false);
+    setPendingTask("");
+    toast({
+      title: "Task cancelled",
+      variant: "destructive",
+    });
+  };
+
   return (
-    <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50">
+    <>
+      <CategoryDialog
+        open={showCategoryDialog}
+        taskText={pendingTask}
+        onSelectCategory={handleCategorySelect}
+        onCancel={handleCategoryCancel}
+      />
+      <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50">
       <div className="flex flex-col items-center gap-3">
         {/* Response text area */}
         {isResponding && (
@@ -226,5 +285,6 @@ export const VoiceOrb = ({ onVoiceInput }: VoiceOrbProps) => {
         </p>
       </div>
     </div>
+    </>
   );
 };
