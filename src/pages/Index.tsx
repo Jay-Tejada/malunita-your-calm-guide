@@ -3,6 +3,9 @@ import { Header } from "@/components/Header";
 import { DomainTabs } from "@/components/DomainTabs";
 import { TaskCard } from "@/components/TaskCard";
 import { VoiceOrb } from "@/components/VoiceOrb";
+import { Inbox } from "@/components/Inbox";
+import { Button } from "@/components/ui/button";
+import { Inbox as InboxIcon } from "lucide-react";
 
 // Sample data - will be replaced with real data from backend
 const sampleTasks = {
@@ -24,6 +27,7 @@ const sampleTasks = {
 const Index = () => {
   const [selectedDomain, setSelectedDomain] = useState("personal");
   const [tasks, setTasks] = useState(sampleTasks);
+  const [showInbox, setShowInbox] = useState(false);
 
   const handleToggleTask = (taskId: string) => {
     setTasks((prev) => ({
@@ -31,6 +35,21 @@ const Index = () => {
       [selectedDomain]: prev[selectedDomain as keyof typeof prev].map((task) =>
         task.id === taskId ? { ...task, completed: !task.completed } : task
       ),
+    }));
+  };
+
+  const handleMoveToToday = (text: string) => {
+    const newTask = {
+      id: Date.now().toString(),
+      title: text,
+      time: "TBD",
+      context: "Inbox",
+      completed: false,
+    };
+    
+    setTasks((prev) => ({
+      ...prev,
+      [selectedDomain]: [...prev[selectedDomain as keyof typeof prev], newTask],
     }));
   };
 
@@ -42,6 +61,27 @@ const Index = () => {
     <div className="min-h-screen bg-background pb-32">
       <div className="max-w-2xl mx-auto px-4 py-8">
         <Header />
+
+        {/* Inbox Toggle */}
+        <div className="mb-6 flex justify-end">
+          <Button
+            onClick={() => setShowInbox(!showInbox)}
+            variant="outline"
+            size="sm"
+            className="gap-2"
+          >
+            <InboxIcon className="h-4 w-4" />
+            {showInbox ? "Close Inbox" : "Open Inbox"}
+          </Button>
+        </div>
+
+        {/* Inbox Section */}
+        {showInbox && (
+          <div className="mb-8 p-6 bg-accent/10 rounded-2xl border border-accent">
+            <h2 className="text-lg font-normal text-foreground mb-4">Inbox</h2>
+            <Inbox onMoveToToday={handleMoveToToday} />
+          </div>
+        )}
 
         {/* Domain Tabs */}
         <div className="mb-8">
