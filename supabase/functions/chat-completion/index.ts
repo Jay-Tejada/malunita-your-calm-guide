@@ -6,13 +6,27 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+const getMoodSystemPrompt = (mood: string | null): string => {
+  if (!mood) return '';
+  
+  const moodPrompts: Record<string, string> = {
+    overwhelmed: '\n\n**Current Mood Context**: The user is feeling overwhelmed. Keep your response calm, minimal, and supportive. Use a gentle tone, provide shorter responses, and avoid overwhelming them with too many suggestions. Focus on one thing at a time.',
+    focused: '\n\n**Current Mood Context**: The user is feeling focused. Match their energy with clear, direct guidance. Be concise and action-oriented. Help them maintain momentum.',
+    calm: '\n\n**Current Mood Context**: The user is feeling calm. Maintain a peaceful, thoughtful tone. Provide reflective insights and measured suggestions.',
+    energized: '\n\n**Current Mood Context**: The user is feeling energized. Use motivating language and provide more action suggestions. Match their enthusiasm while keeping responses organized.',
+    distracted: '\n\n**Current Mood Context**: The user is feeling distracted. Help them refocus with simple, clear guidance. Break down suggestions into small, manageable steps. Be patient and grounding.',
+  };
+  
+  return moodPrompts[mood] || '';
+};
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { messages, userProfile } = await req.json();
+    const { messages, userProfile, currentMood } = await req.json();
     
     if (!messages || !Array.isArray(messages) || messages.length === 0) {
       throw new Error('No messages provided');
@@ -59,6 +73,9 @@ serve(async (req) => {
     } else {
       systemContent += '\nKeep responses brief, focused, and non-distracting. Your tone is calm, focused, and encouraging.';
     }
+    
+    // Add mood-based system prompt adjustment
+    systemContent += getMoodSystemPrompt(currentMood);
 
     const systemMessage = {
       role: 'system',

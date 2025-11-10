@@ -3,6 +3,7 @@ import { Mic, Volume2, VolumeX } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useProfile } from "@/hooks/useProfile";
+import { MoodSelector } from "@/components/MoodSelector";
 
 interface Message {
   role: 'user' | 'assistant';
@@ -22,6 +23,8 @@ export const MalunitaVoice = ({ onSaveNote }: MalunitaVoiceProps) => {
   const [audioLevels, setAudioLevels] = useState<number[]>(new Array(7).fill(0));
   const [conversationHistory, setConversationHistory] = useState<Message[]>([]);
   const [sessionId] = useState(() => Date.now().toString());
+  const [showMoodSelector, setShowMoodSelector] = useState(false);
+  const [currentMood, setCurrentMood] = useState<string | null>(null);
   
   const { profile } = useProfile();
   const audioEnabled = profile?.wants_voice_playback ?? true;
@@ -220,7 +223,8 @@ export const MalunitaVoice = ({ onSaveNote }: MalunitaVoiceProps) => {
             const { data: chatData, error: chatError } = await supabase.functions.invoke('chat-completion', {
               body: { 
                 messages,
-                userProfile: userProfileData 
+                userProfile: userProfileData,
+                currentMood 
               }
             });
 
@@ -229,6 +233,9 @@ export const MalunitaVoice = ({ onSaveNote }: MalunitaVoiceProps) => {
             const response = chatData.reply;
             setGptResponse(response);
             console.log('GPT Response:', response);
+
+            // Show mood selector after response
+            setShowMoodSelector(true);
 
             // Update conversation history and save to database
             const { data: { user } } = await supabase.auth.getUser();
@@ -379,6 +386,7 @@ export const MalunitaVoice = ({ onSaveNote }: MalunitaVoiceProps) => {
   const handleRetry = () => {
     setTranscribedText("");
     setGptResponse("");
+    setShowMoodSelector(false);
     handleVoiceLoop();
   };
 
@@ -386,10 +394,39 @@ export const MalunitaVoice = ({ onSaveNote }: MalunitaVoiceProps) => {
     setConversationHistory([]);
     setTranscribedText("");
     setGptResponse("");
+    setCurrentMood(null);
+    setShowMoodSelector(false);
     toast({
       title: "New conversation started",
       description: "Context has been cleared",
     });
+  };
+
+  const handleMoodSelect = async (mood: string) => {
+    setCurrentMood(mood);
+    setShowMoodSelector(false);
+    
+    // Update the assistant's conversation history entry with mood
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      await supabase
+        .from('conversation_history')
+        .update({ mood })
+        .eq('user_id', user.id)
+        .eq('session_id', sessionId)
+        .eq('role', 'assistant')
+        .order('created_at', { ascending: false })
+        .limit(1);
+    }
+
+    toast({
+      title: "Mood noted",
+      description: `Malunita will adjust to your ${mood} state.`,
+    });
+  };
+
+  const handleSkipMood = () => {
+    setShowMoodSelector(false);
   };
 
   return (
@@ -409,6 +446,16 @@ export const MalunitaVoice = ({ onSaveNote }: MalunitaVoiceProps) => {
             <div className="bg-accent/30 rounded-2xl p-6 border border-accent shadow-sm animate-in fade-in duration-300">
               <p className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Malunita:</p>
               <p className="text-foreground leading-relaxed">{gptResponse}</p>
+            </div>
+          )}
+
+          {/* Mood Selector */}
+          {showMoodSelector && !isProcessing && !isSpeaking && (
+            <div className="animate-in fade-in duration-300">
+              <MoodSelector 
+                onMoodSelect={handleMoodSelect}
+                onSkip={handleSkipMood}
+              />
             </div>
           )}
 
@@ -500,7 +547,7 @@ export const MalunitaVoice = ({ onSaveNote }: MalunitaVoiceProps) => {
         </div>
 
         {/* Action buttons */}
-        {gptResponse && !isProcessing && !isSpeaking && (
+        {gptResponse && !isProcessing && !isSpeaking && !showMoodSelector && (
           <div className="flex gap-3 animate-in fade-in duration-300">
             <button
               onClick={handleSave}
