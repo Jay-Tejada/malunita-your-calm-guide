@@ -4,6 +4,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Loader2, TrendingUp, Clock, MessageSquare } from "lucide-react";
+import { NotificationPermission } from "@/components/NotificationPermission";
 
 interface ProfileSettingsProps {
   onClose?: () => void;
@@ -65,6 +66,12 @@ export const ProfileSettings = ({ onClose }: ProfileSettingsProps) => {
                 <MessageSquare className="w-5 h-5" />
                 Voice Preferences
               </h3>
+              
+              {/* Notification Permission Component */}
+              <div className="mb-6">
+                <NotificationPermission />
+              </div>
+              
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div>

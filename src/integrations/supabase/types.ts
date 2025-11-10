@@ -58,6 +58,7 @@ export type Database = {
           created_at: string
           id: string
           likes_routine_nudges: boolean | null
+          notification_preferences: Json | null
           often_time_based: boolean | null
           peak_activity_time: string | null
           preferred_input_style: string | null
@@ -74,6 +75,7 @@ export type Database = {
           created_at?: string
           id: string
           likes_routine_nudges?: boolean | null
+          notification_preferences?: Json | null
           often_time_based?: boolean | null
           peak_activity_time?: string | null
           preferred_input_style?: string | null
@@ -90,6 +92,7 @@ export type Database = {
           created_at?: string
           id?: string
           likes_routine_nudges?: boolean | null
+          notification_preferences?: Json | null
           often_time_based?: boolean | null
           peak_activity_time?: string | null
           preferred_input_style?: string | null
@@ -98,6 +101,30 @@ export type Database = {
           uses_names?: boolean | null
           uses_reminders?: boolean | null
           wants_voice_playback?: boolean | null
+        }
+        Relationships: []
+      }
+      push_subscriptions: {
+        Row: {
+          created_at: string
+          id: string
+          subscription: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          subscription: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          subscription?: Json
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
