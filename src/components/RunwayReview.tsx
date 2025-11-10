@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { X, Check, Clock, Archive, Edit3, Plus } from "lucide-react";
+import { X, Check, Clock, Archive, Edit3, Plus, Mic } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -32,11 +32,19 @@ export const RunwayReview = ({ onClose }: RunwayReviewProps) => {
   const [showMoodSelector, setShowMoodSelector] = useState(true);
   const [currentMood, setCurrentMood] = useState<string | null>(null);
   const [audioLevels, setAudioLevels] = useState<number[]>(new Array(20).fill(0));
+  const [isListening, setIsListening] = useState(false);
+  const [isProcessingVoice, setIsProcessingVoice] = useState(false);
+  const [voiceTranscript, setVoiceTranscript] = useState("");
   
   const { updateTask, deleteTask } = useTasks();
   const { toast } = useToast();
   const audioElementRef = useRef<HTMLAudioElement | null>(null);
   const animationRef = useRef<number | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const voiceAudioContextRef = useRef<AudioContext | null>(null);
+  const voiceAnalyserRef = useRef<AnalyserNode | null>(null);
+  const voiceAnimationRef = useRef<number | null>(null);
 
   useEffect(() => {
     return () => {
@@ -46,6 +54,12 @@ export const RunwayReview = ({ onClose }: RunwayReviewProps) => {
       }
       if (animationRef.current) {
         cancelAnimationFrame(animationRef.current);
+      }
+      if (voiceAnimationRef.current) {
+        cancelAnimationFrame(voiceAnimationRef.current);
+      }
+      if (voiceAudioContextRef.current) {
+        voiceAudioContextRef.current.close();
       }
     };
   }, []);
@@ -165,6 +179,193 @@ export const RunwayReview = ({ onClose }: RunwayReviewProps) => {
     toast({ title: "Task archived" });
   };
 
+  const analyzeVoiceAudio = () => {
+    if (!voiceAnalyserRef.current) return;
+
+    const dataArray = new Uint8Array(voiceAnalyserRef.current.frequencyBinCount);
+    voiceAnalyserRef.current.getByteFrequencyData(dataArray);
+
+    const bands = 20;
+    const bandSize = Math.floor(dataArray.length / bands);
+    const newLevels = [];
+
+    for (let i = 0; i < bands; i++) {
+      const start = i * bandSize;
+      const end = start + bandSize;
+      const bandData = dataArray.slice(start, end);
+      const average = bandData.reduce((sum, val) => sum + val, 0) / bandData.length;
+      newLevels.push(Math.max(0.2, Math.min(1, average / 128)));
+    }
+
+    setAudioLevels(newLevels);
+    voiceAnimationRef.current = requestAnimationFrame(analyzeVoiceAudio);
+  };
+
+  const processVoiceCommand = async (transcript: string) => {
+    const lowerTranscript = transcript.toLowerCase();
+    
+    // Match patterns like "mark task 1 done" or "complete task 2"
+    const markDoneMatch = lowerTranscript.match(/(?:mark|complete|finish|done)\s+task\s+(\d+)/);
+    if (markDoneMatch) {
+      const taskIndex = parseInt(markDoneMatch[1]) - 1;
+      if (taskIndex >= 0 && taskIndex < tasks.length) {
+        await handleMarkDone(tasks[taskIndex].id);
+        return `Task ${markDoneMatch[1]} marked as done`;
+      }
+    }
+
+    // Match patterns like "archive task 3" or "delete task 1"
+    const archiveMatch = lowerTranscript.match(/(?:archive|delete|remove)\s+task\s+(\d+)/);
+    if (archiveMatch) {
+      const taskIndex = parseInt(archiveMatch[1]) - 1;
+      if (taskIndex >= 0 && taskIndex < tasks.length) {
+        await handleArchive(tasks[taskIndex].id);
+        return `Task ${archiveMatch[1]} archived`;
+      }
+    }
+
+    // Ask AI to respond to general questions about tasks
+    try {
+      const { data, error } = await supabase.functions.invoke('chat-completion', {
+        body: { 
+          messages: [
+            { role: 'user', content: `User is in their Runway Review ritual. They have ${tasks.length} tasks. Their question: ${transcript}` }
+          ],
+          currentMood
+        }
+      });
+
+      if (error) throw error;
+      
+      // Generate speech for response
+      const { data: ttsData, error: ttsError } = await supabase.functions.invoke('text-to-speech', {
+        body: { text: data.reply, voice: 'alloy' }
+      });
+
+      if (!ttsError && ttsData) {
+        await playAudioResponse(ttsData.audioContent);
+      }
+
+      return data.reply;
+    } catch (error) {
+      console.error('Error processing voice command:', error);
+      return "I couldn't process that. Try again?";
+    }
+  };
+
+  const handleVoiceInput = async () => {
+    if (isListening) {
+      // Stop recording
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
+        mediaRecorderRef.current.stop();
+      }
+      if (voiceAnimationRef.current) {
+        cancelAnimationFrame(voiceAnimationRef.current);
+      }
+      if (voiceAudioContextRef.current) {
+        voiceAudioContextRef.current.close();
+        voiceAudioContextRef.current = null;
+      }
+      setAudioLevels(new Array(20).fill(0));
+      return;
+    }
+
+    // Start recording
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+      audioChunksRef.current = [];
+
+      // Set up audio analysis for visual feedback
+      const audioContext = new AudioContext();
+      voiceAudioContextRef.current = audioContext;
+      const source = audioContext.createMediaStreamSource(stream);
+      const analyser = audioContext.createAnalyser();
+      analyser.fftSize = 256;
+      voiceAnalyserRef.current = analyser;
+      source.connect(analyser);
+      analyzeVoiceAudio();
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+
+      mediaRecorder.onstop = async () => {
+        setIsListening(false);
+        setIsProcessingVoice(true);
+        setVoiceTranscript("");
+
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        
+        // Convert blob to base64
+        const reader = new FileReader();
+        reader.readAsDataURL(audioBlob);
+        reader.onloadend = async () => {
+          const base64Audio = reader.result?.toString().split(',')[1];
+          
+          if (!base64Audio) {
+            toast({
+              title: "Error",
+              description: "Failed to process audio",
+              variant: "destructive",
+            });
+            setIsProcessingVoice(false);
+            return;
+          }
+
+          try {
+            // Transcribe audio
+            const { data: transcribeData, error: transcribeError } = await supabase.functions.invoke('transcribe-audio', {
+              body: { audio: base64Audio }
+            });
+
+            if (transcribeError) throw transcribeError;
+
+            const transcript = transcribeData.text;
+            setVoiceTranscript(transcript);
+
+            // Process the voice command
+            const response = await processVoiceCommand(transcript);
+            
+            toast({
+              title: "Voice command",
+              description: response,
+            });
+
+            // Clear transcript after 3 seconds
+            setTimeout(() => setVoiceTranscript(""), 3000);
+
+          } catch (error: any) {
+            console.error('Voice input error:', error);
+            toast({
+              title: "Error",
+              description: error.message || "Failed to process voice input",
+              variant: "destructive",
+            });
+          } finally {
+            setIsProcessingVoice(false);
+          }
+        };
+
+        // Stop all tracks
+        stream.getTracks().forEach(track => track.stop());
+      };
+
+      mediaRecorder.start();
+      setIsListening(true);
+    } catch (error) {
+      console.error('Error accessing microphone:', error);
+      toast({
+        title: "Error",
+        description: "Failed to access microphone. Please allow microphone access.",
+        variant: "destructive",
+      });
+    }
+  };
+
   // Visual theme based on time of day
   const theme = timeOfDay === 'morning' 
     ? {
@@ -192,6 +393,34 @@ export const RunwayReview = ({ onClose }: RunwayReviewProps) => {
       >
         <X className="w-6 h-6" />
       </button>
+
+      {/* Voice Input Button */}
+      <button
+        onClick={handleVoiceInput}
+        disabled={isProcessingVoice}
+        className={`absolute bottom-6 right-6 z-10 ${
+          isListening 
+            ? 'bg-red-500 hover:bg-red-600' 
+            : timeOfDay === 'morning'
+            ? 'bg-orange-500 hover:bg-orange-600'
+            : 'bg-purple-500 hover:bg-purple-600'
+        } text-white rounded-full p-4 shadow-lg transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed`}
+      >
+        <Mic className={`w-6 h-6 ${isListening ? 'animate-pulse' : ''}`} />
+      </button>
+
+      {/* Voice Transcript Display */}
+      {voiceTranscript && (
+        <div className="absolute bottom-24 right-6 z-10 max-w-xs bg-white/90 backdrop-blur-sm rounded-lg p-4 shadow-lg animate-in fade-in duration-200">
+          <p className="text-sm text-gray-800">{voiceTranscript}</p>
+        </div>
+      )}
+
+      {isProcessingVoice && (
+        <div className="absolute bottom-24 right-6 z-10 bg-white/90 backdrop-blur-sm rounded-lg p-4 shadow-lg">
+          <p className="text-sm text-gray-800">Processing...</p>
+        </div>
+      )}
 
       {/* Content */}
       <div className="relative z-10 max-w-4xl mx-auto px-6 py-12">
