@@ -22,6 +22,43 @@ import { useToast } from "@/hooks/use-toast";
 
 const CustomSidebarTrigger = ({ hasUrgentTasks }: { hasUrgentTasks: boolean }) => {
   const { toggleSidebar } = useSidebar();
+  const [timeOfDay, setTimeOfDay] = useState<'morning' | 'day' | 'evening' | 'night'>('day');
+  
+  // Determine time-based glow colors to match the orb's time-based modes
+  useEffect(() => {
+    const updateTimeOfDay = () => {
+      const hour = new Date().getHours();
+      if (hour >= 6 && hour < 12) {
+        setTimeOfDay('morning'); // Golden glow
+      } else if (hour >= 12 && hour < 18) {
+        setTimeOfDay('day'); // Neutral
+      } else if (hour >= 18 && hour < 21) {
+        setTimeOfDay('evening'); // Transitioning to indigo
+      } else {
+        setTimeOfDay('night'); // Indigo glow (reflection mode)
+      }
+    };
+    
+    updateTimeOfDay();
+    const interval = setInterval(updateTimeOfDay, 60000); // Update every minute
+    
+    return () => clearInterval(interval);
+  }, []);
+  
+  // Time-based glow colors matching the orb
+  const getGlowClass = () => {
+    if (hasUrgentTasks) return 'animate-alert-pulse';
+    
+    switch (timeOfDay) {
+      case 'morning':
+        return 'drop-shadow-[0_0_6px_hsl(39_75%_70%/0.5)] group-hover:drop-shadow-[0_0_10px_hsl(39_75%_70%/0.7)]'; // Golden
+      case 'evening':
+      case 'night':
+        return 'drop-shadow-[0_0_6px_hsl(250_45%_70%/0.5)] group-hover:drop-shadow-[0_0_10px_hsl(250_45%_70%/0.7)]'; // Indigo
+      default:
+        return 'group-hover:drop-shadow-[0_0_8px_hsl(var(--primary)/0.6)]'; // Default
+    }
+  };
   
   return (
     <Button
@@ -31,7 +68,7 @@ const CustomSidebarTrigger = ({ hasUrgentTasks }: { hasUrgentTasks: boolean }) =
       className="hover:bg-muted/50 p-2 group transition-all duration-300 relative h-auto w-auto"
     >
       <Globe2 
-        className={`w-5 h-5 text-primary animate-float-spin transition-all duration-300 group-hover:drop-shadow-[0_0_8px_hsl(var(--primary)/0.6)] group-hover:scale-110 ${hasUrgentTasks ? 'animate-alert-pulse' : ''}`} 
+        className={`w-5 h-5 text-primary animate-float-spin transition-all duration-700 group-hover:scale-110 ${getGlowClass()}`} 
       />
       {hasUrgentTasks && (
         <span className="absolute top-1 right-1 w-2 h-2 bg-destructive rounded-full animate-pulse" />
