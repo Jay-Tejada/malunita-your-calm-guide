@@ -189,7 +189,7 @@ const Index = () => {
           <header className="fixed top-0 left-0 right-0 z-40 bg-background/80 backdrop-blur-sm border-b border-border/50">
             <div className="px-4 py-3 flex items-center">
               <SidebarTrigger className="hover:bg-muted/50 p-2">
-                <Globe2 className="w-5 h-5 text-primary" />
+                <Globe2 className="w-5 h-5 text-primary animate-float" />
               </SidebarTrigger>
             </div>
           </header>
