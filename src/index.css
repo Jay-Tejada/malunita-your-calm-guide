@@ -154,19 +154,27 @@ All colors MUST be HSL.
   }
   
   .animate-float-spin-morning {
-    animation: float 4s ease-in-out infinite, spin-morning 6s linear infinite;
+    --spin-duration: 6s;
+    animation: float 4s ease-in-out infinite, spin-variable var(--spin-duration) linear infinite;
+    transition: --spin-duration 3s ease-in-out;
   }
   
   .animate-float-spin-day {
-    animation: float 4s ease-in-out infinite, spin-day 8s linear infinite;
+    --spin-duration: 8s;
+    animation: float 4s ease-in-out infinite, spin-variable var(--spin-duration) linear infinite;
+    transition: --spin-duration 3s ease-in-out;
   }
   
   .animate-float-spin-evening {
-    animation: float 4s ease-in-out infinite, spin-evening 10s linear infinite;
+    --spin-duration: 10s;
+    animation: float 4s ease-in-out infinite, spin-variable var(--spin-duration) linear infinite;
+    transition: --spin-duration 3s ease-in-out;
   }
   
   .animate-float-spin-night {
-    animation: float 4s ease-in-out infinite, spin-night 14s linear infinite;
+    --spin-duration: 14s;
+    animation: float 4s ease-in-out infinite, spin-variable var(--spin-duration) linear infinite;
+    transition: --spin-duration 3s ease-in-out;
   }
   
   @keyframes spin-slow {
@@ -174,24 +182,15 @@ All colors MUST be HSL.
     to { transform: rotate(360deg); }
   }
   
-  @keyframes spin-morning {
+  @keyframes spin-variable {
     from { transform: rotate(0deg); }
     to { transform: rotate(360deg); }
   }
   
-  @keyframes spin-day {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
-  }
-  
-  @keyframes spin-evening {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
-  }
-  
-  @keyframes spin-night {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
+  @property --spin-duration {
+    syntax: '<time>';
+    initial-value: 8s;
+    inherits: false;
   }
   
   .animate-orbit {
