@@ -16,7 +16,7 @@ import { AppSidebar } from "@/components/AppSidebar";
 
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Menu } from "lucide-react";
+import { Globe2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const Index = () => {
@@ -188,7 +188,9 @@ const Index = () => {
           {/* Minimal Header - Just trigger */}
           <header className="fixed top-0 left-0 right-0 z-40 bg-background/80 backdrop-blur-sm border-b border-border/50">
             <div className="px-4 py-3 flex items-center">
-              <SidebarTrigger className="hover:bg-muted/50" />
+              <SidebarTrigger className="hover:bg-muted/50 p-2">
+                <Globe2 className="w-5 h-5 text-primary" />
+              </SidebarTrigger>
             </div>
           </header>
 
