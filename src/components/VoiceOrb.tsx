@@ -7,11 +7,12 @@ interface VoiceOrbProps {
   onVoiceInput?: (text: string, category?: 'inbox' | 'home' | 'work' | 'gym' | 'projects') => void;
   onPlanningModeActivated?: () => void;
   onReflectionModeActivated?: () => void;
+  onOrbReflectionTrigger?: () => void;
 }
 
 type OrbMode = 'capture' | 'reflection' | 'planning' | 'quiet';
 
-export const VoiceOrb = ({ onVoiceInput, onPlanningModeActivated, onReflectionModeActivated }: VoiceOrbProps) => {
+export const VoiceOrb = ({ onVoiceInput, onPlanningModeActivated, onReflectionModeActivated, onOrbReflectionTrigger }: VoiceOrbProps) => {
   const [isListening, setIsListening] = useState(false);
   const [isResponding, setIsResponding] = useState(false);
   const [audioLevels, setAudioLevels] = useState<number[]>(new Array(7).fill(0));
@@ -19,6 +20,8 @@ export const VoiceOrb = ({ onVoiceInput, onPlanningModeActivated, onReflectionMo
   const [pendingTask, setPendingTask] = useState<string>("");
   const [mode, setMode] = useState<OrbMode>('capture');
   const [autoModeEnabled, setAutoModeEnabled] = useState(true);
+  const [showReflectionTooltip, setShowReflectionTooltip] = useState(false);
+  const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -143,7 +146,61 @@ export const VoiceOrb = ({ onVoiceInput, onPlanningModeActivated, onReflectionMo
     };
   }, []);
 
+  const handleMouseDown = () => {
+    // Start long press timer (800ms for long press)
+    const timer = setTimeout(() => {
+      handleLongPress();
+    }, 800);
+    setLongPressTimer(timer);
+  };
+
+  const handleMouseUp = () => {
+    // Cancel long press if released early
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      setLongPressTimer(null);
+    }
+  };
+
+  const handleLongPress = () => {
+    // Check if reflection trigger is available
+    const now = new Date();
+    const hour = now.getHours();
+    const isReflectionTime = mode === 'reflection' || mode === 'quiet' || hour >= 18;
+    
+    if (isReflectionTime && onOrbReflectionTrigger) {
+      onOrbReflectionTrigger();
+      setShowReflectionTooltip(false);
+    }
+  };
+
+  const handleMouseEnter = () => {
+    // Show reflection tooltip if conditions are met
+    const now = new Date();
+    const hour = now.getHours();
+    const isReflectionTime = mode === 'reflection' || mode === 'quiet' || hour >= 18;
+    
+    if (isReflectionTime && onOrbReflectionTrigger && !isListening && !isResponding) {
+      setShowReflectionTooltip(true);
+    }
+  };
+
+  const handleMouseLeave = () => {
+    setShowReflectionTooltip(false);
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      setLongPressTimer(null);
+    }
+  };
+
   const handleClick = async () => {
+    // Don't trigger recording if this was a long press
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      setLongPressTimer(null);
+      return;
+    }
+    
     if (isListening) {
       // Stop recording
       if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
@@ -394,6 +451,13 @@ export const VoiceOrb = ({ onVoiceInput, onPlanningModeActivated, onReflectionMo
 
           {/* Voice Orb Container */}
           <div className="relative flex flex-col items-center gap-4">
+            {/* Reflection Tooltip */}
+            {showReflectionTooltip && (
+              <div className="absolute -top-16 left-1/2 -translate-x-1/2 bg-background/95 backdrop-blur-sm border border-border rounded-full px-4 py-2 shadow-lg animate-in fade-in duration-200 whitespace-nowrap z-10">
+                <p className="text-sm text-muted-foreground">🪞 Reflect on your week?</p>
+              </div>
+            )}
+            
             {/* Main Orb */}
             <div className={`relative ${!isListening && !isResponding ? 'animate-float' : ''}`}>
               {/* Outer glow ring - pulsing when active */}
@@ -412,6 +476,12 @@ export const VoiceOrb = ({ onVoiceInput, onPlanningModeActivated, onReflectionMo
               
               <button
                 onClick={handleClick}
+                onMouseDown={handleMouseDown}
+                onMouseUp={handleMouseUp}
+                onMouseEnter={handleMouseEnter}
+                onMouseLeave={handleMouseLeave}
+                onTouchStart={handleMouseDown}
+                onTouchEnd={handleMouseUp}
                 className={`relative w-20 h-20 rounded-full transition-all duration-700 ease-in-out
                   ${isListening 
                     ? (mode === 'reflection' || mode === 'quiet') 

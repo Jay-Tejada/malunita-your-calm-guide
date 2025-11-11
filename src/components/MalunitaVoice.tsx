@@ -25,13 +25,14 @@ interface MalunitaVoiceProps {
   onSaveNote?: (text: string, response: string) => void;
   onPlanningModeActivated?: () => void;
   onReflectionModeActivated?: () => void;
+  onOrbReflectionTrigger?: () => void;
 }
 
 export interface MalunitaVoiceRef {
   startRecording: () => void;
 }
 
-export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({ onSaveNote, onPlanningModeActivated, onReflectionModeActivated }, ref) => {
+export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({ onSaveNote, onPlanningModeActivated, onReflectionModeActivated, onOrbReflectionTrigger }, ref) => {
   const [isListening, setIsListening] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -778,6 +779,7 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
           onVoiceInput={() => {}} 
           onPlanningModeActivated={onPlanningModeActivated}
           onReflectionModeActivated={onReflectionModeActivated}
+          onOrbReflectionTrigger={onOrbReflectionTrigger}
         />
 
         {/* Action buttons */}

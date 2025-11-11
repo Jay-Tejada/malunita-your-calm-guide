@@ -6,9 +6,9 @@ import { MalunitaVoice, MalunitaVoiceRef } from "@/components/MalunitaVoice";
 import { TaskList } from "@/components/TaskList";
 import { TodaysFocus } from "@/components/TodaysFocus";
 import { ProfileSettings } from "@/components/ProfileSettings";
-import { RunwayReviewButton } from "@/components/RunwayReviewButton";
 import { RunwayReview } from "@/components/RunwayReview";
 import { InstallPromptBanner } from "@/components/InstallPromptBanner";
+import { SmartReflectionPrompt } from "@/components/SmartReflectionPrompt";
 import { useAdmin } from "@/hooks/useAdmin";
 import { useTasks } from "@/hooks/useTasks";
 import { useProfile } from "@/hooks/useProfile";
@@ -24,6 +24,11 @@ const Index = () => {
   const [showSettings, setShowSettings] = useState(false);
   const [showRunwayReview, setShowRunwayReview] = useState(false);
   const malunitaVoiceRef = useRef<MalunitaVoiceRef>(null);
+  
+  // Runway Review trigger settings (can be managed via settings in future)
+  const enableOrbReflectionTrigger = true;
+  const enableReflectButton = true;
+  const enableSmartPrompt = true;
   const navigate = useNavigate();
   const { isAdmin } = useAdmin();
   const { tasks, updateTask } = useTasks();
@@ -214,11 +219,12 @@ const Index = () => {
               onSaveNote={handleSaveNote}
               onPlanningModeActivated={handlePlanningMode}
               onReflectionModeActivated={handleReflectionMode}
+              onOrbReflectionTrigger={enableOrbReflectionTrigger ? () => setShowRunwayReview(true) : undefined}
             />
           </div>
           
           {/* Today's Focus - Primary */}
-          <TodaysFocus />
+          <TodaysFocus onReflectClick={enableReflectButton ? () => setShowRunwayReview(true) : undefined} />
           
           {/* Secondary Categories - Collapsible */}
           <Collapsible defaultOpen={false} className="border-t border-secondary pt-8">
@@ -233,8 +239,10 @@ const Index = () => {
         </div>
       </div>
 
-      {/* Runway Review Button */}
-      <RunwayReviewButton />
+      {/* Smart Reflection Prompt */}
+      {enableSmartPrompt && !showRunwayReview && (
+        <SmartReflectionPrompt onReflect={() => setShowRunwayReview(true)} />
+      )}
 
       {/* Runway Review Modal */}
       {showRunwayReview && <RunwayReview onClose={() => setShowRunwayReview(false)} />}

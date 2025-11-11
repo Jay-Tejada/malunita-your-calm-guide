@@ -8,7 +8,11 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/hooks/useProfile";
 
-export const TodaysFocus = () => {
+interface TodaysFocusProps {
+  onReflectClick?: () => void;
+}
+
+export const TodaysFocus = ({ onReflectClick }: TodaysFocusProps) => {
   const { tasks, isLoading, updateTask, deleteTask } = useTasks();
   const { profile } = useProfile();
   const [isSuggesting, setIsSuggesting] = React.useState(false);
@@ -129,18 +133,31 @@ export const TodaysFocus = () => {
               : `${focusTasks.length} task${focusTasks.length > 1 ? 's' : ''} to focus on`}
           </p>
         </div>
-        {focusTasks.length === 0 && pendingTasks.length > 0 && (
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="gap-2"
-            onClick={handleSuggestFocus}
-            disabled={isSuggesting}
-          >
-            <Sparkles className="w-4 h-4" />
-            {isSuggesting ? 'Thinking...' : 'Suggest Tasks'}
-          </Button>
-        )}
+        <div className="flex items-center gap-2">
+          {onReflectClick && (
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="gap-2"
+              onClick={onReflectClick}
+              title="Review the week with Malunita"
+            >
+              🪞 Reflect
+            </Button>
+          )}
+          {focusTasks.length === 0 && pendingTasks.length > 0 && (
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="gap-2"
+              onClick={handleSuggestFocus}
+              disabled={isSuggesting}
+            >
+              <Sparkles className="w-4 h-4" />
+              {isSuggesting ? 'Thinking...' : 'Suggest Tasks'}
+            </Button>
+          )}
+        </div>
       </div>
 
       {focusTasks.length === 0 ? (
