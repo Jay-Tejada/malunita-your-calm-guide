@@ -33,7 +33,6 @@ interface MalunitaVoiceProps {
   onPlanningModeActivated?: () => void;
   onReflectionModeActivated?: () => void;
   onOrbReflectionTrigger?: () => void;
-  onSuggestTasks?: () => void;
   onTasksCreated?: () => void;
 }
 
@@ -41,7 +40,7 @@ export interface MalunitaVoiceRef {
   startRecording: () => void;
 }
 
-export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({ onSaveNote, onPlanningModeActivated, onReflectionModeActivated, onOrbReflectionTrigger, onSuggestTasks, onTasksCreated }, ref) => {
+export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({ onSaveNote, onPlanningModeActivated, onReflectionModeActivated, onOrbReflectionTrigger, onTasksCreated }, ref) => {
   const [isListening, setIsListening] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -892,7 +891,6 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
           onPlanningModeActivated={onPlanningModeActivated}
           onReflectionModeActivated={onReflectionModeActivated}
           onOrbReflectionTrigger={onOrbReflectionTrigger}
-          onSuggestTasks={onSuggestTasks}
           isSaving={isSaving}
           showSuccess={showSuccess}
         />

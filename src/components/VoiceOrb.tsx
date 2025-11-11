@@ -9,14 +9,13 @@ interface VoiceOrbProps {
   onPlanningModeActivated?: () => void;
   onReflectionModeActivated?: () => void;
   onOrbReflectionTrigger?: () => void;
-  onSuggestTasks?: () => void;
   isSaving?: boolean;
   showSuccess?: boolean;
 }
 
 type OrbMode = 'capture' | 'reflection' | 'planning' | 'quiet';
 
-export const VoiceOrb = ({ onVoiceInput, onPlanningModeActivated, onReflectionModeActivated, onOrbReflectionTrigger, onSuggestTasks, isSaving = false, showSuccess = false }: VoiceOrbProps) => {
+export const VoiceOrb = ({ onVoiceInput, onPlanningModeActivated, onReflectionModeActivated, onOrbReflectionTrigger, isSaving = false, showSuccess = false }: VoiceOrbProps) => {
   const [isListening, setIsListening] = useState(false);
   const [isResponding, setIsResponding] = useState(false);
   const [audioLevels, setAudioLevels] = useState<number[]>(new Array(7).fill(0));
@@ -459,7 +458,7 @@ export const VoiceOrb = ({ onVoiceInput, onPlanningModeActivated, onReflectionMo
             </div>
           )}
 
-          {/* Voice Orb Container with Satellites */}
+          {/* Voice Orb Container */}
           <div className="relative flex flex-col items-center gap-4">
             {/* Reflection Tooltip */}
             {showReflectionTooltip && (
@@ -468,8 +467,7 @@ export const VoiceOrb = ({ onVoiceInput, onPlanningModeActivated, onReflectionMo
               </div>
             )}
             
-            {/* Main Orb Container */}
-            <div className="relative w-32 h-32 flex items-center justify-center">
+            {/* Main Orb */}
             <div className={`relative ${!isListening && !isResponding ? 'animate-float' : ''}`}>
               {/* Outer glow ring - pulsing when active */}
               {isListening && (
@@ -565,7 +563,6 @@ export const VoiceOrb = ({ onVoiceInput, onPlanningModeActivated, onReflectionMo
                 )}
               </button>
             </div>
-            </div>
 
             {/* malunita text beneath orb */}
             <div className="text-center space-y-0.5">
@@ -591,14 +588,14 @@ export const VoiceOrb = ({ onVoiceInput, onPlanningModeActivated, onReflectionMo
         {showModeSelector && (
           <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div className="bg-card p-8 rounded-2xl shadow-2xl max-w-sm w-full animate-scale-in">
-              <h3 className="text-xl font-light mb-6 text-center font-mono lowercase">select mode</h3>
+              <h3 className="text-xl font-light mb-6 text-center">Select Mode</h3>
               <div className="space-y-3">
                 {(['capture', 'planning', 'reflection', 'quiet'] as OrbMode[]).map((m) => (
                   <button
                     key={m}
                     onClick={() => handleModeSelect(m)}
                     className={`
-                      w-full p-4 rounded-xl text-left transition-all font-mono lowercase
+                      w-full p-4 rounded-xl text-left transition-all
                       ${mode === m ? 'bg-primary text-primary-foreground' : 'bg-muted hover:bg-muted/70'}
                     `}
                   >
@@ -609,9 +606,9 @@ export const VoiceOrb = ({ onVoiceInput, onPlanningModeActivated, onReflectionMo
               </div>
               <button
                 onClick={() => setShowModeSelector(false)}
-                className="w-full mt-4 p-3 bg-secondary text-secondary-foreground rounded-xl hover:bg-secondary/80 transition-colors font-mono lowercase"
+                className="w-full mt-4 p-3 bg-secondary text-secondary-foreground rounded-xl hover:bg-secondary/80 transition-colors"
               >
-                cancel
+                Cancel
               </button>
             </div>
           </div>
