@@ -5,10 +5,62 @@ import { Button } from "@/components/ui/button";
 import { Trash2, User, Clock, Bell } from "lucide-react";
 import { useTasks, Task } from "@/hooks/useTasks";
 import { DomainTabs } from "@/components/DomainTabs";
+import { DndContext, DragEndEvent, DragOverlay, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
+import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { TaskCard } from "@/components/TaskCard";
+import { useToast } from "@/hooks/use-toast";
 
 export const TaskList = () => {
   const { tasks, isLoading, updateTask, deleteTask } = useTasks();
   const [selectedDomain, setSelectedDomain] = useState("inbox");
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const { toast } = useToast();
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    })
+  );
+
+  const handleDragStart = (event: DragEndEvent) => {
+    setActiveId(event.active.id as string);
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    setActiveId(null);
+
+    if (!over) return;
+
+    const taskId = active.id as string;
+    const task = tasks?.find((t) => t.id === taskId);
+    
+    if (!task) return;
+
+    // Check if dropped on a category tab
+    const categoryMatch = over.id.toString().match(/^category-(.+)$/);
+    if (categoryMatch) {
+      const newCategory = categoryMatch[1];
+      
+      if (task.category !== newCategory) {
+        updateTask({
+          id: taskId,
+          updates: { category: newCategory },
+        });
+        
+        toast({
+          title: "Task moved",
+          description: `Moved to ${newCategory.charAt(0).toUpperCase() + newCategory.slice(1)}`,
+        });
+      }
+    }
+  };
+
+  const handleDragCancel = () => {
+    setActiveId(null);
+  };
 
   if (isLoading) {
     return (
@@ -22,15 +74,21 @@ export const TaskList = () => {
 
   // Filter tasks by selected domain
   const filteredTasks = tasks?.filter(task => task.category === selectedDomain) || [];
+  const activeTask = activeId ? tasks?.find((t) => t.id === activeId) : null;
 
   if (!tasks || tasks.length === 0) {
     return (
-      <>
+      <DndContext
+        sensors={sensors}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+        onDragCancel={handleDragCancel}
+      >
         <DomainTabs value={selectedDomain} onChange={setSelectedDomain} />
         <Card className="p-8 text-center text-muted-foreground mt-4">
           <p>No tasks yet. Start by speaking into Malunita.</p>
         </Card>
-      </>
+      </DndContext>
     );
   }
 
@@ -49,82 +107,58 @@ export const TaskList = () => {
   };
 
   return (
-    <div className="space-y-4">
-      <DomainTabs value={selectedDomain} onChange={setSelectedDomain} />
-      
-      {filteredTasks.length === 0 ? (
-        <Card className="p-8 text-center text-muted-foreground">
-          <p>No {selectedDomain} tasks yet.</p>
-        </Card>
-      ) : (
-        <div className="space-y-2">
-          {filteredTasks.map((task) => (
-        <Card
-          key={task.id}
-          className={`p-4 transition-all hover:shadow-md ${
-            task.completed ? 'opacity-60 bg-muted/30' : ''
-          }`}
-        >
-          <div className="flex items-start gap-3">
-            <Checkbox
-              checked={task.completed}
-              onCheckedChange={() => handleToggleComplete(task)}
-              className="mt-1"
-            />
-            
-            <div className="flex-1 min-w-0">
-              <h3
-                className={`font-medium ${
-                  task.completed ? 'line-through text-muted-foreground' : ''
-                }`}
-              >
-                {task.title}
-              </h3>
-              
-              {task.context && (
-                <p className="text-sm text-muted-foreground mt-1">{task.context}</p>
-              )}
-              
-              <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
-                {task.has_person_name && (
-                  <span className="flex items-center gap-1">
-                    <User className="w-3 h-3" />
-                    Person
-                  </span>
-                )}
-                {task.is_time_based && (
-                  <span className="flex items-center gap-1">
-                    <Clock className="w-3 h-3" />
-                    Scheduled
-                  </span>
-                )}
-                {task.has_reminder && (
-                  <span className="flex items-center gap-1">
-                    <Bell className="w-3 h-3" />
-                    Reminder
-                  </span>
-                )}
-                {task.keywords && task.keywords.length > 0 && (
-                  <span className="flex items-center gap-1">
-                    {task.keywords.slice(0, 2).join(', ')}
-                  </span>
-                )}
-              </div>
+    <DndContext
+      sensors={sensors}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+      onDragCancel={handleDragCancel}
+    >
+      <div className="space-y-4">
+        <DomainTabs value={selectedDomain} onChange={setSelectedDomain} isDragging={!!activeId} />
+        
+        {filteredTasks.length === 0 ? (
+          <Card className="p-8 text-center text-muted-foreground">
+            <p>No {selectedDomain} tasks yet.</p>
+          </Card>
+        ) : (
+          <SortableContext items={filteredTasks.map((t) => t.id)} strategy={verticalListSortingStrategy}>
+            <div className="space-y-2">
+              {filteredTasks.map((task) => (
+                <div key={task.id} className="flex items-center gap-2">
+                  <TaskCard
+                    id={task.id}
+                    title={task.title}
+                    context={task.context || undefined}
+                    completed={task.completed || false}
+                    onToggle={() => handleToggleComplete(task)}
+                  />
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => handleDelete(task.id)}
+                    className="shrink-0 text-muted-foreground hover:text-destructive"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              ))}
             </div>
+          </SortableContext>
+        )}
+      </div>
 
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => handleDelete(task.id)}
-              className="shrink-0 text-muted-foreground hover:text-destructive"
-            >
-              <Trash2 className="w-4 h-4" />
-            </Button>
+      <DragOverlay>
+        {activeTask ? (
+          <div className="rotate-3 opacity-90">
+            <TaskCard
+              id={activeTask.id}
+              title={activeTask.title}
+              context={activeTask.context || undefined}
+              completed={activeTask.completed || false}
+            />
           </div>
-        </Card>
-          ))}
-        </div>
-      )}
-    </div>
+        ) : null}
+      </DragOverlay>
+    </DndContext>
   );
 };
