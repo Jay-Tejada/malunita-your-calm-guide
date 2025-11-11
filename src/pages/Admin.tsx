@@ -5,7 +5,6 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Loader2, TrendingUp, DollarSign, Activity, Users } from "lucide-react";
-import { ModelSelector } from "@/components/ModelSelector";
 
 export default function Admin() {
   const navigate = useNavigate();
@@ -109,10 +108,24 @@ export default function Admin() {
 
         {/* Model Control */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div>
-            <h2 className="text-xl font-light mb-4">Model Configuration</h2>
-            <ModelSelector />
-          </div>
+          <Card className="p-6">
+            <h3 className="text-lg font-medium mb-4">Model Configuration (Admin Only)</h3>
+            <div className="space-y-4">
+              <div className="p-4 bg-muted/50 rounded-lg">
+                <p className="text-sm font-medium mb-2">Current Model (Locked)</p>
+                <p className="text-2xl font-semibold mb-2">GPT-4 Turbo</p>
+                <p className="text-xs text-muted-foreground">
+                  All users are using gpt-4-turbo for consistent AI behavior. Model is locked at the database level.
+                </p>
+              </div>
+              <div className="p-3 bg-primary/10 border border-primary/20 rounded-lg">
+                <p className="text-xs text-muted-foreground">
+                  <strong>Admin Note:</strong> To change the model, update the database directly or modify the edge function code.
+                  End users cannot change the model - this ensures consistency across all AI interactions.
+                </p>
+              </div>
+            </div>
+          </Card>
 
           {/* Model Stats */}
           <Card className="p-6">

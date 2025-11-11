@@ -37,8 +37,8 @@ serve(async (req) => {
       throw new Error('OpenAI API key not configured');
     }
     
-    // Get user's preferred model
-    const preferredModel = userProfile?.preferred_gpt_model || 'gpt-4o';
+    // Get user's preferred model - locked to gpt-4-turbo for all users
+    const preferredModel = 'gpt-4-turbo';
 
     console.log('Processing chat completion with', messages.length, 'messages');
     console.log('Using model:', preferredModel);

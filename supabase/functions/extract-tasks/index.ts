@@ -21,8 +21,8 @@ serve(async (req) => {
       );
     }
     
-    // Get user's preferred model
-    const preferredModel = userProfile?.preferred_gpt_model || 'gpt-4-turbo';
+    // Get user's preferred model - locked to gpt-4-turbo for all users
+    const preferredModel = 'gpt-4-turbo';
     
     // Fetch learning data if userId provided
     let learningInsights = '';

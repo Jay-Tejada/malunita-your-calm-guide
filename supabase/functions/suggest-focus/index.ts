@@ -26,8 +26,8 @@ serve(async (req) => {
       throw new Error('OPENAI_API_KEY not configured');
     }
     
-    // Get user's preferred model
-    const preferredModel = userProfile?.preferred_gpt_model || 'gpt-4-turbo';
+    // Get user's preferred model - locked to gpt-4-turbo for all users
+    const preferredModel = 'gpt-4-turbo';
 
     // Prepare task summary for AI
     const taskSummary = tasks.map((task: any, idx: number) => 
