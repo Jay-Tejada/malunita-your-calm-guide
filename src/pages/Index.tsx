@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Auth } from "@/components/Auth";
-import { MalunitaVoice } from "@/components/MalunitaVoice";
+import { MalunitaVoice, MalunitaVoiceRef } from "@/components/MalunitaVoice";
 import { TaskList } from "@/components/TaskList";
 import { ProfileSettings } from "@/components/ProfileSettings";
 import { RunwayReviewButton } from "@/components/RunwayReviewButton";
@@ -14,6 +14,7 @@ const Index = () => {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
+  const malunitaVoiceRef = useRef<MalunitaVoiceRef>(null);
   
   const { toast } = useToast();
 
@@ -32,6 +33,20 @@ const Index = () => {
     });
 
     return () => subscription.unsubscribe();
+  }, []);
+
+  // Keyboard shortcut for creating new task (Q key)
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      // Only handle Q if not typing in an input
+      if (e.key.toLowerCase() === 'q' && !(e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement)) {
+        e.preventDefault();
+        malunitaVoiceRef.current?.startRecording();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
   }, []);
 
   const handleSaveNote = async (text: string, response: string) => {
@@ -101,7 +116,7 @@ const Index = () => {
       {/* Main content */}
       <div className="pt-24 pb-32 px-6">
         <div className="max-w-3xl mx-auto space-y-12">
-          <MalunitaVoice onSaveNote={handleSaveNote} />
+          <MalunitaVoice ref={malunitaVoiceRef} onSaveNote={handleSaveNote} />
           
           <div className="border-t border-secondary pt-8">
             <h2 className="text-xl font-light mb-4 text-foreground">Your Tasks</h2>

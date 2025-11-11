@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, forwardRef, useImperativeHandle } from "react";
 import { Mic, Volume2, VolumeX } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -14,7 +14,11 @@ interface MalunitaVoiceProps {
   onSaveNote?: (text: string, response: string) => void;
 }
 
-export const MalunitaVoice = ({ onSaveNote }: MalunitaVoiceProps) => {
+export interface MalunitaVoiceRef {
+  startRecording: () => void;
+}
+
+export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({ onSaveNote }, ref) => {
   const [isListening, setIsListening] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -449,6 +453,15 @@ export const MalunitaVoice = ({ onSaveNote }: MalunitaVoiceProps) => {
     setShowMoodSelector(false);
   };
 
+  // Expose startRecording method via ref
+  useImperativeHandle(ref, () => ({
+    startRecording: () => {
+      if (!isListening && !isProcessing && !isSpeaking) {
+        handleVoiceLoop();
+      }
+    }
+  }));
+
   return (
     <div className="flex flex-col items-center justify-center px-6 py-8">
       <div className="w-full max-w-2xl flex flex-col items-center gap-8">
@@ -580,4 +593,6 @@ export const MalunitaVoice = ({ onSaveNote }: MalunitaVoiceProps) => {
       </div>
     </div>
   );
-};
+});
+
+MalunitaVoice.displayName = "MalunitaVoice";

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,7 @@ export const TaskList = () => {
   const { tasks, isLoading, updateTask, deleteTask } = useTasks();
   const [selectedDomain, setSelectedDomain] = useState("inbox");
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const { toast } = useToast();
 
   const sensors = useSensors(
@@ -61,6 +62,44 @@ export const TaskList = () => {
   const handleDragCancel = () => {
     setActiveId(null);
   };
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      // Only handle if a task is selected and not typing in an input
+      if (!selectedTaskId || e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+
+      const categoryMap: { [key: string]: string } = {
+        '1': 'inbox',
+        '2': 'home',
+        '3': 'work',
+        '4': 'gym',
+        '5': 'projects',
+      };
+
+      const category = categoryMap[e.key];
+      if (category) {
+        e.preventDefault();
+        const task = tasks?.find((t) => t.id === selectedTaskId);
+        if (task && task.category !== category) {
+          updateTask({
+            id: selectedTaskId,
+            updates: { category },
+          });
+          toast({
+            title: "Task moved",
+            description: `Moved to ${category.charAt(0).toUpperCase() + category.slice(1)}`,
+          });
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [selectedTaskId, tasks, updateTask, toast]);
+
 
   if (isLoading) {
     return (
@@ -116,6 +155,14 @@ export const TaskList = () => {
       <div className="space-y-4">
         <DomainTabs value={selectedDomain} onChange={setSelectedDomain} isDragging={!!activeId} />
         
+        {/* Keyboard shortcuts hint */}
+        {filteredTasks.length > 0 && (
+          <div className="text-xs text-muted-foreground text-center">
+            Press <kbd className="px-1.5 py-0.5 bg-secondary rounded text-foreground">1-5</kbd> to move selected task • 
+            Press <kbd className="px-1.5 py-0.5 bg-secondary rounded text-foreground">Q</kbd> to create task
+          </div>
+        )}
+        
         {filteredTasks.length === 0 ? (
           <Card className="p-8 text-center text-muted-foreground">
             <p>No {selectedDomain} tasks yet.</p>
@@ -130,7 +177,9 @@ export const TaskList = () => {
                     title={task.title}
                     context={task.context || undefined}
                     completed={task.completed || false}
+                    selected={selectedTaskId === task.id}
                     onToggle={() => handleToggleComplete(task)}
+                    onSelect={() => setSelectedTaskId(task.id)}
                   />
                   <Button
                     variant="ghost"

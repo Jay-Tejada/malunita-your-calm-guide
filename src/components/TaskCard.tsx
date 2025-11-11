@@ -9,11 +9,13 @@ interface TaskCardProps {
   time?: string;
   context?: string;
   completed?: boolean;
+  selected?: boolean;
   onToggle?: () => void;
   onEdit?: () => void;
+  onSelect?: () => void;
 }
 
-export const TaskCard = ({ id, title, time, context, completed, onToggle, onEdit }: TaskCardProps) => {
+export const TaskCard = ({ id, title, time, context, completed, selected, onToggle, onEdit, onSelect }: TaskCardProps) => {
   const {
     attributes,
     listeners,
@@ -32,11 +34,13 @@ export const TaskCard = ({ id, title, time, context, completed, onToggle, onEdit
     <div
       ref={setNodeRef}
       style={style}
+      onClick={onSelect}
       className={cn(
         "group flex items-start gap-3 p-4 rounded-2xl border transition-all duration-300",
         completed
           ? "bg-success/10 border-success/30 hover:border-success/50"
           : "bg-card border-secondary hover:border-accent hover:shadow-md",
+        selected && "ring-2 ring-accent shadow-lg",
         isDragging && "opacity-50 shadow-xl scale-105"
       )}
     >
