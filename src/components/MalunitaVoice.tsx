@@ -39,6 +39,8 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
   const analyserRef = useRef<AnalyserNode | null>(null);
   const animationFrameRef = useRef<number | null>(null);
   const audioElementRef = useRef<HTMLAudioElement | null>(null);
+  const silenceTimerRef = useRef<number | null>(null);
+  const lastSoundTimeRef = useRef<number>(Date.now());
   
   const { toast } = useToast();
 
@@ -52,12 +54,37 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
     const bandSize = Math.floor(dataArray.length / bands);
     const newLevels = [];
 
+    // Calculate average volume to detect silence
+    let totalVolume = 0;
+
     for (let i = 0; i < bands; i++) {
       const start = i * bandSize;
       const end = start + bandSize;
       const bandData = dataArray.slice(start, end);
       const average = bandData.reduce((sum, val) => sum + val, 0) / bandData.length;
+      totalVolume += average;
       newLevels.push(Math.max(0.2, Math.min(1, average / 128)));
+    }
+
+    const averageVolume = totalVolume / bands;
+    
+    // Detect silence (threshold: 5 out of 128)
+    const SILENCE_THRESHOLD = 5;
+    const SILENCE_DURATION = 5000; // 5 seconds
+    
+    if (averageVolume > SILENCE_THRESHOLD) {
+      lastSoundTimeRef.current = Date.now();
+    } else {
+      const silenceDuration = Date.now() - lastSoundTimeRef.current;
+      
+      if (silenceDuration >= SILENCE_DURATION && isListening) {
+        console.log('Silence detected for 5 seconds, stopping recording...');
+        // Stop recording due to silence
+        if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
+          mediaRecorderRef.current.stop();
+        }
+        return; // Exit early to prevent further analysis
+      }
     }
 
     setAudioLevels(newLevels);
@@ -75,6 +102,9 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
       if (audioElementRef.current) {
         audioElementRef.current.pause();
         audioElementRef.current = null;
+      }
+      if (silenceTimerRef.current) {
+        clearTimeout(silenceTimerRef.current);
       }
     };
   }, []);
@@ -147,6 +177,9 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
       const mediaRecorder = new MediaRecorder(stream);
       mediaRecorderRef.current = mediaRecorder;
       audioChunksRef.current = [];
+      
+      // Reset silence tracking
+      lastSoundTimeRef.current = Date.now();
 
       // Set up audio analysis
       const audioContext = new AudioContext();
