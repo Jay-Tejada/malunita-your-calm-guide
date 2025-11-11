@@ -43,10 +43,15 @@ serve(async (req) => {
     return new Response('ok', { headers: corsHeaders })
   }
 
+  console.log('Transcribe-audio function called');
+
   try {
     // Extract JWT and validate user
     const authHeader = req.headers.get('Authorization')
+    console.log('Auth header present:', !!authHeader);
+    
     if (!authHeader) {
+      console.error('No authorization header provided');
       return new Response(
         JSON.stringify({ error: 'Authentication required' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -60,12 +65,17 @@ serve(async (req) => {
     )
 
     const { data: { user }, error: userError } = await supabase.auth.getUser()
+    console.log('User auth check:', { hasUser: !!user, error: userError?.message });
+    
     if (userError || !user) {
+      console.error('User authentication failed:', userError);
       return new Response(
         JSON.stringify({ error: 'Invalid authentication' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
+
+    console.log('User authenticated:', user.id);
 
     // Check rate limit
     const { data: rateLimitOk } = await supabase.rpc('check_rate_limit', {
@@ -108,6 +118,7 @@ serve(async (req) => {
     formData.append('file', blob, 'audio.webm')
     formData.append('model', 'whisper-1')
 
+    console.log('Calling OpenAI API...');
     const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
       method: 'POST',
       headers: {
@@ -116,11 +127,13 @@ serve(async (req) => {
       body: formData,
     })
 
+    console.log('OpenAI API response status:', response.status);
+    
     if (!response.ok) {
       const errorText = await response.text()
       console.error('OpenAI API error:', response.status, errorText)
       return new Response(
-        JSON.stringify({ error: 'Transcription service temporarily unavailable' }),
+        JSON.stringify({ error: 'Transcription service temporarily unavailable', details: errorText }),
         { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
