@@ -198,6 +198,48 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
             if (transcribeError) throw transcribeError;
 
             const transcribed = transcribeData.text;
+            
+            // Check for stop commands
+            const stopPhrases = ['stop recording', 'that\'s it', 'done', 'stop', 'finish'];
+            const lowerTranscribed = transcribed.toLowerCase().trim();
+            const isStopCommand = stopPhrases.some(phrase => 
+              lowerTranscribed.endsWith(phrase) || lowerTranscribed === phrase
+            );
+            
+            if (isStopCommand) {
+              // Remove stop phrase from transcription
+              let cleanedText = transcribed;
+              for (const phrase of stopPhrases) {
+                const regex = new RegExp(`\\b${phrase}\\b\\.?$`, 'gi');
+                cleanedText = cleanedText.replace(regex, '').trim();
+              }
+              
+              // If there's still content after removing stop phrase, process it
+              if (cleanedText.length > 0) {
+                setTranscribedText(cleanedText);
+                console.log('Transcribed (stop command detected):', cleanedText);
+                
+                // Auto-save without GPT response
+                const { data: { user } } = await supabase.auth.getUser();
+                await autoSaveTasks(cleanedText, '', user);
+                
+                setIsProcessing(false);
+                toast({
+                  title: "Recording stopped",
+                  description: "Your input has been saved",
+                });
+                return;
+              } else {
+                // Just stop command with no content
+                setIsProcessing(false);
+                toast({
+                  title: "Recording stopped",
+                  description: "Ready for next input",
+                });
+                return;
+              }
+            }
+            
             setTranscribedText(transcribed);
             console.log('Transcribed:', transcribed);
 
