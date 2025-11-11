@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { cn } from "@/lib/utils";
-import { Inbox, Home, Briefcase, Dumbbell, FolderKanban, Tag } from "lucide-react";
+import { Inbox, Home, Briefcase, Dumbbell, FolderKanban, Tag, Heart, DollarSign, ShoppingCart, Baby, Car, Plane, Coffee, Book, Music, Gamepad2, Film, Star, Zap, LucideIcon } from "lucide-react";
 import { useDroppable } from "@dnd-kit/core";
 import { CustomCategory } from "@/hooks/useCustomCategories";
 
@@ -11,6 +11,25 @@ const domains = [
   { id: "gym", label: "Gym", icon: Dumbbell },
   { id: "projects", label: "Projects", icon: FolderKanban },
 ];
+
+const ICON_MAP: Record<string, LucideIcon> = {
+  "Tag": Tag,
+  "Home": Home,
+  "Work": Briefcase,
+  "Family": Heart,
+  "Money": DollarSign,
+  "Shopping": ShoppingCart,
+  "Kids": Baby,
+  "Transport": Car,
+  "Travel": Plane,
+  "Food": Coffee,
+  "Learning": Book,
+  "Music": Music,
+  "Games": Gamepad2,
+  "Entertainment": Film,
+  "Important": Star,
+  "Urgent": Zap,
+};
 
 interface DomainTabsProps {
   value: string;
@@ -71,15 +90,18 @@ export const DomainTabs = ({ value, onChange, isDragging = false, customCategori
             onClick={() => onChange(domain.id)}
           />
         ))}
-        {customCategories.map((category) => (
-          <CategoryTab
-            key={category.id}
-            domain={{ id: `custom-${category.id}`, label: category.name, icon: Tag }}
-            isActive={value === `custom-${category.id}`}
-            isDragging={isDragging}
-            onClick={() => onChange(`custom-${category.id}`)}
-          />
-        ))}
+        {customCategories.map((category) => {
+          const IconComponent = ICON_MAP[category.icon || "Tag"] || Tag;
+          return (
+            <CategoryTab
+              key={category.id}
+              domain={{ id: `custom-${category.id}`, label: category.name, icon: IconComponent }}
+              isActive={value === `custom-${category.id}`}
+              isDragging={isDragging}
+              onClick={() => onChange(`custom-${category.id}`)}
+            />
+          );
+        })}
       </div>
     </div>
   );
