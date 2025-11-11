@@ -7,18 +7,38 @@ interface VoiceOrbProps {
   onVoiceInput?: (text: string, category?: 'inbox' | 'home' | 'work' | 'gym' | 'projects') => void;
 }
 
+type OrbMode = 'capture' | 'reflection';
+
 export const VoiceOrb = ({ onVoiceInput }: VoiceOrbProps) => {
   const [isListening, setIsListening] = useState(false);
   const [isResponding, setIsResponding] = useState(false);
   const [audioLevels, setAudioLevels] = useState<number[]>(new Array(7).fill(0));
   const [showCategoryDialog, setShowCategoryDialog] = useState(false);
   const [pendingTask, setPendingTask] = useState<string>("");
+  const [mode, setMode] = useState<OrbMode>('capture');
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const animationFrameRef = useRef<number | null>(null);
   const { toast } = useToast();
+
+  // Determine mode based on time of day
+  useEffect(() => {
+    const checkTimeAndSetMode = () => {
+      const hour = new Date().getHours();
+      if (hour >= 21 || hour < 6) { // After 9pm or before 6am
+        setMode('reflection');
+      } else {
+        setMode('capture');
+      }
+    };
+    
+    checkTimeAndSetMode();
+    const interval = setInterval(checkTimeAndSetMode, 60000); // Check every minute
+    
+    return () => clearInterval(interval);
+  }, []);
 
   const analyzeAudio = () => {
     if (!analyserRef.current) return;
@@ -127,6 +147,27 @@ export const VoiceOrb = ({ onVoiceInput }: VoiceOrbProps) => {
               if (error) throw error;
 
               const transcribedText = data.text;
+              
+              // Check for mode switch command
+              if (transcribedText.toLowerCase().includes('enter reflection mode')) {
+                setMode('reflection');
+                toast({
+                  title: "Reflection mode activated",
+                  description: "Entering a space for deeper thought",
+                });
+                setIsResponding(false);
+                return;
+              }
+              
+              if (transcribedText.toLowerCase().includes('exit reflection mode')) {
+                setMode('capture');
+                toast({
+                  title: "Capture mode activated",
+                  description: "Ready to capture your tasks",
+                });
+                setIsResponding(false);
+                return;
+              }
               
               if (transcribedText) {
                 // Categorize the task using AI
@@ -305,16 +346,20 @@ export const VoiceOrb = ({ onVoiceInput }: VoiceOrbProps) => {
                 onClick={handleClick}
                 className={`relative w-20 h-20 rounded-full transition-all duration-700 ease-in-out
                   ${isListening 
-                    ? 'bg-orb-listening scale-110' 
+                    ? mode === 'reflection' ? 'bg-orb-reflection scale-110' : 'bg-orb-listening scale-110'
                     : isResponding
                     ? 'bg-orb-responding animate-breathing'
-                    : 'bg-orb-idle hover:scale-105 hover:bg-orb-idle-glow'
+                    : mode === 'reflection' ? 'bg-orb-reflection hover:scale-105 hover:bg-orb-reflection-glow' : 'bg-orb-idle hover:scale-105 hover:bg-orb-idle-glow'
                   }`}
                 style={{
                   boxShadow: isListening 
-                    ? '0 8px 32px hsl(var(--orb-listening-glow) / 0.4), inset 0 2px 8px hsl(var(--orb-listening-glow) / 0.3)'
+                    ? mode === 'reflection'
+                      ? '0 8px 32px hsl(var(--orb-reflection-glow) / 0.4), inset 0 2px 8px hsl(var(--orb-reflection-glow) / 0.3)'
+                      : '0 8px 32px hsl(var(--orb-listening-glow) / 0.4), inset 0 2px 8px hsl(var(--orb-listening-glow) / 0.3)'
                     : isResponding
                     ? '0 8px 24px hsl(var(--orb-responding-glow) / 0.3), inset 0 2px 8px hsl(var(--orb-responding-glow) / 0.2)'
+                    : mode === 'reflection'
+                    ? '0 4px 16px hsl(var(--orb-reflection-glow) / 0.2), inset 0 1px 4px hsl(var(--orb-reflection-glow) / 0.3)'
                     : '0 4px 16px hsl(var(--orb-idle-glow) / 0.2), inset 0 1px 4px hsl(var(--orb-idle-glow) / 0.3)'
                 }}
               >
@@ -356,7 +401,13 @@ export const VoiceOrb = ({ onVoiceInput }: VoiceOrbProps) => {
                 malunita
               </p>
               <p className="text-xs text-muted-foreground font-light">
-                {isListening ? 'listening...' : isResponding ? 'transcribing...' : 'tap to speak'}
+                {isListening 
+                  ? 'listening...' 
+                  : isResponding 
+                  ? 'transcribing...' 
+                  : mode === 'reflection'
+                  ? 'reflection mode'
+                  : 'tap to speak'}
               </p>
             </div>
           </div>

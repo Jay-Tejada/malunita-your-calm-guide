@@ -49,6 +49,8 @@ All colors MUST be HSL.
     --orb-listening-glow: 39 75% 70%; /* deeper gold */
     --orb-responding: 18 55% 88%; /* dusky rose/peach */
     --orb-responding-glow: 18 55% 75%; /* deeper peach */
+    --orb-reflection: 250 45% 85%; /* soft indigo */
+    --orb-reflection-glow: 250 45% 70%; /* deeper indigo */
     --orb-orbit: 0 0% 11%; /* black orbit lines */
     
     /* Focus area accent */
