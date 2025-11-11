@@ -39,3 +39,9 @@ verify_jwt = false
 
 [functions.extract-tasks]
 verify_jwt = false
+
+[functions.check-admin]
+verify_jwt = true
+
+[functions.admin-stats]
+verify_jwt = true

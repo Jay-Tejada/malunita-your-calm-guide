@@ -139,6 +139,36 @@ Return valid JSON in this exact format:
 
     console.log('Extracted tasks:', result);
 
+    // Log API usage for admin tracking
+    if (userId) {
+      try {
+        const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2.80.0');
+        const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+        const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+        const supabase = createClient(supabaseUrl, supabaseKey);
+
+        const totalTokens = data.usage?.total_tokens || 0;
+        const modelCosts: Record<string, number> = {
+          'gpt-3.5-turbo': 0.001,
+          'gpt-4': 0.045,
+          'gpt-4-turbo': 0.020,
+          'gpt-4o': 0.010,
+        };
+        const costPer1kTokens = modelCosts[preferredModel] || 0.020;
+        const estimatedCost = (totalTokens / 1000) * costPer1kTokens;
+
+        await supabase.from('api_usage_logs').insert({
+          user_id: userId,
+          function_name: 'extract-tasks',
+          model_used: preferredModel,
+          tokens_used: totalTokens,
+          estimated_cost: estimatedCost,
+        });
+      } catch (logError) {
+        console.error('Failed to log usage:', logError);
+      }
+    }
+
     return new Response(
       JSON.stringify(result),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
