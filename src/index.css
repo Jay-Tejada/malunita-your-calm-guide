@@ -8,39 +8,39 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Soft Beige Minimalism - Malunita Design System */
-    --background: 36 40% 96%; /* #F9F6EE pale warm beige */
-    --foreground: 0 0% 11%; /* #1C1C1C charcoal black */
+    /* Minimalist Grounded System - Malunita */
+    --background: 40 50% 98%; /* #FDFAF6 soft beige */
+    --foreground: 0 0% 0%; /* #000000 true black */
 
-    --card: 36 67% 98%; /* #FFF9F2 soft cream */
-    --card-foreground: 0 0% 11%;
+    --card: 40 50% 99%; /* lighter cream */
+    --card-foreground: 0 0% 0%;
 
-    --popover: 36 67% 98%;
-    --popover-foreground: 0 0% 11%;
+    --popover: 40 50% 99%;
+    --popover-foreground: 0 0% 0%;
 
-    --primary: 0 0% 11%; /* charcoal for primary actions */
-    --primary-foreground: 36 67% 98%;
+    --primary: 0 0% 0%; /* true black for primary */
+    --primary-foreground: 40 50% 98%;
 
-    --secondary: 33 25% 83%; /* #D9CBB5 sand taupe */
-    --secondary-foreground: 0 0% 11%;
+    --secondary: 0 0% 15%; /* dark grey */
+    --secondary-foreground: 40 50% 98%;
 
-    --muted: 33 25% 83%;
-    --muted-foreground: 0 0% 40%;
+    --muted: 40 20% 90%;
+    --muted-foreground: 0 0% 30%;
 
-    --accent: 18 42% 82%; /* #E7C3B6 muted blush */
-    --accent-foreground: 0 0% 11%;
+    --accent: 18 42% 82%; /* soft blush accent */
+    --accent-foreground: 0 0% 0%;
 
-    --success: 82 15% 75%; /* #C3C9B7 sage gray-green */
-    --success-foreground: 0 0% 11%;
+    --success: 82 15% 75%;
+    --success-foreground: 0 0% 0%;
 
     --destructive: 0 70% 50%;
-    --destructive-foreground: 36 67% 98%;
+    --destructive-foreground: 40 50% 98%;
 
-    --border: 33 25% 83%;
-    --input: 33 25% 83%;
-    --ring: 0 0% 11%;
+    --border: 0 0% 85%;
+    --input: 0 0% 90%;
+    --ring: 0 0% 0%;
 
-    --radius: 1rem;
+    --radius: 0.5rem;
 
     /* Voice orb colors - Mode-based */
     --orb-idle: 18 42% 92%; /* soft blush/cream - default capture */
@@ -56,10 +56,10 @@ All colors MUST be HSL.
     --orb-orbit: 0 0% 11%; /* black orbit lines */
     
     /* Planet icon time-based colors */
-    --planet-morning: 39 75% 50%; /* golden */
-    --planet-day: 0 0% 11%; /* charcoal */
-    --planet-evening: 250 45% 55%; /* indigo */
-    --planet-night: 250 45% 60%; /* lighter indigo */
+    --planet-morning: 39 75% 40%; /* deeper golden for visibility */
+    --planet-day: 0 0% 0%; /* true black */
+    --planet-evening: 250 45% 45%; /* deeper indigo */
+    --planet-night: 250 45% 50%; /* indigo */
     
     /* Focus area accent */
     --focus-glow: 36 67% 98%;
@@ -72,9 +72,10 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground font-light;
-    font-family: 'Inter', 'Work Sans', system-ui, -apple-system, sans-serif;
-    letter-spacing: 0.01em;
+    @apply bg-background text-foreground;
+    font-family: 'IBM Plex Mono', monospace;
+    font-weight: 400;
+    letter-spacing: 0;
   }
 }
 

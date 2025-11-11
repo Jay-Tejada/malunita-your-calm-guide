@@ -332,33 +332,29 @@ const Index = () => {
           <InstallPromptBanner />
           
           {/* Minimal Header - Just trigger */}
-          <header className="fixed top-0 left-0 right-0 z-40 bg-background/80 backdrop-blur-sm border-b border-border/50">
+          <header className="fixed top-0 left-0 right-0 z-40 bg-background/95 backdrop-blur-sm">
             <div className="px-4 py-3 flex items-center">
               <CustomSidebarTrigger hasUrgentTasks={hasUrgentTasks} />
             </div>
           </header>
 
-          {/* Orb-Centered Content */}
-          <div className="flex-1 flex flex-col items-center justify-center px-4 pt-16 pb-32">
+          {/* Orb-Centered Minimalist Content */}
+          <div className="flex-1 flex flex-col items-center justify-center px-4 pt-16">
             {/* Voice Orb - Center Stage */}
-            <div className="flex flex-col items-center">
-            <MalunitaVoice 
-              ref={malunitaVoiceRef} 
-              onSaveNote={handleSaveNote}
-              onPlanningModeActivated={handlePlanningMode}
-              onReflectionModeActivated={handleReflectionMode}
-              onOrbReflectionTrigger={enableOrbReflectionTrigger ? () => setShowRunwayReview(true) : undefined}
-              onTasksCreated={() => setShowTodaysFocus(true)}
-            />
-              <p className="mt-6 text-sm text-muted-foreground">What's on your mind?</p>
+            <div className="flex flex-col items-center gap-4">
+              <p className="text-sm text-foreground/60 font-mono lowercase tracking-wide">what's on your mind?</p>
+              
+              <MalunitaVoice 
+                ref={malunitaVoiceRef} 
+                onSaveNote={handleSaveNote}
+                onPlanningModeActivated={handlePlanningMode}
+                onReflectionModeActivated={handleReflectionMode}
+                onOrbReflectionTrigger={enableOrbReflectionTrigger ? () => setShowRunwayReview(true) : undefined}
+                onTasksCreated={() => setShowTodaysFocus(true)}
+              />
+              
+              <p className="text-xs text-foreground/40 font-mono lowercase tracking-wider">malunita — capture mode</p>
             </div>
-            
-            {/* Today's Focus - Conditionally shown */}
-            {showTodaysFocus && (
-              <div className="w-full max-w-2xl mt-12 animate-expand-in">
-                <TodaysFocus onReflectClick={enableReflectButton ? () => setShowRunwayReview(true) : undefined} />
-              </div>
-            )}
           </div>
 
           {/* Smart Reflection Prompt */}
@@ -367,17 +363,31 @@ const Index = () => {
           )}
         </main>
 
-        {/* Task Sheet */}
+        {/* Task Sheet - Slide in from right */}
         <Sheet open={showTasksSheet} onOpenChange={setShowTasksSheet}>
-          <SheetContent side="right" className="w-full sm:max-w-lg overflow-y-auto">
+          <SheetContent side="right" className="w-full sm:max-w-lg overflow-y-auto bg-background">
             <SheetHeader>
-              <SheetTitle>All Tasks</SheetTitle>
+              <SheetTitle className="font-mono lowercase">all tasks</SheetTitle>
             </SheetHeader>
             <div className="mt-6">
               <TaskList />
             </div>
           </SheetContent>
         </Sheet>
+
+        {/* Today's Focus - Slide in from bottom when triggered */}
+        {showTodaysFocus && (
+          <Sheet open={showTodaysFocus} onOpenChange={setShowTodaysFocus}>
+            <SheetContent side="bottom" className="h-[80vh] overflow-y-auto bg-background">
+              <SheetHeader>
+                <SheetTitle className="font-mono lowercase">today's focus</SheetTitle>
+              </SheetHeader>
+              <div className="mt-6">
+                <TodaysFocus onReflectClick={enableReflectButton ? () => setShowRunwayReview(true) : undefined} />
+              </div>
+            </SheetContent>
+          </Sheet>
+        )}
 
         {/* Runway Review Modal */}
         {showRunwayReview && <RunwayReview onClose={() => setShowRunwayReview(false)} />}
