@@ -57,7 +57,7 @@ export const TaskConfirmation: React.FC<TaskConfirmationProps> = ({ tasks, origi
         const wasCorrected = 
           originalTask.suggested_category !== editedTask.category ||
           originalTask.suggested_timeframe !== editedTask.timeframe;
-        
+
         return supabase.from('task_learning_feedback').insert({
           user_id: user.id,
           original_text: originalText,
@@ -69,10 +69,10 @@ export const TaskConfirmation: React.FC<TaskConfirmationProps> = ({ tasks, origi
           was_corrected: wasCorrected
         });
       });
-      
+
       await Promise.all(feedbackPromises);
     }
-    
+
     const confirmed = editedTasks.map(task => ({
       title: task.title,
       category: task.category,

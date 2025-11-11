@@ -82,8 +82,7 @@ Guidelines:
 - If the input is just a question or comment (not a task), return empty tasks array
 
 ${userProfile?.peak_activity_time ? `User's peak activity time: ${userProfile.peak_activity_time}` : ''}
-${userProfile?.common_prefixes?.length > 0 ? `User often uses these prefixes: ${userProfile.common_prefixes.join(', ')}` : ''}
-${learningInsights}
+${userProfile?.common_prefixes?.length > 0 ? `User often uses these prefixes: ${userProfile.common_prefixes.join(', ')}` : ''}${learningInsights}
 
 Return valid JSON in this exact format:
 {
