@@ -130,8 +130,8 @@ export const useTasks = () => {
   return {
     tasks,
     isLoading,
-    createTasks: createTasks.mutate,
-    updateTask: updateTask.mutate,
-    deleteTask: deleteTask.mutate,
+    createTasks: createTasks.mutateAsync,
+    updateTask: updateTask.mutateAsync,
+    deleteTask: deleteTask.mutateAsync,
   };
 };
