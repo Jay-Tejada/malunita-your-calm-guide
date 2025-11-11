@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { cn } from "@/lib/utils";
-import { Inbox, Home, Briefcase, Dumbbell, FolderKanban } from "lucide-react";
+import { Inbox, Home, Briefcase, Dumbbell, FolderKanban, Tag } from "lucide-react";
 import { useDroppable } from "@dnd-kit/core";
+import { CustomCategory } from "@/hooks/useCustomCategories";
 
 const domains = [
   { id: "inbox", label: "Inbox", icon: Inbox },
@@ -15,6 +16,7 @@ interface DomainTabsProps {
   value: string;
   onChange: (domain: string) => void;
   isDragging?: boolean;
+  customCategories?: CustomCategory[];
 }
 
 const CategoryTab = ({ 
@@ -53,7 +55,7 @@ const CategoryTab = ({
   );
 };
 
-export const DomainTabs = ({ value, onChange, isDragging = false }: DomainTabsProps) => {
+export const DomainTabs = ({ value, onChange, isDragging = false, customCategories = [] }: DomainTabsProps) => {
   return (
     <div className={cn(
       "flex gap-2 p-1 bg-card rounded-full border transition-all",
@@ -67,6 +69,15 @@ export const DomainTabs = ({ value, onChange, isDragging = false }: DomainTabsPr
             isActive={value === domain.id}
             isDragging={isDragging}
             onClick={() => onChange(domain.id)}
+          />
+        ))}
+        {customCategories.map((category) => (
+          <CategoryTab
+            key={category.id}
+            domain={{ id: `custom-${category.id}`, label: category.name, icon: Tag }}
+            isActive={value === `custom-${category.id}`}
+            isDragging={isDragging}
+            onClick={() => onChange(`custom-${category.id}`)}
           />
         ))}
       </div>

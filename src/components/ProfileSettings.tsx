@@ -6,6 +6,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Loader2, TrendingUp, Clock, MessageSquare } from "lucide-react";
 import { NotificationPermission } from "@/components/NotificationPermission";
 import { GoalSetting } from "@/components/GoalSetting";
+import { CustomCategoryManager } from "@/components/CustomCategoryManager";
 
 
 interface ProfileSettingsProps {
@@ -67,6 +68,9 @@ export const ProfileSettings = ({ onClose }: ProfileSettingsProps) => {
               <h3 className="text-lg font-medium mb-4">Goal Awareness</h3>
               <GoalSetting />
             </div>
+
+            {/* Custom Categories */}
+            <CustomCategoryManager />
 
             {/* Voice Preferences */}
             <div>

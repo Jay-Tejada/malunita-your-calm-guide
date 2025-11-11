@@ -6,7 +6,7 @@ export interface CustomCategory {
   id: string;
   user_id: string;
   name: string;
-  color: string;
+  color?: string;
   icon?: string;
   created_at: string;
   updated_at: string;
@@ -26,7 +26,7 @@ export const useCustomCategories = () => {
         .from('custom_categories')
         .select('*')
         .eq('user_id', user.id)
-        .order('created_at', { ascending: true });
+        .order('name');
 
       if (error) throw error;
       return data as CustomCategory[];
@@ -54,7 +54,7 @@ export const useCustomCategories = () => {
       queryClient.invalidateQueries({ queryKey: ['custom-categories'] });
       toast({
         title: "Category created",
-        description: "Your custom category has been created.",
+        description: "Your custom category has been added.",
       });
     },
     onError: (error: any) => {
@@ -104,6 +104,7 @@ export const useCustomCategories = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['custom-categories'] });
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
       toast({
         title: "Category deleted",
       });
@@ -118,7 +119,7 @@ export const useCustomCategories = () => {
   });
 
   return {
-    categories: categories || [],
+    categories,
     isLoading,
     createCategory: createCategory.mutateAsync,
     updateCategory: updateCategory.mutateAsync,

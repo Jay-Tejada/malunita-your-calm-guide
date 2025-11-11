@@ -4,6 +4,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Trash2, User, Clock, Bell, Star } from "lucide-react";
 import { useTasks, Task } from "@/hooks/useTasks";
+import { useCustomCategories } from "@/hooks/useCustomCategories";
 import { DomainTabs } from "@/components/DomainTabs";
 import { CategoryManager } from "@/components/CategoryManager";
 import { DndContext, DragEndEvent, DragOverlay, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
@@ -13,6 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 
 export const TaskList = () => {
   const { tasks, isLoading, updateTask, deleteTask } = useTasks();
+  const { categories } = useCustomCategories();
   const [selectedDomain, setSelectedDomain] = useState("inbox");
   const [activeId, setActiveId] = useState<string | null>(null);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
@@ -112,10 +114,19 @@ export const TaskList = () => {
     );
   }
 
-  // Filter tasks by selected domain, excluding focus tasks
-  const filteredTasks = tasks?.filter(task => 
-    task.category === selectedDomain && !task.is_focus
-  ) || [];
+  // Filter tasks by selected domain or custom category, excluding focus tasks
+  const filteredTasks = tasks?.filter(task => {
+    if (task.is_focus) return false;
+    
+    // Check if selected domain is a custom category ID
+    const isCustomCategory = selectedDomain.startsWith('custom-');
+    if (isCustomCategory) {
+      const categoryId = selectedDomain.replace('custom-', '');
+      return task.custom_category_id === categoryId;
+    }
+    
+    return task.category === selectedDomain;
+  }) || [];
   const activeTask = activeId ? tasks?.find((t) => t.id === activeId) : null;
 
   if (!tasks || tasks.length === 0) {
@@ -126,7 +137,12 @@ export const TaskList = () => {
         onDragEnd={handleDragEnd}
         onDragCancel={handleDragCancel}
       >
-        <DomainTabs value={selectedDomain} onChange={setSelectedDomain} />
+        <DomainTabs 
+          value={selectedDomain} 
+          onChange={setSelectedDomain} 
+          isDragging={!!activeId}
+          customCategories={categories || []}
+        />
         <Card className="p-8 text-center text-muted-foreground mt-4">
           <p>No tasks yet. Start by speaking into Malunita.</p>
         </Card>
@@ -171,7 +187,12 @@ export const TaskList = () => {
     >
       <div className="space-y-4">
         <div className="flex items-center justify-between gap-4">
-          <DomainTabs value={selectedDomain} onChange={setSelectedDomain} isDragging={!!activeId} />
+          <DomainTabs 
+            value={selectedDomain} 
+            onChange={setSelectedDomain} 
+            isDragging={!!activeId}
+            customCategories={categories || []}
+          />
           <CategoryManager />
         </div>
         
