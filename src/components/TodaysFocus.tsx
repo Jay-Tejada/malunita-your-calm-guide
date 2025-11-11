@@ -4,9 +4,13 @@ import { FocusCard } from "@/components/FocusCard";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Sparkles } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 export const TodaysFocus = () => {
   const { tasks, isLoading, updateTask, deleteTask } = useTasks();
+  const [isSuggesting, setIsSuggesting] = React.useState(false);
+  const { toast } = useToast();
 
   const today = new Date().toISOString().split('T')[0];
   const focusTasks = tasks?.filter(task => 
@@ -14,6 +18,8 @@ export const TodaysFocus = () => {
     task.focus_date === today &&
     !task.completed
   ) || [];
+
+  const pendingTasks = tasks?.filter(task => !task.completed && !task.is_focus) || [];
 
   const handleToggleComplete = (task: Task) => {
     updateTask({
@@ -39,6 +45,66 @@ export const TodaysFocus = () => {
     deleteTask(id);
   };
 
+  const handleSuggestFocus = async () => {
+    if (pendingTasks.length === 0) {
+      toast({
+        title: "No tasks to suggest",
+        description: "Add some tasks first, then I can help you prioritize.",
+      });
+      return;
+    }
+
+    setIsSuggesting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('suggest-focus', {
+        body: { 
+          tasks: pendingTasks.map(t => ({
+            id: t.id,
+            title: t.title,
+            context: t.context,
+            category: t.category,
+            has_reminder: t.has_reminder,
+            is_time_based: t.is_time_based
+          }))
+        }
+      });
+
+      if (error) throw error;
+
+      const { suggestions, message } = data;
+      
+      // Apply suggestions to tasks
+      const today = new Date().toISOString().split('T')[0];
+      for (const suggestion of suggestions) {
+        const task = pendingTasks[suggestion.taskIndex];
+        if (task) {
+          await updateTask({
+            id: task.id,
+            updates: {
+              is_focus: true,
+              focus_date: today,
+              context: suggestion.reason
+            }
+          });
+        }
+      }
+
+      toast({
+        title: "Focus tasks suggested",
+        description: message || `I've picked ${suggestions.length} tasks to focus on today.`,
+      });
+    } catch (error: any) {
+      console.error('Error suggesting focus:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to generate suggestions",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSuggesting(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="space-y-4">
@@ -60,10 +126,16 @@ export const TodaysFocus = () => {
               : `${focusTasks.length} task${focusTasks.length > 1 ? 's' : ''} to focus on`}
           </p>
         </div>
-        {focusTasks.length === 0 && (
-          <Button variant="ghost" size="sm" className="gap-2">
+        {focusTasks.length === 0 && pendingTasks.length > 0 && (
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="gap-2"
+            onClick={handleSuggestFocus}
+            disabled={isSuggesting}
+          >
             <Sparkles className="w-4 h-4" />
-            Suggest Tasks
+            {isSuggesting ? 'Thinking...' : 'Suggest Tasks'}
           </Button>
         )}
       </div>
