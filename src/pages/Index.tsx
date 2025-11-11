@@ -14,10 +14,31 @@ import { useTasks } from "@/hooks/useTasks";
 import { useProfile } from "@/hooks/useProfile";
 import { AppSidebar } from "@/components/AppSidebar";
 
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { SidebarProvider, useSidebar } from "@/components/ui/sidebar";
+import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Globe2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+
+const CustomSidebarTrigger = ({ hasUrgentTasks }: { hasUrgentTasks: boolean }) => {
+  const { toggleSidebar } = useSidebar();
+  
+  return (
+    <Button
+      variant="ghost"
+      size="icon"
+      onClick={toggleSidebar}
+      className="hover:bg-muted/50 p-2 group transition-all duration-300 relative h-auto w-auto"
+    >
+      <Globe2 
+        className={`w-5 h-5 text-primary animate-float-spin transition-all duration-300 group-hover:drop-shadow-[0_0_8px_hsl(var(--primary)/0.6)] group-hover:scale-110 ${hasUrgentTasks ? 'animate-alert-pulse' : ''}`} 
+      />
+      {hasUrgentTasks && (
+        <span className="absolute top-1 right-1 w-2 h-2 bg-destructive rounded-full animate-pulse" />
+      )}
+    </Button>
+  );
+};
 
 const Index = () => {
   const [user, setUser] = useState<any>(null);
@@ -193,12 +214,7 @@ const Index = () => {
           {/* Minimal Header - Just trigger */}
           <header className="fixed top-0 left-0 right-0 z-40 bg-background/80 backdrop-blur-sm border-b border-border/50">
             <div className="px-4 py-3 flex items-center">
-              <SidebarTrigger className="hover:bg-muted/50 p-2 group transition-all duration-300 relative">
-                <Globe2 className={`w-5 h-5 text-primary animate-float-spin transition-all duration-300 group-hover:drop-shadow-[0_0_8px_hsl(var(--primary)/0.6)] group-hover:scale-110 ${hasUrgentTasks ? 'animate-alert-pulse' : ''}`} />
-                {hasUrgentTasks && (
-                  <span className="absolute top-1 right-1 w-2 h-2 bg-destructive rounded-full animate-pulse" />
-                )}
-              </SidebarTrigger>
+              <CustomSidebarTrigger hasUrgentTasks={hasUrgentTasks} />
             </div>
           </header>
 
