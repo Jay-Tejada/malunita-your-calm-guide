@@ -4,8 +4,16 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Mail, Lock } from "lucide-react";
+import { Mail, Lock, Shield } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
+import { 
+  validateAuthCredentials, 
+  isLockedOut, 
+  getLockoutTimeRemaining,
+  recordFailedLogin,
+  resetLoginAttempts,
+  getAttemptsRemaining 
+} from "@/lib/authValidation";
 
 interface AuthProps {
   onAuthSuccess?: () => void;
@@ -23,10 +31,38 @@ export const Auth = ({ onAuthSuccess }: AuthProps) => {
     return localStorage.getItem('malunita_remember_me') === 'true';
   });
   const [loading, setLoading] = useState(false);
+  const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const { toast } = useToast();
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
+    setValidationErrors([]);
+
+    // Check if account is locked out
+    if (!isForgotPassword && isLockedOut(email)) {
+      const minutesRemaining = getLockoutTimeRemaining(email);
+      toast({
+        title: "Account Temporarily Locked",
+        description: `Too many failed login attempts. Please try again in ${minutesRemaining} minute${minutesRemaining !== 1 ? 's' : ''}.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate credentials (only for signup)
+    if (isSignUp && !isForgotPassword) {
+      const validation = validateAuthCredentials(email, password);
+      if (!validation.success) {
+        setValidationErrors(validation.errors || []);
+        toast({
+          title: "Invalid Input",
+          description: "Please check the requirements below.",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
     setLoading(true);
 
     try {
@@ -65,7 +101,23 @@ export const Auth = ({ onAuthSuccess }: AuthProps) => {
           password,
         });
 
-        if (error) throw error;
+        if (error) {
+          // Record failed login attempt
+          recordFailedLogin(email);
+          const attemptsRemaining = getAttemptsRemaining(email);
+          
+          if (attemptsRemaining > 0) {
+            toast({
+              title: "Login Failed",
+              description: `Invalid credentials. ${attemptsRemaining} attempt${attemptsRemaining !== 1 ? 's' : ''} remaining before temporary lockout.`,
+              variant: "destructive",
+            });
+          }
+          throw error;
+        }
+
+        // Reset failed attempts on successful login
+        resetLoginAttempts(email);
 
         // Store remember me preference
         if (rememberMe) {
@@ -166,6 +218,32 @@ export const Auth = ({ onAuthSuccess }: AuthProps) => {
                     required
                   />
                 </div>
+                {isSignUp && (
+                  <div className="mt-2 space-y-1">
+                    <div className="flex items-start gap-2 text-xs text-muted-foreground">
+                      <Shield className="w-3 h-3 mt-0.5 flex-shrink-0" />
+                      <div>
+                        <p className="font-medium mb-1">Password Requirements:</p>
+                        <ul className="space-y-0.5 list-disc list-inside">
+                          <li>At least 10 characters</li>
+                          <li>One uppercase letter</li>
+                          <li>One lowercase letter</li>
+                          <li>One number</li>
+                          <li>One special character (!@#$%^&*)</li>
+                        </ul>
+                      </div>
+                    </div>
+                    {validationErrors.length > 0 && (
+                      <div className="mt-2 p-2 bg-destructive/10 border border-destructive/20 rounded-md">
+                        {validationErrors.map((error, idx) => (
+                          <p key={idx} className="text-xs text-destructive">
+                            {error}
+                          </p>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             )}
 
