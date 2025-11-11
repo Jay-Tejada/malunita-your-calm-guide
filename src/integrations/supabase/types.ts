@@ -135,10 +135,12 @@ export type Database = {
           completed_at: string | null
           context: string | null
           created_at: string
+          focus_date: string | null
           has_person_name: boolean | null
           has_reminder: boolean | null
           id: string
           input_method: string | null
+          is_focus: boolean | null
           is_time_based: boolean | null
           keywords: string[] | null
           title: string
@@ -151,10 +153,12 @@ export type Database = {
           completed_at?: string | null
           context?: string | null
           created_at?: string
+          focus_date?: string | null
           has_person_name?: boolean | null
           has_reminder?: boolean | null
           id?: string
           input_method?: string | null
+          is_focus?: boolean | null
           is_time_based?: boolean | null
           keywords?: string[] | null
           title: string
@@ -167,10 +171,12 @@ export type Database = {
           completed_at?: string | null
           context?: string | null
           created_at?: string
+          focus_date?: string | null
           has_person_name?: boolean | null
           has_reminder?: boolean | null
           id?: string
           input_method?: string | null
+          is_focus?: boolean | null
           is_time_based?: boolean | null
           keywords?: string[] | null
           title?: string
@@ -184,7 +190,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      clear_old_focus_items: { Args: never; Returns: undefined }
     }
     Enums: {
       [_ in never]: never
