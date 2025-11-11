@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Loader2, TrendingUp, Clock, MessageSquare } from "lucide-react";
 import { NotificationPermission } from "@/components/NotificationPermission";
+import { GoalSetting } from "@/components/GoalSetting";
 
 
 interface ProfileSettingsProps {
@@ -59,6 +60,12 @@ export const ProfileSettings = ({ onClose }: ProfileSettingsProps) => {
                 </div>
                 <p className="text-lg capitalize">{profile.peak_activity_time}</p>
               </div>
+            </div>
+
+            {/* Goal Setting */}
+            <div>
+              <h3 className="text-lg font-medium mb-4">Goal Awareness</h3>
+              <GoalSetting />
             </div>
 
             {/* Voice Preferences */}

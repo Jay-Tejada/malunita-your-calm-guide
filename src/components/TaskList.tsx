@@ -196,6 +196,8 @@ export const TaskList = () => {
                     selected={selectedTaskId === task.id}
                     onToggle={() => handleToggleComplete(task)}
                     onSelect={() => setSelectedTaskId(task.id)}
+                    goalAligned={task.goal_aligned}
+                    alignmentReason={task.alignment_reason}
                   />
                   <Button
                     variant="ghost"
@@ -229,6 +231,8 @@ export const TaskList = () => {
               title={activeTask.title}
               context={activeTask.context || undefined}
               completed={activeTask.completed || false}
+              goalAligned={activeTask.goal_aligned}
+              alignmentReason={activeTask.alignment_reason}
             />
           </div>
         ) : null}

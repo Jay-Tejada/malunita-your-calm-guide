@@ -1,7 +1,8 @@
-import { CheckCircle2, Circle, Clock, GripVertical } from "lucide-react";
+import { CheckCircle2, Circle, Clock, GripVertical, Target } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface TaskCardProps {
   id: string;
@@ -13,9 +14,11 @@ interface TaskCardProps {
   onToggle?: () => void;
   onEdit?: () => void;
   onSelect?: () => void;
+  goalAligned?: boolean | null;
+  alignmentReason?: string | null;
 }
 
-export const TaskCard = ({ id, title, time, context, completed, selected, onToggle, onEdit, onSelect }: TaskCardProps) => {
+export const TaskCard = ({ id, title, time, context, completed, selected, onToggle, onEdit, onSelect, goalAligned, alignmentReason }: TaskCardProps) => {
   const {
     attributes,
     listeners,
@@ -73,14 +76,28 @@ export const TaskCard = ({ id, title, time, context, completed, selected, onTogg
         onClick={onEdit}
         className="flex-1 min-w-0 cursor-pointer"
       >
-        <h3
-          className={cn(
-            "text-sm font-normal transition-all",
-            completed ? "text-muted-foreground line-through" : "text-foreground"
+        <div className="flex items-start gap-2">
+          <h3
+            className={cn(
+              "text-sm font-normal transition-all flex-1",
+              completed ? "text-muted-foreground line-through" : "text-foreground"
+            )}
+          >
+            {title}
+          </h3>
+          {goalAligned === true && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Target className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs">
+                  <p className="text-xs">{alignmentReason || "Aligned with your goal"}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           )}
-        >
-          {title}
-        </h3>
+        </div>
         {(time || context) && (
           <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
             {time && (

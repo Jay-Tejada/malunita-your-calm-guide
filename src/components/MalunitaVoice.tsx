@@ -579,6 +579,8 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
               is_focus: addToFocus,
               focus_date: addToFocus ? new Date().toISOString().split('T')[0] : null,
               user_id: user.id,
+              goal_aligned: task.goal_aligned ?? null,
+              alignment_reason: task.alignment_reason || null,
             };
           } catch (error) {
             // If categorization fails, default to inbox

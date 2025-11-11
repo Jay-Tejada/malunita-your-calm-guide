@@ -86,6 +86,9 @@ export type Database = {
           average_tasks_per_day: number | null
           common_prefixes: string[] | null
           created_at: string
+          current_goal: string | null
+          goal_timeframe: string | null
+          goal_updated_at: string | null
           id: string
           likes_routine_nudges: boolean | null
           notification_preferences: Json | null
@@ -104,6 +107,9 @@ export type Database = {
           average_tasks_per_day?: number | null
           common_prefixes?: string[] | null
           created_at?: string
+          current_goal?: string | null
+          goal_timeframe?: string | null
+          goal_updated_at?: string | null
           id: string
           likes_routine_nudges?: boolean | null
           notification_preferences?: Json | null
@@ -122,6 +128,9 @@ export type Database = {
           average_tasks_per_day?: number | null
           common_prefixes?: string[] | null
           created_at?: string
+          current_goal?: string | null
+          goal_timeframe?: string | null
+          goal_updated_at?: string | null
           id?: string
           likes_routine_nudges?: boolean | null
           notification_preferences?: Json | null
@@ -202,12 +211,14 @@ export type Database = {
       }
       tasks: {
         Row: {
+          alignment_reason: string | null
           category: string | null
           completed: boolean | null
           completed_at: string | null
           context: string | null
           created_at: string
           focus_date: string | null
+          goal_aligned: boolean | null
           has_person_name: boolean | null
           has_reminder: boolean | null
           id: string
@@ -220,12 +231,14 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          alignment_reason?: string | null
           category?: string | null
           completed?: boolean | null
           completed_at?: string | null
           context?: string | null
           created_at?: string
           focus_date?: string | null
+          goal_aligned?: boolean | null
           has_person_name?: boolean | null
           has_reminder?: boolean | null
           id?: string
@@ -238,12 +251,14 @@ export type Database = {
           user_id: string
         }
         Update: {
+          alignment_reason?: string | null
           category?: string | null
           completed?: boolean | null
           completed_at?: string | null
           context?: string | null
           created_at?: string
           focus_date?: string | null
+          goal_aligned?: boolean | null
           has_person_name?: boolean | null
           has_reminder?: boolean | null
           id?: string

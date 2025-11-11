@@ -19,6 +19,8 @@ export interface Task {
   focus_date?: string;
   created_at: string;
   updated_at: string;
+  goal_aligned?: boolean | null;
+  alignment_reason?: string | null;
 }
 
 export const useTasks = () => {

@@ -74,7 +74,9 @@ serve(async (req) => {
       throw new Error('OPENAI_API_KEY not configured');
     }
 
-    const systemPrompt = `You are Malunita, a smart voice productivity assistant for solo creators. Your job is to extract actionable tasks from natural, unfiltered voice input.
+    const systemPrompt = `You are Malunita, a goal-aware productivity coach for solo creators. Your job is to extract actionable tasks from natural, unfiltered voice input and evaluate their alignment with the user's stated goal.
+
+${userProfile?.current_goal ? `🎯 USER'S CURRENT GOAL: "${userProfile.current_goal}" (${userProfile.goal_timeframe || 'this_week'})` : ''}
 
 Guidelines:
 - Extract 1-3 clear, actionable tasks maximum
@@ -82,7 +84,13 @@ Guidelines:
 - Suggest appropriate categories: inbox, work, home, projects, gym
 - Suggest timeframes: today, this_week, later
 - Create friendly confirmation prompts for each task
-- If the input is just a question or comment (not a task), return empty tasks array
+
+${userProfile?.current_goal ? `Goal Alignment Evaluation:
+- Analyze if this task directly supports the stated goal
+- goal_aligned = true: Task directly contributes to achieving the goal
+- goal_aligned = false: Task is unrelated to the goal (general/background work)
+- goal_aligned = null: Unclear or could be tangentially related
+- Provide a brief alignment_reason when applicable` : ''}
 
 ${userProfile?.peak_activity_time ? `User's peak activity time: ${userProfile.peak_activity_time}` : ''}
 ${userProfile?.common_prefixes?.length > 0 ? `User often uses these prefixes: ${userProfile.common_prefixes.join(', ')}` : ''}${learningInsights}
@@ -95,7 +103,9 @@ Return valid JSON in this exact format:
       "suggested_category": "work",
       "suggested_timeframe": "today",
       "confidence": 0.85,
-      "confirmation_prompt": "Should I add this to Work for today?"
+      "confirmation_prompt": "Should I add this to Work for today?"${userProfile?.current_goal ? `,
+      "goal_aligned": true,
+      "alignment_reason": "This directly supports your goal by..."` : ''}
     }
   ],
   "conversation_reply": "Optional friendly reply if no tasks were found"

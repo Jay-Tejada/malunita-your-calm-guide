@@ -16,6 +16,9 @@ export interface UserProfile {
   often_time_based: boolean;
   common_prefixes: string[];
   preferred_gpt_model: 'gpt-3.5-turbo' | 'gpt-4' | 'gpt-4-turbo' | 'gpt-4o';
+  current_goal?: string;
+  goal_timeframe?: string;
+  goal_updated_at?: string;
 }
 
 export const useProfile = () => {
