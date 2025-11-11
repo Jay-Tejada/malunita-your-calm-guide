@@ -55,6 +55,12 @@ All colors MUST be HSL.
     --orb-planning-glow: 39 75% 70%; /* deeper gold */
     --orb-orbit: 0 0% 11%; /* black orbit lines */
     
+    /* Planet icon time-based colors */
+    --planet-morning: 39 75% 50%; /* golden */
+    --planet-day: 0 0% 11%; /* charcoal */
+    --planet-evening: 250 45% 55%; /* indigo */
+    --planet-night: 250 45% 60%; /* lighter indigo */
+    
     /* Focus area accent */
     --focus-glow: 36 67% 98%;
   }

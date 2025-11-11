@@ -87,6 +87,20 @@ const CustomSidebarTrigger = ({ hasUrgentTasks }: { hasUrgentTasks: boolean }) =
     }
   };
   
+  // Time-based icon color - matches the glow theme
+  const getIconColor = () => {
+    switch (timeOfDay) {
+      case 'morning':
+        return 'hsl(var(--planet-morning))'; // Golden
+      case 'evening':
+        return 'hsl(var(--planet-evening))'; // Indigo transition
+      case 'night':
+        return 'hsl(var(--planet-night))'; // Indigo
+      default:
+        return 'hsl(var(--planet-day))'; // Charcoal
+    }
+  };
+  
   return (
     <Button
       variant="ghost"
@@ -95,7 +109,8 @@ const CustomSidebarTrigger = ({ hasUrgentTasks }: { hasUrgentTasks: boolean }) =
       className="hover:bg-muted/50 p-2 group transition-all duration-300 relative h-auto w-auto"
     >
       <Globe2 
-        className={`w-5 h-5 text-primary transition-all duration-700 group-hover:scale-110 ${getRotationClass()} ${getGlowClass()} ${isTransitioning ? 'animate-transition-pulse' : ''}`} 
+        color={getIconColor()}
+        className={`w-5 h-5 transition-all duration-700 group-hover:scale-110 ${getRotationClass()} ${getGlowClass()} ${isTransitioning ? 'animate-transition-pulse' : ''}`} 
       />
       {hasUrgentTasks && (
         <span className="absolute top-1 right-1 w-2 h-2 bg-destructive rounded-full animate-pulse" />
