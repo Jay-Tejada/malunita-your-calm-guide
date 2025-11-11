@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 import { Auth } from "@/components/Auth";
 import { MalunitaVoice, MalunitaVoiceRef } from "@/components/MalunitaVoice";
 import { TaskList } from "@/components/TaskList";
@@ -7,10 +8,11 @@ import { TodaysFocus } from "@/components/TodaysFocus";
 import { ProfileSettings } from "@/components/ProfileSettings";
 import { RunwayReviewButton } from "@/components/RunwayReviewButton";
 import { InstallPromptBanner } from "@/components/InstallPromptBanner";
+import { useAdmin } from "@/hooks/useAdmin";
 
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, Settings, LogOut } from "lucide-react";
+import { ChevronDown, Settings, LogOut, Shield } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const Index = () => {
@@ -18,6 +20,8 @@ const Index = () => {
   const [loading, setLoading] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
   const malunitaVoiceRef = useRef<MalunitaVoiceRef>(null);
+  const navigate = useNavigate();
+  const { isAdmin } = useAdmin();
   
   const { toast } = useToast();
 
@@ -98,10 +102,21 @@ const Index = () => {
             <p className="text-sm text-muted-foreground mt-1">Your minimalist thinking partner</p>
           </div>
           <div className="flex gap-2">
+            {isAdmin && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => navigate('/admin')}
+                className="w-9 h-9"
+              >
+                <Shield className="w-4 h-4" />
+              </Button>
+            )}
             <Button
               variant="ghost"
               size="icon"
               onClick={() => setShowSettings(true)}
+              className="w-9 h-9"
             >
               <Settings className="w-5 h-5" />
             </Button>
@@ -109,6 +124,7 @@ const Index = () => {
               variant="ghost"
               size="icon"
               onClick={handleSignOut}
+              className="w-9 h-9"
             >
               <LogOut className="w-5 h-5" />
             </Button>
