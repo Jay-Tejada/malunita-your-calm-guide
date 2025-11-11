@@ -13,9 +13,9 @@ import { useAdmin } from "@/hooks/useAdmin";
 import { useTasks } from "@/hooks/useTasks";
 import { useProfile } from "@/hooks/useProfile";
 
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, Settings, LogOut, Shield } from "lucide-react";
+import { Menu, Settings, LogOut, Shield, ListTodo } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const Index = () => {
@@ -23,6 +23,7 @@ const Index = () => {
   const [loading, setLoading] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
   const [showRunwayReview, setShowRunwayReview] = useState(false);
+  const [showTasksSheet, setShowTasksSheet] = useState(false);
   const malunitaVoiceRef = useRef<MalunitaVoiceRef>(null);
   
   // Runway Review trigger settings (can be managed via settings in future)
@@ -171,71 +172,76 @@ const Index = () => {
       {/* Install Banner */}
       <InstallPromptBanner />
       
-      {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-40 bg-background/80 backdrop-blur-sm border-b border-secondary">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex justify-between items-center">
-          <div>
-            <h1 className="text-xl sm:text-2xl font-light tracking-tight text-foreground">Malunita</h1>
-            <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 sm:mt-1">Your minimalist thinking partner</p>
-          </div>
-          <div className="flex gap-1 sm:gap-2">
+      {/* Minimal Header - Just logo and menu */}
+      <header className="fixed top-0 left-0 right-0 z-40 bg-background/80 backdrop-blur-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex justify-between items-center">
+          <h1 className="text-lg sm:text-xl font-light tracking-tight text-foreground">malunita</h1>
+          <div className="flex gap-2">
+            <Sheet open={showTasksSheet} onOpenChange={setShowTasksSheet}>
+              <SheetTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="w-9 h-9"
+                >
+                  <ListTodo className="w-5 h-5" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-full sm:max-w-lg overflow-y-auto">
+                <SheetHeader>
+                  <SheetTitle>All Tasks</SheetTitle>
+                </SheetHeader>
+                <div className="mt-6">
+                  <TaskList />
+                </div>
+              </SheetContent>
+            </Sheet>
             {isAdmin && (
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={() => navigate('/admin')}
-                className="w-8 h-8 sm:w-9 sm:h-9"
+                className="w-9 h-9"
               >
-                <Shield className="w-4 h-4" />
+                <Shield className="w-5 h-5" />
               </Button>
             )}
             <Button
               variant="ghost"
               size="icon"
               onClick={() => setShowSettings(true)}
-              className="w-8 h-8 sm:w-9 sm:h-9"
+              className="w-9 h-9"
             >
-              <Settings className="w-4 h-4 sm:w-5 sm:h-5" />
+              <Settings className="w-5 h-5" />
             </Button>
             <Button
               variant="ghost"
               size="icon"
               onClick={handleSignOut}
-              className="w-8 h-8 sm:w-9 sm:h-9"
+              className="w-9 h-9"
             >
-              <LogOut className="w-4 h-4 sm:w-5 sm:h-5" />
+              <LogOut className="w-5 h-5" />
             </Button>
           </div>
         </div>
       </header>
 
-      {/* Main content */}
-      <div className="pt-24 pb-48 sm:pb-40 px-4 sm:px-6">
-        <div className="max-w-4xl mx-auto space-y-16 sm:space-y-20">
-          {/* Voice Input */}
-          <div className="flex justify-center">
-            <MalunitaVoice 
-              ref={malunitaVoiceRef} 
-              onSaveNote={handleSaveNote}
-              onPlanningModeActivated={handlePlanningMode}
-              onReflectionModeActivated={handleReflectionMode}
-              onOrbReflectionTrigger={enableOrbReflectionTrigger ? () => setShowRunwayReview(true) : undefined}
-            />
-          </div>
-          
-          {/* Today's Focus - Primary */}
+      {/* Minimal Main Content - Orb Focused */}
+      <div className="min-h-screen flex flex-col items-center justify-center px-4 pb-32">
+        {/* Voice Input - Center Stage */}
+        <div className="mb-16">
+          <MalunitaVoice 
+            ref={malunitaVoiceRef} 
+            onSaveNote={handleSaveNote}
+            onPlanningModeActivated={handlePlanningMode}
+            onReflectionModeActivated={handleReflectionMode}
+            onOrbReflectionTrigger={enableOrbReflectionTrigger ? () => setShowRunwayReview(true) : undefined}
+          />
+        </div>
+        
+        {/* Today's Focus - Compact Card */}
+        <div className="w-full max-w-2xl">
           <TodaysFocus onReflectClick={enableReflectButton ? () => setShowRunwayReview(true) : undefined} />
-          
-          {/* Secondary Categories - Collapsible */}
-          <Collapsible defaultOpen={false} className="border-t border-secondary pt-8 sm:pt-10 mt-12 sm:mt-16">
-            <CollapsibleTrigger className="flex items-center justify-between w-full group">
-              <h2 className="text-xl font-light text-foreground">Inbox & Categories</h2>
-              <ChevronDown className="w-5 h-5 text-muted-foreground transition-transform group-data-[state=open]:rotate-180" />
-            </CollapsibleTrigger>
-            <CollapsibleContent className="mt-6">
-              <TaskList />
-            </CollapsibleContent>
-          </Collapsible>
         </div>
       </div>
 

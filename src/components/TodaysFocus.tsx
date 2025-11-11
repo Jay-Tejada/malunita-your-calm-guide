@@ -123,22 +123,22 @@ export const TodaysFocus = ({ onReflectClick }: TodaysFocusProps) => {
   }
 
   return (
-    <div className="space-y-6 sm:space-y-8">
-      <div className="flex flex-col gap-4 sm:gap-3">
+    <div className="space-y-4">
+      <div className="flex flex-col gap-3">
         <div>
-          <h2 className="text-2xl sm:text-3xl font-light text-foreground mb-1">Today's Focus</h2>
-          <p className="text-xs sm:text-sm text-muted-foreground">
+          <h2 className="text-lg sm:text-xl font-light text-foreground mb-1">Today's Focus</h2>
+          <p className="text-xs text-muted-foreground">
             {focusTasks.length === 0 
-              ? "What are the 3-5 most important things today?" 
-              : `${focusTasks.length} task${focusTasks.length > 1 ? 's' : ''} to focus on`}
+              ? "Your top priorities" 
+              : `${focusTasks.length} task${focusTasks.length > 1 ? 's' : ''}`}
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+        <div className="flex flex-wrap items-center gap-2">
           {onReflectClick && (
             <Button 
               variant="ghost" 
               size="sm" 
-              className="gap-1.5 h-9 px-3 text-xs sm:text-sm"
+              className="gap-1.5 h-8 px-2.5 text-xs"
               onClick={onReflectClick}
               title="Review the week with Malunita"
             >
@@ -149,11 +149,11 @@ export const TodaysFocus = ({ onReflectClick }: TodaysFocusProps) => {
             <Button 
               variant="ghost" 
               size="sm" 
-              className="gap-1.5 h-9 px-3 text-xs sm:text-sm"
+              className="gap-1.5 h-8 px-2.5 text-xs"
               onClick={handleSuggestFocus}
               disabled={isSuggesting}
             >
-              <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <Sparkles className="w-3.5 h-3.5" />
               {isSuggesting ? 'Thinking...' : 'Suggest Tasks'}
             </Button>
           )}
@@ -161,18 +161,13 @@ export const TodaysFocus = ({ onReflectClick }: TodaysFocusProps) => {
       </div>
 
       {focusTasks.length === 0 ? (
-        <Card className="p-8 sm:p-12 text-center border-dashed">
-          <div className="max-w-md mx-auto space-y-2 sm:space-y-3">
-            <p className="text-sm sm:text-base text-muted-foreground">
-              Your focus area is clear and ready.
-            </p>
-            <p className="text-sm text-muted-foreground">
-              Add tasks from Inbox, or let Malunita help you identify what matters most today.
-            </p>
-          </div>
+        <Card className="p-6 text-center border-dashed">
+          <p className="text-xs sm:text-sm text-muted-foreground">
+            Your focus area is clear. Tap "Suggest Tasks" or use the orb to add tasks.
+          </p>
         </Card>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-2">
           {focusTasks.map((task) => (
             <FocusCard
               key={task.id}
