@@ -344,14 +344,15 @@ const Index = () => {
             <div className="flex flex-col items-center gap-4">
               <p className="text-sm text-foreground/60 font-mono lowercase tracking-wide">what's on your mind?</p>
               
-              <MalunitaVoice 
-                ref={malunitaVoiceRef} 
-                onSaveNote={handleSaveNote}
-                onPlanningModeActivated={handlePlanningMode}
-                onReflectionModeActivated={handleReflectionMode}
-                onOrbReflectionTrigger={enableOrbReflectionTrigger ? () => setShowRunwayReview(true) : undefined}
-                onTasksCreated={() => setShowTodaysFocus(true)}
-              />
+            <MalunitaVoice 
+              ref={malunitaVoiceRef} 
+              onSaveNote={handleSaveNote}
+              onPlanningModeActivated={handlePlanningMode}
+              onReflectionModeActivated={handleReflectionMode}
+              onOrbReflectionTrigger={enableOrbReflectionTrigger ? () => setShowRunwayReview(true) : undefined}
+              onSuggestTasks={handlePlanningMode}
+              onTasksCreated={() => setShowTodaysFocus(true)}
+            />
               
               <p className="text-xs text-foreground/40 font-mono lowercase tracking-wider">malunita — capture mode</p>
             </div>
