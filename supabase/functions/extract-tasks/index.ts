@@ -21,6 +21,9 @@ serve(async (req) => {
       );
     }
     
+    // Get user's preferred model
+    const preferredModel = userProfile?.preferred_gpt_model || 'gpt-4-turbo';
+    
     // Fetch learning data if userId provided
     let learningInsights = '';
     if (userId) {
@@ -99,6 +102,7 @@ Return valid JSON in this exact format:
 }`;
 
     console.log('Extracting tasks from:', text);
+    console.log('Using model:', preferredModel);
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -106,7 +110,7 @@ Return valid JSON in this exact format:
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4-turbo',
+        model: preferredModel,
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: text }

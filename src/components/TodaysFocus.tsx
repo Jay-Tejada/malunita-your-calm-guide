@@ -6,9 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useProfile } from "@/hooks/useProfile";
 
 export const TodaysFocus = () => {
   const { tasks, isLoading, updateTask, deleteTask } = useTasks();
+  const { profile } = useProfile();
   const [isSuggesting, setIsSuggesting] = React.useState(false);
   const { toast } = useToast();
 
@@ -65,7 +67,8 @@ export const TodaysFocus = () => {
             category: t.category,
             has_reminder: t.has_reminder,
             is_time_based: t.is_time_based
-          }))
+          })),
+          userProfile: profile
         }
       });
 

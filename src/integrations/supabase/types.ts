@@ -61,6 +61,7 @@ export type Database = {
           notification_preferences: Json | null
           often_time_based: boolean | null
           peak_activity_time: string | null
+          preferred_gpt_model: string | null
           preferred_input_style: string | null
           total_tasks_logged: number | null
           updated_at: string
@@ -78,6 +79,7 @@ export type Database = {
           notification_preferences?: Json | null
           often_time_based?: boolean | null
           peak_activity_time?: string | null
+          preferred_gpt_model?: string | null
           preferred_input_style?: string | null
           total_tasks_logged?: number | null
           updated_at?: string
@@ -95,6 +97,7 @@ export type Database = {
           notification_preferences?: Json | null
           often_time_based?: boolean | null
           peak_activity_time?: string | null
+          preferred_gpt_model?: string | null
           preferred_input_style?: string | null
           total_tasks_logged?: number | null
           updated_at?: string

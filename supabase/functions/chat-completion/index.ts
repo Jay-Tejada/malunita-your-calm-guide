@@ -36,8 +36,12 @@ serve(async (req) => {
     if (!openAIApiKey) {
       throw new Error('OpenAI API key not configured');
     }
+    
+    // Get user's preferred model
+    const preferredModel = userProfile?.preferred_gpt_model || 'gpt-4o';
 
     console.log('Processing chat completion with', messages.length, 'messages');
+    console.log('Using model:', preferredModel);
 
     // Build personalized system message based on user profile
     let systemContent = `You are Malunita, a warm, calm, minimalist productivity assistant designed for solo creators and thinkers.
@@ -100,7 +104,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o',
+        model: preferredModel,
         messages: [systemMessage, ...messages],
         temperature: 0.7,
         max_tokens: 150,

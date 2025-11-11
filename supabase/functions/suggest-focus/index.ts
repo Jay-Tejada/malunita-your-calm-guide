@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const { tasks, context } = await req.json();
+    const { tasks, context, userProfile } = await req.json();
     
     if (!tasks || tasks.length === 0) {
       return new Response(
@@ -25,6 +25,9 @@ serve(async (req) => {
     if (!openaiApiKey) {
       throw new Error('OPENAI_API_KEY not configured');
     }
+    
+    // Get user's preferred model
+    const preferredModel = userProfile?.preferred_gpt_model || 'gpt-4-turbo';
 
     // Prepare task summary for AI
     const taskSummary = tasks.map((task: any, idx: number) => 
@@ -60,6 +63,7 @@ ${context ? `User context: "${context}"` : ''}
 Based on this list, suggest 3-5 tasks to focus on today. Choose the task indices and provide a brief reason for each.`;
 
     console.log('Calling OpenAI for focus suggestions...');
+    console.log('Using model:', preferredModel);
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -67,7 +71,7 @@ Based on this list, suggest 3-5 tasks to focus on today. Choose the task indices
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4-turbo',
+        model: preferredModel,
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt }

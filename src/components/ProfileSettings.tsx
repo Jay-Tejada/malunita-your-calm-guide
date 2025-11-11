@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Loader2, TrendingUp, Clock, MessageSquare } from "lucide-react";
 import { NotificationPermission } from "@/components/NotificationPermission";
+import { ModelSelector } from "@/components/ModelSelector";
 
 interface ProfileSettingsProps {
   onClose?: () => void;
@@ -122,6 +123,9 @@ export const ProfileSettings = ({ onClose }: ProfileSettingsProps) => {
                 </div>
               </div>
             </div>
+
+            {/* AI Model Selection */}
+            <ModelSelector />
 
             {/* Task Patterns */}
             <div>

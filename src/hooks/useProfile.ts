@@ -15,6 +15,7 @@ export interface UserProfile {
   uses_names: boolean;
   often_time_based: boolean;
   common_prefixes: string[];
+  preferred_gpt_model: 'gpt-3.5-turbo' | 'gpt-4' | 'gpt-4-turbo' | 'gpt-4o';
 }
 
 export const useProfile = () => {

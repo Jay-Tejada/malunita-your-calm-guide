@@ -288,7 +288,8 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
                       category: t.category,
                       has_reminder: t.has_reminder,
                       is_time_based: t.is_time_based
-                    }))
+                    })),
+                    userProfile: profile
                   }
                 });
 

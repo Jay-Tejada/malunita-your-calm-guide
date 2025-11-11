@@ -7,6 +7,7 @@ import { TodaysFocus } from "@/components/TodaysFocus";
 import { ProfileSettings } from "@/components/ProfileSettings";
 import { RunwayReviewButton } from "@/components/RunwayReviewButton";
 import { InstallPromptBanner } from "@/components/InstallPromptBanner";
+import { ModelIndicator } from "@/components/ModelIndicator";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Button } from "@/components/ui/button";
 import { ChevronDown, Settings, LogOut } from "lucide-react";
@@ -141,6 +142,9 @@ const Index = () => {
 
       {/* Runway Review Button */}
       <RunwayReviewButton />
+      
+      {/* Model Indicator */}
+      <ModelIndicator />
     </div>
   );
 };
