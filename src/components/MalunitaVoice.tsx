@@ -36,6 +36,7 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
   const [isListening, setIsListening] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [transcribedText, setTranscribedText] = useState("");
   const [gptResponse, setGptResponse] = useState("");
   const [audioLevels, setAudioLevels] = useState<number[]>(new Array(7).fill(0));
@@ -53,6 +54,7 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
   
   const handleVoiceTaskCapture = async (text: string, category?: 'inbox' | 'home' | 'work' | 'gym' | 'projects') => {
     try {
+      setIsSaving(true);
       await createTasks([{
         title: text,
         category: category || 'inbox',
@@ -61,6 +63,8 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
       }]);
     } catch (error) {
       console.error('Error creating task from voice:', error);
+    } finally {
+      setIsSaving(false);
     }
   };
   
@@ -793,6 +797,7 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
           onPlanningModeActivated={onPlanningModeActivated}
           onReflectionModeActivated={onReflectionModeActivated}
           onOrbReflectionTrigger={onOrbReflectionTrigger}
+          isSaving={isSaving}
         />
 
         {/* Action buttons */}

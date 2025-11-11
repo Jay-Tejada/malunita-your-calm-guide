@@ -8,11 +8,12 @@ interface VoiceOrbProps {
   onPlanningModeActivated?: () => void;
   onReflectionModeActivated?: () => void;
   onOrbReflectionTrigger?: () => void;
+  isSaving?: boolean;
 }
 
 type OrbMode = 'capture' | 'reflection' | 'planning' | 'quiet';
 
-export const VoiceOrb = ({ onVoiceInput, onPlanningModeActivated, onReflectionModeActivated, onOrbReflectionTrigger }: VoiceOrbProps) => {
+export const VoiceOrb = ({ onVoiceInput, onPlanningModeActivated, onReflectionModeActivated, onOrbReflectionTrigger, isSaving = false }: VoiceOrbProps) => {
   const [isListening, setIsListening] = useState(false);
   const [isResponding, setIsResponding] = useState(false);
   const [audioLevels, setAudioLevels] = useState<number[]>(new Array(7).fill(0));
@@ -479,7 +480,7 @@ export const VoiceOrb = ({ onVoiceInput, onPlanningModeActivated, onReflectionMo
                       : mode === 'planning'
                       ? 'bg-orb-planning scale-110'
                       : 'bg-orb-listening scale-110'
-                    : isResponding
+                    : (isResponding || isSaving)
                     ? 'bg-orb-responding animate-breathing'
                     : (mode === 'reflection' || mode === 'quiet')
                     ? 'bg-orb-reflection hover:scale-105 hover:bg-orb-reflection-glow'
@@ -494,7 +495,7 @@ export const VoiceOrb = ({ onVoiceInput, onPlanningModeActivated, onReflectionMo
                       : mode === 'planning'
                       ? '0 8px 32px hsl(var(--orb-planning-glow) / 0.4), inset 0 2px 8px hsl(var(--orb-planning-glow) / 0.3)'
                       : '0 8px 32px hsl(var(--orb-listening-glow) / 0.4), inset 0 2px 8px hsl(var(--orb-listening-glow) / 0.3)'
-                    : isResponding
+                    : (isResponding || isSaving)
                     ? '0 8px 24px hsl(var(--orb-responding-glow) / 0.3), inset 0 2px 8px hsl(var(--orb-responding-glow) / 0.2)'
                     : (mode === 'reflection' || mode === 'quiet')
                     ? '0 4px 16px hsl(var(--orb-reflection-glow) / 0.2), inset 0 1px 4px hsl(var(--orb-reflection-glow) / 0.3)'
@@ -520,14 +521,14 @@ export const VoiceOrb = ({ onVoiceInput, onPlanningModeActivated, onReflectionMo
                 )}
 
                 {/* Idle state - soft glow with subtle pulse */}
-                {!isListening && !isResponding && (
+                {!isListening && !isResponding && !isSaving && (
                   <div className="absolute inset-0 flex items-center justify-center">
                     <div className="w-3 h-3 rounded-full bg-foreground/40 animate-breathing" />
                   </div>
                 )}
 
-                {/* Processing spinner when responding */}
-                {isResponding && (
+                 {/* Processing spinner when responding or saving */}
+                {(isResponding || isSaving) && (
                   <div className="flex items-center justify-center w-full h-full">
                     <div className="w-8 h-8 border-2 border-foreground/30 border-t-foreground/70 rounded-full animate-spin" />
                   </div>
@@ -543,6 +544,8 @@ export const VoiceOrb = ({ onVoiceInput, onPlanningModeActivated, onReflectionMo
               <p className="text-[10px] sm:text-xs text-muted-foreground font-light">
                 {isListening 
                   ? 'listening...' 
+                  : isSaving
+                  ? 'saving...'
                   : isResponding 
                   ? 'transcribing...' 
                   : getModeDisplayName(mode)}
