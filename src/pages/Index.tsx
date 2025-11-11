@@ -221,16 +221,18 @@ const Index = () => {
           {/* Orb-Centered Content */}
           <div className="flex-1 flex flex-col items-center justify-center px-4 pt-16 pb-32">
             {/* Voice Orb - Center Stage */}
-            <div className="flex flex-col items-center">
-            <MalunitaVoice 
-              ref={malunitaVoiceRef} 
-              onSaveNote={handleSaveNote}
-              onPlanningModeActivated={handlePlanningMode}
-              onReflectionModeActivated={handleReflectionMode}
-              onOrbReflectionTrigger={enableOrbReflectionTrigger ? () => setShowRunwayReview(true) : undefined}
-              onTasksCreated={() => setShowTodaysFocus(true)}
-            />
-              <p className="mt-6 text-sm text-muted-foreground">What's on your mind?</p>
+            <div className="flex flex-col items-center w-full">
+              <div className="flex justify-center w-full">
+                <MalunitaVoice 
+                  ref={malunitaVoiceRef} 
+                  onSaveNote={handleSaveNote}
+                  onPlanningModeActivated={handlePlanningMode}
+                  onReflectionModeActivated={handleReflectionMode}
+                  onOrbReflectionTrigger={enableOrbReflectionTrigger ? () => setShowRunwayReview(true) : undefined}
+                  onTasksCreated={() => setShowTodaysFocus(true)}
+                />
+              </div>
+              <p className="mt-6 text-sm text-muted-foreground text-center w-full">What's on your mind?</p>
             </div>
             
             {/* Today's Focus - Conditionally shown */}
