@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Mail, Lock } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 
@@ -13,8 +14,14 @@ interface AuthProps {
 export const Auth = ({ onAuthSuccess }: AuthProps) => {
   const [isSignUp, setIsSignUp] = useState(false);
   const [isForgotPassword, setIsForgotPassword] = useState(false);
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(() => {
+    // Pre-fill email if "remember me" was previously checked
+    return localStorage.getItem('malunita_remember_email') || "";
+  });
   const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(() => {
+    return localStorage.getItem('malunita_remember_me') === 'true';
+  });
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
@@ -59,6 +66,15 @@ export const Auth = ({ onAuthSuccess }: AuthProps) => {
         });
 
         if (error) throw error;
+
+        // Store remember me preference
+        if (rememberMe) {
+          localStorage.setItem('malunita_remember_me', 'true');
+          localStorage.setItem('malunita_remember_email', email);
+        } else {
+          localStorage.removeItem('malunita_remember_me');
+          localStorage.removeItem('malunita_remember_email');
+        }
 
         toast({
           title: "Welcome back!",
@@ -154,13 +170,28 @@ export const Auth = ({ onAuthSuccess }: AuthProps) => {
             )}
 
             {!isForgotPassword && !isSignUp && (
-              <button
-                type="button"
-                onClick={() => setIsForgotPassword(true)}
-                className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-              >
-                Forgot password?
-              </button>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <Checkbox 
+                    id="remember" 
+                    checked={rememberMe}
+                    onCheckedChange={(checked) => setRememberMe(checked as boolean)}
+                  />
+                  <label
+                    htmlFor="remember"
+                    className="text-xs text-muted-foreground cursor-pointer select-none"
+                  >
+                    Remember this device
+                  </label>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsForgotPassword(true)}
+                  className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  Forgot password?
+                </button>
+              </div>
             )}
 
             <Button
