@@ -7,7 +7,7 @@ interface VoiceOrbProps {
   onVoiceInput?: (text: string, category?: 'inbox' | 'home' | 'work' | 'gym' | 'projects') => void;
 }
 
-type OrbMode = 'capture' | 'reflection';
+type OrbMode = 'capture' | 'reflection' | 'planning' | 'quiet';
 
 export const VoiceOrb = ({ onVoiceInput }: VoiceOrbProps) => {
   const [isListening, setIsListening] = useState(false);
@@ -16,6 +16,7 @@ export const VoiceOrb = ({ onVoiceInput }: VoiceOrbProps) => {
   const [showCategoryDialog, setShowCategoryDialog] = useState(false);
   const [pendingTask, setPendingTask] = useState<string>("");
   const [mode, setMode] = useState<OrbMode>('capture');
+  const [autoModeEnabled, setAutoModeEnabled] = useState(true);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -23,8 +24,10 @@ export const VoiceOrb = ({ onVoiceInput }: VoiceOrbProps) => {
   const animationFrameRef = useRef<number | null>(null);
   const { toast } = useToast();
 
-  // Determine mode based on time of day
+  // Determine mode based on time of day (only if auto mode is enabled)
   useEffect(() => {
+    if (!autoModeEnabled) return;
+    
     const checkTimeAndSetMode = () => {
       const hour = new Date().getHours();
       if (hour >= 21 || hour < 6) { // After 9pm or before 6am
@@ -38,7 +41,62 @@ export const VoiceOrb = ({ onVoiceInput }: VoiceOrbProps) => {
     const interval = setInterval(checkTimeAndSetMode, 60000); // Check every minute
     
     return () => clearInterval(interval);
-  }, []);
+  }, [autoModeEnabled]);
+
+  const detectModeSwitch = (text: string): OrbMode | null => {
+    const lowerText = text.toLowerCase();
+    
+    // Planning mode triggers
+    if (lowerText.includes('planning mode') || 
+        lowerText.includes('switch to planning') ||
+        lowerText.includes('enter planning') ||
+        lowerText.includes('focus mode')) {
+      return 'planning';
+    }
+    
+    // Reflection mode triggers
+    if (lowerText.includes('reflection mode') || 
+        lowerText.includes('switch to reflection') ||
+        lowerText.includes('enter reflection')) {
+      return 'reflection';
+    }
+    
+    // Quiet mode triggers (maps to reflection)
+    if (lowerText.includes('quiet mode') || 
+        lowerText.includes('switch to quiet') ||
+        lowerText.includes("i'm in quiet") ||
+        lowerText.includes('enter quiet')) {
+      return 'quiet';
+    }
+    
+    // Capture mode triggers
+    if (lowerText.includes('capture mode') || 
+        lowerText.includes('switch to capture') ||
+        lowerText.includes('normal mode') ||
+        lowerText.includes('default mode')) {
+      return 'capture';
+    }
+    
+    return null;
+  };
+
+  const getModeDisplayName = (mode: OrbMode): string => {
+    switch (mode) {
+      case 'planning': return 'planning mode';
+      case 'reflection': return 'reflection mode';
+      case 'quiet': return 'quiet mode';
+      default: return 'capture mode';
+    }
+  };
+
+  const getModeDescription = (mode: OrbMode): string => {
+    switch (mode) {
+      case 'planning': return 'Focused on goals and priorities';
+      case 'reflection': return 'A space for deeper thought';
+      case 'quiet': return 'Listening mode for gentle input';
+      default: return 'Ready to capture your tasks';
+    }
+  };
 
   const analyzeAudio = () => {
     if (!analyserRef.current) return;
@@ -149,21 +207,13 @@ export const VoiceOrb = ({ onVoiceInput }: VoiceOrbProps) => {
               const transcribedText = data.text;
               
               // Check for mode switch command
-              if (transcribedText.toLowerCase().includes('enter reflection mode')) {
-                setMode('reflection');
+              const detectedMode = detectModeSwitch(transcribedText);
+              if (detectedMode) {
+                setMode(detectedMode);
+                setAutoModeEnabled(false); // Disable auto mode when user manually switches
                 toast({
-                  title: "Reflection mode activated",
-                  description: "Entering a space for deeper thought",
-                });
-                setIsResponding(false);
-                return;
-              }
-              
-              if (transcribedText.toLowerCase().includes('exit reflection mode')) {
-                setMode('capture');
-                toast({
-                  title: "Capture mode activated",
-                  description: "Ready to capture your tasks",
+                  title: `${getModeDisplayName(detectedMode)} activated`,
+                  description: getModeDescription(detectedMode),
                 });
                 setIsResponding(false);
                 return;
@@ -346,20 +396,32 @@ export const VoiceOrb = ({ onVoiceInput }: VoiceOrbProps) => {
                 onClick={handleClick}
                 className={`relative w-20 h-20 rounded-full transition-all duration-700 ease-in-out
                   ${isListening 
-                    ? mode === 'reflection' ? 'bg-orb-reflection scale-110' : 'bg-orb-listening scale-110'
+                    ? (mode === 'reflection' || mode === 'quiet') 
+                      ? 'bg-orb-reflection scale-110' 
+                      : mode === 'planning'
+                      ? 'bg-orb-planning scale-110'
+                      : 'bg-orb-listening scale-110'
                     : isResponding
                     ? 'bg-orb-responding animate-breathing'
-                    : mode === 'reflection' ? 'bg-orb-reflection hover:scale-105 hover:bg-orb-reflection-glow' : 'bg-orb-idle hover:scale-105 hover:bg-orb-idle-glow'
+                    : (mode === 'reflection' || mode === 'quiet')
+                    ? 'bg-orb-reflection hover:scale-105 hover:bg-orb-reflection-glow'
+                    : mode === 'planning'
+                    ? 'bg-orb-planning hover:scale-105 hover:bg-orb-planning-glow'
+                    : 'bg-orb-idle hover:scale-105 hover:bg-orb-idle-glow'
                   }`}
                 style={{
                   boxShadow: isListening 
-                    ? mode === 'reflection'
+                    ? (mode === 'reflection' || mode === 'quiet')
                       ? '0 8px 32px hsl(var(--orb-reflection-glow) / 0.4), inset 0 2px 8px hsl(var(--orb-reflection-glow) / 0.3)'
+                      : mode === 'planning'
+                      ? '0 8px 32px hsl(var(--orb-planning-glow) / 0.4), inset 0 2px 8px hsl(var(--orb-planning-glow) / 0.3)'
                       : '0 8px 32px hsl(var(--orb-listening-glow) / 0.4), inset 0 2px 8px hsl(var(--orb-listening-glow) / 0.3)'
                     : isResponding
                     ? '0 8px 24px hsl(var(--orb-responding-glow) / 0.3), inset 0 2px 8px hsl(var(--orb-responding-glow) / 0.2)'
-                    : mode === 'reflection'
+                    : (mode === 'reflection' || mode === 'quiet')
                     ? '0 4px 16px hsl(var(--orb-reflection-glow) / 0.2), inset 0 1px 4px hsl(var(--orb-reflection-glow) / 0.3)'
+                    : mode === 'planning'
+                    ? '0 4px 16px hsl(var(--orb-planning-glow) / 0.2), inset 0 1px 4px hsl(var(--orb-planning-glow) / 0.3)'
                     : '0 4px 16px hsl(var(--orb-idle-glow) / 0.2), inset 0 1px 4px hsl(var(--orb-idle-glow) / 0.3)'
                 }}
               >
@@ -405,9 +467,7 @@ export const VoiceOrb = ({ onVoiceInput }: VoiceOrbProps) => {
                   ? 'listening...' 
                   : isResponding 
                   ? 'transcribing...' 
-                  : mode === 'reflection'
-                  ? 'reflection mode'
-                  : 'tap to speak'}
+                  : getModeDisplayName(mode)}
               </p>
             </div>
           </div>

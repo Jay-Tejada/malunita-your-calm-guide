@@ -43,14 +43,16 @@ All colors MUST be HSL.
     --radius: 1rem;
 
     /* Voice orb colors - Mode-based */
-    --orb-idle: 18 42% 92%; /* soft blush/cream */
+    --orb-idle: 18 42% 92%; /* soft blush/cream - default capture */
     --orb-idle-glow: 18 42% 82%; /* muted blush */
-    --orb-listening: 39 75% 85%; /* warm golden */
+    --orb-listening: 39 75% 85%; /* warm golden - for active listening */
     --orb-listening-glow: 39 75% 70%; /* deeper gold */
     --orb-responding: 18 55% 88%; /* dusky rose/peach */
     --orb-responding-glow: 18 55% 75%; /* deeper peach */
-    --orb-reflection: 250 45% 85%; /* soft indigo */
+    --orb-reflection: 250 45% 85%; /* soft indigo - reflection/quiet */
     --orb-reflection-glow: 250 45% 70%; /* deeper indigo */
+    --orb-planning: 39 75% 85%; /* warm golden - planning/focus */
+    --orb-planning-glow: 39 75% 70%; /* deeper gold */
     --orb-orbit: 0 0% 11%; /* black orbit lines */
     
     /* Focus area accent */
