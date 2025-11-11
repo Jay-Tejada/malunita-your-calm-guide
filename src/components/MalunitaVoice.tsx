@@ -273,7 +273,7 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
             if (audioEnabled) {
               console.log('Generating speech...');
               const { data: ttsData, error: ttsError } = await supabase.functions.invoke('text-to-speech', {
-                body: { text: response, voice: 'alloy' }
+                body: { text: response, voice: 'nova' } // Warm, friendly voice
               });
 
               if (ttsError) throw ttsError;

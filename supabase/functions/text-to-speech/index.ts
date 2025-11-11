@@ -12,7 +12,9 @@ serve(async (req) => {
   }
 
   try {
-    const { text, voice = 'alloy' } = await req.json();
+    // Use 'nova' for a warm, friendly, conversational tone
+    // Other options: 'shimmer' (gentle), 'echo' (calm)
+    const { text, voice = 'nova' } = await req.json();
     
     if (!text) {
       throw new Error('No text provided');
@@ -32,10 +34,11 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'tts-1',
+        model: 'tts-1-hd', // Use HD model for higher quality, warmer voice
         input: text,
         voice: voice,
         response_format: 'mp3',
+        speed: 0.95, // Slightly slower for a more natural, conversational pace
       }),
     });
 

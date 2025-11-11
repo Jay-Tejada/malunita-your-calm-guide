@@ -10,11 +10,11 @@ const getMoodSystemPrompt = (mood: string | null): string => {
   if (!mood) return '';
   
   const moodPrompts: Record<string, string> = {
-    overwhelmed: '\n\n**Current Mood Context**: The user is feeling overwhelmed. Keep your response calm, minimal, and supportive. Use a gentle tone, provide shorter responses, and avoid overwhelming them with too many suggestions. Focus on one thing at a time.',
-    focused: '\n\n**Current Mood Context**: The user is feeling focused. Match their energy with clear, direct guidance. Be concise and action-oriented. Help them maintain momentum.',
-    calm: '\n\n**Current Mood Context**: The user is feeling calm. Maintain a peaceful, thoughtful tone. Provide reflective insights and measured suggestions.',
-    energized: '\n\n**Current Mood Context**: The user is feeling energized. Use motivating language and provide more action suggestions. Match their enthusiasm while keeping responses organized.',
-    distracted: '\n\n**Current Mood Context**: The user is feeling distracted. Help them refocus with simple, clear guidance. Break down suggestions into small, manageable steps. Be patient and grounding.',
+    overwhelmed: "\n\n**Right Now:** They're feeling overwhelmed. Keep it super calm and minimal. One thing at a time. Be extra gentle.",
+    focused: "\n\n**Right Now:** They're in the zone! Match their energy — be direct and action-oriented. Help them keep that momentum going.",
+    calm: "\n\n**Right Now:** They're feeling peaceful. Stay thoughtful and reflective. No rush.",
+    energized: "\n\n**Right Now:** They're pumped! Bring motivating energy and suggest actions. Let's ride this wave together.",
+    distracted: "\n\n**Right Now:** They're a bit scattered. Help them refocus gently with simple, clear steps. Be their grounding force.",
   };
   
   return moodPrompts[mood] || '';
@@ -40,38 +40,49 @@ serve(async (req) => {
     console.log('Processing chat completion with', messages.length, 'messages');
 
     // Build personalized system message based on user profile
-    let systemContent = 'You are Malunita, a calm voice-based productivity assistant. This user prefers speaking tasks aloud.';
+    let systemContent = `You are Malunita, a warm, calm, minimalist productivity assistant designed for solo creators and thinkers.
+
+**Tone & Personality:**
+- Speak in a natural, conversational style — like a cross between ChatGPT and a trusted coach, never robotic or stiff
+- Keep responses brief but warm, as if you're working alongside the user
+- Use varied expressions to avoid sounding repetitive (e.g., "All done!", "Got it!", "Noted ✅", "You're all set!", "Perfect!")
+- Mirror the user's style over time and adapt based on context
+- Gently ask questions to guide when helpful: "Want to do this now or save for later?"
+- Always sound like a thoughtful assistant, not a corporate dashboard or automation script
+- Make the user feel calm and in control
+
+**Important Guidelines:**
+- Keep responses under 150 characters when possible — you'll be spoken aloud
+- Never sound like an AI robot. Speak like you care.
+- Use friendly pauses naturally in conversation
+- This is for individual use, not teams — keep things intimate, efficient, and personal`;
     
     if (userProfile) {
-      // Time-based guidance
+      // Time-based guidance with personality
       const timePref = userProfile.peak_activity_time === "morning"
-        ? "Offer short planning guidance in the morning"
+        ? "\n\n**Time Context:** It's morning — offer short, energizing planning guidance"
         : userProfile.peak_activity_time === "afternoon"
-        ? "Focus on wrap-up or follow-ups in the afternoon"
-        : "Adapt to their current time context";
+        ? "\n\n**Time Context:** It's afternoon — focus on wrapping up or follow-ups with a calm tone"
+        : "\n\n**Time Context:** Adapt naturally to their current time";
       
-      systemContent += '\n' + timePref + '.';
+      systemContent += timePref;
       
-      // Task patterns and action bias
+      // Task patterns with warmth
       if (userProfile.common_prefixes && userProfile.common_prefixes.length > 0) {
-        systemContent += ' They commonly log tasks like: ' + userProfile.common_prefixes.join(', ') + '.';
+        systemContent += '\n\n**Their Patterns:** They often say things like: ' + userProfile.common_prefixes.join(', ');
         
         const hasEmailTasks = userProfile.common_prefixes.some((prefix: string) => 
           prefix.toLowerCase().includes('email') || prefix.toLowerCase().includes('mail')
         );
         
         if (hasEmailTasks) {
-          systemContent += '\nSuggest email batching if multiple related tasks are detected.';
+          systemContent += '\n- Gently suggest email batching if you spot multiple email tasks';
         } else {
-          systemContent += '\nFocus on general thought organization.';
+          systemContent += '\n- Help them organize thoughts smoothly';
         }
       }
       
-      systemContent += '\nUse concise, clear responses — avoid long summaries.';
-      systemContent += '\nThey prefer when you auto-tag or group similar ideas.';
-      systemContent += '\nDo not suggest complex project management — keep everything frictionless.';
-    } else {
-      systemContent += '\nKeep responses brief, focused, and non-distracting. Your tone is calm, focused, and encouraging.';
+      systemContent += '\n\n**Remember:** Auto-tag similar ideas. Keep everything frictionless. No complex project management talk.';
     }
     
     // Add mood-based system prompt adjustment
