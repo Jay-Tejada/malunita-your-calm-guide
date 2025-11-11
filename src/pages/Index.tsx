@@ -209,7 +209,7 @@ const Index = () => {
             
             {/* Today's Focus - Conditionally shown */}
             {showTodaysFocus && (
-              <div className="w-full max-w-2xl mt-12 animate-fade-in">
+              <div className="w-full max-w-2xl mt-12 animate-expand-in">
                 <TodaysFocus onReflectClick={enableReflectButton ? () => setShowRunwayReview(true) : undefined} />
               </div>
             )}
