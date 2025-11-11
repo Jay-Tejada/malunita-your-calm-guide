@@ -37,6 +37,7 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
   const [transcribedText, setTranscribedText] = useState("");
   const [gptResponse, setGptResponse] = useState("");
   const [audioLevels, setAudioLevels] = useState<number[]>(new Array(7).fill(0));
@@ -61,6 +62,12 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
         input_method: 'voice',
         completed: false,
       }]);
+      
+      // Show success animation
+      setShowSuccess(true);
+      setTimeout(() => {
+        setShowSuccess(false);
+      }, 2000);
     } catch (error) {
       console.error('Error creating task from voice:', error);
     } finally {
@@ -798,6 +805,7 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
           onReflectionModeActivated={onReflectionModeActivated}
           onOrbReflectionTrigger={onOrbReflectionTrigger}
           isSaving={isSaving}
+          showSuccess={showSuccess}
         />
 
         {/* Action buttons */}

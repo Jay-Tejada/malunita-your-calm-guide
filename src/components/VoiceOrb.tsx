@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { CategoryDialog } from "./CategoryDialog";
+import { Check } from "lucide-react";
 
 interface VoiceOrbProps {
   onVoiceInput?: (text: string, category?: 'inbox' | 'home' | 'work' | 'gym' | 'projects') => void;
@@ -9,11 +10,12 @@ interface VoiceOrbProps {
   onReflectionModeActivated?: () => void;
   onOrbReflectionTrigger?: () => void;
   isSaving?: boolean;
+  showSuccess?: boolean;
 }
 
 type OrbMode = 'capture' | 'reflection' | 'planning' | 'quiet';
 
-export const VoiceOrb = ({ onVoiceInput, onPlanningModeActivated, onReflectionModeActivated, onOrbReflectionTrigger, isSaving = false }: VoiceOrbProps) => {
+export const VoiceOrb = ({ onVoiceInput, onPlanningModeActivated, onReflectionModeActivated, onOrbReflectionTrigger, isSaving = false, showSuccess = false }: VoiceOrbProps) => {
   const [isListening, setIsListening] = useState(false);
   const [isResponding, setIsResponding] = useState(false);
   const [audioLevels, setAudioLevels] = useState<number[]>(new Array(7).fill(0));
@@ -520,14 +522,24 @@ export const VoiceOrb = ({ onVoiceInput, onPlanningModeActivated, onReflectionMo
                   </div>
                 )}
 
+                {/* Success checkmark */}
+                {showSuccess && !isListening && !isResponding && !isSaving && (
+                  <div className="absolute inset-0 flex items-center justify-center animate-in scale-in duration-300">
+                    <div className="relative">
+                      <Check className="w-10 h-10 text-foreground animate-pulse" strokeWidth={3} />
+                      <div className="absolute inset-0 w-10 h-10 rounded-full bg-foreground/20 animate-ping" />
+                    </div>
+                  </div>
+                )}
+
                 {/* Idle state - soft glow with subtle pulse */}
-                {!isListening && !isResponding && !isSaving && (
+                {!isListening && !isResponding && !isSaving && !showSuccess && (
                   <div className="absolute inset-0 flex items-center justify-center">
                     <div className="w-3 h-3 rounded-full bg-foreground/40 animate-breathing" />
                   </div>
                 )}
 
-                 {/* Processing spinner when responding or saving */}
+                {/* Processing spinner when responding or saving */}
                 {(isResponding || isSaving) && (
                   <div className="flex items-center justify-center w-full h-full">
                     <div className="w-8 h-8 border-2 border-foreground/30 border-t-foreground/70 rounded-full animate-spin" />
@@ -546,6 +558,8 @@ export const VoiceOrb = ({ onVoiceInput, onPlanningModeActivated, onReflectionMo
                   ? 'listening...' 
                   : isSaving
                   ? 'saving...'
+                  : showSuccess
+                  ? 'task saved!'
                   : isResponding 
                   ? 'transcribing...' 
                   : getModeDisplayName(mode)}
