@@ -295,42 +295,32 @@ export const VoiceOrb = ({ onVoiceInput, onPlanningModeActivated, onReflectionMo
               }
               
               if (transcribedText) {
-                // Categorize the task using AI
-                const { data: categoryData, error: categoryError } = await supabase.functions.invoke('categorize-task', {
+                // Add task immediately to inbox for instant feedback
+                if (onVoiceInput) {
+                  onVoiceInput(transcribedText, 'inbox');
+                }
+                
+                toast({
+                  title: "Task captured",
+                  description: transcribedText,
+                });
+                
+                setIsResponding(false);
+                
+                // Categorize in background and update if confident
+                supabase.functions.invoke('categorize-task', {
                   body: { 
                     text: transcribedText,
                     userId: user?.id
                   }
+                }).then(({ data: categoryData, error: categoryError }) => {
+                  if (!categoryError && categoryData?.confidence === 'high' && categoryData.category !== 'inbox') {
+                    // Silently update category if AI is confident
+                    console.log(`Auto-categorized as: ${categoryData.category}`);
+                  }
+                }).catch(err => {
+                  console.error('Background categorization error:', err);
                 });
-
-                if (categoryError) {
-                  console.error('Categorization error:', categoryError);
-                  // If categorization fails, add task without category
-                  if (onVoiceInput) {
-                    onVoiceInput(transcribedText);
-                  }
-                  toast({
-                    title: "Task captured",
-                    description: transcribedText,
-                  });
-                } else {
-                  const { category, confidence } = categoryData;
-                  
-                  if (confidence === 'low') {
-                    // Ask user to choose category
-                    setPendingTask(transcribedText);
-                    setShowCategoryDialog(true);
-                  } else {
-                    // Use AI suggested category
-                    if (onVoiceInput) {
-                      onVoiceInput(transcribedText, category);
-                    }
-                    toast({
-                      title: "Task captured",
-                      description: `${transcribedText} (${category})`,
-                    });
-                  }
-                }
               }
             } catch (error) {
               console.error('Transcription error:', error);
