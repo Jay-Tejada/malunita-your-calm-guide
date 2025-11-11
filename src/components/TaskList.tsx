@@ -8,7 +8,7 @@ import { DomainTabs } from "@/components/DomainTabs";
 
 export const TaskList = () => {
   const { tasks, isLoading, updateTask, deleteTask } = useTasks();
-  const [selectedDomain, setSelectedDomain] = useState("home");
+  const [selectedDomain, setSelectedDomain] = useState("inbox");
 
   if (isLoading) {
     return (

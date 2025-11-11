@@ -328,20 +328,47 @@ export const MalunitaVoice = ({ onSaveNote }: MalunitaVoiceProps) => {
       // Save tasks to database
       if (!user) return;
 
-      const tasksToInsert = tasks.map((task: any) => ({
-        title: task.title,
-        context: response,
-        has_reminder: task.has_reminder || false,
-        has_person_name: task.has_person_name || false,
-        is_time_based: task.is_time_based || false,
-        keywords: task.keywords || [],
-        input_method: 'voice' as const,
-        user_id: user.id,
-      }));
+      // Categorize each task or default to inbox
+      const tasksWithCategories = await Promise.all(
+        tasks.map(async (task: any) => {
+          try {
+            const { data: categoryData } = await supabase.functions.invoke('categorize-task', {
+              body: { text: task.title }
+            });
+            
+            const category = categoryData?.category || 'inbox';
+            
+            return {
+              title: task.title,
+              context: response,
+              category,
+              has_reminder: task.has_reminder || false,
+              has_person_name: task.has_person_name || false,
+              is_time_based: task.is_time_based || false,
+              keywords: task.keywords || [],
+              input_method: 'voice' as const,
+              user_id: user.id,
+            };
+          } catch (error) {
+            // If categorization fails, default to inbox
+            return {
+              title: task.title,
+              context: response,
+              category: 'inbox',
+              has_reminder: task.has_reminder || false,
+              has_person_name: task.has_person_name || false,
+              is_time_based: task.is_time_based || false,
+              keywords: task.keywords || [],
+              input_method: 'voice' as const,
+              user_id: user.id,
+            };
+          }
+        })
+      );
 
       const { error: insertError } = await supabase
         .from('tasks')
-        .insert(tasksToInsert);
+        .insert(tasksWithCategories);
 
       if (insertError) throw insertError;
 
@@ -353,9 +380,14 @@ export const MalunitaVoice = ({ onSaveNote }: MalunitaVoiceProps) => {
         .eq('session_id', sessionId)
         .eq('content', transcription);
 
+      const inboxCount = tasksWithCategories.filter(t => t.category === 'inbox').length;
+      const categorizedCount = tasksWithCategories.length - inboxCount;
+      
       toast({
         title: "Tasks saved",
-        description: `${tasks.length} task${tasks.length > 1 ? 's' : ''} created automatically.`,
+        description: categorizedCount > 0 
+          ? `${categorizedCount} categorized, ${inboxCount} in inbox`
+          : `${tasks.length} task${tasks.length > 1 ? 's' : ''} saved to inbox`,
       });
       
       // Call legacy onSaveNote for backwards compatibility

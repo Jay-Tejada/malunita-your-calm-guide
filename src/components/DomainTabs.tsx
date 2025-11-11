@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { cn } from "@/lib/utils";
-import { Home, Briefcase, Dumbbell, FolderKanban } from "lucide-react";
+import { Inbox, Home, Briefcase, Dumbbell, FolderKanban } from "lucide-react";
 
 const domains = [
+  { id: "inbox", label: "Inbox", icon: Inbox },
   { id: "home", label: "Home", icon: Home },
   { id: "work", label: "Work", icon: Briefcase },
   { id: "gym", label: "Gym", icon: Dumbbell },

@@ -37,6 +37,7 @@ serve(async (req) => {
             role: 'system',
             content: `You are Malunita, a helpful AI assistant that categorizes tasks. 
 Analyze the task and categorize it into one of these domains:
+- inbox: Default category for uncategorizable tasks or when unclear
 - home: Tasks related to personal life, hobbies, errands, home chores, relationships, family, etc.
 - work: Tasks related to work, business, professional development, career, office tasks, etc.
 - gym: Tasks related to fitness, exercise, workouts, sports, physical training, etc.
@@ -44,12 +45,13 @@ Analyze the task and categorize it into one of these domains:
 
 Return ONLY a JSON object with this structure:
 {
-  "category": "home" | "work" | "gym" | "projects",
+  "category": "inbox" | "home" | "work" | "gym" | "projects",
   "confidence": "high" | "low"
 }
 
 Use "high" confidence when the categorization is clear and obvious.
-Use "low" confidence when the task is ambiguous or could fit multiple categories.`
+Use "low" confidence when the task is ambiguous or could fit multiple categories.
+Use "inbox" if confidence is low or categorization is unclear.`
           },
           {
             role: 'user',
@@ -67,7 +69,7 @@ Use "low" confidence when the task is ambiguous or could fit multiple categories
                 properties: {
                   category: {
                     type: "string",
-                    enum: ["home", "work", "gym", "projects"],
+                    enum: ["inbox", "home", "work", "gym", "projects"],
                     description: "The domain category for the task"
                   },
                   confidence: {

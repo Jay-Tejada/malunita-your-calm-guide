@@ -5,7 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { CategoryDialog } from "./CategoryDialog";
 
 interface VoiceOrbProps {
-  onVoiceInput?: (text: string, category?: 'home' | 'work' | 'gym' | 'projects') => void;
+  onVoiceInput?: (text: string, category?: 'inbox' | 'home' | 'work' | 'gym' | 'projects') => void;
 }
 
 export const VoiceOrb = ({ onVoiceInput }: VoiceOrbProps) => {
