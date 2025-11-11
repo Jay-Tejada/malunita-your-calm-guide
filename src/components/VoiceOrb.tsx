@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect } from "react";
-import { Mic } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { CategoryDialog } from "./CategoryDialog";
@@ -218,6 +217,53 @@ export const VoiceOrb = ({ onVoiceInput }: VoiceOrbProps) => {
     });
   };
 
+  // Orbital particles
+  const OrbitalParticles = ({ active }: { active: boolean }) => (
+    <>
+      {/* Orbit line 1 */}
+      <div className={`absolute inset-0 ${active ? 'animate-squiggle' : ''}`}>
+        <svg className="w-full h-full" viewBox="0 0 100 100">
+          <ellipse
+            cx="50"
+            cy="50"
+            rx="40"
+            ry="35"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="0.5"
+            className="text-orb-orbit opacity-20"
+            style={{ transform: 'rotate(15deg)', transformOrigin: 'center' }}
+          />
+        </svg>
+      </div>
+      
+      {/* Orbit line 2 */}
+      <div className={`absolute inset-0 ${active ? 'animate-squiggle' : ''}`} style={{ animationDelay: '0.15s' }}>
+        <svg className="w-full h-full" viewBox="0 0 100 100">
+          <ellipse
+            cx="50"
+            cy="50"
+            rx="38"
+            ry="42"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="0.5"
+            className="text-orb-orbit opacity-15"
+            style={{ transform: 'rotate(-25deg)', transformOrigin: 'center' }}
+          />
+        </svg>
+      </div>
+      
+      {/* Small orbiting particles */}
+      {!active && (
+        <>
+          <div className="absolute top-1/4 left-1/4 w-1 h-1 rounded-full bg-orb-orbit opacity-30 animate-orbit" />
+          <div className="absolute top-1/3 right-1/4 w-1.5 h-1.5 rounded-full bg-orb-orbit opacity-20 animate-orbit-reverse" />
+        </>
+      )}
+    </>
+  );
+
   return (
     <>
       <CategoryDialog
@@ -227,70 +273,95 @@ export const VoiceOrb = ({ onVoiceInput }: VoiceOrbProps) => {
         onCancel={handleCategoryCancel}
       />
       <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50">
-      <div className="flex flex-col items-center gap-3">
-        {/* Response text area */}
-        {isResponding && (
-          <div className="mb-2 px-6 py-3 bg-card rounded-2xl shadow-lg border border-secondary animate-in fade-in duration-300">
-            <p className="text-sm text-foreground max-w-xs text-center">
-              Transcribing your task...
-            </p>
-          </div>
-        )}
-
-        {/* Voice Orb */}
-        <div className="relative">
-          {/* Pulsing ring when listening */}
-          {isListening && (
-            <div className="absolute inset-0 rounded-full border-2 border-orb-listening animate-ping opacity-75" />
+        <div className="flex flex-col items-center gap-6">
+          {/* Response text area */}
+          {isResponding && (
+            <div className="mb-2 px-6 py-3 bg-card rounded-2xl shadow-lg border border-secondary animate-in fade-in duration-300">
+              <p className="text-sm text-foreground max-w-xs text-center">
+                Transcribing your task...
+              </p>
+            </div>
           )}
-          
-          <button
-            onClick={handleClick}
-            className={`relative w-20 h-20 rounded-full transition-all duration-500 ease-in-out shadow-xl
-              ${isListening 
-                ? 'bg-background border-4 border-orb-listening scale-110 shadow-2xl' 
-                : isResponding
-                ? 'bg-orb-responding border-4 border-orb-listening animate-breathing'
-                : 'bg-card border-2 border-secondary hover:scale-105 hover:border-accent'
-              }`}
-          >
-            {/* Real-time waveform responding to audio levels */}
-            {isListening && (
-              <div className="absolute inset-0 flex items-center justify-center gap-1">
-                {audioLevels.map((level, i) => (
-                  <div
-                    key={i}
-                    className="w-1 bg-orb-waveform rounded-full transition-all duration-75"
-                    style={{
-                      height: `${level * 60}%`,
-                    }}
-                  />
-                ))}
-              </div>
-            )}
 
-            {/* Microphone icon when not active */}
-            {!isListening && !isResponding && (
-              <div className="flex items-center justify-center w-full h-full">
-                <Mic className="w-8 h-8 text-foreground" />
+          {/* Voice Orb Container */}
+          <div className="relative flex flex-col items-center gap-4">
+            {/* Main Orb */}
+            <div className={`relative ${!isListening && !isResponding ? 'animate-float' : ''}`}>
+              {/* Outer glow ring - pulsing when active */}
+              {isListening && (
+                <div className="absolute inset-0 rounded-full animate-pulse-glow" 
+                  style={{
+                    boxShadow: '0 0 30px hsl(var(--orb-listening-glow) / 0.5), 0 0 60px hsl(var(--orb-listening-glow) / 0.25)'
+                  }}
+                />
+              )}
+              
+              {/* Orbital lines and particles */}
+              <div className="absolute inset-0 w-32 h-32 -left-6 -top-6">
+                <OrbitalParticles active={isListening} />
               </div>
-            )}
+              
+              <button
+                onClick={handleClick}
+                className={`relative w-20 h-20 rounded-full transition-all duration-700 ease-in-out
+                  ${isListening 
+                    ? 'bg-orb-listening scale-110' 
+                    : isResponding
+                    ? 'bg-orb-responding animate-breathing'
+                    : 'bg-orb-idle hover:scale-105 hover:bg-orb-idle-glow'
+                  }`}
+                style={{
+                  boxShadow: isListening 
+                    ? '0 8px 32px hsl(var(--orb-listening-glow) / 0.4), inset 0 2px 8px hsl(var(--orb-listening-glow) / 0.3)'
+                    : isResponding
+                    ? '0 8px 24px hsl(var(--orb-responding-glow) / 0.3), inset 0 2px 8px hsl(var(--orb-responding-glow) / 0.2)'
+                    : '0 4px 16px hsl(var(--orb-idle-glow) / 0.2), inset 0 1px 4px hsl(var(--orb-idle-glow) / 0.3)'
+                }}
+              >
+                {/* Sound wave visualization when listening */}
+                {isListening && (
+                  <div className="absolute inset-0 flex items-center justify-center gap-0.5 px-4">
+                    {audioLevels.map((level, i) => (
+                      <div
+                        key={i}
+                        className="w-1 bg-foreground/70 rounded-full transition-all duration-100"
+                        style={{
+                          height: `${level * 50}%`,
+                          opacity: 0.6 + (level * 0.4)
+                        }}
+                      />
+                    ))}
+                  </div>
+                )}
 
-            {/* Processing spinner when responding */}
-            {isResponding && (
-              <div className="flex items-center justify-center w-full h-full">
-                <div className="w-8 h-8 border-3 border-foreground border-t-transparent rounded-full animate-spin" />
-              </div>
-            )}
-          </button>
+                {/* Idle state - soft glow with subtle pulse */}
+                {!isListening && !isResponding && (
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="w-3 h-3 rounded-full bg-foreground/40 animate-breathing" />
+                  </div>
+                )}
+
+                {/* Processing spinner when responding */}
+                {isResponding && (
+                  <div className="flex items-center justify-center w-full h-full">
+                    <div className="w-8 h-8 border-2 border-foreground/30 border-t-foreground/70 rounded-full animate-spin" />
+                  </div>
+                )}
+              </button>
+            </div>
+
+            {/* malunita text beneath orb */}
+            <div className="text-center space-y-1">
+              <p className="text-sm font-serif text-foreground tracking-wide lowercase">
+                malunita
+              </p>
+              <p className="text-xs text-muted-foreground font-light">
+                {isListening ? 'listening...' : isResponding ? 'transcribing...' : 'tap to speak'}
+              </p>
+            </div>
+          </div>
         </div>
-
-        {/* Status text */}
-        <p className="text-xs text-muted-foreground font-medium">
-          {isListening ? 'Listening...' : isResponding ? 'Transcribing...' : 'Tap to speak'}
-        </p>
       </div>
-    </div>
     </>
   );
 };

@@ -42,10 +42,14 @@ All colors MUST be HSL.
 
     --radius: 1rem;
 
-    /* Voice orb colors */
-    --orb-listening: 33 25% 83%; /* taupe outline */
-    --orb-responding: 36 33% 91%; /* #EAE1D3 soft glow */
-    --orb-waveform: 0 0% 11%; /* black waveforms */
+    /* Voice orb colors - Mode-based */
+    --orb-idle: 18 42% 92%; /* soft blush/cream */
+    --orb-idle-glow: 18 42% 82%; /* muted blush */
+    --orb-listening: 39 75% 85%; /* warm golden */
+    --orb-listening-glow: 39 75% 70%; /* deeper gold */
+    --orb-responding: 18 55% 88%; /* dusky rose/peach */
+    --orb-responding-glow: 18 55% 75%; /* deeper peach */
+    --orb-orbit: 0 0% 11%; /* black orbit lines */
     
     /* Focus area accent */
     --focus-glow: 36 67% 98%;
@@ -85,6 +89,58 @@ All colors MUST be HSL.
   @keyframes breathing {
     0%, 100% { opacity: 0.6; transform: scale(1); }
     50% { opacity: 1; transform: scale(1.05); }
+  }
+  
+  .animate-float {
+    animation: float 4s ease-in-out infinite;
+  }
+  
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-8px); }
+  }
+  
+  .animate-orbit {
+    animation: orbit 8s linear infinite;
+  }
+  
+  @keyframes orbit {
+    from { transform: rotate(0deg) translateX(50px) rotate(0deg); }
+    to { transform: rotate(360deg) translateX(50px) rotate(-360deg); }
+  }
+  
+  .animate-orbit-reverse {
+    animation: orbit-reverse 10s linear infinite;
+  }
+  
+  @keyframes orbit-reverse {
+    from { transform: rotate(0deg) translateX(60px) rotate(0deg); }
+    to { transform: rotate(-360deg) translateX(60px) rotate(360deg); }
+  }
+  
+  .animate-pulse-glow {
+    animation: pulse-glow 2s ease-in-out infinite;
+  }
+  
+  @keyframes pulse-glow {
+    0%, 100% { 
+      box-shadow: 0 0 20px hsl(var(--orb-listening-glow) / 0.4),
+                  0 0 40px hsl(var(--orb-listening-glow) / 0.2);
+    }
+    50% { 
+      box-shadow: 0 0 30px hsl(var(--orb-listening-glow) / 0.6),
+                  0 0 60px hsl(var(--orb-listening-glow) / 0.3);
+    }
+  }
+  
+  .animate-squiggle {
+    animation: squiggle 0.3s ease-in-out infinite;
+  }
+  
+  @keyframes squiggle {
+    0%, 100% { transform: translateX(0) scale(1); }
+    25% { transform: translateX(-2px) scale(1.05); }
+    75% { transform: translateX(2px) scale(0.95); }
   }
   
   .transition-calm {
