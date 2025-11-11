@@ -1,10 +1,13 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts"
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
+
+const MAX_AUDIO_SIZE = 25 * 1024 * 1024 // 25MB in base64 characters
 
 function processBase64Chunks(base64String: string, chunkSize = 32768) {
   const chunks: Uint8Array[] = [];
@@ -41,13 +44,62 @@ serve(async (req) => {
   }
 
   try {
-    const { audio } = await req.json()
-    
-    if (!audio) {
-      throw new Error('No audio data provided')
+    // Extract JWT and validate user
+    const authHeader = req.headers.get('Authorization')
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: 'Authentication required' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
     }
 
-    console.log('Transcribing audio...')
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      { global: { headers: { Authorization: authHeader } } }
+    )
+
+    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    if (userError || !user) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid authentication' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // Check rate limit
+    const { data: rateLimitOk } = await supabase.rpc('check_rate_limit', {
+      _user_id: user.id,
+      _endpoint: 'transcribe-audio',
+      _max_requests: 20,
+      _window_minutes: 1
+    })
+
+    if (!rateLimitOk) {
+      return new Response(
+        JSON.stringify({ error: 'Rate limit exceeded. Please try again in a moment.' }),
+        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    const { audio } = await req.json()
+    
+    // Input validation
+    if (!audio || typeof audio !== 'string') {
+      return new Response(
+        JSON.stringify({ error: 'Invalid audio data' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    if (audio.length > MAX_AUDIO_SIZE) {
+      return new Response(
+        JSON.stringify({ error: 'Audio file too large. Maximum size is 25MB.' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    console.log('Transcribing audio for user:', user.id)
 
     const binaryAudio = processBase64Chunks(audio)
     
@@ -66,8 +118,11 @@ serve(async (req) => {
 
     if (!response.ok) {
       const errorText = await response.text()
-      console.error('OpenAI API error:', errorText)
-      throw new Error(`OpenAI API error: ${errorText}`)
+      console.error('OpenAI API error:', response.status, errorText)
+      return new Response(
+        JSON.stringify({ error: 'Transcription service temporarily unavailable' }),
+        { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
     }
 
     const result = await response.json()

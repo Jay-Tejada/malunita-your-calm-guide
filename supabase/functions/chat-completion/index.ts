@@ -1,10 +1,14 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+const MAX_MESSAGES = 50;
+const MAX_MESSAGE_LENGTH = 10000;
 
 const getMoodSystemPrompt = (mood: string | null): string => {
   if (!mood) return '';
@@ -26,10 +30,66 @@ serve(async (req) => {
   }
 
   try {
+    // Extract JWT and validate user
+    const authHeader = req.headers.get('Authorization')
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: 'Authentication required' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      { global: { headers: { Authorization: authHeader } } }
+    )
+
+    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    if (userError || !user) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid authentication' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // Check rate limit
+    const { data: rateLimitOk } = await supabase.rpc('check_rate_limit', {
+      _user_id: user.id,
+      _endpoint: 'chat-completion',
+      _max_requests: 30,
+      _window_minutes: 1
+    })
+
+    if (!rateLimitOk) {
+      return new Response(
+        JSON.stringify({ error: 'Too many requests. Please wait a moment.' }),
+        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
     const { messages, userProfile, currentMood } = await req.json();
     
+    // Input validation
     if (!messages || !Array.isArray(messages) || messages.length === 0) {
-      throw new Error('No messages provided');
+      return new Response(
+        JSON.stringify({ error: 'Invalid messages format' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    if (messages.length > MAX_MESSAGES) {
+      return new Response(
+        JSON.stringify({ error: 'Too many messages in conversation' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    if (messages.some((msg: any) => msg.content?.length > MAX_MESSAGE_LENGTH)) {
+      return new Response(
+        JSON.stringify({ error: 'Message content too long' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
     }
 
     const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
@@ -113,8 +173,11 @@ serve(async (req) => {
 
     if (!response.ok) {
       const error = await response.text();
-      console.error('OpenAI API error:', error);
-      throw new Error('OpenAI API error: ' + response.status);
+      console.error('OpenAI API error:', response.status, error);
+      return new Response(
+        JSON.stringify({ error: 'Chat service temporarily unavailable' }),
+        { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     const data = await response.json();

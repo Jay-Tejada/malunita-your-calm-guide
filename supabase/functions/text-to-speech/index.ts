@@ -1,10 +1,13 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+const MAX_TEXT_LENGTH = 3000;
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -12,12 +15,59 @@ serve(async (req) => {
   }
 
   try {
-    // Use 'nova' for a warm, friendly, conversational tone
-    // Other options: 'shimmer' (gentle), 'echo' (calm)
+    // Extract JWT and validate user
+    const authHeader = req.headers.get('Authorization')
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: 'Authentication required' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      { global: { headers: { Authorization: authHeader } } }
+    )
+
+    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    if (userError || !user) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid authentication' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // Check rate limit
+    const { data: rateLimitOk } = await supabase.rpc('check_rate_limit', {
+      _user_id: user.id,
+      _endpoint: 'text-to-speech',
+      _max_requests: 20,
+      _window_minutes: 1
+    })
+
+    if (!rateLimitOk) {
+      return new Response(
+        JSON.stringify({ error: 'Rate limit exceeded' }),
+        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
     const { text, voice = 'nova' } = await req.json();
     
-    if (!text) {
-      throw new Error('No text provided');
+    // Input validation
+    if (!text || typeof text !== 'string') {
+      return new Response(
+        JSON.stringify({ error: 'Invalid text input' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    if (text.length > MAX_TEXT_LENGTH) {
+      return new Response(
+        JSON.stringify({ error: 'Text too long. Maximum 3000 characters.' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
     }
 
     const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
@@ -44,8 +94,11 @@ serve(async (req) => {
 
     if (!response.ok) {
       const error = await response.text();
-      console.error('OpenAI TTS error:', error);
-      throw new Error(`OpenAI TTS error: ${response.status}`);
+      console.error('OpenAI TTS error:', response.status, error);
+      return new Response(
+        JSON.stringify({ error: 'Audio generation service unavailable' }),
+        { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     // Convert audio buffer to base64

@@ -203,6 +203,33 @@ export type Database = {
         }
         Relationships: []
       }
+      rate_limits: {
+        Row: {
+          created_at: string
+          endpoint: string
+          id: string
+          request_count: number
+          user_id: string
+          window_start: string
+        }
+        Insert: {
+          created_at?: string
+          endpoint: string
+          id?: string
+          request_count?: number
+          user_id: string
+          window_start?: string
+        }
+        Update: {
+          created_at?: string
+          endpoint?: string
+          id?: string
+          request_count?: number
+          user_id?: string
+          window_start?: string
+        }
+        Relationships: []
+      }
       task_learning_feedback: {
         Row: {
           actual_category: string
@@ -342,6 +369,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_rate_limit: {
+        Args: {
+          _endpoint: string
+          _max_requests?: number
+          _user_id: string
+          _window_minutes?: number
+        }
+        Returns: boolean
+      }
+      cleanup_old_rate_limits: { Args: never; Returns: undefined }
       clear_old_focus_items: { Args: never; Returns: undefined }
       has_role: {
         Args: {
@@ -350,6 +387,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_service_role: { Args: never; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "user"

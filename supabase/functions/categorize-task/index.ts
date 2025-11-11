@@ -1,10 +1,13 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+const MAX_TEXT_LENGTH = 2000;
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -12,10 +15,59 @@ serve(async (req) => {
   }
 
   try {
+    // Extract JWT and validate user
+    const authHeader = req.headers.get('Authorization')
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ category: 'inbox', confidence: 'low', error: 'Authentication required' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
+    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } }
+    });
+
+    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    if (userError || !user) {
+      return new Response(
+        JSON.stringify({ category: 'inbox', confidence: 'low', error: 'Invalid authentication' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // Check rate limit
+    const { data: rateLimitOk } = await supabase.rpc('check_rate_limit', {
+      _user_id: user.id,
+      _endpoint: 'categorize-task',
+      _max_requests: 30,
+      _window_minutes: 1
+    })
+
+    if (!rateLimitOk) {
+      return new Response(
+        JSON.stringify({ category: 'inbox', confidence: 'low', error: 'Rate limit exceeded' }),
+        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
     const { text, userId } = await req.json();
     
-    if (!text) {
-      throw new Error('No text provided');
+    // Input validation
+    if (!text || typeof text !== 'string') {
+      return new Response(
+        JSON.stringify({ category: 'inbox', confidence: 'low', error: 'Invalid text input' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    if (text.length > MAX_TEXT_LENGTH) {
+      return new Response(
+        JSON.stringify({ category: 'inbox', confidence: 'low', error: 'Text too long' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
     }
 
     const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
@@ -98,7 +150,7 @@ Be confident and decisive. Use "low" confidence only when truly ambiguous.`
         JSON.stringify({ 
           category: 'inbox', 
           confidence: 'low',
-          error: 'API error'
+          error: 'Service temporarily unavailable'
         }),
         { 
           status: 200,

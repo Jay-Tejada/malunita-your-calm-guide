@@ -8,22 +8,22 @@ extra_search_path = ["public", "extensions"]
 max_rows = 1000
 
 [functions.transcribe-audio]
-verify_jwt = false
+verify_jwt = true
 
 [functions.chat-completion]
-verify_jwt = false
+verify_jwt = true
 
 [functions.text-to-speech]
-verify_jwt = false
+verify_jwt = true
 
 [functions.categorize-task]
-verify_jwt = false
+verify_jwt = true
 
 [functions.suggest-tasks]
-verify_jwt = false
+verify_jwt = true
 
 [functions.split-tasks]
-verify_jwt = false
+verify_jwt = true
 
 [functions.runway-review]
 verify_jwt = true
@@ -32,13 +32,13 @@ verify_jwt = true
 verify_jwt = false
 
 [functions.send-push-notification]
-verify_jwt = false
+verify_jwt = true
 
 [functions.suggest-focus]
-verify_jwt = false
+verify_jwt = true
 
 [functions.extract-tasks]
-verify_jwt = false
+verify_jwt = true
 
 [functions.check-admin]
 verify_jwt = true

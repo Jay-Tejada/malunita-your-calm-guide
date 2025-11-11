@@ -7,6 +7,9 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+const MAX_TITLE_LENGTH = 500;
+const MAX_BODY_LENGTH = 1000;
+
 // VAPID keys - Generate these with: web-push generate-vapid-keys
 const VAPID_PUBLIC_KEY = 'BIsP3dA-qEvFd9zkXb48wFpv3mQWO-upuheOmnaUjIU0Etszc8PgpygsNYXmfUoyFZ0MZ4YE2a-GUO0Ewlr1sFo';
 const VAPID_PRIVATE_KEY = Deno.env.get('VAPID_PRIVATE_KEY') || '';
@@ -64,10 +67,13 @@ serve(async (req) => {
   }
 
   try {
-    const { title, body, icon, badge, data, userId } = await req.json() as PushNotificationPayload;
-
-    if (!title || !body) {
-      throw new Error('Title and body are required');
+    // Extract JWT and validate user (for admin/system use)
+    const authHeader = req.headers.get('Authorization')
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: 'Authentication required' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
     }
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
@@ -77,7 +83,56 @@ serve(async (req) => {
       throw new Error('Supabase credentials not configured');
     }
 
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const supabase = createClient(supabaseUrl, supabaseKey, {
+      global: { headers: { Authorization: authHeader } }
+    });
+
+    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    if (userError || !user) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid authentication' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // Check rate limit
+    const { data: rateLimitOk } = await supabase.rpc('check_rate_limit', {
+      _user_id: user.id,
+      _endpoint: 'send-push-notification',
+      _max_requests: 30,
+      _window_minutes: 1
+    })
+
+    if (!rateLimitOk) {
+      return new Response(
+        JSON.stringify({ error: 'Rate limit exceeded' }),
+        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    const { title, body, icon, badge, data, userId } = await req.json() as PushNotificationPayload;
+
+    // Input validation
+    if (!title || !body || typeof title !== 'string' || typeof body !== 'string') {
+      return new Response(
+        JSON.stringify({ error: 'Title and body are required and must be strings' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (title.length > MAX_TITLE_LENGTH) {
+      return new Response(
+        JSON.stringify({ error: 'Title too long' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (body.length > MAX_BODY_LENGTH) {
+      return new Response(
+        JSON.stringify({ error: 'Body too long' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     // Get subscriptions for the user or all users
     let query = supabase.from('push_subscriptions').select('*');
