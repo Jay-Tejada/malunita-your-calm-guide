@@ -9,6 +9,7 @@ import { ProfileSettings } from "@/components/ProfileSettings";
 import { RunwayReview } from "@/components/RunwayReview";
 import { InstallPromptBanner } from "@/components/InstallPromptBanner";
 import { SmartReflectionPrompt } from "@/components/SmartReflectionPrompt";
+import { TaskStream } from "@/components/TaskStream";
 import { useAdmin } from "@/hooks/useAdmin";
 import { useTasks } from "@/hooks/useTasks";
 import { useProfile } from "@/hooks/useProfile";
@@ -16,8 +17,7 @@ import { AppSidebar } from "@/components/AppSidebar";
 
 import { SidebarProvider, useSidebar } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Globe2 } from "lucide-react";
+import { Globe2, Mic } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const CustomSidebarTrigger = ({ hasUrgentTasks }: { hasUrgentTasks: boolean }) => {
@@ -45,7 +45,7 @@ const Index = () => {
   const [loading, setLoading] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
   const [showRunwayReview, setShowRunwayReview] = useState(false);
-  const [showTasksSheet, setShowTasksSheet] = useState(false);
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [showTodaysFocus, setShowTodaysFocus] = useState(false);
   const malunitaVoiceRef = useRef<MalunitaVoiceRef>(null);
   
@@ -203,7 +203,11 @@ const Index = () => {
         {/* Sidebar */}
         <AppSidebar 
           onSettingsClick={() => setShowSettings(true)}
-          onAllTasksClick={() => setShowTasksSheet(true)}
+          onCategoryClick={(category) => {
+            setActiveCategory(category);
+            setShowTodaysFocus(false);
+          }}
+          activeCategory={activeCategory}
         />
 
         {/* Main Content */}
@@ -218,29 +222,61 @@ const Index = () => {
             </div>
           </header>
 
-          {/* Orb-Centered Content */}
+          {/* Main Content Area */}
           <div className="flex-1 flex flex-col px-4 pt-16 pb-32 overflow-y-auto">
-            {/* Voice Orb - Top and Center */}
-            <div className="flex flex-col items-center w-full group py-12">
-              <div className="flex justify-center w-full">
-                <MalunitaVoice 
-                  ref={malunitaVoiceRef} 
-                  onSaveNote={handleSaveNote}
-                  onPlanningModeActivated={handlePlanningMode}
-                  onReflectionModeActivated={handleReflectionMode}
-                  onOrbReflectionTrigger={enableOrbReflectionTrigger ? () => setShowRunwayReview(true) : undefined}
-                  onTasksCreated={() => setShowTodaysFocus(true)}
+            {!activeCategory && !showTodaysFocus ? (
+              // Default: Voice Orb Centered
+              <div className="flex flex-col items-center w-full group py-12">
+                <div className="flex justify-center w-full">
+                  <MalunitaVoice 
+                    ref={malunitaVoiceRef} 
+                    onSaveNote={handleSaveNote}
+                    onPlanningModeActivated={handlePlanningMode}
+                    onReflectionModeActivated={handleReflectionMode}
+                    onOrbReflectionTrigger={enableOrbReflectionTrigger ? () => setShowRunwayReview(true) : undefined}
+                    onTasksCreated={() => setShowTodaysFocus(true)}
+                  />
+                </div>
+                <p className="mt-6 text-sm text-muted-foreground text-center w-full transition-all duration-300 group-hover:text-foreground group-hover:scale-105">What's on your mind?</p>
+              </div>
+            ) : activeCategory ? (
+              // Task Stream View
+              <div className="py-8">
+                <TaskStream 
+                  category={activeCategory} 
+                  onClose={() => setActiveCategory(null)} 
                 />
+                
+                {/* Voice Note Pill Button */}
+                <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50">
+                  <Button
+                    onClick={() => malunitaVoiceRef.current?.startRecording()}
+                    className="rounded-full px-6 py-6 bg-primary/90 hover:bg-primary backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-300 animate-pulse hover:animate-none"
+                  >
+                    <Mic className="w-4 h-4 mr-2" />
+                    <span className="text-sm font-light">Voice Note</span>
+                  </Button>
+                </div>
               </div>
-              <p className="mt-6 text-sm text-muted-foreground text-center w-full transition-all duration-300 group-hover:text-foreground group-hover:scale-105">What's on your mind?</p>
-            </div>
-            
-            {/* Today's Focus - Conditionally shown */}
-            {showTodaysFocus && (
-              <div className="w-full max-w-2xl mx-auto animate-expand-in">
-                <TodaysFocus onReflectClick={enableReflectButton ? () => setShowRunwayReview(true) : undefined} />
+            ) : showTodaysFocus ? (
+              // Today's Focus View
+              <div className="py-8">
+                <div className="w-full max-w-2xl mx-auto animate-fade-in">
+                  <TodaysFocus onReflectClick={enableReflectButton ? () => setShowRunwayReview(true) : undefined} />
+                </div>
+                
+                {/* Voice Note Pill Button */}
+                <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50">
+                  <Button
+                    onClick={() => malunitaVoiceRef.current?.startRecording()}
+                    className="rounded-full px-6 py-6 bg-primary/90 hover:bg-primary backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-300 animate-pulse hover:animate-none"
+                  >
+                    <Mic className="w-4 h-4 mr-2" />
+                    <span className="text-sm font-light">Voice Note</span>
+                  </Button>
+                </div>
               </div>
-            )}
+            ) : null}
           </div>
 
           {/* Smart Reflection Prompt */}
@@ -248,18 +284,6 @@ const Index = () => {
             <SmartReflectionPrompt onReflect={() => setShowRunwayReview(true)} />
           )}
         </main>
-
-        {/* Task Sheet */}
-        <Sheet open={showTasksSheet} onOpenChange={setShowTasksSheet}>
-          <SheetContent side="right" className="w-full sm:max-w-lg overflow-y-auto">
-            <SheetHeader>
-              <SheetTitle>All Tasks</SheetTitle>
-            </SheetHeader>
-            <div className="mt-6">
-              <TaskList />
-            </div>
-          </SheetContent>
-        </Sheet>
 
         {/* Runway Review Modal */}
         {showRunwayReview && <RunwayReview onClose={() => setShowRunwayReview(false)} />}

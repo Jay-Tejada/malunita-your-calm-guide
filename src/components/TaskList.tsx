@@ -12,13 +12,21 @@ import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable"
 import { TaskCard } from "@/components/TaskCard";
 import { useToast } from "@/hooks/use-toast";
 
-export const TaskList = () => {
+interface TaskListProps {
+  category?: string;
+}
+
+export const TaskList = ({ category: externalCategory }: TaskListProps = {}) => {
   const { tasks, isLoading, updateTask, deleteTask } = useTasks();
   const { categories } = useCustomCategories();
-  const [selectedDomain, setSelectedDomain] = useState("inbox");
+  const [internalDomain, setInternalDomain] = useState("inbox");
   const [activeId, setActiveId] = useState<string | null>(null);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const { toast } = useToast();
+  
+  // Use external category if provided, otherwise use internal state
+  const selectedDomain = externalCategory ?? internalDomain;
+  const setSelectedDomain = externalCategory ? () => {} : setInternalDomain;
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -118,6 +126,9 @@ export const TaskList = () => {
   const filteredTasks = tasks?.filter(task => {
     if (task.is_focus) return false;
     
+    // Show all non-focus tasks if "all" is selected
+    if (selectedDomain === 'all') return true;
+    
     // Check if selected domain is a custom category ID
     const isCustomCategory = selectedDomain.startsWith('custom-');
     if (isCustomCategory) {
@@ -186,15 +197,18 @@ export const TaskList = () => {
       onDragCancel={handleDragCancel}
     >
       <div className="space-y-4">
-        <div className="flex items-center justify-between gap-4">
-          <DomainTabs 
-            value={selectedDomain} 
-            onChange={setSelectedDomain} 
-            isDragging={!!activeId}
-            customCategories={categories || []}
-          />
-          <CategoryManager />
-        </div>
+        {/* Only show domain tabs and category manager when not in controlled mode */}
+        {!externalCategory && (
+          <div className="flex items-center justify-between gap-4">
+            <DomainTabs 
+              value={selectedDomain} 
+              onChange={setSelectedDomain} 
+              isDragging={!!activeId}
+              customCategories={categories || []}
+            />
+            <CategoryManager />
+          </div>
+        )}
         
         {/* Keyboard shortcuts hint */}
         {filteredTasks.length > 0 && (

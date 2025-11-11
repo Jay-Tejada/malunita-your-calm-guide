@@ -1,7 +1,18 @@
-import { useState } from "react";
-import { Home, Briefcase, Dumbbell, FolderKanban, Inbox, Tag, Settings, Shield, ListTodo, LogOut } from "lucide-react";
+import React from "react";
+import { 
+  Home, 
+  Briefcase, 
+  Dumbbell, 
+  FolderKanban, 
+  Inbox, 
+  Tag, 
+  Settings, 
+  Shield, 
+  ListTodo, 
+  LogOut,
+  CheckSquare 
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { NavLink } from "@/components/NavLink";
 import { useAdmin } from "@/hooks/useAdmin";
 import { useCustomCategories } from "@/hooks/useCustomCategories";
 import { supabase } from "@/integrations/supabase/client";
@@ -18,12 +29,12 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 
 interface AppSidebarProps {
   onSettingsClick: () => void;
-  onAllTasksClick: () => void;
+  onCategoryClick: (category: string) => void;
+  activeCategory: string | null;
 }
 
 const ICON_MAP: Record<string, React.ComponentType<any>> = {
@@ -31,14 +42,14 @@ const ICON_MAP: Record<string, React.ComponentType<any>> = {
 };
 
 const defaultCategories = [
-  { name: "Inbox", icon: Inbox, path: "/inbox" },
-  { name: "Projects", icon: FolderKanban, path: "/projects" },
-  { name: "Work", icon: Briefcase, path: "/work" },
-  { name: "Home", icon: Home, path: "/home" },
-  { name: "Gym", icon: Dumbbell, path: "/gym" },
+  { label: "Inbox", icon: Inbox, path: "/inbox" },
+  { label: "Projects", icon: FolderKanban, path: "/projects" },
+  { label: "Work", icon: Briefcase, path: "/work" },
+  { label: "Home", icon: Home, path: "/home" },
+  { label: "Gym", icon: Dumbbell, path: "/gym" },
 ];
 
-export function AppSidebar({ onSettingsClick, onAllTasksClick }: AppSidebarProps) {
+export function AppSidebar({ onSettingsClick, onCategoryClick, activeCategory }: AppSidebarProps) {
   const { state } = useSidebar();
   const navigate = useNavigate();
   const { isAdmin } = useAdmin();
@@ -77,22 +88,17 @@ export function AppSidebar({ onSettingsClick, onAllTasksClick }: AppSidebarProps
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {defaultCategories.map((item) => {
-                const IconComponent = item.icon;
-                return (
-                  <SidebarMenuItem key={item.name}>
-                    <SidebarMenuButton asChild>
-                      <button
-                        onClick={onAllTasksClick}
-                        className="w-full flex items-center gap-3 hover:bg-muted/50"
-                      >
-                        <IconComponent className="w-4 h-4" />
-                        {!collapsed && <span>{item.name}</span>}
-                      </button>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
+              {defaultCategories.map((category) => (
+                <SidebarMenuItem key={category.path}>
+                  <SidebarMenuButton 
+                    onClick={() => onCategoryClick(category.path.replace('/', '') || 'inbox')}
+                    className={activeCategory === (category.path.replace('/', '') || 'inbox') ? 'bg-muted text-primary font-medium' : 'hover:bg-muted/50'}
+                  >
+                    <category.icon className="mr-2 h-4 w-4" />
+                    {!collapsed && <span>{category.label}</span>}
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -107,27 +113,26 @@ export function AppSidebar({ onSettingsClick, onAllTasksClick }: AppSidebarProps
               </SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
-                  {customCategories.map((cat) => {
-                    const IconComponent = ICON_MAP[cat.icon || 'Tag'] || Tag;
-                    return (
-                      <SidebarMenuItem key={cat.id}>
-                        <SidebarMenuButton asChild>
-                          <button
-                            onClick={onAllTasksClick}
-                            className="w-full flex items-center gap-3 hover:bg-muted/50"
-                          >
-                            <div 
-                              className="w-4 h-4 rounded-full flex items-center justify-center text-xs"
-                              style={{ backgroundColor: cat.color }}
-                            >
-                              <IconComponent className="w-3 h-3 text-white" />
-                            </div>
-                            {!collapsed && <span>{cat.name}</span>}
-                          </button>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    );
-                  })}
+                  {customCategories?.map((category) => (
+                    <SidebarMenuItem key={category.id}>
+                      <SidebarMenuButton
+                        onClick={() => onCategoryClick(`custom-${category.id}`)}
+                        className={activeCategory === `custom-${category.id}` ? 'bg-muted text-primary font-medium' : 'hover:bg-muted/50'}
+                      >
+                        <div 
+                          className="w-2 h-2 rounded-full mr-3"
+                          style={{ backgroundColor: category.color }}
+                        />
+                        {category.icon && ICON_MAP[category.icon] && (
+                          React.createElement(ICON_MAP[category.icon], { 
+                            className: "mr-2 h-4 w-4",
+                            style: { color: category.color }
+                          })
+                        )}
+                        {!collapsed && <span>{category.name}</span>}
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>
@@ -141,49 +146,35 @@ export function AppSidebar({ onSettingsClick, onAllTasksClick }: AppSidebarProps
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  <button
-                    onClick={onAllTasksClick}
-                    className="w-full flex items-center gap-3 hover:bg-muted/50"
-                  >
-                    <ListTodo className="w-4 h-4" />
-                    {!collapsed && <span>All Tasks</span>}
-                  </button>
+                <SidebarMenuButton 
+                  onClick={() => onCategoryClick('all')}
+                  className={activeCategory === 'all' ? 'bg-muted text-primary font-medium' : 'hover:bg-muted/50'}
+                >
+                  <CheckSquare className="mr-2 h-4 w-4" />
+                  {!collapsed && <span>All Tasks</span>}
                 </SidebarMenuButton>
               </SidebarMenuItem>
+              
               {isAdmin && (
                 <SidebarMenuItem>
-                  <SidebarMenuButton asChild>
-                    <button
-                      onClick={() => navigate('/admin')}
-                      className="w-full flex items-center gap-3 hover:bg-muted/50"
-                    >
-                      <Shield className="w-4 h-4" />
-                      {!collapsed && <span>Admin</span>}
-                    </button>
+                  <SidebarMenuButton onClick={() => navigate('/admin')}>
+                    <Shield className="mr-2 h-4 w-4" />
+                    {!collapsed && <span>Admin</span>}
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               )}
+              
               <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  <button
-                    onClick={onSettingsClick}
-                    className="w-full flex items-center gap-3 hover:bg-muted/50"
-                  >
-                    <Settings className="w-4 h-4" />
-                    {!collapsed && <span>Settings</span>}
-                  </button>
+                <SidebarMenuButton onClick={onSettingsClick}>
+                  <Settings className="mr-2 h-4 w-4" />
+                  {!collapsed && <span>Settings</span>}
                 </SidebarMenuButton>
               </SidebarMenuItem>
+              
               <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  <button
-                    onClick={handleSignOut}
-                    className="w-full flex items-center gap-3 hover:bg-muted/50"
-                  >
-                    <LogOut className="w-4 h-4" />
-                    {!collapsed && <span>Sign Out</span>}
-                  </button>
+                <SidebarMenuButton onClick={handleSignOut}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  {!collapsed && <span>Sign Out</span>}
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>
