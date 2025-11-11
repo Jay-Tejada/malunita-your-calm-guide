@@ -279,6 +279,9 @@ export const MalunitaVoice = ({ onSaveNote }: MalunitaVoiceProps) => {
 
             setIsProcessing(false);
 
+            // Step 4: Automatically save tasks
+            await autoSaveTasks(transcribed, response, user);
+
           } catch (error) {
             console.error('Voice loop error:', error);
             toast({
@@ -306,15 +309,11 @@ export const MalunitaVoice = ({ onSaveNote }: MalunitaVoiceProps) => {
     }
   };
 
-  const handleSave = async () => {
-    if (!transcribedText || !gptResponse) return;
-    
-    setIsProcessing(true);
-    
+  const autoSaveTasks = async (transcription: string, response: string, user: any) => {
     try {
       // Split tasks using AI
       const { data: splitData, error: splitError } = await supabase.functions.invoke('split-tasks', {
-        body: { text: transcribedText }
+        body: { text: transcription }
       });
 
       if (splitError) throw splitError;
@@ -322,22 +321,16 @@ export const MalunitaVoice = ({ onSaveNote }: MalunitaVoiceProps) => {
       const tasks = splitData.tasks || [];
 
       if (tasks.length === 0) {
-        toast({
-          title: "No tasks detected",
-          description: "Try rephrasing with actionable items.",
-          variant: "destructive",
-        });
-        setIsProcessing(false);
+        console.log('No actionable tasks detected in transcription');
         return;
       }
 
       // Save tasks to database
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
+      if (!user) return;
 
       const tasksToInsert = tasks.map((task: any) => ({
         title: task.title,
-        context: gptResponse,
+        context: response,
         has_reminder: task.has_reminder || false,
         has_person_name: task.has_person_name || false,
         is_time_based: task.is_time_based || false,
@@ -358,28 +351,23 @@ export const MalunitaVoice = ({ onSaveNote }: MalunitaVoiceProps) => {
         .update({ was_saved: true })
         .eq('user_id', user.id)
         .eq('session_id', sessionId)
-        .eq('content', transcribedText);
+        .eq('content', transcription);
 
       toast({
         title: "Tasks saved",
-        description: `${tasks.length} task${tasks.length > 1 ? 's' : ''} created successfully.`,
+        description: `${tasks.length} task${tasks.length > 1 ? 's' : ''} created automatically.`,
       });
-
-      setTranscribedText("");
-      setGptResponse("");
       
       // Call legacy onSaveNote for backwards compatibility
       if (onSaveNote) {
-        onSaveNote(transcribedText, gptResponse);
+        onSaveNote(transcription, response);
       }
     } catch (error: any) {
+      console.error('Error auto-saving tasks:', error);
       toast({
-        title: "Error saving tasks",
-        description: error.message,
-        variant: "destructive",
+        title: "Note",
+        description: "Couldn't detect actionable tasks, but your conversation was saved.",
       });
-    } finally {
-      setIsProcessing(false);
     }
   };
 
@@ -547,14 +535,8 @@ export const MalunitaVoice = ({ onSaveNote }: MalunitaVoiceProps) => {
         </div>
 
         {/* Action buttons */}
-        {gptResponse && !isProcessing && !isSpeaking && (
+        {gptResponse && !isProcessing && !isSpeaking && !showMoodSelector && (
           <div className="flex gap-3 animate-in fade-in duration-300">
-            <button
-              onClick={handleSave}
-              className="px-6 py-2 bg-primary text-primary-foreground rounded-full text-sm hover:scale-105 transition-transform"
-            >
-              Save Tasks
-            </button>
             <button
               onClick={handleRetry}
               className="px-6 py-2 bg-secondary text-secondary-foreground rounded-full text-sm hover:scale-105 transition-transform"
