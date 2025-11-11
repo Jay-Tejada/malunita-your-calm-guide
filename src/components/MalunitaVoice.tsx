@@ -547,13 +547,13 @@ export const MalunitaVoice = ({ onSaveNote }: MalunitaVoiceProps) => {
         </div>
 
         {/* Action buttons */}
-        {gptResponse && !isProcessing && !isSpeaking && !showMoodSelector && (
+        {gptResponse && !isProcessing && !isSpeaking && (
           <div className="flex gap-3 animate-in fade-in duration-300">
             <button
               onClick={handleSave}
               className="px-6 py-2 bg-primary text-primary-foreground rounded-full text-sm hover:scale-105 transition-transform"
             >
-              Save Note
+              Save Tasks
             </button>
             <button
               onClick={handleRetry}
