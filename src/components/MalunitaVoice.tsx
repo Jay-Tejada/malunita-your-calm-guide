@@ -559,7 +559,10 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
         tasks.map(async (task: any) => {
           try {
             const { data: categoryData } = await supabase.functions.invoke('categorize-task', {
-              body: { text: task.title }
+              body: { 
+                text: task.title,
+                userId: user.id
+              }
             });
             
             const category = categoryData?.category || 'inbox';

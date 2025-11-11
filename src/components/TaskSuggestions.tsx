@@ -36,8 +36,14 @@ export const TaskSuggestions = ({ tasks, domain, onAddTask }: TaskSuggestionsPro
   const generateSuggestions = async () => {
     setIsLoading(true);
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
       const { data, error } = await supabase.functions.invoke('suggest-tasks', {
-        body: { tasks, domain }
+        body: { 
+          tasks, 
+          domain,
+          userId: user?.id 
+        }
       });
 
       if (error) throw error;

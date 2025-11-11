@@ -1,3 +1,4 @@
+import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
@@ -11,57 +12,56 @@ serve(async (req) => {
   }
 
   try {
-    const { tasks, domain } = await req.json();
+    const { tasks, domain, userId } = await req.json();
     
     if (!tasks) {
       throw new Error('No tasks provided');
     }
 
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    if (!LOVABLE_API_KEY) {
-      throw new Error('LOVABLE_API_KEY is not configured');
+    const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
+    if (!openaiApiKey) {
+      throw new Error('OPENAI_API_KEY is not configured');
     }
+
+    // Locked to gpt-4-turbo for consistency
+    const model = 'gpt-4-turbo';
 
     console.log('Generating task suggestions for domain:', domain);
     console.log('Task count:', tasks.length);
+    console.log('Using model:', model);
 
     // Prepare task summary for the AI
     const taskSummary = tasks.map((t: any) => 
-      `${t.completed ? '✓' : '○'} ${t.title} (${t.context || 'no context'})`
+      `${t.completed ? '✓' : '○'} ${t.title}${t.context ? ` (${t.context})` : ''}`
     ).join('\n');
 
-    const systemPrompt = `You are Malunita, an AI assistant that helps users manage their tasks effectively.
-
-Analyze the user's current tasks and patterns to suggest 3-5 new actionable tasks that would be valuable additions.
+    const systemPrompt = `You are a productivity assistant helping the user think clearly. Based on recent voice notes, unfinished tasks, and goal themes, suggest 3–5 tasks that are meaningful and time-sensitive. Keep it light, encouraging, and avoid generic fluff.
 
 Current domain: ${domain}
 
 Consider:
 - Incomplete tasks that might need follow-up actions
-- Patterns in the user's work (contexts, types of activities)
+- Patterns in the user's work and activities
 - Tasks that complement existing work
 - Balance between different types of activities
 - Realistic time commitments
+- What would be genuinely helpful right now
 
 Suggest tasks that are:
 - Specific and actionable
 - Relevant to the current domain (${domain})
 - Complementary to existing tasks
 - Not duplicates of existing tasks
+- Time-sensitive or meaningful to current goals`;
 
-Return suggestions with appropriate priority levels:
-- high: Urgent or critical tasks
-- medium: Important but not urgent
-- low: Nice to have, can be done later`;
-
-    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+        'Authorization': `Bearer ${openaiApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
+        model: model,
         messages: [
           { role: 'system', content: systemPrompt },
           { 
@@ -115,44 +115,66 @@ Return suggestions with appropriate priority levels:
             }
           }
         ],
-        tool_choice: { type: "function", function: { name: "suggest_tasks" } }
+        tool_choice: { type: "function", function: { name: "suggest_tasks" } },
+        temperature: 0.7
       }),
     });
 
     if (!response.ok) {
+      const errorText = await response.text();
+      console.error('OpenAI API error:', response.status, errorText);
+      
+      // Alert builder about failures - don't fallback
       if (response.status === 429) {
+        console.error('BUILDER ALERT: OpenAI rate limit exceeded for suggest-tasks');
         return new Response(
-          JSON.stringify({ error: 'Rate limit exceeded. Please try again later.' }), 
+          JSON.stringify({ error: 'Rate limit exceeded. Please try again in a moment.' }), 
           {
             status: 429,
             headers: { ...corsHeaders, 'Content-Type': 'application/json' }
           }
         );
       }
-      if (response.status === 402) {
-        return new Response(
-          JSON.stringify({ error: 'Payment required. Please add credits to your workspace.' }), 
-          {
-            status: 402,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-          }
-        );
-      }
-      const errorText = await response.text();
-      console.error('AI gateway error:', response.status, errorText);
-      throw new Error(`AI gateway error: ${response.status}`);
+      
+      console.error('BUILDER ALERT: OpenAI API failure in suggest-tasks:', response.status);
+      throw new Error(`OpenAI API error: ${response.status}`);
     }
 
     const data = await response.json();
-    console.log('AI response received');
+    console.log('OpenAI response received');
 
     const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
     if (!toolCall) {
+      console.error('BUILDER ALERT: No tool call in OpenAI response for suggest-tasks');
       throw new Error('No tool call in response');
     }
 
     const result = JSON.parse(toolCall.function.arguments);
     console.log('Generated suggestions:', result.suggestions.length);
+
+    // Log API usage for admin tracking
+    if (userId) {
+      try {
+        const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2.80.0');
+        const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+        const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+        const supabase = createClient(supabaseUrl, supabaseKey);
+
+        const totalTokens = data.usage?.total_tokens || 0;
+        const costPer1kTokens = 0.020; // gpt-4-turbo cost
+        const estimatedCost = (totalTokens / 1000) * costPer1kTokens;
+
+        await supabase.from('api_usage_logs').insert({
+          user_id: userId,
+          function_name: 'suggest-tasks',
+          model_used: model,
+          tokens_used: totalTokens,
+          estimated_cost: estimatedCost,
+        });
+      } catch (logError) {
+        console.error('Failed to log usage:', logError);
+      }
+    }
 
     return new Response(
       JSON.stringify(result),
@@ -160,7 +182,7 @@ Return suggestions with appropriate priority levels:
     );
 
   } catch (error) {
-    console.error('Task suggestion error:', error);
+    console.error('BUILDER ALERT: Task suggestion error:', error);
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
       {

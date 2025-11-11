@@ -1,3 +1,4 @@
+import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
@@ -11,27 +12,31 @@ serve(async (req) => {
   }
 
   try {
-    const { text } = await req.json();
+    const { text, userId } = await req.json();
     
     if (!text) {
       throw new Error('No text provided');
     }
 
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    if (!LOVABLE_API_KEY) {
-      throw new Error('LOVABLE_API_KEY is not configured');
+    const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
+    if (!openaiApiKey) {
+      throw new Error('OPENAI_API_KEY is not configured');
     }
 
-    console.log('Categorizing task:', text);
+    // Locked to gpt-4-turbo for consistency
+    const model = 'gpt-4-turbo';
 
-    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+    console.log('Categorizing task:', text);
+    console.log('Using model:', model);
+
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+        'Authorization': `Bearer ${openaiApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
+        model: model,
         messages: [
           {
             role: 'system',
@@ -49,67 +54,87 @@ Return ONLY a JSON object with this structure:
   "confidence": "high" | "low"
 }
 
-Use "high" confidence when the categorization is clear and obvious.
-Use "low" confidence when the task is ambiguous or could fit multiple categories.
-Use "inbox" if confidence is low or categorization is unclear.`
+Examples:
+- "Buy groceries" → {"category": "home", "confidence": "high"}
+- "Finish the presentation for Monday" → {"category": "work", "confidence": "high"}
+- "Go for a run" → {"category": "gym", "confidence": "high"}
+- "Work on side project website" → {"category": "projects", "confidence": "high"}
+- "Call someone" → {"category": "inbox", "confidence": "low"}
+
+Be confident and decisive. Use "low" confidence only when truly ambiguous.`
           },
           {
             role: 'user',
-            content: `Categorize this task: "${text}"`
+            content: text
           }
         ],
-        tools: [
-          {
-            type: "function",
-            function: {
-              name: "categorize_task",
-              description: "Categorize a task into home, work, gym, or projects domain",
-              parameters: {
-                type: "object",
-                properties: {
-                  category: {
-                    type: "string",
-                    enum: ["inbox", "home", "work", "gym", "projects"],
-                    description: "The domain category for the task"
-                  },
-                  confidence: {
-                    type: "string",
-                    enum: ["high", "low"],
-                    description: "Confidence level of the categorization"
-                  }
-                },
-                required: ["category", "confidence"],
-                additionalProperties: false
-              }
-            }
-          }
-        ],
-        tool_choice: { type: "function", function: { name: "categorize_task" } }
+        temperature: 0.3,
+        response_format: { type: "json_object" }
       }),
     });
 
     if (!response.ok) {
-      if (response.status === 429) {
-        throw new Error('Rate limit exceeded. Please try again later.');
-      }
-      if (response.status === 402) {
-        throw new Error('Payment required. Please add credits to your workspace.');
-      }
       const errorText = await response.text();
-      console.error('AI gateway error:', response.status, errorText);
-      throw new Error(`AI gateway error: ${response.status}`);
+      console.error('OpenAI API error:', response.status, errorText);
+      
+      if (response.status === 429) {
+        console.error('BUILDER ALERT: OpenAI rate limit exceeded for categorize-task');
+        return new Response(
+          JSON.stringify({ 
+            category: 'inbox', 
+            confidence: 'low',
+            error: 'Rate limit exceeded' 
+          }),
+          { 
+            status: 200,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          }
+        );
+      }
+      
+      console.error('BUILDER ALERT: OpenAI API failure in categorize-task:', response.status);
+      // Gracefully fallback to inbox for categorization failures
+      return new Response(
+        JSON.stringify({ 
+          category: 'inbox', 
+          confidence: 'low',
+          error: 'API error'
+        }),
+        { 
+          status: 200,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
     }
 
     const data = await response.json();
-    console.log('AI response:', JSON.stringify(data));
+    const result = JSON.parse(data.choices[0].message.content);
 
-    const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
-    if (!toolCall) {
-      throw new Error('No tool call in response');
+    console.log('Categorized as:', result.category, 'with', result.confidence, 'confidence');
+
+    // Log API usage for admin tracking
+    if (userId) {
+      try {
+        const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2.80.0');
+        const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+        const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+        const supabase = createClient(supabaseUrl, supabaseKey);
+
+        const totalTokens = data.usage?.total_tokens || 0;
+        const costPer1kTokens = 0.020; // gpt-4-turbo cost
+        const estimatedCost = (totalTokens / 1000) * costPer1kTokens;
+
+        await supabase.from('api_usage_logs').insert({
+          user_id: userId,
+          function_name: 'categorize-task',
+          model_used: model,
+          tokens_used: totalTokens,
+          estimated_cost: estimatedCost,
+        });
+      } catch (logError) {
+        console.error('Failed to log usage:', logError);
+      }
     }
-
-    const result = JSON.parse(toolCall.function.arguments);
-    console.log('Categorization result:', result);
 
     return new Response(
       JSON.stringify(result),
@@ -117,11 +142,16 @@ Use "inbox" if confidence is low or categorization is unclear.`
     );
 
   } catch (error) {
-    console.error('Categorization error:', error);
+    console.error('BUILDER ALERT: Task categorization error:', error);
+    // Gracefully fallback to inbox for categorization errors
     return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
+      JSON.stringify({ 
+        category: 'inbox', 
+        confidence: 'low',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      }),
       {
-        status: 500,
+        status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       }
     );

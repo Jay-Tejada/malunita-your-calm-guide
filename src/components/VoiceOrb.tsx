@@ -118,6 +118,9 @@ export const VoiceOrb = ({ onVoiceInput }: VoiceOrbProps) => {
             }
 
             try {
+              // Get current user for usage tracking
+              const { data: { user } } = await supabase.auth.getUser();
+              
               const { data, error } = await supabase.functions.invoke('transcribe-audio', {
                 body: { audio: base64Audio }
               });
@@ -129,7 +132,10 @@ export const VoiceOrb = ({ onVoiceInput }: VoiceOrbProps) => {
               if (transcribedText) {
                 // Categorize the task using AI
                 const { data: categoryData, error: categoryError } = await supabase.functions.invoke('categorize-task', {
-                  body: { text: transcribedText }
+                  body: { 
+                    text: transcribedText,
+                    userId: user?.id
+                  }
                 });
 
                 if (categoryError) {
