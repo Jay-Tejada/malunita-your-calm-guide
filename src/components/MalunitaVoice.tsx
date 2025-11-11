@@ -26,13 +26,14 @@ interface MalunitaVoiceProps {
   onPlanningModeActivated?: () => void;
   onReflectionModeActivated?: () => void;
   onOrbReflectionTrigger?: () => void;
+  onTasksCreated?: () => void;
 }
 
 export interface MalunitaVoiceRef {
   startRecording: () => void;
 }
 
-export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({ onSaveNote, onPlanningModeActivated, onReflectionModeActivated, onOrbReflectionTrigger }, ref) => {
+export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({ onSaveNote, onPlanningModeActivated, onReflectionModeActivated, onOrbReflectionTrigger, onTasksCreated }, ref) => {
   const [isListening, setIsListening] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -74,6 +75,11 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
       setTimeout(() => {
         setShowSuccess(false);
       }, 2000);
+      
+      // Notify parent that tasks were created
+      if (onTasksCreated) {
+        onTasksCreated();
+      }
     } catch (error) {
       console.error('Error creating task from voice:', error);
     } finally {
@@ -713,6 +719,11 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
         title: "Tasks saved",
         description: `${confirmedTasks.length} task${confirmedTasks.length > 1 ? 's' : ''} saved successfully`,
       });
+      
+      // Notify parent that tasks were created
+      if (onTasksCreated) {
+        onTasksCreated();
+      }
     } catch (error: any) {
       console.error('Error saving tasks:', error);
       toast({

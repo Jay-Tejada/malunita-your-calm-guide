@@ -12,10 +12,11 @@ import { SmartReflectionPrompt } from "@/components/SmartReflectionPrompt";
 import { useAdmin } from "@/hooks/useAdmin";
 import { useTasks } from "@/hooks/useTasks";
 import { useProfile } from "@/hooks/useProfile";
+import { AppSidebar } from "@/components/AppSidebar";
 
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
-import { Menu, Settings, LogOut, Shield, ListTodo } from "lucide-react";
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Menu } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const Index = () => {
@@ -24,6 +25,7 @@ const Index = () => {
   const [showSettings, setShowSettings] = useState(false);
   const [showRunwayReview, setShowRunwayReview] = useState(false);
   const [showTasksSheet, setShowTasksSheet] = useState(false);
+  const [showTodaysFocus, setShowTodaysFocus] = useState(false);
   const malunitaVoiceRef = useRef<MalunitaVoiceRef>(null);
   
   // Runway Review trigger settings (can be managed via settings in future)
@@ -82,7 +84,9 @@ const Index = () => {
   };
 
   const handlePlanningMode = async () => {
-    // Trigger Today's Focus suggestion
+    // Show Today's Focus and trigger suggestion
+    setShowTodaysFocus(true);
+    
     const pendingTasks = tasks?.filter(task => !task.completed && !task.is_focus) || [];
     
     if (pendingTasks.length === 0) {
@@ -168,91 +172,71 @@ const Index = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Install Banner */}
-      <InstallPromptBanner />
-      
-      {/* Minimal Header - Just logo and menu */}
-      <header className="fixed top-0 left-0 right-0 z-40 bg-background/80 backdrop-blur-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex justify-between items-center">
-          <h1 className="text-lg sm:text-xl font-light tracking-tight text-foreground">malunita</h1>
-          <div className="flex gap-2">
-            <Sheet open={showTasksSheet} onOpenChange={setShowTasksSheet}>
-              <SheetTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="w-9 h-9"
-                >
-                  <ListTodo className="w-5 h-5" />
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="right" className="w-full sm:max-w-lg overflow-y-auto">
-                <SheetHeader>
-                  <SheetTitle>All Tasks</SheetTitle>
-                </SheetHeader>
-                <div className="mt-6">
-                  <TaskList />
-                </div>
-              </SheetContent>
-            </Sheet>
-            {isAdmin && (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => navigate('/admin')}
-                className="w-9 h-9"
-              >
-                <Shield className="w-5 h-5" />
-              </Button>
+    <SidebarProvider>
+      <div className="min-h-screen flex w-full bg-background">
+        {/* Sidebar */}
+        <AppSidebar 
+          onSettingsClick={() => setShowSettings(true)}
+          onAllTasksClick={() => setShowTasksSheet(true)}
+        />
+
+        {/* Main Content */}
+        <main className="flex-1 flex flex-col">
+          {/* Install Banner */}
+          <InstallPromptBanner />
+          
+          {/* Minimal Header - Just trigger */}
+          <header className="fixed top-0 left-0 right-0 z-40 bg-background/80 backdrop-blur-sm border-b border-border/50">
+            <div className="px-4 py-3 flex items-center">
+              <SidebarTrigger className="hover:bg-muted/50" />
+            </div>
+          </header>
+
+          {/* Orb-Centered Content */}
+          <div className="flex-1 flex flex-col items-center justify-center px-4 pt-16 pb-32">
+            {/* Voice Orb - Center Stage */}
+            <div className="flex flex-col items-center">
+            <MalunitaVoice 
+              ref={malunitaVoiceRef} 
+              onSaveNote={handleSaveNote}
+              onPlanningModeActivated={handlePlanningMode}
+              onReflectionModeActivated={handleReflectionMode}
+              onOrbReflectionTrigger={enableOrbReflectionTrigger ? () => setShowRunwayReview(true) : undefined}
+              onTasksCreated={() => setShowTodaysFocus(true)}
+            />
+              <p className="mt-6 text-sm text-muted-foreground">What's on your mind?</p>
+            </div>
+            
+            {/* Today's Focus - Conditionally shown */}
+            {showTodaysFocus && (
+              <div className="w-full max-w-2xl mt-12 animate-fade-in">
+                <TodaysFocus onReflectClick={enableReflectButton ? () => setShowRunwayReview(true) : undefined} />
+              </div>
             )}
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setShowSettings(true)}
-              className="w-9 h-9"
-            >
-              <Settings className="w-5 h-5" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleSignOut}
-              className="w-9 h-9"
-            >
-              <LogOut className="w-5 h-5" />
-            </Button>
           </div>
-        </div>
-      </header>
 
-      {/* Minimal Main Content - Orb Focused */}
-      <div className="min-h-screen flex flex-col items-center justify-center px-4 pb-32">
-        {/* Voice Input - Center Stage */}
-        <div className="mb-16">
-          <MalunitaVoice 
-            ref={malunitaVoiceRef} 
-            onSaveNote={handleSaveNote}
-            onPlanningModeActivated={handlePlanningMode}
-            onReflectionModeActivated={handleReflectionMode}
-            onOrbReflectionTrigger={enableOrbReflectionTrigger ? () => setShowRunwayReview(true) : undefined}
-          />
-        </div>
-        
-        {/* Today's Focus - Compact Card */}
-        <div className="w-full max-w-2xl">
-          <TodaysFocus onReflectClick={enableReflectButton ? () => setShowRunwayReview(true) : undefined} />
-        </div>
+          {/* Smart Reflection Prompt */}
+          {enableSmartPrompt && !showRunwayReview && (
+            <SmartReflectionPrompt onReflect={() => setShowRunwayReview(true)} />
+          )}
+        </main>
+
+        {/* Task Sheet */}
+        <Sheet open={showTasksSheet} onOpenChange={setShowTasksSheet}>
+          <SheetContent side="right" className="w-full sm:max-w-lg overflow-y-auto">
+            <SheetHeader>
+              <SheetTitle>All Tasks</SheetTitle>
+            </SheetHeader>
+            <div className="mt-6">
+              <TaskList />
+            </div>
+          </SheetContent>
+        </Sheet>
+
+        {/* Runway Review Modal */}
+        {showRunwayReview && <RunwayReview onClose={() => setShowRunwayReview(false)} />}
       </div>
-
-      {/* Smart Reflection Prompt */}
-      {enableSmartPrompt && !showRunwayReview && (
-        <SmartReflectionPrompt onReflect={() => setShowRunwayReview(true)} />
-      )}
-
-      {/* Runway Review Modal */}
-      {showRunwayReview && <RunwayReview onClose={() => setShowRunwayReview(false)} />}
-    </div>
+    </SidebarProvider>
   );
 };
 

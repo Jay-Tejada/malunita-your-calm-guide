@@ -24,6 +24,7 @@ export const VoiceOrb = ({ onVoiceInput, onPlanningModeActivated, onReflectionMo
   const [mode, setMode] = useState<OrbMode>('capture');
   const [autoModeEnabled, setAutoModeEnabled] = useState(true);
   const [showReflectionTooltip, setShowReflectionTooltip] = useState(false);
+  const [showModeSelector, setShowModeSelector] = useState(false);
   const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -166,15 +167,30 @@ export const VoiceOrb = ({ onVoiceInput, onPlanningModeActivated, onReflectionMo
   };
 
   const handleLongPress = () => {
-    // Check if reflection trigger is available
-    const now = new Date();
-    const hour = now.getHours();
-    const isReflectionTime = mode === 'reflection' || mode === 'quiet' || hour >= 18;
-    
-    if (isReflectionTime && onOrbReflectionTrigger) {
-      onOrbReflectionTrigger();
-      setShowReflectionTooltip(false);
+    // Show mode selector
+    setShowModeSelector(true);
+    setShowReflectionTooltip(false);
+    // Haptic feedback
+    if ('vibrate' in navigator) {
+      navigator.vibrate(100);
     }
+  };
+
+  const handleModeSelect = (selectedMode: OrbMode) => {
+    setMode(selectedMode);
+    setShowModeSelector(false);
+    
+    // Trigger callbacks based on mode
+    if (selectedMode === 'planning' && onPlanningModeActivated) {
+      onPlanningModeActivated();
+    } else if (selectedMode === 'reflection' && onReflectionModeActivated) {
+      onReflectionModeActivated();
+    }
+    
+    toast({
+      title: `${getModeDisplayName(selectedMode)} mode`,
+      description: getModeDescription(selectedMode),
+    });
   };
 
   const handleMouseEnter = () => {
@@ -485,10 +501,10 @@ export const VoiceOrb = ({ onVoiceInput, onPlanningModeActivated, onReflectionMo
                     : (isResponding || isSaving)
                     ? 'bg-orb-responding animate-breathing'
                     : (mode === 'reflection' || mode === 'quiet')
-                    ? 'bg-orb-reflection hover:scale-105 hover:bg-orb-reflection-glow'
+                    ? 'bg-orb-reflection hover:scale-105 hover:bg-orb-reflection-glow animate-breathing'
                     : mode === 'planning'
-                    ? 'bg-orb-planning hover:scale-105 hover:bg-orb-planning-glow'
-                    : 'bg-orb-idle hover:scale-105 hover:bg-orb-idle-glow'
+                    ? 'bg-orb-planning hover:scale-105 hover:bg-orb-planning-glow animate-breathing'
+                    : 'bg-orb-idle hover:scale-105 hover:bg-orb-idle-glow animate-breathing'
                   }`}
                 style={{
                   boxShadow: isListening 
@@ -567,6 +583,36 @@ export const VoiceOrb = ({ onVoiceInput, onPlanningModeActivated, onReflectionMo
             </div>
           </div>
         </div>
+
+        {/* Mode Selector - Long Press */}
+        {showModeSelector && (
+          <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-card p-8 rounded-2xl shadow-2xl max-w-sm w-full animate-scale-in">
+              <h3 className="text-xl font-light mb-6 text-center">Select Mode</h3>
+              <div className="space-y-3">
+                {(['capture', 'planning', 'reflection', 'quiet'] as OrbMode[]).map((m) => (
+                  <button
+                    key={m}
+                    onClick={() => handleModeSelect(m)}
+                    className={`
+                      w-full p-4 rounded-xl text-left transition-all
+                      ${mode === m ? 'bg-primary text-primary-foreground' : 'bg-muted hover:bg-muted/70'}
+                    `}
+                  >
+                    <div className="font-medium">{getModeDisplayName(m)}</div>
+                    <div className="text-sm opacity-70 mt-1">{getModeDescription(m)}</div>
+                  </button>
+                ))}
+              </div>
+              <button
+                onClick={() => setShowModeSelector(false)}
+                className="w-full mt-4 p-3 bg-secondary text-secondary-foreground rounded-xl hover:bg-secondary/80 transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </>
   );
