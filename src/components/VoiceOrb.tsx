@@ -438,7 +438,7 @@ export const VoiceOrb = ({ onVoiceInput, onPlanningModeActivated, onReflectionMo
         onSelectCategory={handleCategorySelect}
         onCancel={handleCategoryCancel}
       />
-      <div className="fixed bottom-20 sm:bottom-8 left-1/2 -translate-x-1/2 z-50" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+      <div className="fixed bottom-24 sm:bottom-8 left-1/2 -translate-x-1/2 z-50" style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 1rem)' }}>
         <div className="flex flex-col items-center gap-6">
           {/* Response text area */}
           {isResponding && (
@@ -546,11 +546,11 @@ export const VoiceOrb = ({ onVoiceInput, onPlanningModeActivated, onReflectionMo
             </div>
 
             {/* malunita text beneath orb */}
-            <div className="text-center space-y-1">
-              <p className="text-sm font-serif text-foreground tracking-wide lowercase">
+            <div className="text-center space-y-0.5">
+              <p className="text-xs sm:text-sm font-serif text-foreground tracking-wide lowercase">
                 malunita
               </p>
-              <p className="text-xs text-muted-foreground font-light">
+              <p className="text-[10px] sm:text-xs text-muted-foreground font-light">
                 {isListening 
                   ? 'listening...' 
                   : isResponding 

@@ -64,13 +64,13 @@ export const SmartReflectionPrompt = ({ onReflect }: SmartReflectionPromptProps)
 
   return (
     <div 
-      className={`fixed bottom-24 sm:bottom-32 left-1/2 -translate-x-1/2 z-40 transition-all duration-300 ${
+      className={`fixed bottom-36 sm:bottom-32 left-1/2 -translate-x-1/2 z-40 transition-all duration-300 max-w-[90vw] sm:max-w-none ${
         isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
       }`}
       style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
-      <div className="bg-background/95 backdrop-blur-sm border border-border rounded-full px-4 sm:px-6 py-2 sm:py-3 shadow-lg flex flex-col sm:flex-row items-center gap-2 sm:gap-4">
-        <p className="text-xs sm:text-sm text-muted-foreground text-center sm:text-left">
+      <div className="bg-background/95 backdrop-blur-sm border border-border rounded-full px-3 sm:px-6 py-2 sm:py-3 shadow-lg flex flex-col sm:flex-row items-center gap-2 sm:gap-4">
+        <p className="text-[11px] sm:text-sm text-muted-foreground text-center sm:text-left">
           Would you like to reflect on your week?
         </p>
         <div className="flex items-center gap-2">
@@ -78,16 +78,16 @@ export const SmartReflectionPrompt = ({ onReflect }: SmartReflectionPromptProps)
             variant="ghost"
             size="sm"
             onClick={handleDismiss}
-            className="text-muted-foreground hover:text-foreground"
+            className="text-muted-foreground hover:text-foreground h-8 px-3 text-xs sm:text-sm"
           >
             Not now
           </Button>
           <Button
             size="sm"
             onClick={handleReflect}
-            className="gap-2 rounded-full"
+            className="gap-1.5 rounded-full h-8 px-4 text-xs sm:text-sm"
           >
-            <Sparkles className="w-3 h-3" />
+            <Sparkles className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
             Begin Review
           </Button>
         </div>

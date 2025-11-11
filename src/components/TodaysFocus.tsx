@@ -123,22 +123,22 @@ export const TodaysFocus = ({ onReflectClick }: TodaysFocusProps) => {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
+    <div className="space-y-6 sm:space-y-8">
+      <div className="flex flex-col gap-4 sm:gap-3">
         <div>
-          <h2 className="text-2xl sm:text-3xl font-light text-foreground">Today's Focus</h2>
-          <p className="text-xs sm:text-sm text-muted-foreground mt-1">
+          <h2 className="text-2xl sm:text-3xl font-light text-foreground mb-1">Today's Focus</h2>
+          <p className="text-xs sm:text-sm text-muted-foreground">
             {focusTasks.length === 0 
               ? "What are the 3-5 most important things today?" 
               : `${focusTasks.length} task${focusTasks.length > 1 ? 's' : ''} to focus on`}
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           {onReflectClick && (
             <Button 
               variant="ghost" 
               size="sm" 
-              className="gap-2"
+              className="gap-1.5 h-9 px-3 text-xs sm:text-sm"
               onClick={onReflectClick}
               title="Review the week with Malunita"
             >
@@ -149,11 +149,11 @@ export const TodaysFocus = ({ onReflectClick }: TodaysFocusProps) => {
             <Button 
               variant="ghost" 
               size="sm" 
-              className="gap-2"
+              className="gap-1.5 h-9 px-3 text-xs sm:text-sm"
               onClick={handleSuggestFocus}
               disabled={isSuggesting}
             >
-              <Sparkles className="w-4 h-4" />
+              <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               {isSuggesting ? 'Thinking...' : 'Suggest Tasks'}
             </Button>
           )}
