@@ -1,3 +1,4 @@
+import React from "react";
 import { useTasks, Task } from "@/hooks/useTasks";
 import { FocusCard } from "@/components/FocusCard";
 import { Card } from "@/components/ui/card";
