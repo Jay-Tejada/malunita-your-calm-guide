@@ -13,6 +13,7 @@ import { TaskStream } from "@/components/TaskStream";
 import { useAdmin } from "@/hooks/useAdmin";
 import { useTasks } from "@/hooks/useTasks";
 import { useProfile } from "@/hooks/useProfile";
+import { useCustomCategories } from "@/hooks/useCustomCategories";
 import { AppSidebar } from "@/components/AppSidebar";
 
 import { SidebarProvider, useSidebar } from "@/components/ui/sidebar";
@@ -57,8 +58,32 @@ const Index = () => {
   const { isAdmin } = useAdmin();
   const { tasks, updateTask } = useTasks();
   const { profile } = useProfile();
+  const { categories: customCategories } = useCustomCategories();
   
   const { toast } = useToast();
+
+  // Build complete category list for navigation
+  const allCategories = [
+    'inbox',
+    'projects', 
+    'work',
+    'home',
+    'gym',
+    ...(customCategories?.map(c => `custom-${c.id}`) || []),
+    'all'
+  ];
+
+  const currentCategoryIndex = activeCategory ? allCategories.indexOf(activeCategory) : -1;
+  const hasPrevCategory = currentCategoryIndex > 0;
+  const hasNextCategory = currentCategoryIndex >= 0 && currentCategoryIndex < allCategories.length - 1;
+
+  const handleCategoryNavigate = (direction: 'prev' | 'next') => {
+    if (direction === 'prev' && hasPrevCategory) {
+      setActiveCategory(allCategories[currentCategoryIndex - 1]);
+    } else if (direction === 'next' && hasNextCategory) {
+      setActiveCategory(allCategories[currentCategoryIndex + 1]);
+    }
+  };
 
   // Check for urgent tasks (time-sensitive or with reminders that are incomplete)
   const hasUrgentTasks = tasks?.some(task => 
@@ -244,7 +269,10 @@ const Index = () => {
               <div className="py-8">
                 <TaskStream 
                   category={activeCategory} 
-                  onClose={() => setActiveCategory(null)} 
+                  onClose={() => setActiveCategory(null)}
+                  onNavigate={handleCategoryNavigate}
+                  hasPrev={hasPrevCategory}
+                  hasNext={hasNextCategory}
                 />
                 
                 {/* Voice Note Pill Button */}
