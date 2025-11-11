@@ -7,6 +7,7 @@ import { useTasks } from "@/hooks/useTasks";
 import { MoodSelector } from "@/components/MoodSelector";
 import { TaskConfirmation } from "@/components/TaskConfirmation";
 import { VoiceOrb } from "@/components/VoiceOrb";
+import { FolderSuggestion } from "@/components/FolderSuggestion";
 
 interface Message {
   role: 'user' | 'assistant';
@@ -19,6 +20,12 @@ interface SuggestedTask {
   suggested_timeframe: string;
   confidence: number;
   confirmation_prompt: string;
+}
+
+interface FolderPrediction {
+  category: string;
+  confidence: number;
+  reason: string;
 }
 
 interface MalunitaVoiceProps {
@@ -49,6 +56,9 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
   const [pendingTasks, setPendingTasks] = useState<SuggestedTask[]>([]);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [originalVoiceText, setOriginalVoiceText] = useState('');
+  const [showFolderSuggestion, setShowFolderSuggestion] = useState(false);
+  const [pendingTaskForFolder, setPendingTaskForFolder] = useState<{text: string, taskId: string} | null>(null);
+  const [folderPredictions, setFolderPredictions] = useState<FolderPrediction[]>([]);
   
   const { profile } = useProfile();
   const { tasks, updateTask, createTasks } = useTasks();
@@ -57,16 +67,17 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
   const handleVoiceTaskCapture = async (text: string, category?: 'inbox' | 'home' | 'work' | 'gym' | 'projects') => {
     try {
       setIsSaving(true);
-      await createTasks([{
+      const result = await createTasks([{
         title: text,
         category: category || 'inbox',
         input_method: 'voice',
         completed: false,
       }]);
       
+      const taskId = result?.[0]?.id;
+      
       // Trigger haptic feedback on mobile devices
       if ('vibrate' in navigator) {
-        // Short double pulse: vibrate-pause-vibrate
         navigator.vibrate([50, 50, 50]);
       }
       
@@ -80,11 +91,70 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
       if (onTasksCreated) {
         onTasksCreated();
       }
+      
+      // Get folder suggestions after task is created
+      if (!category && taskId) {
+        try {
+          const { data: { user } } = await supabase.auth.getUser();
+          const { data: categoryData, error: categoryError } = await supabase.functions.invoke('categorize-task', {
+            body: { 
+              text: text,
+              userId: user?.id
+            }
+          });
+
+          if (!categoryError && categoryData?.predictions && categoryData.predictions.length > 0) {
+            setPendingTaskForFolder({ text, taskId });
+            setFolderPredictions(categoryData.predictions);
+            setShowFolderSuggestion(true);
+          }
+        } catch (err) {
+          console.error('Error getting folder suggestions:', err);
+          // Silently fail - task is already created in inbox
+        }
+      }
     } catch (error) {
       console.error('Error creating task from voice:', error);
     } finally {
       setIsSaving(false);
     }
+  };
+  
+  const handleFolderSelect = async (category: string) => {
+    if (!pendingTaskForFolder) return;
+    
+    try {
+      await updateTask({
+        id: pendingTaskForFolder.taskId,
+        updates: { category }
+      });
+      
+      toast({
+        title: "moved to folder",
+        description: `"${pendingTaskForFolder.text}" → ${category}`,
+      });
+    } catch (error) {
+      console.error('Error updating task category:', error);
+      toast({
+        title: "error",
+        description: "failed to move task",
+        variant: "destructive",
+      });
+    } finally {
+      setShowFolderSuggestion(false);
+      setPendingTaskForFolder(null);
+      setFolderPredictions([]);
+    }
+  };
+  
+  const handleKeepInInbox = () => {
+    toast({
+      title: "kept in inbox",
+      description: "task stays in inbox",
+    });
+    setShowFolderSuggestion(false);
+    setPendingTaskForFolder(null);
+    setFolderPredictions([]);
   };
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -852,6 +922,15 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
           }}
         />
       )}
+      
+      {/* Folder Suggestion Dialog */}
+      <FolderSuggestion
+        open={showFolderSuggestion}
+        taskText={pendingTaskForFolder?.text || ''}
+        predictions={folderPredictions}
+        onSelectFolder={handleFolderSelect}
+        onKeepInInbox={handleKeepInInbox}
+      />
     </div>
   );
 });
