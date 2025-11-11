@@ -2,73 +2,59 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
-export interface Task {
+export interface CustomCategory {
   id: string;
   user_id: string;
-  title: string;
-  context?: string;
-  category?: string;
-  custom_category_id?: string;
-  completed: boolean;
-  completed_at?: string;
-  has_reminder: boolean;
-  has_person_name: boolean;
-  is_time_based: boolean;
-  keywords?: string[];
-  input_method: 'voice' | 'text';
-  is_focus: boolean;
-  focus_date?: string;
+  name: string;
+  color: string;
+  icon?: string;
   created_at: string;
   updated_at: string;
-  goal_aligned?: boolean | null;
-  alignment_reason?: string | null;
 }
 
-export const useTasks = () => {
+export const useCustomCategories = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: tasks, isLoading } = useQuery({
-    queryKey: ['tasks'],
+  const { data: categories, isLoading } = useQuery({
+    queryKey: ['custom-categories'],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
       const { data, error } = await supabase
-        .from('tasks')
+        .from('custom_categories')
         .select('*')
         .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: true });
 
       if (error) throw error;
-      return data as Task[];
+      return data as CustomCategory[];
     },
   });
 
-  const createTasks = useMutation({
-    mutationFn: async (tasks: Array<Omit<Partial<Task>, 'id' | 'user_id' | 'created_at' | 'updated_at'> & { title: string }>) => {
+  const createCategory = useMutation({
+    mutationFn: async (category: { name: string; color?: string; icon?: string }) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      const tasksWithUser = tasks.map(task => ({
-        ...task,
-        user_id: user.id,
-      }));
-
       const { data, error } = await supabase
-        .from('tasks')
-        .insert(tasksWithUser)
-        .select();
+        .from('custom_categories')
+        .insert({
+          ...category,
+          user_id: user.id,
+        })
+        .select()
+        .single();
 
       if (error) throw error;
       return data;
     },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['tasks'] });
-      queryClient.invalidateQueries({ queryKey: ['profile'] });
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['custom-categories'] });
       toast({
-        title: "Tasks saved",
-        description: `${data.length} task${data.length > 1 ? 's' : ''} created successfully.`,
+        title: "Category created",
+        description: "Your custom category has been created.",
       });
     },
     onError: (error: any) => {
@@ -80,10 +66,10 @@ export const useTasks = () => {
     },
   });
 
-  const updateTask = useMutation({
-    mutationFn: async ({ id, updates }: { id: string; updates: Partial<Task> }) => {
+  const updateCategory = useMutation({
+    mutationFn: async ({ id, updates }: { id: string; updates: Partial<CustomCategory> }) => {
       const { data, error } = await supabase
-        .from('tasks')
+        .from('custom_categories')
         .update(updates)
         .eq('id', id)
         .select()
@@ -93,7 +79,10 @@ export const useTasks = () => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['custom-categories'] });
+      toast({
+        title: "Category updated",
+      });
     },
     onError: (error: any) => {
       toast({
@@ -104,19 +93,19 @@ export const useTasks = () => {
     },
   });
 
-  const deleteTask = useMutation({
+  const deleteCategory = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
-        .from('tasks')
+        .from('custom_categories')
         .delete()
         .eq('id', id);
 
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['custom-categories'] });
       toast({
-        title: "Task deleted",
+        title: "Category deleted",
       });
     },
     onError: (error: any) => {
@@ -129,10 +118,10 @@ export const useTasks = () => {
   });
 
   return {
-    tasks,
+    categories: categories || [],
     isLoading,
-    createTasks: createTasks.mutateAsync,
-    updateTask: updateTask.mutateAsync,
-    deleteTask: deleteTask.mutateAsync,
+    createCategory: createCategory.mutateAsync,
+    updateCategory: updateCategory.mutateAsync,
+    deleteCategory: deleteCategory.mutateAsync,
   };
 };

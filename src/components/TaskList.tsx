@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Trash2, User, Clock, Bell, Star } from "lucide-react";
 import { useTasks, Task } from "@/hooks/useTasks";
 import { DomainTabs } from "@/components/DomainTabs";
+import { CategoryManager } from "@/components/CategoryManager";
 import { DndContext, DragEndEvent, DragOverlay, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { TaskCard } from "@/components/TaskCard";
@@ -169,7 +170,10 @@ export const TaskList = () => {
       onDragCancel={handleDragCancel}
     >
       <div className="space-y-4">
-        <DomainTabs value={selectedDomain} onChange={setSelectedDomain} isDragging={!!activeId} />
+        <div className="flex items-center justify-between gap-4">
+          <DomainTabs value={selectedDomain} onChange={setSelectedDomain} isDragging={!!activeId} />
+          <CategoryManager />
+        </div>
         
         {/* Keyboard shortcuts hint */}
         {filteredTasks.length > 0 && (

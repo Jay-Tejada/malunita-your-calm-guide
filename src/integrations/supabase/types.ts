@@ -80,6 +80,36 @@ export type Database = {
         }
         Relationships: []
       }
+      custom_categories: {
+        Row: {
+          color: string | null
+          created_at: string
+          icon: string | null
+          id: string
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          icon?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          icon?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           autocategorize_enabled: boolean | null
@@ -217,6 +247,7 @@ export type Database = {
           completed_at: string | null
           context: string | null
           created_at: string
+          custom_category_id: string | null
           focus_date: string | null
           goal_aligned: boolean | null
           has_person_name: boolean | null
@@ -237,6 +268,7 @@ export type Database = {
           completed_at?: string | null
           context?: string | null
           created_at?: string
+          custom_category_id?: string | null
           focus_date?: string | null
           goal_aligned?: boolean | null
           has_person_name?: boolean | null
@@ -257,6 +289,7 @@ export type Database = {
           completed_at?: string | null
           context?: string | null
           created_at?: string
+          custom_category_id?: string | null
           focus_date?: string | null
           goal_aligned?: boolean | null
           has_person_name?: boolean | null
@@ -270,7 +303,15 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "tasks_custom_category_id_fkey"
+            columns: ["custom_category_id"]
+            isOneToOne: false
+            referencedRelation: "custom_categories"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
