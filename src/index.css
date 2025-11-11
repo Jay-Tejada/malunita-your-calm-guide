@@ -235,7 +235,26 @@ All colors MUST be HSL.
       filter: drop-shadow(0 0 4px hsl(var(--destructive) / 0.4));
     }
     50% { 
-      filter: drop-shadow(0 0 12px hsl(var(--destructive) / 0.8));
+      filter: drop-shadow(0 0 8px hsl(var(--destructive) / 0.7));
+    }
+  }
+  
+  .animate-transition-pulse {
+    animation: transition-pulse 3s ease-in-out;
+  }
+  
+  @keyframes transition-pulse {
+    0%, 100% { 
+      transform: scale(1);
+    }
+    25% { 
+      transform: scale(1.15);
+    }
+    50% { 
+      transform: scale(1.05);
+    }
+    75% { 
+      transform: scale(1.12);
     }
   }
   
