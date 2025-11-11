@@ -63,6 +63,12 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
         completed: false,
       }]);
       
+      // Trigger haptic feedback on mobile devices
+      if ('vibrate' in navigator) {
+        // Short double pulse: vibrate-pause-vibrate
+        navigator.vibrate([50, 50, 50]);
+      }
+      
       // Show success animation
       setShowSuccess(true);
       setTimeout(() => {
