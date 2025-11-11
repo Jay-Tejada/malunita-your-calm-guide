@@ -7,8 +7,11 @@ import { TaskList } from "@/components/TaskList";
 import { TodaysFocus } from "@/components/TodaysFocus";
 import { ProfileSettings } from "@/components/ProfileSettings";
 import { RunwayReviewButton } from "@/components/RunwayReviewButton";
+import { RunwayReview } from "@/components/RunwayReview";
 import { InstallPromptBanner } from "@/components/InstallPromptBanner";
 import { useAdmin } from "@/hooks/useAdmin";
+import { useTasks } from "@/hooks/useTasks";
+import { useProfile } from "@/hooks/useProfile";
 
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Button } from "@/components/ui/button";
@@ -19,9 +22,12 @@ const Index = () => {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
+  const [showRunwayReview, setShowRunwayReview] = useState(false);
   const malunitaVoiceRef = useRef<MalunitaVoiceRef>(null);
   const navigate = useNavigate();
   const { isAdmin } = useAdmin();
+  const { tasks, updateTask } = useTasks();
+  const { profile } = useProfile();
   
   const { toast } = useToast();
 
@@ -67,6 +73,72 @@ const Index = () => {
       title: "Signed out",
       description: "You've been signed out successfully.",
     });
+  };
+
+  const handlePlanningMode = async () => {
+    // Trigger Today's Focus suggestion
+    const pendingTasks = tasks?.filter(task => !task.completed && !task.is_focus) || [];
+    
+    if (pendingTasks.length === 0) {
+      toast({
+        title: "No tasks to prioritize",
+        description: "Add some tasks first, then I can help you focus.",
+      });
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase.functions.invoke('suggest-focus', {
+        body: { 
+          tasks: pendingTasks.map(t => ({
+            id: t.id,
+            title: t.title,
+            context: t.context,
+            category: t.category,
+            has_reminder: t.has_reminder,
+            is_time_based: t.is_time_based
+          })),
+          userProfile: profile
+        }
+      });
+
+      if (error) throw error;
+
+      const { suggestions, message } = data;
+      
+      // Apply suggestions to tasks
+      const today = new Date().toISOString().split('T')[0];
+      for (const suggestion of suggestions) {
+        const task = pendingTasks[suggestion.taskIndex];
+        if (task) {
+          await updateTask({
+            id: task.id,
+            updates: {
+              is_focus: true,
+              focus_date: today,
+              context: suggestion.reason
+            }
+          });
+        }
+      }
+
+      toast({
+        title: "Today's Focus updated",
+        description: message || `${suggestions.length} task${suggestions.length > 1 ? 's' : ''} selected for focus`,
+      });
+    } catch (error: any) {
+      console.error('Error suggesting focus:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to generate suggestions",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleReflectionMode = () => {
+    // Launch Runway Review
+    setShowRunwayReview(true);
   };
 
   if (loading) {
@@ -137,7 +209,12 @@ const Index = () => {
         <div className="max-w-4xl mx-auto space-y-16">
           {/* Voice Input */}
           <div className="flex justify-center">
-            <MalunitaVoice ref={malunitaVoiceRef} onSaveNote={handleSaveNote} />
+            <MalunitaVoice 
+              ref={malunitaVoiceRef} 
+              onSaveNote={handleSaveNote}
+              onPlanningModeActivated={handlePlanningMode}
+              onReflectionModeActivated={handleReflectionMode}
+            />
           </div>
           
           {/* Today's Focus - Primary */}
@@ -158,6 +235,9 @@ const Index = () => {
 
       {/* Runway Review Button */}
       <RunwayReviewButton />
+
+      {/* Runway Review Modal */}
+      {showRunwayReview && <RunwayReview onClose={() => setShowRunwayReview(false)} />}
     </div>
   );
 };

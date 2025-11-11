@@ -5,11 +5,13 @@ import { CategoryDialog } from "./CategoryDialog";
 
 interface VoiceOrbProps {
   onVoiceInput?: (text: string, category?: 'inbox' | 'home' | 'work' | 'gym' | 'projects') => void;
+  onPlanningModeActivated?: () => void;
+  onReflectionModeActivated?: () => void;
 }
 
 type OrbMode = 'capture' | 'reflection' | 'planning' | 'quiet';
 
-export const VoiceOrb = ({ onVoiceInput }: VoiceOrbProps) => {
+export const VoiceOrb = ({ onVoiceInput, onPlanningModeActivated, onReflectionModeActivated }: VoiceOrbProps) => {
   const [isListening, setIsListening] = useState(false);
   const [isResponding, setIsResponding] = useState(false);
   const [audioLevels, setAudioLevels] = useState<number[]>(new Array(7).fill(0));
@@ -30,10 +32,18 @@ export const VoiceOrb = ({ onVoiceInput }: VoiceOrbProps) => {
     
     const checkTimeAndSetMode = () => {
       const hour = new Date().getHours();
-      if (hour >= 21 || hour < 6) { // After 9pm or before 6am
-        setMode('reflection');
-      } else {
-        setMode('capture');
+      const newMode = (hour >= 21 || hour < 6) ? 'reflection' : 'capture';
+      
+      // Only trigger callbacks if mode actually changes
+      if (newMode !== mode) {
+        setMode(newMode);
+        
+        if (newMode === 'reflection') {
+          toast({
+            title: "Reflection mode activated",
+            description: "Evening time for deeper thought",
+          });
+        }
       }
     };
     
@@ -41,7 +51,7 @@ export const VoiceOrb = ({ onVoiceInput }: VoiceOrbProps) => {
     const interval = setInterval(checkTimeAndSetMode, 60000); // Check every minute
     
     return () => clearInterval(interval);
-  }, [autoModeEnabled]);
+  }, [autoModeEnabled, mode, toast]);
 
   const detectModeSwitch = (text: string): OrbMode | null => {
     const lowerText = text.toLowerCase();
@@ -215,6 +225,14 @@ export const VoiceOrb = ({ onVoiceInput }: VoiceOrbProps) => {
                   title: `${getModeDisplayName(detectedMode)} activated`,
                   description: getModeDescription(detectedMode),
                 });
+                
+                // Trigger mode-specific actions
+                if (detectedMode === 'planning') {
+                  onPlanningModeActivated?.();
+                } else if (detectedMode === 'reflection' || detectedMode === 'quiet') {
+                  onReflectionModeActivated?.();
+                }
+                
                 setIsResponding(false);
                 return;
               }

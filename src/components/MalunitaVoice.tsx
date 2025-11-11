@@ -6,6 +6,7 @@ import { useProfile } from "@/hooks/useProfile";
 import { useTasks } from "@/hooks/useTasks";
 import { MoodSelector } from "@/components/MoodSelector";
 import { TaskConfirmation } from "@/components/TaskConfirmation";
+import { VoiceOrb } from "@/components/VoiceOrb";
 
 interface Message {
   role: 'user' | 'assistant';
@@ -22,13 +23,15 @@ interface SuggestedTask {
 
 interface MalunitaVoiceProps {
   onSaveNote?: (text: string, response: string) => void;
+  onPlanningModeActivated?: () => void;
+  onReflectionModeActivated?: () => void;
 }
 
 export interface MalunitaVoiceRef {
   startRecording: () => void;
 }
 
-export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({ onSaveNote }, ref) => {
+export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({ onSaveNote, onPlanningModeActivated, onReflectionModeActivated }, ref) => {
   const [isListening, setIsListening] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -770,79 +773,12 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
           )}
         </div>
 
-        {/* Voice Control */}
-        <div className="flex flex-col items-center gap-6">
-          {/* Controls row */}
-          <div className="flex items-center gap-6">
-            {/* Conversation counter */}
-            {conversationHistory.length > 0 && (
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-muted-foreground">
-                  {conversationHistory.length / 2} exchanges
-                </span>
-                <button
-                  onClick={handleNewConversation}
-                  className="text-xs text-muted-foreground hover:text-foreground transition-colors underline"
-                >
-                  Clear
-                </button>
-              </div>
-            )}
-          </div>
-
-          {/* Main voice button */}
-          <div className="relative">
-            {isListening && (
-              <div className="absolute inset-0 rounded-full border-2 border-orb-listening animate-ping opacity-75" />
-            )}
-            
-            <button
-              onClick={handleVoiceLoop}
-              disabled={isProcessing || isSpeaking}
-              className={`relative w-24 h-24 rounded-full transition-all duration-500 ease-in-out shadow-2xl
-                ${isListening 
-                  ? 'bg-background border-4 border-orb-listening scale-110' 
-                  : isProcessing || isSpeaking
-                  ? 'bg-orb-responding border-4 border-orb-listening animate-breathing opacity-60'
-                  : 'bg-card border-2 border-secondary hover:scale-105 hover:border-accent'
-                }`}
-            >
-              {isListening && (
-                <div className="absolute inset-0 flex items-center justify-center gap-1">
-                  {audioLevels.map((level, i) => (
-                    <div
-                      key={i}
-                      className="w-1.5 bg-orb-waveform rounded-full transition-all duration-75"
-                      style={{ height: `${level * 70}%` }}
-                    />
-                  ))}
-                </div>
-              )}
-
-              {!isListening && !isProcessing && !isSpeaking && (
-                <div className="flex items-center justify-center w-full h-full">
-                  <Mic className="w-10 h-10 text-foreground" />
-                </div>
-              )}
-
-              {(isProcessing || isSpeaking) && (
-                <div className="flex items-center justify-center w-full h-full">
-                  <div className="w-10 h-10 border-3 border-foreground border-t-transparent rounded-full animate-spin" />
-                </div>
-              )}
-            </button>
-          </div>
-
-          <p className="text-sm text-muted-foreground font-light">
-            {isListening 
-              ? 'Listening...' 
-              : isProcessing 
-              ? 'Processing...' 
-              : isSpeaking
-              ? 'Speaking...'
-              : 'Tap to speak'}
-          </p>
-        </div>
+        {/* Voice Control - Replaced with VoiceOrb */}
+        <VoiceOrb 
+          onVoiceInput={() => {}} 
+          onPlanningModeActivated={onPlanningModeActivated}
+          onReflectionModeActivated={onReflectionModeActivated}
+        />
 
         {/* Action buttons */}
         {gptResponse && !isProcessing && !isSpeaking && !showMoodSelector && (
