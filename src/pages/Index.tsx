@@ -39,6 +39,11 @@ const Index = () => {
   
   const { toast } = useToast();
 
+  // Check for urgent tasks (time-sensitive or with reminders that are incomplete)
+  const hasUrgentTasks = tasks?.some(task => 
+    !task.completed && (task.has_reminder || task.is_time_based)
+  ) ?? false;
+
   useEffect(() => {
     // Set up auth state listener FIRST
     const {
@@ -188,8 +193,11 @@ const Index = () => {
           {/* Minimal Header - Just trigger */}
           <header className="fixed top-0 left-0 right-0 z-40 bg-background/80 backdrop-blur-sm border-b border-border/50">
             <div className="px-4 py-3 flex items-center">
-              <SidebarTrigger className="hover:bg-muted/50 p-2 group transition-all duration-300">
-                <Globe2 className="w-5 h-5 text-primary animate-float-spin transition-all duration-300 group-hover:drop-shadow-[0_0_8px_hsl(var(--primary)/0.6)] group-hover:scale-110" />
+              <SidebarTrigger className="hover:bg-muted/50 p-2 group transition-all duration-300 relative">
+                <Globe2 className={`w-5 h-5 text-primary animate-float-spin transition-all duration-300 group-hover:drop-shadow-[0_0_8px_hsl(var(--primary)/0.6)] group-hover:scale-110 ${hasUrgentTasks ? 'animate-alert-pulse' : ''}`} />
+                {hasUrgentTasks && (
+                  <span className="absolute top-1 right-1 w-2 h-2 bg-destructive rounded-full animate-pulse" />
+                )}
               </SidebarTrigger>
             </div>
           </header>

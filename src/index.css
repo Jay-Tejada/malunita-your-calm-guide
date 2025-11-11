@@ -191,6 +191,19 @@ All colors MUST be HSL.
     }
   }
   
+  .animate-alert-pulse {
+    animation: alert-pulse 2s ease-in-out infinite;
+  }
+  
+  @keyframes alert-pulse {
+    0%, 100% { 
+      filter: drop-shadow(0 0 4px hsl(var(--destructive) / 0.4));
+    }
+    50% { 
+      filter: drop-shadow(0 0 12px hsl(var(--destructive) / 0.8));
+    }
+  }
+  
   .animate-squiggle {
     animation: squiggle 0.3s ease-in-out infinite;
   }
