@@ -221,7 +221,7 @@ const Index = () => {
           {/* Orb-Centered Content */}
           <div className="flex-1 flex flex-col items-center justify-center px-4 pt-16 pb-32">
             {/* Voice Orb - Center Stage */}
-            <div className="flex flex-col items-center w-full">
+            <div className="flex flex-col items-center w-full group">
               <div className="flex justify-center w-full">
                 <MalunitaVoice 
                   ref={malunitaVoiceRef} 
@@ -232,7 +232,7 @@ const Index = () => {
                   onTasksCreated={() => setShowTodaysFocus(true)}
                 />
               </div>
-              <p className="mt-6 text-sm text-muted-foreground text-center w-full">What's on your mind?</p>
+              <p className="mt-6 text-sm text-muted-foreground text-center w-full transition-all duration-300 group-hover:text-foreground group-hover:scale-105">What's on your mind?</p>
             </div>
             
             {/* Today's Focus - Conditionally shown */}
