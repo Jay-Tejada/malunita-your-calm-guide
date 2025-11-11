@@ -64,12 +64,13 @@ export const SmartReflectionPrompt = ({ onReflect }: SmartReflectionPromptProps)
 
   return (
     <div 
-      className={`fixed bottom-24 left-1/2 -translate-x-1/2 z-40 transition-all duration-300 ${
+      className={`fixed bottom-24 sm:bottom-32 left-1/2 -translate-x-1/2 z-40 transition-all duration-300 ${
         isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
       }`}
+      style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
-      <div className="bg-background/95 backdrop-blur-sm border border-border rounded-full px-6 py-3 shadow-lg flex items-center gap-4">
-        <p className="text-sm text-muted-foreground">
+      <div className="bg-background/95 backdrop-blur-sm border border-border rounded-full px-4 sm:px-6 py-2 sm:py-3 shadow-lg flex flex-col sm:flex-row items-center gap-2 sm:gap-4">
+        <p className="text-xs sm:text-sm text-muted-foreground text-center sm:text-left">
           Would you like to reflect on your week?
         </p>
         <div className="flex items-center gap-2">

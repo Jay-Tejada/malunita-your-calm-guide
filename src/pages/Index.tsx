@@ -173,18 +173,18 @@ const Index = () => {
       
       {/* Header */}
       <header className="fixed top-0 left-0 right-0 z-40 bg-background/80 backdrop-blur-sm border-b border-secondary">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex justify-between items-center">
           <div>
-            <h1 className="text-2xl font-light tracking-tight text-foreground">Malunita</h1>
-            <p className="text-sm text-muted-foreground mt-1">Your minimalist thinking partner</p>
+            <h1 className="text-xl sm:text-2xl font-light tracking-tight text-foreground">Malunita</h1>
+            <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 sm:mt-1">Your minimalist thinking partner</p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-1 sm:gap-2">
             {isAdmin && (
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={() => navigate('/admin')}
-                className="w-9 h-9"
+                className="w-8 h-8 sm:w-9 sm:h-9"
               >
                 <Shield className="w-4 h-4" />
               </Button>
@@ -193,25 +193,25 @@ const Index = () => {
               variant="ghost"
               size="icon"
               onClick={() => setShowSettings(true)}
-              className="w-9 h-9"
+              className="w-8 h-8 sm:w-9 sm:h-9"
             >
-              <Settings className="w-5 h-5" />
+              <Settings className="w-4 h-4 sm:w-5 sm:h-5" />
             </Button>
             <Button
               variant="ghost"
               size="icon"
               onClick={handleSignOut}
-              className="w-9 h-9"
+              className="w-8 h-8 sm:w-9 sm:h-9"
             >
-              <LogOut className="w-5 h-5" />
+              <LogOut className="w-4 h-4 sm:w-5 sm:h-5" />
             </Button>
           </div>
         </div>
       </header>
 
       {/* Main content */}
-      <div className="pt-24 pb-32 px-6">
-        <div className="max-w-4xl mx-auto space-y-16">
+      <div className="pt-24 pb-40 px-4 sm:px-6">
+        <div className="max-w-4xl mx-auto space-y-12 sm:space-y-16">
           {/* Voice Input */}
           <div className="flex justify-center">
             <MalunitaVoice 
@@ -227,7 +227,7 @@ const Index = () => {
           <TodaysFocus onReflectClick={enableReflectButton ? () => setShowRunwayReview(true) : undefined} />
           
           {/* Secondary Categories - Collapsible */}
-          <Collapsible defaultOpen={false} className="border-t border-secondary pt-8">
+          <Collapsible defaultOpen={false} className="border-t border-secondary pt-6 sm:pt-8">
             <CollapsibleTrigger className="flex items-center justify-between w-full group">
               <h2 className="text-xl font-light text-foreground">Inbox & Categories</h2>
               <ChevronDown className="w-5 h-5 text-muted-foreground transition-transform group-data-[state=open]:rotate-180" />

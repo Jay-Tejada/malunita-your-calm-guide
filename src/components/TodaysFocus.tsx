@@ -124,16 +124,16 @@ export const TodaysFocus = ({ onReflectClick }: TodaysFocusProps) => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
         <div>
-          <h2 className="text-3xl font-light text-foreground">Today's Focus</h2>
-          <p className="text-sm text-muted-foreground mt-1">
+          <h2 className="text-2xl sm:text-3xl font-light text-foreground">Today's Focus</h2>
+          <p className="text-xs sm:text-sm text-muted-foreground mt-1">
             {focusTasks.length === 0 
               ? "What are the 3-5 most important things today?" 
               : `${focusTasks.length} task${focusTasks.length > 1 ? 's' : ''} to focus on`}
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {onReflectClick && (
             <Button 
               variant="ghost" 
@@ -161,9 +161,9 @@ export const TodaysFocus = ({ onReflectClick }: TodaysFocusProps) => {
       </div>
 
       {focusTasks.length === 0 ? (
-        <Card className="p-12 text-center border-dashed">
-          <div className="max-w-md mx-auto space-y-3">
-            <p className="text-muted-foreground">
+        <Card className="p-8 sm:p-12 text-center border-dashed">
+          <div className="max-w-md mx-auto space-y-2 sm:space-y-3">
+            <p className="text-sm sm:text-base text-muted-foreground">
               Your focus area is clear and ready.
             </p>
             <p className="text-sm text-muted-foreground">

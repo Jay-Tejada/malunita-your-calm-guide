@@ -438,7 +438,7 @@ export const VoiceOrb = ({ onVoiceInput, onPlanningModeActivated, onReflectionMo
         onSelectCategory={handleCategorySelect}
         onCancel={handleCategoryCancel}
       />
-      <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50">
+      <div className="fixed bottom-20 sm:bottom-8 left-1/2 -translate-x-1/2 z-50" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
         <div className="flex flex-col items-center gap-6">
           {/* Response text area */}
           {isResponding && (

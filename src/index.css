@@ -89,6 +89,36 @@ All colors MUST be HSL.
   .animate-breathing {
     animation: breathing 3s ease-in-out infinite;
   }
+
+  /* Mobile-specific utilities */
+  @media (max-width: 640px) {
+    .mobile-compact {
+      padding: 1rem;
+    }
+    
+    .mobile-stack {
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    
+    /* Ensure safe areas on notched devices */
+    body {
+      padding-top: env(safe-area-inset-top);
+      padding-left: env(safe-area-inset-left);
+      padding-right: env(safe-area-inset-right);
+    }
+  }
+
+  /* Touch target minimum sizes for accessibility */
+  button:not(.unstyled), 
+  a:not(.unstyled) {
+    min-height: 44px;
+  }
+
+  /* Smooth scrolling */
+  html {
+    scroll-behavior: smooth;
+  }
   
   @keyframes breathing {
     0%, 100% { opacity: 0.6; transform: scale(1); }
