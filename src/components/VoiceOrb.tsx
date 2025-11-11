@@ -468,45 +468,8 @@ export const VoiceOrb = ({ onVoiceInput, onPlanningModeActivated, onReflectionMo
               </div>
             )}
             
-            {/* Orbital Satellites Container */}
-            <div className="relative w-48 h-48 flex items-center justify-center">
-              {/* Reflect Satellite - Top Left */}
-              {onOrbReflectionTrigger && !isListening && !isResponding && (
-                <button
-                  onClick={onOrbReflectionTrigger}
-                  className="absolute w-12 h-12 rounded-full bg-foreground/5 backdrop-blur-sm border border-foreground/10 hover:bg-foreground/10 hover:border-foreground/20 transition-all duration-300 flex items-center justify-center group animate-orbit-satellite-1"
-                  style={{ 
-                    top: '10%',
-                    left: '10%',
-                  }}
-                  aria-label="reflect"
-                >
-                  <span className="text-xs font-mono text-foreground/60 group-hover:text-foreground transition-colors">🪞</span>
-                  <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                    <span className="text-xs font-mono text-foreground/40 lowercase">reflect</span>
-                  </div>
-                </button>
-              )}
-              
-              {/* Suggest Tasks Satellite - Top Right */}
-              {onSuggestTasks && !isListening && !isResponding && (
-                <button
-                  onClick={onSuggestTasks}
-                  className="absolute w-12 h-12 rounded-full bg-foreground/5 backdrop-blur-sm border border-foreground/10 hover:bg-foreground/10 hover:border-foreground/20 transition-all duration-300 flex items-center justify-center group animate-orbit-satellite-2"
-                  style={{ 
-                    top: '10%',
-                    right: '10%',
-                  }}
-                  aria-label="suggest tasks"
-                >
-                  <span className="text-xs font-mono text-foreground/60 group-hover:text-foreground transition-colors">✨</span>
-                  <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                    <span className="text-xs font-mono text-foreground/40 lowercase">suggest</span>
-                  </div>
-                </button>
-              )}
-            
-            {/* Main Orb */}
+            {/* Main Orb Container */}
+            <div className="relative w-32 h-32 flex items-center justify-center">
             <div className={`relative ${!isListening && !isResponding ? 'animate-float' : ''}`}>
               {/* Outer glow ring - pulsing when active */}
               {isListening && (

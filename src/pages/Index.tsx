@@ -331,12 +331,6 @@ const Index = () => {
           {/* Install Banner */}
           <InstallPromptBanner />
           
-          {/* Minimal Header - Just trigger */}
-          <header className="fixed top-0 left-0 right-0 z-40 bg-background/95 backdrop-blur-sm">
-            <div className="px-4 py-3 flex items-center">
-              <CustomSidebarTrigger hasUrgentTasks={hasUrgentTasks} />
-            </div>
-          </header>
 
           {/* Orb-Centered Minimalist Content */}
           <div className="flex-1 flex flex-col items-center justify-center px-4 pt-16">
@@ -353,8 +347,6 @@ const Index = () => {
               onSuggestTasks={handlePlanningMode}
               onTasksCreated={() => setShowTodaysFocus(true)}
             />
-              
-              <p className="text-xs text-foreground/40 font-mono lowercase tracking-wider">malunita — capture mode</p>
             </div>
           </div>
 
