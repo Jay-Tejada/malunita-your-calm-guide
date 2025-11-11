@@ -219,9 +219,9 @@ const Index = () => {
           </header>
 
           {/* Orb-Centered Content */}
-          <div className="flex-1 flex flex-col items-center justify-center px-4 pt-16 pb-32">
-            {/* Voice Orb - Center Stage */}
-            <div className="flex flex-col items-center w-full group">
+          <div className="flex-1 flex flex-col px-4 pt-16 pb-32 overflow-y-auto">
+            {/* Voice Orb - Top and Center */}
+            <div className="flex flex-col items-center w-full group py-12">
               <div className="flex justify-center w-full">
                 <MalunitaVoice 
                   ref={malunitaVoiceRef} 
@@ -237,7 +237,7 @@ const Index = () => {
             
             {/* Today's Focus - Conditionally shown */}
             {showTodaysFocus && (
-              <div className="w-full max-w-2xl mt-12 animate-expand-in">
+              <div className="w-full max-w-2xl mx-auto animate-expand-in">
                 <TodaysFocus onReflectClick={enableReflectButton ? () => setShowRunwayReview(true) : undefined} />
               </div>
             )}
