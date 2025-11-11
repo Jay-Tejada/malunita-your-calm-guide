@@ -8,6 +8,7 @@ export interface CustomCategory {
   name: string;
   color?: string;
   icon?: string;
+  display_order: number;
   created_at: string;
   updated_at: string;
 }
@@ -26,7 +27,7 @@ export const useCustomCategories = () => {
         .from('custom_categories')
         .select('*')
         .eq('user_id', user.id)
-        .order('name');
+        .order('display_order');
 
       if (error) throw error;
       return data as CustomCategory[];
@@ -38,11 +39,22 @@ export const useCustomCategories = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
+      // Get the max display_order for this user
+      const { data: existingCategories } = await supabase
+        .from('custom_categories')
+        .select('display_order')
+        .eq('user_id', user.id)
+        .order('display_order', { ascending: false })
+        .limit(1);
+
+      const maxOrder = existingCategories?.[0]?.display_order ?? -1;
+
       const { data, error } = await supabase
         .from('custom_categories')
         .insert({
           ...category,
           user_id: user.id,
+          display_order: maxOrder + 1,
         })
         .select()
         .single();
@@ -118,11 +130,40 @@ export const useCustomCategories = () => {
     },
   });
 
+  const updateOrder = useMutation({
+    mutationFn: async (updates: Array<{ id: string; display_order: number }>) => {
+      const promises = updates.map(({ id, display_order }) =>
+        supabase
+          .from('custom_categories')
+          .update({ display_order })
+          .eq('id', id)
+      );
+
+      const results = await Promise.all(promises);
+      const errors = results.filter(r => r.error);
+      
+      if (errors.length > 0) {
+        throw new Error('Failed to update category order');
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['custom-categories'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   return {
     categories,
     isLoading,
     createCategory: createCategory.mutateAsync,
     updateCategory: updateCategory.mutateAsync,
     deleteCategory: deleteCategory.mutateAsync,
+    updateOrder: updateOrder.mutateAsync,
   };
 };

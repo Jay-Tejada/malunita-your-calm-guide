@@ -3,8 +3,11 @@ import { useCustomCategories } from "@/hooks/useCustomCategories";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Plus, Trash2, Edit2, Tag, Home, Briefcase, Heart, DollarSign, ShoppingCart, Baby, Car, Plane, Coffee, Book, Music, Gamepad2, Film, Star, Zap } from "lucide-react";
+import { Plus, Trash2, Edit2, Tag, Home, Briefcase, Heart, DollarSign, ShoppingCart, Baby, Car, Plane, Coffee, Book, Music, Gamepad2, Film, Star, Zap, GripVertical } from "lucide-react";
 import { Label } from "@/components/ui/label";
+import { DndContext, closestCenter, DragEndEvent, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
+import { SortableContext, verticalListSortingStrategy, useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 const DEFAULT_COLORS = [
   '#EF4444', // red
@@ -35,13 +38,90 @@ const CATEGORY_ICONS = [
   { icon: Zap, label: "Urgent" },
 ];
 
+interface SortableCategoryItemProps {
+  category: any;
+  onEdit: (category: any) => void;
+  onDelete: (id: string) => void;
+}
+
+const SortableCategoryItem = ({ category, onEdit, onDelete }: SortableCategoryItemProps) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: category.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  const iconData = CATEGORY_ICONS.find(i => i.label === category.icon);
+  const IconComponent = iconData?.icon || Tag;
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="flex items-center gap-2 p-3 rounded-lg border border-border bg-card hover:bg-accent/50 transition-colors"
+    >
+      <div
+        {...attributes}
+        {...listeners}
+        className="cursor-grab active:cursor-grabbing touch-none"
+      >
+        <GripVertical className="w-4 h-4 text-muted-foreground" />
+      </div>
+      <div className="flex items-center gap-3 flex-1">
+        <div
+          className="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
+          style={{ backgroundColor: category.color || '#6B7280' }}
+        >
+          <IconComponent className="w-4 h-4 text-white" />
+        </div>
+        <span className="font-medium">{category.name}</span>
+      </div>
+      <div className="flex gap-1">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => onEdit(category)}
+          className="h-8 w-8"
+        >
+          <Edit2 className="w-4 h-4" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => onDelete(category.id)}
+          className="h-8 w-8 text-destructive hover:text-destructive"
+        >
+          <Trash2 className="w-4 h-4" />
+        </Button>
+      </div>
+    </div>
+  );
+};
+
 export const CustomCategoryManager = () => {
-  const { categories, createCategory, deleteCategory, updateCategory } = useCustomCategories();
+  const { categories, createCategory, deleteCategory, updateCategory, updateOrder } = useCustomCategories();
   const [isOpen, setIsOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [name, setName] = useState("");
   const [color, setColor] = useState("#6B7280");
   const [selectedIconIndex, setSelectedIconIndex] = useState(0);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    })
+  );
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -85,6 +165,36 @@ export const CustomCategoryManager = () => {
     setName("");
     setColor("#6B7280");
     setSelectedIconIndex(0);
+  };
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (!over || active.id === over.id || !categories) {
+      return;
+    }
+
+    const oldIndex = categories.findIndex((cat) => cat.id === active.id);
+    const newIndex = categories.findIndex((cat) => cat.id === over.id);
+
+    if (oldIndex === -1 || newIndex === -1) return;
+
+    // Create new array with reordered items
+    const reordered = [...categories];
+    const [movedItem] = reordered.splice(oldIndex, 1);
+    reordered.splice(newIndex, 0, movedItem);
+
+    // Update display_order for all affected items
+    const updates = reordered.map((cat, index) => ({
+      id: cat.id,
+      display_order: index,
+    }));
+
+    try {
+      await updateOrder(updates);
+    } catch (error) {
+      console.error('Failed to reorder categories:', error);
+    }
   };
 
   return (
@@ -172,45 +282,30 @@ export const CustomCategoryManager = () => {
 
       <div className="space-y-2">
         {categories && categories.length > 0 ? (
-          categories.map((category) => {
-            const iconData = CATEGORY_ICONS.find(i => i.label === category.icon);
-            const IconComponent = iconData?.icon || Tag;
-            
-            return (
-              <div
-                key={category.id}
-                className="flex items-center justify-between p-3 rounded-lg border border-border bg-card hover:bg-accent/50 transition-colors"
+          <>
+            <p className="text-xs text-muted-foreground">
+              Drag categories to reorder them
+            </p>
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+            >
+              <SortableContext
+                items={categories.map(c => c.id)}
+                strategy={verticalListSortingStrategy}
               >
-                <div className="flex items-center gap-3">
-                  <div
-                    className="w-8 h-8 rounded-full flex items-center justify-center"
-                    style={{ backgroundColor: category.color || '#6B7280' }}
-                  >
-                    <IconComponent className="w-4 h-4 text-white" />
-                  </div>
-                  <span className="font-medium">{category.name}</span>
-                </div>
-                <div className="flex gap-1">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleEdit(category)}
-                    className="h-8 w-8"
-                  >
-                    <Edit2 className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleDelete(category.id)}
-                    className="h-8 w-8 text-destructive hover:text-destructive"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
-            );
-          })
+                {categories.map((category) => (
+                  <SortableCategoryItem
+                    key={category.id}
+                    category={category}
+                    onEdit={handleEdit}
+                    onDelete={handleDelete}
+                  />
+                ))}
+              </SortableContext>
+            </DndContext>
+          </>
         ) : (
           <p className="text-sm text-muted-foreground text-center py-4">
             No custom categories yet. Create one to get started!
