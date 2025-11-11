@@ -1,6 +1,10 @@
-import { Sparkles } from "lucide-react";
+import { Sparkles, Settings } from "lucide-react";
+import { useAdmin } from "@/hooks/useAdmin";
+import { NavLink } from "./NavLink";
+import { Button } from "./ui/button";
 
 export const Header = () => {
+  const { isAdmin } = useAdmin();
   return (
     <header className="flex items-center justify-between mb-8">
       <div className="flex items-center gap-3">
@@ -12,11 +16,21 @@ export const Header = () => {
           <p className="text-xs text-muted-foreground">Your thinking partner</p>
         </div>
       </div>
-      <div className="text-right">
-        <p className="text-xs text-muted-foreground">Today</p>
-        <p className="text-sm font-normal text-foreground">
-          {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
-        </p>
+      <div className="flex items-center gap-4">
+        {isAdmin && (
+          <NavLink to="/admin">
+            <Button variant="ghost" size="sm" className="gap-2">
+              <Settings className="w-4 h-4" />
+              <span className="hidden sm:inline">Admin</span>
+            </Button>
+          </NavLink>
+        )}
+        <div className="text-right">
+          <p className="text-xs text-muted-foreground">Today</p>
+          <p className="text-sm font-normal text-foreground">
+            {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
+          </p>
+        </div>
       </div>
     </header>
   );

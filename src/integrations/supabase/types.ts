@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      api_usage_logs: {
+        Row: {
+          created_at: string
+          estimated_cost: number
+          function_name: string
+          id: string
+          model_used: string
+          tokens_used: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          estimated_cost: number
+          function_name: string
+          id?: string
+          model_used: string
+          tokens_used: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          estimated_cost?: number
+          function_name?: string
+          id?: string
+          model_used?: string
+          tokens_used?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       conversation_history: {
         Row: {
           audio_played: boolean | null
@@ -227,15 +257,43 @@ export type Database = {
         }
         Relationships: []
       }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
       clear_old_focus_items: { Args: never; Returns: undefined }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -362,6 +420,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "user"],
+    },
   },
 } as const
