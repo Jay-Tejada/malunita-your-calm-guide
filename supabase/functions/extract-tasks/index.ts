@@ -12,13 +12,58 @@ serve(async (req) => {
   }
 
   try {
-    const { text, userProfile } = await req.json();
+    const { text, userProfile, userId } = await req.json();
     
     if (!text) {
       return new Response(
         JSON.stringify({ error: 'No text provided' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
+    }
+    
+    // Fetch learning data if userId provided
+    let learningInsights = '';
+    if (userId) {
+      const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2.80.0');
+      const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+      const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+      const supabase = createClient(supabaseUrl, supabaseKey);
+      
+      // Get recent corrections to learn from
+      const { data: feedback } = await supabase
+        .from('task_learning_feedback')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('was_corrected', true)
+        .order('created_at', { ascending: false })
+        .limit(20);
+      
+      if (feedback && feedback.length > 0) {
+        // Aggregate patterns
+        const categoryPatterns: Record<string, string[]> = {};
+        const timeframePatterns: Record<string, string[]> = {};
+        
+        feedback.forEach(item => {
+          // Build category patterns
+          const key = item.task_title.toLowerCase();
+          if (!categoryPatterns[item.actual_category]) {
+            categoryPatterns[item.actual_category] = [];
+          }
+          categoryPatterns[item.actual_category].push(key);
+          
+          // Build timeframe patterns
+          if (!timeframePatterns[item.actual_timeframe]) {
+            timeframePatterns[item.actual_timeframe] = [];
+          }
+          timeframePatterns[item.actual_timeframe].push(key);
+        });
+        
+        learningInsights = `\n\nLearning from user's past corrections:
+- Category preferences: ${Object.entries(categoryPatterns).map(([cat, tasks]) => 
+  `${cat} for tasks like: ${tasks.slice(0, 3).join(', ')}`).join('; ')}
+- Timeframe preferences: ${Object.entries(timeframePatterns).map(([time, tasks]) => 
+  `${time} for tasks like: ${tasks.slice(0, 3).join(', ')}`).join('; ')}`;
+      }
     }
 
     const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
@@ -38,6 +83,7 @@ Guidelines:
 
 ${userProfile?.peak_activity_time ? `User's peak activity time: ${userProfile.peak_activity_time}` : ''}
 ${userProfile?.common_prefixes?.length > 0 ? `User often uses these prefixes: ${userProfile.common_prefixes.join(', ')}` : ''}
+${learningInsights}
 
 Return valid JSON in this exact format:
 {

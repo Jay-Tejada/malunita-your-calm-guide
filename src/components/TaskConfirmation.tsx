@@ -9,6 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { supabase } from "@/integrations/supabase/client";
 
 interface SuggestedTask {
   title: string;
@@ -20,11 +21,12 @@ interface SuggestedTask {
 
 interface TaskConfirmationProps {
   tasks: SuggestedTask[];
+  originalText: string;
   onConfirm: (confirmedTasks: Array<{title: string; category: string; is_focus: boolean}>) => void;
   onCancel: () => void;
 }
 
-export const TaskConfirmation: React.FC<TaskConfirmationProps> = ({ tasks, onConfirm, onCancel }) => {
+export const TaskConfirmation: React.FC<TaskConfirmationProps> = ({ tasks, originalText, onConfirm, onCancel }) => {
   const [editedTasks, setEditedTasks] = React.useState(
     tasks.map(task => ({
       title: task.title,
@@ -45,7 +47,32 @@ export const TaskConfirmation: React.FC<TaskConfirmationProps> = ({ tasks, onCon
     setEditedTasks(updated);
   };
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
+    // Track corrections for learning
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (user) {
+      const feedbackPromises = tasks.map((originalTask, index) => {
+        const editedTask = editedTasks[index];
+        const wasCorrected = 
+          originalTask.suggested_category !== editedTask.category ||
+          originalTask.suggested_timeframe !== editedTask.timeframe;
+        
+        return supabase.from('task_learning_feedback').insert({
+          user_id: user.id,
+          original_text: originalText,
+          task_title: editedTask.title,
+          suggested_category: originalTask.suggested_category,
+          actual_category: editedTask.category,
+          suggested_timeframe: originalTask.suggested_timeframe,
+          actual_timeframe: editedTask.timeframe,
+          was_corrected: wasCorrected
+        });
+      });
+      
+      await Promise.all(feedbackPromises);
+    }
+    
     const confirmed = editedTasks.map(task => ({
       title: task.title,
       category: task.category,

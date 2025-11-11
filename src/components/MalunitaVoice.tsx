@@ -41,6 +41,7 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
   const [currentMood, setCurrentMood] = useState<string | null>(null);
   const [pendingTasks, setPendingTasks] = useState<SuggestedTask[]>([]);
   const [showConfirmation, setShowConfirmation] = useState(false);
+  const [originalVoiceText, setOriginalVoiceText] = useState('');
   
   const { profile } = useProfile();
   const { tasks, updateTask, createTasks } = useTasks();
@@ -362,10 +363,13 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
                 
                 try {
                   // Extract tasks using AI
+                  const { data: { user } } = await supabase.auth.getUser();
+                  
                   const { data: extractData, error: extractError } = await supabase.functions.invoke('extract-tasks', {
                     body: { 
                       text: cleanedText,
-                      userProfile: profile
+                      userProfile: profile,
+                      userId: user?.id
                     }
                   });
 
@@ -373,6 +377,7 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
 
                   if (extractData.tasks && extractData.tasks.length > 0) {
                     setPendingTasks(extractData.tasks);
+                    setOriginalVoiceText(cleanedText);
                     setShowConfirmation(true);
                   } else if (extractData.conversation_reply) {
                     setGptResponse(extractData.conversation_reply);
@@ -850,10 +855,12 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
       {showConfirmation && pendingTasks.length > 0 && (
         <TaskConfirmation
           tasks={pendingTasks}
+          originalText={originalVoiceText}
           onConfirm={handleConfirmTasks}
           onCancel={() => {
             setShowConfirmation(false);
             setPendingTasks([]);
+            setOriginalVoiceText('');
             setIsProcessing(false);
           }}
         />

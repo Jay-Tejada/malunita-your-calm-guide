@@ -128,6 +128,45 @@ export type Database = {
         }
         Relationships: []
       }
+      task_learning_feedback: {
+        Row: {
+          actual_category: string
+          actual_timeframe: string
+          created_at: string
+          id: string
+          original_text: string
+          suggested_category: string
+          suggested_timeframe: string
+          task_title: string
+          user_id: string
+          was_corrected: boolean
+        }
+        Insert: {
+          actual_category: string
+          actual_timeframe: string
+          created_at?: string
+          id?: string
+          original_text: string
+          suggested_category: string
+          suggested_timeframe: string
+          task_title: string
+          user_id: string
+          was_corrected?: boolean
+        }
+        Update: {
+          actual_category?: string
+          actual_timeframe?: string
+          created_at?: string
+          id?: string
+          original_text?: string
+          suggested_category?: string
+          suggested_timeframe?: string
+          task_title?: string
+          user_id?: string
+          was_corrected?: boolean
+        }
+        Relationships: []
+      }
       tasks: {
         Row: {
           category: string | null
