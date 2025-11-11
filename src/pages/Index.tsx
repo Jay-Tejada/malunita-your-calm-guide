@@ -8,9 +8,8 @@ import { ProfileSettings } from "@/components/ProfileSettings";
 import { RunwayReviewButton } from "@/components/RunwayReviewButton";
 import { InstallPromptBanner } from "@/components/InstallPromptBanner";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Settings, LogOut } from "lucide-react";
+import { ChevronDown, Settings, LogOut } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const Index = () => {
