@@ -284,11 +284,17 @@ export const VoiceOrb = ({ onVoiceInput, onPlanningModeActivated, onReflectionMo
               // Get current user for usage tracking
               const { data: { user } } = await supabase.auth.getUser();
               
+              console.log('Calling transcribe-audio function...');
               const { data, error } = await supabase.functions.invoke('transcribe-audio', {
                 body: { audio: base64Audio }
               });
 
-              if (error) throw error;
+              console.log('Transcribe response:', { data, error });
+              
+              if (error) {
+                console.error('Transcription error details:', error);
+                throw error;
+              }
 
               const transcribedText = data.text;
               
@@ -343,9 +349,10 @@ export const VoiceOrb = ({ onVoiceInput, onPlanningModeActivated, onReflectionMo
               }
             } catch (error) {
               console.error('Transcription error:', error);
+              const errorMessage = error instanceof Error ? error.message : 'Failed to transcribe audio';
               toast({
                 title: "Error",
-                description: "Failed to transcribe audio",
+                description: errorMessage,
                 variant: "destructive",
               });
             } finally {
