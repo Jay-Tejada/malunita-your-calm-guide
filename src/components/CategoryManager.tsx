@@ -109,7 +109,7 @@ export const CategoryManager = () => {
 
         <div className="space-y-2 mt-4">
           <p className="text-sm text-muted-foreground">Your Categories:</p>
-          {categories.length === 0 ? (
+          {!categories || categories.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-4">
               No custom categories yet. Create one above!
             </p>
