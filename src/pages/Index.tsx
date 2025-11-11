@@ -60,6 +60,22 @@ const CustomSidebarTrigger = ({ hasUrgentTasks }: { hasUrgentTasks: boolean }) =
     }
   };
   
+  // Time-based rotation speed - slower for reflection/evening
+  const getRotationClass = () => {
+    switch (timeOfDay) {
+      case 'morning':
+        return 'animate-float-spin-morning'; // 6s - energetic morning
+      case 'day':
+        return 'animate-float-spin-day'; // 8s - normal pace
+      case 'evening':
+        return 'animate-float-spin-evening'; // 10s - slowing down
+      case 'night':
+        return 'animate-float-spin-night'; // 14s - slow reflection
+      default:
+        return 'animate-float-spin';
+    }
+  };
+  
   return (
     <Button
       variant="ghost"
@@ -68,7 +84,7 @@ const CustomSidebarTrigger = ({ hasUrgentTasks }: { hasUrgentTasks: boolean }) =
       className="hover:bg-muted/50 p-2 group transition-all duration-300 relative h-auto w-auto"
     >
       <Globe2 
-        className={`w-5 h-5 text-primary animate-float-spin transition-all duration-700 group-hover:scale-110 ${getGlowClass()}`} 
+        className={`w-5 h-5 text-primary transition-all duration-700 group-hover:scale-110 ${getRotationClass()} ${getGlowClass()}`} 
       />
       {hasUrgentTasks && (
         <span className="absolute top-1 right-1 w-2 h-2 bg-destructive rounded-full animate-pulse" />

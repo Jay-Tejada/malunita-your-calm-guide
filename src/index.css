@@ -153,7 +153,43 @@ All colors MUST be HSL.
     animation: float 4s ease-in-out infinite, spin-slow 8s linear infinite;
   }
   
+  .animate-float-spin-morning {
+    animation: float 4s ease-in-out infinite, spin-morning 6s linear infinite;
+  }
+  
+  .animate-float-spin-day {
+    animation: float 4s ease-in-out infinite, spin-day 8s linear infinite;
+  }
+  
+  .animate-float-spin-evening {
+    animation: float 4s ease-in-out infinite, spin-evening 10s linear infinite;
+  }
+  
+  .animate-float-spin-night {
+    animation: float 4s ease-in-out infinite, spin-night 14s linear infinite;
+  }
+  
   @keyframes spin-slow {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+  
+  @keyframes spin-morning {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+  
+  @keyframes spin-day {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+  
+  @keyframes spin-evening {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+  
+  @keyframes spin-night {
     from { transform: rotate(0deg); }
     to { transform: rotate(360deg); }
   }
