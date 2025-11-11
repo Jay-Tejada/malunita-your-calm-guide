@@ -252,14 +252,19 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
                 setTranscribedText(cleanedText);
                 console.log('Transcribed (stop command detected):', cleanedText);
                 
+                // Ask user where to place the task
+                const addToFocus = window.confirm(
+                  `"${cleanedText}"\n\nAdd to Today's Focus?\n\nOK = Today's Focus | Cancel = Inbox`
+                );
+                
                 // Auto-save without GPT response
                 const { data: { user } } = await supabase.auth.getUser();
-                await autoSaveTasks(cleanedText, '', user);
+                await autoSaveTasks(cleanedText, '', user, addToFocus);
                 
                 setIsProcessing(false);
                 toast({
-                  title: "Recording stopped",
-                  description: "Your input has been saved",
+                  title: "Saved",
+                  description: addToFocus ? "Added to Today's Focus" : "Saved to Inbox",
                 });
                 return;
               } else {
@@ -388,7 +393,7 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
     }
   };
 
-  const autoSaveTasks = async (transcription: string, response: string, user: any) => {
+  const autoSaveTasks = async (transcription: string, response: string, user: any, addToFocus: boolean = false) => {
     try {
       // Split tasks using AI
       const { data: splitData, error: splitError } = await supabase.functions.invoke('split-tasks', {
@@ -426,6 +431,8 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
               is_time_based: task.is_time_based || false,
               keywords: task.keywords || [],
               input_method: 'voice' as const,
+              is_focus: addToFocus,
+              focus_date: addToFocus ? new Date().toISOString().split('T')[0] : null,
               user_id: user.id,
             };
           } catch (error) {
@@ -439,6 +446,8 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
               is_time_based: task.is_time_based || false,
               keywords: task.keywords || [],
               input_method: 'voice' as const,
+              is_focus: addToFocus,
+              focus_date: addToFocus ? new Date().toISOString().split('T')[0] : null,
               user_id: user.id,
             };
           }

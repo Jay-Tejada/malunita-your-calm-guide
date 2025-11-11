@@ -3,9 +3,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { Auth } from "@/components/Auth";
 import { MalunitaVoice, MalunitaVoiceRef } from "@/components/MalunitaVoice";
 import { TaskList } from "@/components/TaskList";
+import { TodaysFocus } from "@/components/TodaysFocus";
 import { ProfileSettings } from "@/components/ProfileSettings";
 import { RunwayReviewButton } from "@/components/RunwayReviewButton";
 import { InstallPromptBanner } from "@/components/InstallPromptBanner";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Settings, LogOut } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -115,13 +118,25 @@ const Index = () => {
 
       {/* Main content */}
       <div className="pt-24 pb-32 px-6">
-        <div className="max-w-3xl mx-auto space-y-12">
-          <MalunitaVoice ref={malunitaVoiceRef} onSaveNote={handleSaveNote} />
-          
-          <div className="border-t border-secondary pt-8">
-            <h2 className="text-xl font-light mb-4 text-foreground">Your Tasks</h2>
-            <TaskList />
+        <div className="max-w-4xl mx-auto space-y-16">
+          {/* Voice Input */}
+          <div className="flex justify-center">
+            <MalunitaVoice ref={malunitaVoiceRef} onSaveNote={handleSaveNote} />
           </div>
+          
+          {/* Today's Focus - Primary */}
+          <TodaysFocus />
+          
+          {/* Secondary Categories - Collapsible */}
+          <Collapsible defaultOpen={false} className="border-t border-secondary pt-8">
+            <CollapsibleTrigger className="flex items-center justify-between w-full group">
+              <h2 className="text-xl font-light text-foreground">Inbox & Categories</h2>
+              <ChevronDown className="w-5 h-5 text-muted-foreground transition-transform group-data-[state=open]:rotate-180" />
+            </CollapsibleTrigger>
+            <CollapsibleContent className="mt-6">
+              <TaskList />
+            </CollapsibleContent>
+          </Collapsible>
         </div>
       </div>
 

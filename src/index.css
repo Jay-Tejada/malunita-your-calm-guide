@@ -46,6 +46,9 @@ All colors MUST be HSL.
     --orb-listening: 33 25% 83%; /* taupe outline */
     --orb-responding: 36 33% 91%; /* #EAE1D3 soft glow */
     --orb-waveform: 0 0% 11%; /* black waveforms */
+    
+    /* Focus area accent */
+    --focus-glow: 36 67% 98%;
   }
 }
 
@@ -82,5 +85,9 @@ All colors MUST be HSL.
   @keyframes breathing {
     0%, 100% { opacity: 0.6; transform: scale(1); }
     50% { opacity: 1; transform: scale(1.05); }
+  }
+  
+  .transition-calm {
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   }
 }

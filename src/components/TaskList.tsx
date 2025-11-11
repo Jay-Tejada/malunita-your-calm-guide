@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
-import { Trash2, User, Clock, Bell } from "lucide-react";
+import { Trash2, User, Clock, Bell, Star } from "lucide-react";
 import { useTasks, Task } from "@/hooks/useTasks";
 import { DomainTabs } from "@/components/DomainTabs";
 import { DndContext, DragEndEvent, DragOverlay, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
@@ -111,8 +111,10 @@ export const TaskList = () => {
     );
   }
 
-  // Filter tasks by selected domain
-  const filteredTasks = tasks?.filter(task => task.category === selectedDomain) || [];
+  // Filter tasks by selected domain, excluding focus tasks
+  const filteredTasks = tasks?.filter(task => 
+    task.category === selectedDomain && !task.is_focus
+  ) || [];
   const activeTask = activeId ? tasks?.find((t) => t.id === activeId) : null;
 
   if (!tasks || tasks.length === 0) {
@@ -138,6 +140,20 @@ export const TaskList = () => {
         completed: !task.completed,
         completed_at: !task.completed ? new Date().toISOString() : null,
       },
+    });
+  };
+
+  const handleAddToFocus = (taskId: string) => {
+    updateTask({
+      id: taskId,
+      updates: {
+        is_focus: true,
+        focus_date: new Date().toISOString().split('T')[0],
+      },
+    });
+    toast({
+      title: "Added to Focus",
+      description: "Task moved to Today's Focus",
     });
   };
 
@@ -181,6 +197,15 @@ export const TaskList = () => {
                     onToggle={() => handleToggleComplete(task)}
                     onSelect={() => setSelectedTaskId(task.id)}
                   />
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => handleAddToFocus(task.id)}
+                    className="shrink-0 text-muted-foreground hover:text-foreground"
+                    title="Add to Today's Focus"
+                  >
+                    <Star className="w-4 h-4" />
+                  </Button>
                   <Button
                     variant="ghost"
                     size="icon"

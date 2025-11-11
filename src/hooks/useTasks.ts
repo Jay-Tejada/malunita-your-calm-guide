@@ -15,6 +15,8 @@ export interface Task {
   is_time_based: boolean;
   keywords?: string[];
   input_method: 'voice' | 'text';
+  is_focus: boolean;
+  focus_date?: string;
   created_at: string;
   updated_at: string;
 }
