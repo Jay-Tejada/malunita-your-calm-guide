@@ -3,6 +3,7 @@ import { Mic, Volume2, VolumeX } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useProfile } from "@/hooks/useProfile";
+import { useTasks } from "@/hooks/useTasks";
 import { MoodSelector } from "@/components/MoodSelector";
 
 interface Message {
@@ -31,6 +32,7 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
   const [currentMood, setCurrentMood] = useState<string | null>(null);
   
   const { profile } = useProfile();
+  const { tasks, updateTask } = useTasks();
   const audioEnabled = profile?.wants_voice_playback ?? true;
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -231,10 +233,105 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
             if (transcribeError) throw transcribeError;
 
             const transcribed = transcribeData.text;
+            const lowerTranscribed = transcribed.toLowerCase().trim();
+            
+            // Check for AI focus suggestion commands
+            const focusSuggestionPhrases = [
+              'what should i focus on today',
+              'help me prioritize',
+              'suggest focus',
+              'what should i do today',
+              'pick my tasks',
+              'what tasks should i focus on',
+              'help me choose tasks'
+            ];
+            
+            const isFocusSuggestion = focusSuggestionPhrases.some(phrase => 
+              lowerTranscribed.includes(phrase)
+            );
+            
+            if (isFocusSuggestion) {
+              console.log('Focus suggestion command detected');
+              setTranscribedText(transcribed);
+              setIsProcessing(true);
+              
+              try {
+                const pendingTasks = tasks?.filter(task => !task.completed && !task.is_focus) || [];
+                
+                if (pendingTasks.length === 0) {
+                  setIsProcessing(false);
+                  toast({
+                    title: "No tasks to prioritize",
+                    description: "Add some tasks first, then I can help you focus.",
+                  });
+                  return;
+                }
+
+                const { data, error } = await supabase.functions.invoke('suggest-focus', {
+                  body: { 
+                    tasks: pendingTasks.map(t => ({
+                      id: t.id,
+                      title: t.title,
+                      context: t.context,
+                      category: t.category,
+                      has_reminder: t.has_reminder,
+                      is_time_based: t.is_time_based
+                    }))
+                  }
+                });
+
+                if (error) throw error;
+
+                const { suggestions, message } = data;
+                
+                // Apply suggestions to tasks
+                const today = new Date().toISOString().split('T')[0];
+                for (const suggestion of suggestions) {
+                  const task = pendingTasks[suggestion.taskIndex];
+                  if (task) {
+                    await updateTask({
+                      id: task.id,
+                      updates: {
+                        is_focus: true,
+                        focus_date: today,
+                        context: suggestion.reason
+                      }
+                    });
+                  }
+                }
+
+                const responseMessage = message || `I've picked ${suggestions.length} tasks for you to focus on today.`;
+                setGptResponse(responseMessage);
+                
+                // Play audio response if enabled
+                if (audioEnabled) {
+                  const { data: ttsData, error: ttsError } = await supabase.functions.invoke('text-to-speech', {
+                    body: { text: responseMessage, voice: 'nova' }
+                  });
+
+                  if (ttsError) throw ttsError;
+                  await playAudioResponse(ttsData.audioContent);
+                }
+
+                toast({
+                  title: "Focus tasks selected",
+                  description: `${suggestions.length} task${suggestions.length > 1 ? 's' : ''} added to Today's Focus`,
+                });
+              } catch (error: any) {
+                console.error('Error suggesting focus:', error);
+                toast({
+                  title: "Error",
+                  description: error.message || "Failed to generate suggestions",
+                  variant: "destructive",
+                });
+              } finally {
+                setIsProcessing(false);
+              }
+              return;
+            }
             
             // Check for stop commands
             const stopPhrases = ['stop recording', 'that\'s it', 'done', 'stop', 'finish'];
-            const lowerTranscribed = transcribed.toLowerCase().trim();
             const isStopCommand = stopPhrases.some(phrase => 
               lowerTranscribed.endsWith(phrase) || lowerTranscribed === phrase
             );
