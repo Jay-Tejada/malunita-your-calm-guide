@@ -149,6 +149,15 @@ All colors MUST be HSL.
     50% { transform: translateY(-8px); }
   }
   
+  .animate-float-spin {
+    animation: float 4s ease-in-out infinite, spin-slow 8s linear infinite;
+  }
+  
+  @keyframes spin-slow {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+  
   .animate-orbit {
     animation: orbit 8s linear infinite;
   }
