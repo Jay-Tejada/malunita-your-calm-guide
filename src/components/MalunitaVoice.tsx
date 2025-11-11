@@ -5,10 +5,19 @@ import { useToast } from "@/hooks/use-toast";
 import { useProfile } from "@/hooks/useProfile";
 import { useTasks } from "@/hooks/useTasks";
 import { MoodSelector } from "@/components/MoodSelector";
+import { TaskConfirmation } from "@/components/TaskConfirmation";
 
 interface Message {
   role: 'user' | 'assistant';
   content: string;
+}
+
+interface SuggestedTask {
+  title: string;
+  suggested_category: string;
+  suggested_timeframe: string;
+  confidence: number;
+  confirmation_prompt: string;
 }
 
 interface MalunitaVoiceProps {
@@ -30,9 +39,11 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
   const [sessionId] = useState(() => Date.now().toString());
   const [showMoodSelector, setShowMoodSelector] = useState(false);
   const [currentMood, setCurrentMood] = useState<string | null>(null);
+  const [pendingTasks, setPendingTasks] = useState<SuggestedTask[]>([]);
+  const [showConfirmation, setShowConfirmation] = useState(false);
   
   const { profile } = useProfile();
-  const { tasks, updateTask } = useTasks();
+  const { tasks, updateTask, createTasks } = useTasks();
   const audioEnabled = profile?.wants_voice_playback ?? true;
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -349,20 +360,48 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
                 setTranscribedText(cleanedText);
                 console.log('Transcribed (stop command detected):', cleanedText);
                 
-                // Ask user where to place the task
-                const addToFocus = window.confirm(
-                  `"${cleanedText}"\n\nAdd to Today's Focus?\n\nOK = Today's Focus | Cancel = Inbox`
-                );
+                try {
+                  // Extract tasks using AI
+                  const { data: extractData, error: extractError } = await supabase.functions.invoke('extract-tasks', {
+                    body: { 
+                      text: cleanedText,
+                      userProfile: profile
+                    }
+                  });
+
+                  if (extractError) throw extractError;
+
+                  if (extractData.tasks && extractData.tasks.length > 0) {
+                    setPendingTasks(extractData.tasks);
+                    setShowConfirmation(true);
+                  } else if (extractData.conversation_reply) {
+                    setGptResponse(extractData.conversation_reply);
+                    
+                    if (audioEnabled) {
+                      const { data: ttsData, error: ttsError } = await supabase.functions.invoke('text-to-speech', {
+                        body: { text: extractData.conversation_reply, voice: 'nova' }
+                      });
+
+                      if (ttsError) throw ttsError;
+                      await playAudioResponse(ttsData.audioContent);
+                    }
+                    
+                    toast({
+                      title: "Got it",
+                      description: "No tasks to save from that input.",
+                    });
+                  }
+                } catch (error: any) {
+                  console.error('Error extracting tasks:', error);
+                  toast({
+                    title: "Error",
+                    description: error.message || "Failed to process input",
+                    variant: "destructive",
+                  });
+                } finally {
+                  setIsProcessing(false);
+                }
                 
-                // Auto-save without GPT response
-                const { data: { user } } = await supabase.auth.getUser();
-                await autoSaveTasks(cleanedText, '', user, addToFocus);
-                
-                setIsProcessing(false);
-                toast({
-                  title: "Saved",
-                  description: addToFocus ? "Added to Today's Focus" : "Saved to Inbox",
-                });
                 return;
               } else {
                 // Just stop command with no content
@@ -607,6 +646,40 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
     });
   };
 
+  const handleConfirmTasks = async (confirmedTasks: Array<{title: string; category: string; is_focus: boolean}>) => {
+    setShowConfirmation(false);
+    setIsProcessing(true);
+
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const tasksToCreate = confirmedTasks.map(task => ({
+        title: task.title,
+        category: task.category,
+        input_method: 'voice' as const,
+        is_focus: task.is_focus,
+        focus_date: task.is_focus ? today : null,
+        completed: false,
+      }));
+
+      await createTasks(tasksToCreate);
+      
+      setPendingTasks([]);
+      toast({
+        title: "Tasks saved",
+        description: `${confirmedTasks.length} task${confirmedTasks.length > 1 ? 's' : ''} saved successfully`,
+      });
+    } catch (error: any) {
+      console.error('Error saving tasks:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to save tasks",
+        variant: "destructive",
+      });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   const handleMoodSelect = async (mood: string) => {
     setCurrentMood(mood);
     setShowMoodSelector(false);
@@ -772,6 +845,19 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
           </div>
         )}
       </div>
+
+      {/* Task Confirmation Dialog */}
+      {showConfirmation && pendingTasks.length > 0 && (
+        <TaskConfirmation
+          tasks={pendingTasks}
+          onConfirm={handleConfirmTasks}
+          onCancel={() => {
+            setShowConfirmation(false);
+            setPendingTasks([]);
+            setIsProcessing(false);
+          }}
+        />
+      )}
     </div>
   );
 });
