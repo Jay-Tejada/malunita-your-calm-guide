@@ -51,6 +51,19 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
   const { tasks, updateTask, createTasks } = useTasks();
   const audioEnabled = profile?.wants_voice_playback ?? true;
   
+  const handleVoiceTaskCapture = async (text: string, category?: 'inbox' | 'home' | 'work' | 'gym' | 'projects') => {
+    try {
+      await createTasks([{
+        title: text,
+        category: category || 'inbox',
+        input_method: 'voice',
+        completed: false,
+      }]);
+    } catch (error) {
+      console.error('Error creating task from voice:', error);
+    }
+  };
+  
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -776,7 +789,7 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
 
         {/* Voice Control - Replaced with VoiceOrb */}
         <VoiceOrb 
-          onVoiceInput={() => {}} 
+          onVoiceInput={handleVoiceTaskCapture} 
           onPlanningModeActivated={onPlanningModeActivated}
           onReflectionModeActivated={onReflectionModeActivated}
           onOrbReflectionTrigger={onOrbReflectionTrigger}
