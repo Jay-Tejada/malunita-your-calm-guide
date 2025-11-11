@@ -101,6 +101,22 @@ const CustomSidebarTrigger = ({ hasUrgentTasks }: { hasUrgentTasks: boolean }) =
     }
   };
   
+  // Time-based orbital ring animation speed
+  const getOrbitalClass = () => {
+    switch (timeOfDay) {
+      case 'morning':
+        return 'animate-planet-orbit-morning'; // 4s - fast energetic
+      case 'day':
+        return 'animate-planet-orbit-day'; // 6s - normal
+      case 'evening':
+        return 'animate-planet-orbit-evening'; // 8s - slowing
+      case 'night':
+        return 'animate-planet-orbit-night'; // 10s - slow reflection
+      default:
+        return 'animate-planet-orbit-day';
+    }
+  };
+  
   return (
     <Button
       variant="ghost"
@@ -108,10 +124,35 @@ const CustomSidebarTrigger = ({ hasUrgentTasks }: { hasUrgentTasks: boolean }) =
       onClick={toggleSidebar}
       className="hover:bg-muted/50 p-2 group transition-all duration-300 relative h-auto w-auto"
     >
-      <Globe2 
-        color={getIconColor()}
-        className={`w-5 h-5 transition-all duration-700 group-hover:scale-110 ${getRotationClass()} ${getGlowClass()} ${isTransitioning ? 'animate-transition-pulse' : ''}`} 
-      />
+      <div className="relative">
+        {/* Orbital Ring */}
+        <div className={`absolute inset-0 -m-2 ${getOrbitalClass()}`}>
+          <svg className="w-9 h-9" viewBox="0 0 36 36">
+            <ellipse
+              cx="18"
+              cy="18"
+              rx="16"
+              ry="14"
+              fill="none"
+              stroke={getIconColor()}
+              strokeWidth="0.8"
+              className="transition-all duration-700"
+              style={{ 
+                opacity: 0.4,
+                transform: 'rotate(25deg)',
+                transformOrigin: 'center'
+              }}
+            />
+          </svg>
+        </div>
+        
+        {/* Planet Icon */}
+        <Globe2 
+          color={getIconColor()}
+          className={`w-5 h-5 transition-all duration-700 group-hover:scale-110 relative z-10 ${getRotationClass()} ${getGlowClass()} ${isTransitioning ? 'animate-transition-pulse' : ''}`} 
+        />
+      </div>
+      
       {hasUrgentTasks && (
         <span className="absolute top-1 right-1 w-2 h-2 bg-destructive rounded-full animate-pulse" />
       )}

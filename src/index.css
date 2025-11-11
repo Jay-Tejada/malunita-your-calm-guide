@@ -264,6 +264,36 @@ All colors MUST be HSL.
     }
   }
   
+  .animate-planet-orbit-morning {
+    animation: planet-orbit 4s linear infinite;
+  }
+  
+  .animate-planet-orbit-day {
+    animation: planet-orbit 6s linear infinite;
+  }
+  
+  .animate-planet-orbit-evening {
+    animation: planet-orbit 8s linear infinite;
+  }
+  
+  .animate-planet-orbit-night {
+    animation: planet-orbit 10s linear infinite;
+  }
+  
+  @keyframes planet-orbit {
+    from { 
+      transform: rotate(0deg);
+      opacity: 0.3;
+    }
+    50% {
+      opacity: 0.5;
+    }
+    to { 
+      transform: rotate(360deg);
+      opacity: 0.3;
+    }
+  }
+  
   .animate-squiggle {
     animation: squiggle 0.3s ease-in-out infinite;
   }
