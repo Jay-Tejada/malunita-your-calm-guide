@@ -22,100 +22,6 @@ import { useToast } from "@/hooks/use-toast";
 
 const CustomSidebarTrigger = ({ hasUrgentTasks }: { hasUrgentTasks: boolean }) => {
   const { toggleSidebar } = useSidebar();
-  const [timeOfDay, setTimeOfDay] = useState<'morning' | 'day' | 'evening' | 'night'>('day');
-  const [isTransitioning, setIsTransitioning] = useState(false);
-  
-  // Determine time-based glow colors to match the orb's time-based modes
-  useEffect(() => {
-    const updateTimeOfDay = () => {
-      const hour = new Date().getHours();
-      let newTimeOfDay: 'morning' | 'day' | 'evening' | 'night';
-      
-      if (hour >= 6 && hour < 12) {
-        newTimeOfDay = 'morning'; // Golden glow
-      } else if (hour >= 12 && hour < 18) {
-        newTimeOfDay = 'day'; // Neutral
-      } else if (hour >= 18 && hour < 21) {
-        newTimeOfDay = 'evening'; // Transitioning to indigo
-      } else {
-        newTimeOfDay = 'night'; // Indigo glow (reflection mode)
-      }
-      
-      // Trigger transition pulse if time period changed
-      if (newTimeOfDay !== timeOfDay) {
-        setIsTransitioning(true);
-        setTimeout(() => setIsTransitioning(false), 3000); // Match transition duration
-      }
-      
-      setTimeOfDay(newTimeOfDay);
-    };
-    
-    updateTimeOfDay();
-    const interval = setInterval(updateTimeOfDay, 60000); // Update every minute
-    
-    return () => clearInterval(interval);
-  }, [timeOfDay]);
-  
-  // Time-based glow colors matching the orb
-  const getGlowClass = () => {
-    if (hasUrgentTasks) return 'animate-alert-pulse';
-    
-    switch (timeOfDay) {
-      case 'morning':
-        return 'drop-shadow-[0_0_6px_hsl(39_75%_70%/0.5)] group-hover:drop-shadow-[0_0_10px_hsl(39_75%_70%/0.7)]'; // Golden
-      case 'evening':
-      case 'night':
-        return 'drop-shadow-[0_0_6px_hsl(250_45%_70%/0.5)] group-hover:drop-shadow-[0_0_10px_hsl(250_45%_70%/0.7)]'; // Indigo
-      default:
-        return 'group-hover:drop-shadow-[0_0_8px_hsl(var(--primary)/0.6)]'; // Default
-    }
-  };
-  
-  // Time-based rotation speed - slower for reflection/evening
-  const getRotationClass = () => {
-    switch (timeOfDay) {
-      case 'morning':
-        return 'animate-float-spin-morning'; // 6s - energetic morning
-      case 'day':
-        return 'animate-float-spin-day'; // 8s - normal pace
-      case 'evening':
-        return 'animate-float-spin-evening'; // 10s - slowing down
-      case 'night':
-        return 'animate-float-spin-night'; // 14s - slow reflection
-      default:
-        return 'animate-float-spin';
-    }
-  };
-  
-  // Time-based icon color - matches the glow theme
-  const getIconColor = () => {
-    switch (timeOfDay) {
-      case 'morning':
-        return 'hsl(var(--planet-morning))'; // Golden
-      case 'evening':
-        return 'hsl(var(--planet-evening))'; // Indigo transition
-      case 'night':
-        return 'hsl(var(--planet-night))'; // Indigo
-      default:
-        return 'hsl(var(--planet-day))'; // Charcoal
-    }
-  };
-  
-  // Time-based orbital ring animation speed
-  const getOrbitalClass = () => {
-    switch (timeOfDay) {
-      case 'morning':
-        return 'animate-planet-orbit-morning'; // 4s - fast energetic
-      case 'day':
-        return 'animate-planet-orbit-day'; // 6s - normal
-      case 'evening':
-        return 'animate-planet-orbit-evening'; // 8s - slowing
-      case 'night':
-        return 'animate-planet-orbit-night'; // 10s - slow reflection
-      default:
-        return 'animate-planet-orbit-day';
-    }
-  };
   
   return (
     <Button
@@ -124,35 +30,9 @@ const CustomSidebarTrigger = ({ hasUrgentTasks }: { hasUrgentTasks: boolean }) =
       onClick={toggleSidebar}
       className="hover:bg-muted/50 p-2 group transition-all duration-300 relative h-auto w-auto"
     >
-      <div className="relative">
-        {/* Orbital Ring */}
-        <div className={`absolute inset-0 -m-2 ${getOrbitalClass()}`}>
-          <svg className="w-9 h-9" viewBox="0 0 36 36">
-            <ellipse
-              cx="18"
-              cy="18"
-              rx="16"
-              ry="14"
-              fill="none"
-              stroke={getIconColor()}
-              strokeWidth="0.8"
-              className="transition-all duration-700"
-              style={{ 
-                opacity: 0.4,
-                transform: 'rotate(25deg)',
-                transformOrigin: 'center'
-              }}
-            />
-          </svg>
-        </div>
-        
-        {/* Planet Icon */}
-        <Globe2 
-          color={getIconColor()}
-          className={`w-5 h-5 transition-all duration-700 group-hover:scale-110 relative z-10 ${getRotationClass()} ${getGlowClass()} ${isTransitioning ? 'animate-transition-pulse' : ''}`} 
-        />
-      </div>
-      
+      <Globe2 
+        className={`w-5 h-5 text-primary animate-float-spin transition-all duration-300 group-hover:drop-shadow-[0_0_8px_hsl(var(--primary)/0.6)] group-hover:scale-110 ${hasUrgentTasks ? 'animate-alert-pulse' : ''}`} 
+      />
       {hasUrgentTasks && (
         <span className="absolute top-1 right-1 w-2 h-2 bg-destructive rounded-full animate-pulse" />
       )}
@@ -332,29 +212,33 @@ const Index = () => {
           <InstallPromptBanner />
           
           {/* Minimal Header - Just trigger */}
-          <header className="fixed top-0 left-0 right-0 z-40 bg-background/95 backdrop-blur-sm">
+          <header className="fixed top-0 left-0 right-0 z-40 bg-background/80 backdrop-blur-sm border-b border-border/50">
             <div className="px-4 py-3 flex items-center">
               <CustomSidebarTrigger hasUrgentTasks={hasUrgentTasks} />
             </div>
           </header>
 
-          {/* Orb-Centered Minimalist Content */}
-          <div className="flex-1 flex flex-col items-center justify-center px-4 pt-16">
+          {/* Orb-Centered Content */}
+          <div className="flex-1 flex flex-col items-center justify-center px-4 pt-16 pb-32">
             {/* Voice Orb - Center Stage */}
-            <div className="flex flex-col items-center gap-4">
-              <p className="text-sm text-foreground/60 font-mono lowercase tracking-wide">what's on your mind?</p>
-              
-              <MalunitaVoice 
-                ref={malunitaVoiceRef} 
-                onSaveNote={handleSaveNote}
-                onPlanningModeActivated={handlePlanningMode}
-                onReflectionModeActivated={handleReflectionMode}
-                onOrbReflectionTrigger={enableOrbReflectionTrigger ? () => setShowRunwayReview(true) : undefined}
-                onTasksCreated={() => setShowTodaysFocus(true)}
-              />
-              
-              <p className="text-xs text-foreground/40 font-mono lowercase tracking-wider">malunita — capture mode</p>
+            <div className="flex flex-col items-center">
+            <MalunitaVoice 
+              ref={malunitaVoiceRef} 
+              onSaveNote={handleSaveNote}
+              onPlanningModeActivated={handlePlanningMode}
+              onReflectionModeActivated={handleReflectionMode}
+              onOrbReflectionTrigger={enableOrbReflectionTrigger ? () => setShowRunwayReview(true) : undefined}
+              onTasksCreated={() => setShowTodaysFocus(true)}
+            />
+              <p className="mt-6 text-sm text-muted-foreground">What's on your mind?</p>
             </div>
+            
+            {/* Today's Focus - Conditionally shown */}
+            {showTodaysFocus && (
+              <div className="w-full max-w-2xl mt-12 animate-expand-in">
+                <TodaysFocus onReflectClick={enableReflectButton ? () => setShowRunwayReview(true) : undefined} />
+              </div>
+            )}
           </div>
 
           {/* Smart Reflection Prompt */}
@@ -363,31 +247,17 @@ const Index = () => {
           )}
         </main>
 
-        {/* Task Sheet - Slide in from right */}
+        {/* Task Sheet */}
         <Sheet open={showTasksSheet} onOpenChange={setShowTasksSheet}>
-          <SheetContent side="right" className="w-full sm:max-w-lg overflow-y-auto bg-background">
+          <SheetContent side="right" className="w-full sm:max-w-lg overflow-y-auto">
             <SheetHeader>
-              <SheetTitle className="font-mono lowercase">all tasks</SheetTitle>
+              <SheetTitle>All Tasks</SheetTitle>
             </SheetHeader>
             <div className="mt-6">
               <TaskList />
             </div>
           </SheetContent>
         </Sheet>
-
-        {/* Today's Focus - Slide in from bottom when triggered */}
-        {showTodaysFocus && (
-          <Sheet open={showTodaysFocus} onOpenChange={setShowTodaysFocus}>
-            <SheetContent side="bottom" className="h-[80vh] overflow-y-auto bg-background">
-              <SheetHeader>
-                <SheetTitle className="font-mono lowercase">today's focus</SheetTitle>
-              </SheetHeader>
-              <div className="mt-6">
-                <TodaysFocus onReflectClick={enableReflectButton ? () => setShowRunwayReview(true) : undefined} />
-              </div>
-            </SheetContent>
-          </Sheet>
-        )}
 
         {/* Runway Review Modal */}
         {showRunwayReview && <RunwayReview onClose={() => setShowRunwayReview(false)} />}

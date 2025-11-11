@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Home, Briefcase, Dumbbell, FolderKanban, Inbox, Tag, Settings, Shield, ListTodo, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { NavLink } from "@/components/NavLink";
 import { useAdmin } from "@/hooks/useAdmin";
 import { useCustomCategories } from "@/hooks/useCustomCategories";
 import { supabase } from "@/integrations/supabase/client";
@@ -17,6 +18,8 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
 
 interface AppSidebarProps {
   onSettingsClick: () => void;
@@ -47,28 +50,30 @@ export function AppSidebar({ onSettingsClick, onAllTasksClick }: AppSidebarProps
   const handleSignOut = async () => {
     await supabase.auth.signOut();
     toast({
-      title: "signed out",
-      description: "you've been signed out successfully.",
+      title: "Signed out",
+      description: "You've been signed out successfully.",
     });
   };
 
   return (
     <Sidebar
-      className={`${collapsed ? "w-14" : "w-64"} bg-foreground border-r border-foreground/10`}
+      className={collapsed ? "w-14" : "w-64"}
       collapsible="icon"
     >
-      <SidebarContent className="bg-foreground">
+      <SidebarContent className="bg-card">
         {/* Logo */}
-        <div className="p-6">
-          <h1 className="text-lg font-mono font-bold tracking-tight text-background lowercase">
+        <div className="p-4">
+          <h1 className="text-xl font-light tracking-tight text-foreground">
             {!collapsed && "malunita"}
           </h1>
         </div>
 
+        <Separator />
+
         {/* Default Categories */}
         <SidebarGroup>
-          <SidebarGroupLabel className={`${collapsed ? "sr-only" : ""} text-background/60 font-mono lowercase text-xs`}>
-            folders
+          <SidebarGroupLabel className={collapsed ? "sr-only" : ""}>
+            Categories
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
@@ -79,10 +84,10 @@ export function AppSidebar({ onSettingsClick, onAllTasksClick }: AppSidebarProps
                     <SidebarMenuButton asChild>
                       <button
                         onClick={onAllTasksClick}
-                        className="w-full flex items-center gap-3 hover:bg-background/10 transition-colors text-background font-mono lowercase font-medium"
+                        className="w-full flex items-center gap-3 hover:bg-muted/50"
                       >
                         <IconComponent className="w-4 h-4" />
-                        {!collapsed && <span>{item.name.toLowerCase()}</span>}
+                        {!collapsed && <span>{item.name}</span>}
                       </button>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -95,10 +100,10 @@ export function AppSidebar({ onSettingsClick, onAllTasksClick }: AppSidebarProps
         {/* Custom Categories */}
         {customCategories && customCategories.length > 0 && (
           <>
-            <div className="my-4 h-px bg-background/10" />
+            <Separator />
             <SidebarGroup>
-              <SidebarGroupLabel className={`${collapsed ? "sr-only" : ""} text-background/60 font-mono lowercase text-xs`}>
-                custom
+              <SidebarGroupLabel className={collapsed ? "sr-only" : ""}>
+                Custom
               </SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
@@ -109,15 +114,15 @@ export function AppSidebar({ onSettingsClick, onAllTasksClick }: AppSidebarProps
                         <SidebarMenuButton asChild>
                           <button
                             onClick={onAllTasksClick}
-                            className="w-full flex items-center gap-3 hover:bg-background/10 transition-colors text-background font-mono lowercase font-medium"
+                            className="w-full flex items-center gap-3 hover:bg-muted/50"
                           >
                             <div 
-                              className="w-4 h-4 rounded-full flex items-center justify-center"
+                              className="w-4 h-4 rounded-full flex items-center justify-center text-xs"
                               style={{ backgroundColor: cat.color }}
                             >
                               <IconComponent className="w-3 h-3 text-white" />
                             </div>
-                            {!collapsed && <span>{cat.name.toLowerCase()}</span>}
+                            {!collapsed && <span>{cat.name}</span>}
                           </button>
                         </SidebarMenuButton>
                       </SidebarMenuItem>
@@ -129,7 +134,7 @@ export function AppSidebar({ onSettingsClick, onAllTasksClick }: AppSidebarProps
           </>
         )}
 
-        <div className="my-4 h-px bg-background/10" />
+        <Separator />
 
         {/* Actions */}
         <SidebarGroup>
@@ -139,10 +144,10 @@ export function AppSidebar({ onSettingsClick, onAllTasksClick }: AppSidebarProps
                 <SidebarMenuButton asChild>
                   <button
                     onClick={onAllTasksClick}
-                    className="w-full flex items-center gap-3 hover:bg-background/10 transition-colors text-background font-mono lowercase font-medium"
+                    className="w-full flex items-center gap-3 hover:bg-muted/50"
                   >
                     <ListTodo className="w-4 h-4" />
-                    {!collapsed && <span>all tasks</span>}
+                    {!collapsed && <span>All Tasks</span>}
                   </button>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -151,10 +156,10 @@ export function AppSidebar({ onSettingsClick, onAllTasksClick }: AppSidebarProps
                   <SidebarMenuButton asChild>
                     <button
                       onClick={() => navigate('/admin')}
-                      className="w-full flex items-center gap-3 hover:bg-background/10 transition-colors text-background font-mono lowercase font-medium"
+                      className="w-full flex items-center gap-3 hover:bg-muted/50"
                     >
                       <Shield className="w-4 h-4" />
-                      {!collapsed && <span>admin</span>}
+                      {!collapsed && <span>Admin</span>}
                     </button>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -163,10 +168,10 @@ export function AppSidebar({ onSettingsClick, onAllTasksClick }: AppSidebarProps
                 <SidebarMenuButton asChild>
                   <button
                     onClick={onSettingsClick}
-                    className="w-full flex items-center gap-3 hover:bg-background/10 transition-colors text-background font-mono lowercase font-medium"
+                    className="w-full flex items-center gap-3 hover:bg-muted/50"
                   >
                     <Settings className="w-4 h-4" />
-                    {!collapsed && <span>settings</span>}
+                    {!collapsed && <span>Settings</span>}
                   </button>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -174,10 +179,10 @@ export function AppSidebar({ onSettingsClick, onAllTasksClick }: AppSidebarProps
                 <SidebarMenuButton asChild>
                   <button
                     onClick={handleSignOut}
-                    className="w-full flex items-center gap-3 hover:bg-background/10 transition-colors text-background font-mono lowercase font-medium"
+                    className="w-full flex items-center gap-3 hover:bg-muted/50"
                   >
                     <LogOut className="w-4 h-4" />
-                    {!collapsed && <span>sign out</span>}
+                    {!collapsed && <span>Sign Out</span>}
                   </button>
                 </SidebarMenuButton>
               </SidebarMenuItem>

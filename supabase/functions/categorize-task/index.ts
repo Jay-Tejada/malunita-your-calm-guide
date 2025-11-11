@@ -93,7 +93,7 @@ serve(async (req) => {
           {
             role: 'system',
             content: `You are Malunita, a helpful AI assistant that categorizes tasks. 
-Analyze the task and provide the top 3 most likely categories from these options:
+Analyze the task and categorize it into one of these domains:
 - inbox: Default category for uncategorizable tasks or when unclear
 - home: Tasks related to personal life, hobbies, errands, home chores, relationships, family, etc.
 - work: Tasks related to work, business, professional development, career, office tasks, etc.
@@ -102,23 +102,18 @@ Analyze the task and provide the top 3 most likely categories from these options
 
 Return ONLY a JSON object with this structure:
 {
-  "predictions": [
-    {"category": "home", "confidence": 0.85, "reason": "Involves grocery shopping"},
-    {"category": "projects", "confidence": 0.10, "reason": "Could be a cooking project"},
-    {"category": "inbox", "confidence": 0.05, "reason": "Default fallback"}
-  ]
+  "category": "inbox" | "home" | "work" | "gym" | "projects",
+  "confidence": "high" | "low"
 }
 
-The predictions array must have exactly 3 items, ranked by confidence (highest first).
-Confidence scores should sum to approximately 1.0.
-Provide brief, clear reasons for each prediction.
-
 Examples:
-- "Buy groceries" → top prediction: home (0.85), projects (0.10), inbox (0.05)
-- "Finish the presentation for Monday" → top prediction: work (0.90), projects (0.08), inbox (0.02)
-- "Go for a run" → top prediction: gym (0.92), home (0.06), inbox (0.02)
+- "Buy groceries" → {"category": "home", "confidence": "high"}
+- "Finish the presentation for Monday" → {"category": "work", "confidence": "high"}
+- "Go for a run" → {"category": "gym", "confidence": "high"}
+- "Work on side project website" → {"category": "projects", "confidence": "high"}
+- "Call someone" → {"category": "inbox", "confidence": "low"}
 
-Be decisive and rank confidently.`
+Be confident and decisive. Use "low" confidence only when truly ambiguous.`
           },
           {
             role: 'user',
@@ -138,11 +133,9 @@ Be decisive and rank confidently.`
         console.error('BUILDER ALERT: OpenAI rate limit exceeded for categorize-task');
         return new Response(
           JSON.stringify({ 
-            predictions: [
-              { category: 'inbox', confidence: 0.90, reason: 'rate limit fallback' },
-              { category: 'home', confidence: 0.05, reason: 'alternate option' },
-              { category: 'work', confidence: 0.05, reason: 'alternate option' }
-            ]
+            category: 'inbox', 
+            confidence: 'low',
+            error: 'Rate limit exceeded' 
           }),
           { 
             status: 200,
@@ -152,26 +145,24 @@ Be decisive and rank confidently.`
       }
       
       console.error('BUILDER ALERT: OpenAI API failure in categorize-task:', response.status);
-    // Gracefully fallback to inbox for categorization failures
-    return new Response(
-      JSON.stringify({ 
-        predictions: [
-          { category: 'inbox', confidence: 0.90, reason: 'default fallback' },
-          { category: 'home', confidence: 0.05, reason: 'alternate option' },
-          { category: 'work', confidence: 0.05, reason: 'alternate option' }
-        ]
-      }),
-      { 
-        status: 200,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-      }
-    );
+      // Gracefully fallback to inbox for categorization failures
+      return new Response(
+        JSON.stringify({ 
+          category: 'inbox', 
+          confidence: 'low',
+          error: 'Service temporarily unavailable'
+        }),
+        { 
+          status: 200,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
     }
 
     const data = await response.json();
     const result = JSON.parse(data.choices[0].message.content);
 
-    console.log('Top predictions:', result.predictions?.map((p: any) => `${p.category} (${p.confidence})`).join(', '));
+    console.log('Categorized as:', result.category, 'with', result.confidence, 'confidence');
 
     // Log API usage for admin tracking
     if (userId) {
@@ -207,11 +198,9 @@ Be decisive and rank confidently.`
     // Gracefully fallback to inbox for categorization errors
     return new Response(
       JSON.stringify({ 
-        predictions: [
-          { category: 'inbox', confidence: 0.90, reason: 'error fallback' },
-          { category: 'home', confidence: 0.05, reason: 'alternate option' },
-          { category: 'work', confidence: 0.05, reason: 'alternate option' }
-        ]
+        category: 'inbox', 
+        confidence: 'low',
+        error: error instanceof Error ? error.message : 'Unknown error'
       }),
       {
         status: 200,
