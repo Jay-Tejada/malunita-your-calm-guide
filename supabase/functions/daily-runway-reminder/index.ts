@@ -43,20 +43,20 @@ serve(async (req) => {
       );
     }
 
-    // Filter users who want daily review reminders at this time
-    const usersToNotify = profiles.filter(profile => {
+    // Filter users who want notifications and check their preferred time
+    const candidateUsers = profiles.filter(profile => {
       const prefs = profile.notification_preferences as any;
-      if (!prefs?.dailyReview) return false;
+      if (!prefs?.dailyReview && !prefs?.taskReminders) return false;
       
-      // Parse review time (format: "HH:MM")
-      const reviewTime = prefs.reviewTime || "09:00";
+      // Parse review time (format: "HH:MM", default to 8 AM Eastern)
+      const reviewTime = prefs.reviewTime || "08:00";
       const [hour] = reviewTime.split(':').map(Number);
       
-      // Check if current hour matches their preferred time
+      // Check if current hour matches their preferred notification time
       return hour === currentHour;
     });
 
-    if (usersToNotify.length === 0) {
+    if (candidateUsers.length === 0) {
       return new Response(
         JSON.stringify({ 
           message: `No users scheduled for notifications at hour ${currentHour}`,
@@ -66,21 +66,46 @@ serve(async (req) => {
       );
     }
 
-    // Determine time of day for message
-    const timeOfDay = currentHour >= 6 && currentHour < 18 ? 'morning' : 'evening';
-    const notificationData = timeOfDay === 'morning' 
-      ? {
-          title: '🌅 Morning Clarity',
-          body: 'Time for your Runway Review. Set your intentions for today.',
-        }
-      : {
-          title: '🌙 Evening Wind-Down',
-          body: 'Time for your Runway Review. Reflect and close your mental tabs.',
-        };
+    // Check each user for incomplete focused tasks
+    const usersWithFocusedTasks = await Promise.all(
+      candidateUsers.map(async (user) => {
+        const today = new Date().toISOString().split('T')[0];
+        
+        const { data: tasks, error } = await supabase
+          .from('tasks')
+          .select('id, title')
+          .eq('user_id', user.id)
+          .eq('completed', false)
+          .lte('focus_date', today)
+          .not('focus_date', 'is', null);
 
-    // Send notifications to each user
+        if (error) {
+          console.error(`Error fetching tasks for user ${user.id}:`, error);
+          return null;
+        }
+
+        return tasks && tasks.length > 0 ? { user, taskCount: tasks.length } : null;
+      })
+    );
+
+    const usersToNotify = usersWithFocusedTasks.filter(item => item !== null);
+
+    if (usersToNotify.length === 0) {
+      return new Response(
+        JSON.stringify({ 
+          message: `No users with incomplete focused tasks at hour ${currentHour}`,
+          checked: candidateUsers.length
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    console.log(`Found ${usersToNotify.length} users with incomplete focused tasks`);
+
+    // Send notifications to each user with focused tasks
     const results = await Promise.allSettled(
-      usersToNotify.map(async (user) => {
+      usersToNotify.map(async ({ user, taskCount }) => {
+        const taskWord = taskCount === 1 ? 'task' : 'tasks';
         return fetch(`${supabaseUrl}/functions/v1/send-push-notification`, {
           method: 'POST',
           headers: {
@@ -89,12 +114,12 @@ serve(async (req) => {
           },
           body: JSON.stringify({
             userId: user.id,
-            title: notificationData.title,
-            body: notificationData.body,
+            title: '🎯 Focus Tasks Reminder',
+            body: `You have ${taskCount} incomplete focused ${taskWord} for today.`,
             icon: '/icon-192.png',
             data: {
               url: '/',
-              action: 'runway-review'
+              action: 'view-focus-tasks'
             }
           }),
         });
@@ -112,7 +137,6 @@ serve(async (req) => {
         sent: successCount,
         failed: failedCount,
         total: usersToNotify.length,
-        timeOfDay,
         currentHour
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
