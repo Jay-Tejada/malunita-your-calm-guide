@@ -7,6 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { BottomNav } from "@/components/BottomNav";
+import { NotificationSnooze } from "@/components/NotificationSnooze";
 
 const Notifications = () => {
   const navigate = useNavigate();
@@ -228,6 +229,20 @@ const Notifications = () => {
             )}
           </CardContent>
         </Card>
+
+        {isSubscribed && (
+          <Card className="mt-4">
+            <CardHeader>
+              <CardTitle>Snooze Reminders</CardTitle>
+              <CardDescription>
+                Need a break? Temporarily pause your focus task reminders
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <NotificationSnooze />
+            </CardContent>
+          </Card>
+        )}
       </main>
       
       <BottomNav />

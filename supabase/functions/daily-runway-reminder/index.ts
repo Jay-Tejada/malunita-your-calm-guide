@@ -28,10 +28,10 @@ serve(async (req) => {
     
     console.log(`Running daily reminder check at ${now.toISOString()}, hour: ${currentHour}`);
 
-    // Get users who have notification preferences enabled
+    // Get users who have notification preferences enabled and not snoozed
     const { data: profiles, error: profilesError } = await supabase
       .from('profiles')
-      .select('id, notification_preferences')
+      .select('id, notification_preferences, notification_snooze_until')
       .not('notification_preferences', 'is', null);
 
     if (profilesError) throw profilesError;
@@ -47,6 +47,15 @@ serve(async (req) => {
     const candidateUsers = profiles.filter(profile => {
       const prefs = profile.notification_preferences as any;
       if (!prefs?.dailyReview && !prefs?.taskReminders) return false;
+      
+      // Check if user has snoozed notifications
+      if (profile.notification_snooze_until) {
+        const snoozeUntil = new Date(profile.notification_snooze_until);
+        if (now < snoozeUntil) {
+          console.log(`User ${profile.id} has snoozed until ${snoozeUntil.toISOString()}`);
+          return false;
+        }
+      }
       
       // Parse review time (format: "HH:MM", default to 8 AM Eastern)
       const reviewTime = prefs.reviewTime || "08:00";

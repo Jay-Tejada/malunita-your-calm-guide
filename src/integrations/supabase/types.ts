@@ -125,6 +125,7 @@ export type Database = {
           id: string
           likes_routine_nudges: boolean | null
           notification_preferences: Json | null
+          notification_snooze_until: string | null
           often_time_based: boolean | null
           peak_activity_time: string | null
           preferred_gpt_model: string | null
@@ -146,6 +147,7 @@ export type Database = {
           id: string
           likes_routine_nudges?: boolean | null
           notification_preferences?: Json | null
+          notification_snooze_until?: string | null
           often_time_based?: boolean | null
           peak_activity_time?: string | null
           preferred_gpt_model?: string | null
@@ -167,6 +169,7 @@ export type Database = {
           id?: string
           likes_routine_nudges?: boolean | null
           notification_preferences?: Json | null
+          notification_snooze_until?: string | null
           often_time_based?: boolean | null
           peak_activity_time?: string | null
           preferred_gpt_model?: string | null
