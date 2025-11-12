@@ -10,6 +10,7 @@ import { CategoryManager } from "@/components/CategoryManager";
 import { DndContext, DragEndEvent, DragOverlay, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { TaskCard } from "@/components/TaskCard";
+import { TaskCategoryFeedback } from "@/components/TaskCategoryFeedback";
 import { useToast } from "@/hooks/use-toast";
 import {
   Drawer,
@@ -284,36 +285,48 @@ export const TaskList = ({ category: externalCategory }: TaskListProps = {}) => 
           <SortableContext items={filteredTasks.map((t) => t.id)} strategy={verticalListSortingStrategy}>
             <div className="space-y-2">
               {filteredTasks.map((task) => (
-                <div key={task.id} className="flex items-center gap-2">
-                  <TaskCard
-                    id={task.id}
-                    title={task.title}
-                    context={task.context || undefined}
-                    completed={task.completed || false}
-                    selected={selectedTaskId === task.id}
-                    onToggle={() => handleToggleComplete(task)}
-                    onSelect={() => setSelectedTaskId(task.id)}
-                    onLongPress={() => handleLongPress(task)}
-                    goalAligned={task.goal_aligned}
-                    alignmentReason={task.alignment_reason}
-                  />
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleAddToFocus(task.id)}
-                    className="shrink-0 text-muted-foreground hover:text-foreground"
-                    title="Add to Today's Focus"
-                  >
-                    <Star className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleDelete(task.id)}
-                    className="shrink-0 text-muted-foreground hover:text-destructive"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
+                <div key={task.id} className="space-y-0">
+                  <div className="flex items-center gap-2">
+                    <TaskCard
+                      id={task.id}
+                      title={task.title}
+                      context={task.context || undefined}
+                      completed={task.completed || false}
+                      selected={selectedTaskId === task.id}
+                      onToggle={() => handleToggleComplete(task)}
+                      onSelect={() => setSelectedTaskId(task.id)}
+                      onLongPress={() => handleLongPress(task)}
+                      goalAligned={task.goal_aligned}
+                      alignmentReason={task.alignment_reason}
+                    />
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleAddToFocus(task.id)}
+                      className="shrink-0 text-muted-foreground hover:text-foreground"
+                      title="Add to Today's Focus"
+                    >
+                      <Star className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleDelete(task.id)}
+                      className="shrink-0 text-muted-foreground hover:text-destructive"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  
+                  {/* Show feedback component for voice-created tasks */}
+                  {task.input_method === 'voice' && !task.completed && (
+                    <TaskCategoryFeedback
+                      taskId={task.id}
+                      taskTitle={task.title}
+                      currentCategory={task.category || 'inbox'}
+                      originalText={task.title}
+                    />
+                  )}
                 </div>
               ))}
             </div>
