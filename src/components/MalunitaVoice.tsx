@@ -444,7 +444,10 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
                 return cleanTranscribed.endsWith(phrase) || cleanTranscribed === phrase;
               } else {
                 // Single word - check if it's the last word or the only word
-                return words[words.length - 1] === phrase || cleanTranscribed === phrase;
+                const lastWord = words[words.length - 1];
+                return lastWord === phrase || cleanTranscribed === phrase || 
+                       // Also match if it's close to the end (within last 2 words)
+                       (words.length >= 2 && words[words.length - 2] === phrase && words[words.length - 1].length <= 3);
               }
             });
             
