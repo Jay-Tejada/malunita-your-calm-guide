@@ -19,6 +19,8 @@ export interface UserProfile {
   current_goal?: string;
   goal_timeframe?: string;
   goal_updated_at?: string;
+  wake_word_enabled?: boolean;
+  custom_wake_word?: string;
 }
 
 export const useProfile = () => {

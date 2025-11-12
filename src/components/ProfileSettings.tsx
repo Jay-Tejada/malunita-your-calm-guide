@@ -2,13 +2,15 @@ import { useProfile } from "@/hooks/useProfile";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Loader2, TrendingUp, Clock, MessageSquare } from "lucide-react";
+import { Loader2, TrendingUp, Clock, MessageSquare, Mic } from "lucide-react";
 import { NotificationPermission } from "@/components/NotificationPermission";
 import { GoalSetting } from "@/components/GoalSetting";
 import { CustomCategoryManager } from "@/components/CustomCategoryManager";
 import { VoiceCommandsManager } from "@/components/VoiceCommandsManager";
 import { PersonalizationInsights } from "@/components/PersonalizationInsights";
+import { useState } from "react";
 
 
 interface ProfileSettingsProps {
@@ -17,6 +19,7 @@ interface ProfileSettingsProps {
 
 export const ProfileSettings = ({ onClose }: ProfileSettingsProps) => {
   const { profile, isLoading, updateProfile } = useProfile();
+  const [customWakeWord, setCustomWakeWord] = useState(profile?.custom_wake_word || 'hey malunita');
 
   if (isLoading) {
     return (
@@ -140,6 +143,57 @@ export const ProfileSettings = ({ onClose }: ProfileSettingsProps) => {
                     }
                   />
                 </div>
+              </div>
+            </div>
+
+            {/* Wake Word Settings */}
+            <div>
+              <h3 className="text-lg font-medium mb-4 flex items-center gap-2">
+                <Mic className="w-5 h-5" />
+                Hands-Free Activation
+              </h3>
+              
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label htmlFor="wake-word">Wake Word</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Activate voice input by saying a phrase
+                    </p>
+                  </div>
+                  <Switch
+                    id="wake-word"
+                    checked={profile.wake_word_enabled || false}
+                    onCheckedChange={(checked) =>
+                      updateProfile({ wake_word_enabled: checked })
+                    }
+                  />
+                </div>
+
+                {profile.wake_word_enabled && (
+                  <div className="space-y-2 pl-4 border-l-2 border-primary/20">
+                    <Label htmlFor="custom-wake-word">Custom Phrase</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        id="custom-wake-word"
+                        value={customWakeWord}
+                        onChange={(e) => setCustomWakeWord(e.target.value)}
+                        placeholder="hey malunita"
+                        className="flex-1"
+                      />
+                      <Button
+                        size="sm"
+                        onClick={() => updateProfile({ custom_wake_word: customWakeWord })}
+                        variant="secondary"
+                      >
+                        Save
+                      </Button>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Say "{customWakeWord}" to activate voice input hands-free
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
 

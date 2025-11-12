@@ -14,6 +14,7 @@ import { useAdmin } from "@/hooks/useAdmin";
 import { useTasks } from "@/hooks/useTasks";
 import { useProfile } from "@/hooks/useProfile";
 import { useCustomCategories } from "@/hooks/useCustomCategories";
+import { useWakeWord } from "@/hooks/useWakeWord";
 import { AppSidebar } from "@/components/AppSidebar";
 import { BottomNav } from "@/components/BottomNav";
 
@@ -62,6 +63,20 @@ const Index = () => {
   const { categories: customCategories } = useCustomCategories();
   
   const { toast } = useToast();
+
+  // Wake word detection - triggers voice input hands-free
+  const { isListening: isWakeWordListening } = useWakeWord({
+    onWakeWordDetected: () => {
+      console.log('Wake word detected - activating voice input');
+      malunitaVoiceRef.current?.startRecording();
+      toast({
+        title: "Voice activated",
+        description: "Listening...",
+        duration: 1500,
+      });
+    },
+    enabled: !!user && !showSettings && !showRunwayReview,
+  });
 
   // Build complete category list for navigation
   const allCategories = [
