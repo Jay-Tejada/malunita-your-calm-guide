@@ -1,12 +1,13 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAdmin } from "@/hooks/useAdmin";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, TrendingUp, Brain, AlertCircle, ArrowLeft } from "lucide-react";
+import { Loader2, TrendingUp, Brain, AlertCircle, ArrowLeft, Play } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
 
 interface LearningTrend {
   id: string;
@@ -28,9 +29,11 @@ interface LearningTrend {
 
 export default function Trends() {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const { isAdmin, isLoading: isCheckingAdmin } = useAdmin();
+  const [isRunningAnalysis, setIsRunningAnalysis] = useState(false);
 
-  const { data: trends, isLoading: isLoadingTrends } = useQuery({
+  const { data: trends, isLoading: isLoadingTrends, refetch } = useQuery({
     queryKey: ['learning-trends'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -44,6 +47,34 @@ export default function Trends() {
     },
     enabled: isAdmin,
   });
+
+  const handleRunAnalysis = async () => {
+    setIsRunningAnalysis(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('global-trends-analyzer', {
+        body: {}
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Analysis complete",
+        description: data.message || "Trends analysis has been updated",
+      });
+
+      // Refresh the trends data
+      await refetch();
+    } catch (error: any) {
+      console.error('Error running analysis:', error);
+      toast({
+        title: "Analysis failed",
+        description: error.message || "Failed to run trends analysis",
+        variant: "destructive",
+      });
+    } finally {
+      setIsRunningAnalysis(false);
+    }
+  };
 
   useEffect(() => {
     if (!isCheckingAdmin && !isAdmin) {
@@ -88,15 +119,32 @@ export default function Trends() {
               Insights from user corrections and feedback
             </p>
           </div>
-          <div className="text-right">
+          <div className="flex items-center gap-4">
             {latestTrend && (
-              <>
+              <div className="text-right">
                 <p className="text-sm text-muted-foreground">Last Analysis</p>
                 <p className="text-lg font-medium">
                   {new Date(latestTrend.analysis_date).toLocaleDateString()}
                 </p>
-              </>
+              </div>
             )}
+            <Button
+              onClick={handleRunAnalysis}
+              disabled={isRunningAnalysis}
+              className="gap-2"
+            >
+              {isRunningAnalysis ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Analyzing...
+                </>
+              ) : (
+                <>
+                  <Play className="w-4 h-4" />
+                  Run Analysis Now
+                </>
+              )}
+            </Button>
           </div>
         </div>
 
