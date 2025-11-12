@@ -6,6 +6,7 @@ import { useProfile } from "@/hooks/useProfile";
 import { useTasks } from "@/hooks/useTasks";
 import { MoodSelector } from "@/components/MoodSelector";
 import { TaskConfirmation } from "@/components/TaskConfirmation";
+import { TaskFeedbackDialog } from "@/components/TaskFeedbackDialog";
 import { VoiceOrb } from "@/components/VoiceOrb";
 
 interface Message {
@@ -50,6 +51,12 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
   const [pendingTasks, setPendingTasks] = useState<SuggestedTask[]>([]);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [originalVoiceText, setOriginalVoiceText] = useState('');
+  const [showFeedbackDialog, setShowFeedbackDialog] = useState(false);
+  const [feedbackTaskData, setFeedbackTaskData] = useState<{
+    taskId: string;
+    taskTitle: string;
+    originalText: string;
+  } | null>(null);
   
   const { profile } = useProfile();
   const { tasks, updateTask, createTasks } = useTasks();
@@ -58,7 +65,7 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
   const handleVoiceTaskCapture = async (text: string, category?: 'inbox' | 'home' | 'work' | 'gym' | 'projects') => {
     try {
       setIsSaving(true);
-      await createTasks([{
+      const createdTasks = await createTasks([{
         title: text,
         category: category || 'inbox',
         input_method: 'voice',
@@ -80,6 +87,17 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
       // Notify parent that tasks were created
       if (onTasksCreated) {
         onTasksCreated();
+      }
+      
+      // Show feedback dialog for the created task
+      if (createdTasks && createdTasks.length > 0) {
+        const task = createdTasks[0];
+        setFeedbackTaskData({
+          taskId: task.id,
+          taskTitle: task.title,
+          originalText: text,
+        });
+        setShowFeedbackDialog(true);
       }
     } catch (error) {
       console.error('Error creating task from voice:', error);
@@ -875,6 +893,17 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
             setOriginalVoiceText('');
             setIsProcessing(false);
           }}
+        />
+      )}
+
+      {/* Task Feedback Dialog */}
+      {showFeedbackDialog && feedbackTaskData && (
+        <TaskFeedbackDialog
+          open={showFeedbackDialog}
+          onOpenChange={setShowFeedbackDialog}
+          taskId={feedbackTaskData.taskId}
+          taskTitle={feedbackTaskData.taskTitle}
+          originalText={feedbackTaskData.originalText}
         />
       )}
     </div>
