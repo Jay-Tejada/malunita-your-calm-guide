@@ -51,6 +51,7 @@ const Index = () => {
   const [showRunwayReview, setShowRunwayReview] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [showTodaysFocus, setShowTodaysFocus] = useState(false);
+  const [wakeWordDetected, setWakeWordDetected] = useState(0);
   const malunitaVoiceRef = useRef<MalunitaVoiceRef>(null);
   
   // Runway Review trigger settings (can be managed via settings in future)
@@ -69,6 +70,9 @@ const Index = () => {
   const { isListening: isWakeWordListening } = useWakeWord({
     onWakeWordDetected: () => {
       console.log('Wake word detected - activating voice input');
+      
+      // Trigger visual ripple animation
+      setWakeWordDetected(Date.now());
       
       // Haptic feedback for mobile devices
       if ('vibrate' in navigator) {
@@ -353,6 +357,7 @@ const Index = () => {
           <WakeWordIndicator 
             isListening={isWakeWordListening} 
             wakeWord={profile?.custom_wake_word}
+            detectionTrigger={wakeWordDetected}
           />
         </main>
 
