@@ -54,3 +54,6 @@ verify_jwt = true
 
 [functions.personalization-agent]
 verify_jwt = false
+
+[functions.global-trends-analyzer]
+verify_jwt = false
