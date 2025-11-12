@@ -21,7 +21,7 @@ const getSystemPrompt = (timeOfDay: 'morning' | 'evening', mood: string | null, 
 
   const moodPrompt = mood ? `\n\nUser's current mood: ${mood}. Adjust your tone accordingly.` : '';
 
-  const taskContext = `\n\n**Current Tasks:**\n${taskSummary}\n\nProvide a brief review organized into:\n✅ Next Actions (top 3 priorities)\n⏳ Time-Sensitive Tasks\n🧠 Unfinished Thoughts\n🧹 Possible Clutter (tasks that could be archived or postponed)\n\nKeep your response concise, encouraging, and actionable.`;
+  const taskContext = `\n\n**Current Tasks:**\n${taskSummary}\n\nProvide a brief, actionable review organized into:\n🚨 Urgent Today (what needs attention right now)\n📅 Upcoming (what to prepare for)\n⚠️ Stuck/Overdue (what might need to be archived, rescheduled, or broken down)\n\nFor each category, give specific, actionable insights. Keep your tone warm, motivating, and focus on clarity and progress.`;
 
   return basePrompt + timePrompt + moodPrompt + taskContext;
 };
@@ -57,16 +57,13 @@ serve(async (req) => {
 
     const { mood } = await req.json();
 
-    // Fetch open tasks (not completed, created in last 7 days)
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-
+    // Fetch open tasks (not completed, not marked as "long term")
     const { data: tasks, error: tasksError } = await supabase
       .from('tasks')
       .select('*')
       .eq('user_id', user.id)
       .eq('completed', false)
-      .gte('created_at', sevenDaysAgo.toISOString())
+      .neq('category', 'long term')
       .order('created_at', { ascending: false });
 
     if (tasksError) throw tasksError;
@@ -77,30 +74,49 @@ serve(async (req) => {
           review: "You have no open tasks. Great job staying on top of things! Ready to capture new ideas?",
           tasks: [],
           categories: {
-            nextActions: [],
-            timeSensitive: [],
-            unfinished: [],
-            clutter: []
+            urgentToday: [],
+            upcoming: [],
+            stuckOverdue: []
           }
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Categorize tasks
-    const timeSensitive = tasks.filter(t => t.is_time_based || t.has_reminder);
-    const withContext = tasks.filter(t => t.context && t.context.length > 10);
-    const recent = tasks.filter(t => {
-      const created = new Date(t.created_at);
-      const now = new Date();
-      const hoursDiff = (now.getTime() - created.getTime()) / (1000 * 60 * 60);
-      return hoursDiff < 24;
+    // Categorize tasks into: Urgent Today, Upcoming, Stuck/Overdue
+    const now = new Date();
+    const today = now.toISOString().split('T')[0];
+    
+    // Urgent Today: focus tasks for today OR time-sensitive tasks
+    const urgentToday = tasks.filter(t => {
+      if (t.focus_date === today) return true;
+      if (t.is_time_based || t.has_reminder) {
+        const created = new Date(t.created_at);
+        const hoursSinceCreated = (now.getTime() - created.getTime()) / (1000 * 60 * 60);
+        return hoursSinceCreated < 48; // Time-sensitive tasks created in last 2 days
+      }
+      return false;
     });
-    const older = tasks.filter(t => {
+    
+    // Upcoming: recent tasks (created in last 3 days) not in urgent
+    const upcoming = tasks.filter(t => {
+      if (urgentToday.includes(t)) return false;
       const created = new Date(t.created_at);
-      const now = new Date();
-      const daysDiff = (now.getTime() - created.getTime()) / (1000 * 60 * 60 * 24);
-      return daysDiff >= 3;
+      const daysSinceCreated = (now.getTime() - created.getTime()) / (1000 * 60 * 60 * 24);
+      return daysSinceCreated < 3;
+    });
+    
+    // Stuck/Overdue: older tasks (3+ days) or past focus dates
+    const stuckOverdue = tasks.filter(t => {
+      if (urgentToday.includes(t) || upcoming.includes(t)) return false;
+      const created = new Date(t.created_at);
+      const daysSinceCreated = (now.getTime() - created.getTime()) / (1000 * 60 * 60 * 24);
+      
+      // Check if focus_date is in the past
+      if (t.focus_date && t.focus_date < today) return true;
+      
+      // Or if task is older than 3 days
+      return daysSinceCreated >= 3;
     });
 
     // Build task summary
@@ -148,10 +164,9 @@ serve(async (req) => {
         tasks,
         timeOfDay,
         categories: {
-          nextActions: recent.slice(0, 3),
-          timeSensitive,
-          unfinished: withContext,
-          clutter: older
+          urgentToday,
+          upcoming,
+          stuckOverdue
         }
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

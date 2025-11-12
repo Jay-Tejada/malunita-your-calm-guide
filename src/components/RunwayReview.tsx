@@ -11,10 +11,9 @@ interface RunwayReviewProps {
 }
 
 interface CategorizedTasks {
-  nextActions: any[];
-  timeSensitive: any[];
-  unfinished: any[];
-  clutter: any[];
+  urgentToday: any[];
+  upcoming: any[];
+  stuckOverdue: any[];
 }
 
 export const RunwayReview = ({ onClose }: RunwayReviewProps) => {
@@ -22,10 +21,9 @@ export const RunwayReview = ({ onClose }: RunwayReviewProps) => {
   const [review, setReview] = useState("");
   const [tasks, setTasks] = useState<any[]>([]);
   const [categories, setCategories] = useState<CategorizedTasks>({
-    nextActions: [],
-    timeSensitive: [],
-    unfinished: [],
-    clutter: []
+    urgentToday: [],
+    upcoming: [],
+    stuckOverdue: []
   });
   const [timeOfDay, setTimeOfDay] = useState<'morning' | 'evening'>('morning');
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -84,10 +82,9 @@ export const RunwayReview = ({ onClose }: RunwayReviewProps) => {
       setReview(data.review);
       setTasks(data.tasks || []);
       setCategories(data.categories || {
-        nextActions: [],
-        timeSensitive: [],
-        unfinished: [],
-        clutter: []
+        urgentToday: [],
+        upcoming: [],
+        stuckOverdue: []
       });
       setTimeOfDay(data.timeOfDay || 'morning');
 
@@ -471,12 +468,12 @@ export const RunwayReview = ({ onClose }: RunwayReviewProps) => {
         {/* Task Categories */}
         {!isLoading && !showMoodSelector && (
           <div className="space-y-6">
-            {/* Urgent Today (Time-Sensitive) */}
-            {categories.timeSensitive.length > 0 && (
+            {/* Urgent Today */}
+            {categories.urgentToday.length > 0 && (
               <TaskSection 
                 title="🚨 Urgent Today"
-                description="Time-sensitive tasks that need immediate attention"
-                tasks={categories.timeSensitive}
+                description="Time-sensitive tasks and today's focus items that need immediate attention"
+                tasks={categories.urgentToday}
                 theme={theme}
                 onMarkDone={handleMarkDone}
                 onArchive={handleArchive}
@@ -484,12 +481,12 @@ export const RunwayReview = ({ onClose }: RunwayReviewProps) => {
               />
             )}
             
-            {/* Next Actions (Top Priorities) */}
-            {categories.nextActions.length > 0 && (
+            {/* Upcoming */}
+            {categories.upcoming.length > 0 && (
               <TaskSection 
-                title="✅ Top Priorities"
-                description="Your most important next actions to gain momentum"
-                tasks={categories.nextActions}
+                title="📅 Upcoming"
+                description="Recent tasks to prepare for - your next priorities"
+                tasks={categories.upcoming}
                 theme={theme}
                 onMarkDone={handleMarkDone}
                 onArchive={handleArchive}
@@ -497,29 +494,16 @@ export const RunwayReview = ({ onClose }: RunwayReviewProps) => {
               />
             )}
             
-            {/* Stuck/Overdue (Clutter) */}
-            {categories.clutter.length > 0 && (
+            {/* Stuck/Overdue */}
+            {categories.stuckOverdue.length > 0 && (
               <TaskSection 
-                title="⏸️ Stuck or Overdue"
-                description="Older tasks that may need a decision: continue, delegate, or archive"
-                tasks={categories.clutter}
+                title="⚠️ Stuck or Overdue"
+                description="Older tasks that may need to be archived, rescheduled, or broken down"
+                tasks={categories.stuckOverdue}
                 theme={theme}
                 onMarkDone={handleMarkDone}
                 onArchive={handleArchive}
                 variant="stuck"
-              />
-            )}
-            
-            {/* Upcoming (Unfinished Thoughts) */}
-            {categories.unfinished.length > 0 && (
-              <TaskSection 
-                title="📝 Needs Refinement"
-                description="Tasks with notes that might need more clarity or planning"
-                tasks={categories.unfinished}
-                theme={theme}
-                onMarkDone={handleMarkDone}
-                onArchive={handleArchive}
-                variant="upcoming"
               />
             )}
           </div>

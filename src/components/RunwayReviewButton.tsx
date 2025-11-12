@@ -14,7 +14,7 @@ export const RunwayReviewButton = () => {
         size="lg"
       >
         <Rocket className="w-5 h-5 mr-2" />
-        Runway Review
+        Review My Day
       </Button>
 
       {showReview && <RunwayReview onClose={() => setShowReview(false)} />}
