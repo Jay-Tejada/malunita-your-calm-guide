@@ -7,6 +7,7 @@ import { Loader2, TrendingUp, Clock, MessageSquare } from "lucide-react";
 import { NotificationPermission } from "@/components/NotificationPermission";
 import { GoalSetting } from "@/components/GoalSetting";
 import { CustomCategoryManager } from "@/components/CustomCategoryManager";
+import { VoiceCommandsManager } from "@/components/VoiceCommandsManager";
 
 
 interface ProfileSettingsProps {
@@ -71,6 +72,9 @@ export const ProfileSettings = ({ onClose }: ProfileSettingsProps) => {
 
             {/* Custom Categories */}
             <CustomCategoryManager />
+
+            {/* Voice Commands */}
+            <VoiceCommandsManager />
 
             {/* Voice Preferences */}
             <div>

@@ -120,6 +120,7 @@ export type Database = {
           common_prefixes: string[] | null
           created_at: string
           current_goal: string | null
+          custom_stop_commands: string[] | null
           goal_timeframe: string | null
           goal_updated_at: string | null
           id: string
@@ -142,6 +143,7 @@ export type Database = {
           common_prefixes?: string[] | null
           created_at?: string
           current_goal?: string | null
+          custom_stop_commands?: string[] | null
           goal_timeframe?: string | null
           goal_updated_at?: string | null
           id: string
@@ -164,6 +166,7 @@ export type Database = {
           common_prefixes?: string[] | null
           created_at?: string
           current_goal?: string | null
+          custom_stop_commands?: string[] | null
           goal_timeframe?: string | null
           goal_updated_at?: string | null
           id?: string

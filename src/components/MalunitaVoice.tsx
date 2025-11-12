@@ -385,7 +385,10 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
             }
             
             // Check for stop commands - more flexible matching
-            const stopPhrases = ['stop recording', 'that\'s it', 'done', 'stop', 'finish'];
+            const defaultStopPhrases = ['stop recording', 'that\'s it', 'done', 'stop', 'finish'];
+            const customStopPhrases = profile?.custom_stop_commands || [];
+            const stopPhrases = [...defaultStopPhrases, ...customStopPhrases];
+            
             const isStopCommand = stopPhrases.some(phrase => {
               // Remove punctuation and extra spaces for better matching
               const cleanTranscribed = lowerTranscribed.replace(/[.,!?;]+/g, '').trim();
