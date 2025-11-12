@@ -44,13 +44,6 @@ export const VoiceOrb = ({ onVoiceInput, onPlanningModeActivated, onReflectionMo
       // Only trigger callbacks if mode actually changes
       if (newMode !== mode) {
         setMode(newMode);
-        
-        if (newMode === 'reflection') {
-          toast({
-            title: "Reflection mode activated",
-            description: "Evening time for deeper thought",
-          });
-        }
       }
     };
     
