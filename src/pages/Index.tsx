@@ -279,7 +279,7 @@ const Index = () => {
                 <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50">
                   <Button
                     onClick={() => malunitaVoiceRef.current?.startRecording()}
-                    className="rounded-full px-6 py-6 bg-primary/90 hover:bg-primary backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-300 animate-pulse hover:animate-none"
+                    className="rounded-full px-6 py-6 bg-primary/90 hover:bg-primary backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-300"
                   >
                     <Mic className="w-4 h-4 mr-2" />
                     <span className="text-sm font-light">Voice Note</span>
@@ -297,7 +297,7 @@ const Index = () => {
                 <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50">
                   <Button
                     onClick={() => malunitaVoiceRef.current?.startRecording()}
-                    className="rounded-full px-6 py-6 bg-primary/90 hover:bg-primary backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-300 animate-pulse hover:animate-none"
+                    className="rounded-full px-6 py-6 bg-primary/90 hover:bg-primary backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-300"
                   >
                     <Mic className="w-4 h-4 mr-2" />
                     <span className="text-sm font-light">Voice Note</span>
