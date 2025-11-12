@@ -10,6 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface Task {
   id: string;
@@ -17,6 +18,7 @@ interface Task {
   time?: string;
   context: string;
   completed: boolean;
+  category?: string;
 }
 
 interface TaskEditDialogProps {
@@ -30,12 +32,14 @@ export const TaskEditDialog = ({ open, task, onSave, onClose }: TaskEditDialogPr
   const [title, setTitle] = useState("");
   const [time, setTime] = useState("");
   const [context, setContext] = useState("");
+  const [category, setCategory] = useState("inbox");
 
   useEffect(() => {
     if (task) {
       setTitle(task.title);
       setTime(task.time || "");
       setContext(task.context);
+      setCategory(task.category || "inbox");
     }
   }, [task]);
 
@@ -46,6 +50,7 @@ export const TaskEditDialog = ({ open, task, onSave, onClose }: TaskEditDialogPr
       title: title.trim() || task.title,
       time: time.trim() || task.time,
       context: context.trim() || task.context,
+      category: category,
     });
     onClose();
   };
@@ -95,6 +100,22 @@ export const TaskEditDialog = ({ open, task, onSave, onClose }: TaskEditDialogPr
               onChange={(e) => setContext(e.target.value)}
               placeholder="e.g., Work, Personal"
             />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="category">Category</Label>
+            <Select value={category} onValueChange={setCategory}>
+              <SelectTrigger id="category">
+                <SelectValue placeholder="Select category" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="inbox">Inbox</SelectItem>
+                <SelectItem value="home">Home</SelectItem>
+                <SelectItem value="work">Work</SelectItem>
+                <SelectItem value="gym">Gym</SelectItem>
+                <SelectItem value="projects">Projects</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
