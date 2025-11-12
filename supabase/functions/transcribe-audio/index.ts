@@ -46,40 +46,38 @@ serve(async (req) => {
   console.log('Transcribe-audio function called');
 
   try {
-    // Extract JWT and validate user
+    // Get user from JWT (already validated by Supabase since verify_jwt = true)
     const authHeader = req.headers.get('Authorization')
-    console.log('Auth header present:', !!authHeader);
-    
     if (!authHeader) {
-      console.error('No authorization header provided');
       return new Response(
         JSON.stringify({ error: 'Authentication required' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
+    // Create Supabase client for database operations
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      { global: { headers: { Authorization: authHeader } } }
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    const { data: { user }, error: userError } = await supabase.auth.getUser()
-    console.log('User auth check:', { hasUser: !!user, error: userError?.message });
+    // Extract user ID from JWT
+    const jwt = authHeader.replace('Bearer ', '')
+    const payload = JSON.parse(atob(jwt.split('.')[1]))
+    const userId = payload.sub
     
-    if (userError || !user) {
-      console.error('User authentication failed:', userError);
+    if (!userId) {
       return new Response(
         JSON.stringify({ error: 'Invalid authentication' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
-    console.log('User authenticated:', user.id);
+    console.log('User authenticated:', userId);
 
     // Check rate limit
     const { data: rateLimitOk } = await supabase.rpc('check_rate_limit', {
-      _user_id: user.id,
+      _user_id: userId,
       _endpoint: 'transcribe-audio',
       _max_requests: 20,
       _window_minutes: 1
@@ -109,7 +107,7 @@ serve(async (req) => {
       )
     }
 
-    console.log('Transcribing audio for user:', user.id)
+    console.log('Transcribing audio for user:', userId)
 
     const binaryAudio = processBase64Chunks(audio)
     
