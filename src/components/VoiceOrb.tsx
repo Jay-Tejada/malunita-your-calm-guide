@@ -523,19 +523,73 @@ export const VoiceOrb = ({ onVoiceInput, onPlanningModeActivated, onReflectionMo
                     : '0 4px 16px hsl(var(--orb-idle-glow) / 0.2), inset 0 1px 4px hsl(var(--orb-idle-glow) / 0.3)'
                 }}
               >
-                {/* Sound wave visualization when listening */}
+                {/* Spinning lines visualization when listening */}
                 {isListening && !stopWordDetected && (
-                  <div className="absolute inset-0 flex items-center justify-center gap-0.5 px-4">
-                    {audioLevels.map((level, i) => (
-                      <div
-                        key={i}
-                        className="w-1 bg-foreground/70 rounded-full transition-all duration-100"
+                  <div className="absolute inset-0 flex items-center justify-center overflow-hidden">
+                    {/* Rotating line group 1 */}
+                    <div className="absolute inset-0 animate-spin" style={{ animationDuration: '3s' }}>
+                      {[0, 45, 90, 135].map((angle) => (
+                        <div
+                          key={`line1-${angle}`}
+                          className="absolute top-1/2 left-1/2 origin-left"
+                          style={{
+                            transform: `rotate(${angle}deg) translateY(-50%)`,
+                            width: '35px',
+                            height: '2px',
+                            marginLeft: '-2px'
+                          }}
+                        >
+                          <div 
+                            className="h-full rounded-full transition-all duration-300"
+                            style={{
+                              background: `linear-gradient(to right, 
+                                hsl(var(${mode === 'reflection' || mode === 'quiet' ? '--orb-reflection-glow' : mode === 'planning' ? '--orb-planning-glow' : '--orb-listening-glow'}) / 0.8),
+                                hsl(var(${mode === 'reflection' || mode === 'quiet' ? '--orb-reflection-glow' : mode === 'planning' ? '--orb-planning-glow' : '--orb-listening-glow'}) / 0)
+                              )`,
+                            }}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                    
+                    {/* Rotating line group 2 - opposite direction, thicker */}
+                    <div className="absolute inset-0 animate-spin" style={{ animationDuration: '4s', animationDirection: 'reverse' }}>
+                      {[22.5, 67.5, 112.5, 157.5].map((angle) => (
+                        <div
+                          key={`line2-${angle}`}
+                          className="absolute top-1/2 left-1/2 origin-left"
+                          style={{
+                            transform: `rotate(${angle}deg) translateY(-50%)`,
+                            width: '30px',
+                            height: '3px',
+                            marginLeft: '-2px'
+                          }}
+                        >
+                          <div 
+                            className="h-full rounded-full transition-all duration-300"
+                            style={{
+                              background: `linear-gradient(to right, 
+                                hsl(var(${mode === 'reflection' || mode === 'quiet' ? '--orb-reflection-glow' : mode === 'planning' ? '--orb-planning-glow' : '--orb-listening-glow'}) / 0.6),
+                                hsl(var(${mode === 'reflection' || mode === 'quiet' ? '--orb-reflection-glow' : mode === 'planning' ? '--orb-planning-glow' : '--orb-listening-glow'}) / 0)
+                              )`,
+                            }}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                    
+                    {/* Inner pulsing ring */}
+                    <div className="absolute inset-0 flex items-center justify-center animate-pulse">
+                      <div 
+                        className="w-4 h-4 rounded-full"
                         style={{
-                          height: `${level * 50}%`,
-                          opacity: 0.6 + (level * 0.4)
+                          background: `radial-gradient(circle, 
+                            hsl(var(${mode === 'reflection' || mode === 'quiet' ? '--orb-reflection-glow' : mode === 'planning' ? '--orb-planning-glow' : '--orb-listening-glow'}) / 0.4),
+                            hsl(var(${mode === 'reflection' || mode === 'quiet' ? '--orb-reflection-glow' : mode === 'planning' ? '--orb-planning-glow' : '--orb-listening-glow'}) / 0)
+                          )`,
                         }}
                       />
-                    ))}
+                    </div>
                   </div>
                 )}
 
