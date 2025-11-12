@@ -7,6 +7,7 @@ import Index from "./pages/Index";
 import Install from "./pages/Install";
 import NotFound from "./pages/NotFound";
 import Admin from "./pages/Admin";
+import Trends from "./pages/Trends";
 import ResetPassword from "./pages/ResetPassword";
 import TestCore from "./pages/TestCore";
 import TestAll from "./pages/TestAll";
@@ -29,6 +30,7 @@ const App = () => (
           <Route path="/notifications" element={<Notifications />} />
           <Route path="/install" element={<Install />} />
           <Route path="/admin" element={<Admin />} />
+          <Route path="/trends" element={<Trends />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/test-core" element={<TestCore />} />
           <Route path="/test-all" element={<TestAll />} />
