@@ -4,7 +4,8 @@ import { useAdmin } from "@/hooks/useAdmin";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
-import { Loader2, TrendingUp, DollarSign, Activity, Users } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Loader2, TrendingUp, DollarSign, Activity, Users, Brain } from "lucide-react";
 
 export default function Admin() {
   const navigate = useNavigate();
@@ -50,9 +51,19 @@ export default function Admin() {
   return (
     <div className="min-h-screen bg-background p-6">
       <div className="max-w-7xl mx-auto space-y-6">
-        <div>
-          <h1 className="text-3xl font-light mb-2">Admin Dashboard</h1>
-          <p className="text-muted-foreground">Monitor AI usage and costs</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-light mb-2">Admin Dashboard</h1>
+            <p className="text-muted-foreground">Monitor AI usage and costs</p>
+          </div>
+          <Button
+            onClick={() => navigate('/trends')}
+            variant="outline"
+            className="gap-2"
+          >
+            <Brain className="w-4 h-4" />
+            View AI Learning Trends
+          </Button>
         </div>
 
         {/* Summary Cards */}
