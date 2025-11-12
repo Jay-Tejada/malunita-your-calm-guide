@@ -64,31 +64,28 @@ export const SmartReflectionPrompt = ({ onReflect }: SmartReflectionPromptProps)
 
   return (
     <div 
-      className={`fixed bottom-36 sm:bottom-32 left-1/2 -translate-x-1/2 z-40 transition-all duration-300 max-w-[90vw] sm:max-w-none ${
-        isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+      className={`fixed top-20 right-4 z-40 transition-all duration-300 ${
+        isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-8'
       }`}
-      style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
-      <div className="bg-background/95 backdrop-blur-sm border border-border rounded-full px-3 sm:px-6 py-2 sm:py-3 shadow-lg flex flex-col sm:flex-row items-center gap-2 sm:gap-4">
-        <p className="text-[11px] sm:text-sm text-muted-foreground text-center sm:text-left">
-          Would you like to reflect on your week?
-        </p>
-        <div className="flex items-center gap-2">
+      <div className="bg-background/95 backdrop-blur-sm border border-border rounded-full pl-4 pr-2 py-2 shadow-lg flex items-center gap-3">
+        <Sparkles className="w-4 h-4 text-primary flex-shrink-0" />
+        <span className="text-xs text-muted-foreground whitespace-nowrap">Reflect on week?</span>
+        <div className="flex items-center gap-1">
           <Button
             variant="ghost"
             size="sm"
             onClick={handleDismiss}
-            className="text-muted-foreground hover:text-foreground h-8 px-3 text-xs sm:text-sm"
+            className="h-7 w-7 p-0 rounded-full hover:bg-muted"
           >
-            Not now
+            <span className="text-lg leading-none">×</span>
           </Button>
           <Button
             size="sm"
             onClick={handleReflect}
-            className="gap-1.5 rounded-full h-8 px-4 text-xs sm:text-sm"
+            className="rounded-full h-7 px-3 text-xs"
           >
-            <Sparkles className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-            Begin Review
+            Begin
           </Button>
         </div>
       </div>
