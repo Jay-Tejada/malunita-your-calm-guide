@@ -12,6 +12,7 @@ import TestCore from "./pages/TestCore";
 import TestAll from "./pages/TestAll";
 import Inbox from "./pages/Inbox";
 import Notifications from "./pages/Notifications";
+import Goals from "./pages/Goals";
 
 const queryClient = new QueryClient();
 
@@ -24,6 +25,7 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/inbox" element={<Inbox />} />
+          <Route path="/goals" element={<Goals />} />
           <Route path="/notifications" element={<Notifications />} />
           <Route path="/install" element={<Install />} />
           <Route path="/admin" element={<Admin />} />

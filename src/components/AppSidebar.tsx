@@ -10,7 +10,8 @@ import {
   Shield, 
   ListTodo, 
   LogOut,
-  CheckSquare 
+  CheckSquare,
+  Target
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAdmin } from "@/hooks/useAdmin";
@@ -145,6 +146,16 @@ export function AppSidebar({ onSettingsClick, onCategoryClick, activeCategory }:
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton 
+                  onClick={() => navigate('/goals')}
+                  className="hover:bg-muted/50"
+                >
+                  <Target className="mr-2 h-4 w-4" />
+                  {!collapsed && <span>Goals</span>}
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
               <SidebarMenuItem>
                 <SidebarMenuButton 
                   onClick={() => onCategoryClick('all')}

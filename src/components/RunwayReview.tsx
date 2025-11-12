@@ -471,43 +471,55 @@ export const RunwayReview = ({ onClose }: RunwayReviewProps) => {
         {/* Task Categories */}
         {!isLoading && !showMoodSelector && (
           <div className="space-y-6">
-            {categories.nextActions.length > 0 && (
-              <TaskSection 
-                title="✅ Next Actions"
-                tasks={categories.nextActions}
-                theme={theme}
-                onMarkDone={handleMarkDone}
-                onArchive={handleArchive}
-              />
-            )}
-            
+            {/* Urgent Today (Time-Sensitive) */}
             {categories.timeSensitive.length > 0 && (
               <TaskSection 
-                title="⏳ Time-Sensitive"
+                title="🚨 Urgent Today"
+                description="Time-sensitive tasks that need immediate attention"
                 tasks={categories.timeSensitive}
                 theme={theme}
                 onMarkDone={handleMarkDone}
                 onArchive={handleArchive}
+                variant="urgent"
               />
             )}
             
-            {categories.unfinished.length > 0 && (
+            {/* Next Actions (Top Priorities) */}
+            {categories.nextActions.length > 0 && (
               <TaskSection 
-                title="🧠 Unfinished Thoughts"
-                tasks={categories.unfinished}
+                title="✅ Top Priorities"
+                description="Your most important next actions to gain momentum"
+                tasks={categories.nextActions}
                 theme={theme}
                 onMarkDone={handleMarkDone}
                 onArchive={handleArchive}
+                variant="priority"
               />
             )}
             
+            {/* Stuck/Overdue (Clutter) */}
             {categories.clutter.length > 0 && (
               <TaskSection 
-                title="🧹 Possible Clutter"
+                title="⏸️ Stuck or Overdue"
+                description="Older tasks that may need a decision: continue, delegate, or archive"
                 tasks={categories.clutter}
                 theme={theme}
                 onMarkDone={handleMarkDone}
                 onArchive={handleArchive}
+                variant="stuck"
+              />
+            )}
+            
+            {/* Upcoming (Unfinished Thoughts) */}
+            {categories.unfinished.length > 0 && (
+              <TaskSection 
+                title="📝 Needs Refinement"
+                description="Tasks with notes that might need more clarity or planning"
+                tasks={categories.unfinished}
+                theme={theme}
+                onMarkDone={handleMarkDone}
+                onArchive={handleArchive}
+                variant="upcoming"
               />
             )}
           </div>
@@ -519,28 +531,48 @@ export const RunwayReview = ({ onClose }: RunwayReviewProps) => {
 
 interface TaskSectionProps {
   title: string;
+  description?: string;
   tasks: any[];
   theme: any;
   onMarkDone: (id: string) => void;
   onArchive: (id: string) => void;
+  variant?: 'urgent' | 'priority' | 'stuck' | 'upcoming';
 }
 
-const TaskSection = ({ title, tasks, theme, onMarkDone, onArchive }: TaskSectionProps) => {
+const TaskSection = ({ title, description, tasks, theme, onMarkDone, onArchive, variant }: TaskSectionProps) => {
+  const variantStyles = {
+    urgent: 'border-red-500/20 bg-red-500/5',
+    priority: 'border-primary/20 bg-primary/5',
+    stuck: 'border-orange-500/20 bg-orange-500/5',
+    upcoming: 'border-blue-500/20 bg-blue-500/5',
+  };
+
   return (
-    <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6">
-      <h3 className={`text-lg font-medium mb-4 ${theme.text}`}>{title}</h3>
+    <div className={`backdrop-blur-sm rounded-2xl p-6 border-2 ${variant ? variantStyles[variant] : 'bg-white/10'}`}>
+      <div className="mb-4">
+        <h3 className={`text-lg font-semibold mb-1 ${theme.text}`}>{title}</h3>
+        {description && (
+          <p className={`text-sm ${theme.accent} opacity-80`}>{description}</p>
+        )}
+      </div>
       <div className="space-y-3">
         {tasks.map((task) => (
           <div
             key={task.id}
-            className="flex items-start gap-3 bg-white/5 rounded-xl p-4"
+            className="flex items-start gap-3 bg-white/10 hover:bg-white/15 rounded-xl p-4 transition-colors"
           >
             <div className="flex-1">
-              <p className={theme.text}>{task.title}</p>
+              <p className={`font-medium ${theme.text}`}>{task.title}</p>
               {task.context && (
                 <p className={`text-sm mt-1 ${theme.accent} opacity-70`}>
-                  {task.context.slice(0, 100)}...
+                  {task.context.length > 100 ? `${task.context.slice(0, 100)}...` : task.context}
                 </p>
+              )}
+              {task.is_time_based && (
+                <span className="inline-flex items-center gap-1 mt-2 text-xs bg-red-500/20 text-red-300 px-2 py-1 rounded">
+                  <Clock className="w-3 h-3" />
+                  Time-sensitive
+                </span>
               )}
             </div>
             <div className="flex gap-2">
@@ -548,7 +580,8 @@ const TaskSection = ({ title, tasks, theme, onMarkDone, onArchive }: TaskSection
                 size="sm"
                 variant="ghost"
                 onClick={() => onMarkDone(task.id)}
-                className="h-8 w-8 p-0"
+                className={`h-8 w-8 p-0 ${theme.text} hover:bg-green-500/20`}
+                title="Mark complete"
               >
                 <Check className="w-4 h-4" />
               </Button>
@@ -556,7 +589,8 @@ const TaskSection = ({ title, tasks, theme, onMarkDone, onArchive }: TaskSection
                 size="sm"
                 variant="ghost"
                 onClick={() => onArchive(task.id)}
-                className="h-8 w-8 p-0"
+                className={`h-8 w-8 p-0 ${theme.text} hover:bg-red-500/20`}
+                title="Archive task"
               >
                 <Archive className="w-4 h-4" />
               </Button>
