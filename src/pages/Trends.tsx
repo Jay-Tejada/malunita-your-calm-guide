@@ -8,6 +8,21 @@ import { Button } from "@/components/ui/button";
 import { Loader2, TrendingUp, Brain, AlertCircle, ArrowLeft, Play } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
+import { 
+  LineChart, 
+  Line, 
+  BarChart, 
+  Bar, 
+  PieChart, 
+  Pie, 
+  Cell,
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  Legend, 
+  ResponsiveContainer 
+} from "recharts";
 
 interface LearningTrend {
   id: string;
@@ -96,6 +111,36 @@ export default function Trends() {
 
   const latestTrend = trends?.[0];
   const hasData = trends && trends.length > 0;
+
+  // Prepare chart data
+  const correctionsOverTime = trends?.map(trend => ({
+    date: new Date(trend.analysis_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+    corrections: trend.total_corrections_analyzed,
+    patterns: trend.common_patterns?.length || 0,
+  })).reverse() || [];
+
+  // Category accuracy data from latest trend
+  const categoryData = latestTrend?.common_patterns?.reduce((acc, pattern) => {
+    const categoryMatch = pattern.pattern.match(/category.*?(\w+)/i);
+    if (categoryMatch) {
+      const category = categoryMatch[1];
+      acc[category] = (acc[category] || 0) + pattern.frequency;
+    }
+    return acc;
+  }, {} as Record<string, number>) || {};
+
+  const categoryChartData = Object.entries(categoryData).map(([name, value]) => ({
+    name: name.charAt(0).toUpperCase() + name.slice(1),
+    corrections: value,
+  }));
+
+  // Pie chart for correction distribution
+  const correctionDistribution = latestTrend?.common_patterns?.slice(0, 5).map((pattern, index) => ({
+    name: pattern.pattern.substring(0, 30) + '...',
+    value: pattern.frequency,
+  })) || [];
+
+  const COLORS = ['hsl(var(--primary))', 'hsl(var(--secondary))', 'hsl(var(--accent))', 'hsl(var(--muted))', 'hsl(var(--destructive))'];
 
   return (
     <div className="min-h-screen bg-background p-6">
@@ -227,6 +272,117 @@ export default function Trends() {
                     </div>
                   ))}
                 </div>
+              </Card>
+            )}
+
+            {/* Visual Charts */}
+            {trends.length > 1 && (
+              <>
+                {/* Corrections Over Time */}
+                <Card className="p-6">
+                  <h3 className="text-lg font-medium mb-4">Corrections Over Time</h3>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <LineChart data={correctionsOverTime}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                      <XAxis 
+                        dataKey="date" 
+                        stroke="hsl(var(--muted-foreground))"
+                        style={{ fontSize: '12px' }}
+                      />
+                      <YAxis 
+                        stroke="hsl(var(--muted-foreground))"
+                        style={{ fontSize: '12px' }}
+                      />
+                      <Tooltip 
+                        contentStyle={{
+                          backgroundColor: 'hsl(var(--popover))',
+                          border: '1px solid hsl(var(--border))',
+                          borderRadius: '8px',
+                        }}
+                      />
+                      <Legend />
+                      <Line 
+                        type="monotone" 
+                        dataKey="corrections" 
+                        stroke="hsl(var(--primary))" 
+                        strokeWidth={2}
+                        name="Total Corrections"
+                      />
+                      <Line 
+                        type="monotone" 
+                        dataKey="patterns" 
+                        stroke="hsl(var(--accent))" 
+                        strokeWidth={2}
+                        name="Patterns Found"
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </Card>
+
+                {/* Category Corrections */}
+                {categoryChartData.length > 0 && (
+                  <Card className="p-6">
+                    <h3 className="text-lg font-medium mb-4">Corrections by Category</h3>
+                    <ResponsiveContainer width="100%" height={300}>
+                      <BarChart data={categoryChartData}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                        <XAxis 
+                          dataKey="name" 
+                          stroke="hsl(var(--muted-foreground))"
+                          style={{ fontSize: '12px' }}
+                        />
+                        <YAxis 
+                          stroke="hsl(var(--muted-foreground))"
+                          style={{ fontSize: '12px' }}
+                        />
+                        <Tooltip 
+                          contentStyle={{
+                            backgroundColor: 'hsl(var(--popover))',
+                            border: '1px solid hsl(var(--border))',
+                            borderRadius: '8px',
+                          }}
+                        />
+                        <Bar 
+                          dataKey="corrections" 
+                          fill="hsl(var(--primary))"
+                          name="Corrections"
+                        />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </Card>
+                )}
+              </>
+            )}
+
+            {/* Correction Distribution Pie Chart */}
+            {correctionDistribution.length > 0 && (
+              <Card className="p-6">
+                <h3 className="text-lg font-medium mb-4">Top Correction Types</h3>
+                <ResponsiveContainer width="100%" height={300}>
+                  <PieChart>
+                    <Pie
+                      data={correctionDistribution}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                      outerRadius={80}
+                      fill="hsl(var(--primary))"
+                      dataKey="value"
+                    >
+                      {correctionDistribution.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip 
+                      contentStyle={{
+                        backgroundColor: 'hsl(var(--popover))',
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: '8px',
+                      }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
               </Card>
             )}
 
