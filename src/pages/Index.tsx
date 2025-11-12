@@ -15,6 +15,7 @@ import { useTasks } from "@/hooks/useTasks";
 import { useProfile } from "@/hooks/useProfile";
 import { useCustomCategories } from "@/hooks/useCustomCategories";
 import { AppSidebar } from "@/components/AppSidebar";
+import { BottomNav } from "@/components/BottomNav";
 
 import { SidebarProvider, useSidebar } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
@@ -309,6 +310,9 @@ const Index = () => {
 
         {/* Runway Review Modal */}
         {showRunwayReview && <RunwayReview onClose={() => setShowRunwayReview(false)} />}
+        
+        {/* Mobile Bottom Navigation */}
+        <BottomNav />
       </div>
     </SidebarProvider>
   );
