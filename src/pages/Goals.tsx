@@ -15,6 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { CustomCategoryManager } from "@/components/CustomCategoryManager";
 import { BottomNav } from "@/components/BottomNav";
+import { TaskGoalTagging } from "@/components/TaskGoalTagging";
 
 const Goals = () => {
   const navigate = useNavigate();
@@ -211,61 +212,41 @@ const Goals = () => {
               </CardContent>
             </Card>
 
-            {/* Goal-Aligned Tasks */}
-            {profile?.current_goal && totalGoalTasks > 0 && (
+            {/* Task Tagging Interface */}
+            {profile?.current_goal && (
+              <TaskGoalTagging />
+            )}
+
+            {/* Goal-Aligned Tasks Summary */}
+            {profile?.current_goal && completedGoalTasks.length > 0 && (
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <Sparkles className="h-5 w-5 text-primary" />
-                    Goal-Aligned Tasks
+                    <CheckCircle2 className="h-5 w-5 text-green-600" />
+                    Completed Goal Tasks
                   </CardTitle>
                   <CardDescription>
-                    Tasks that support your current goal
+                    Recent accomplishments toward your goal
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-2">
-                  {goalAlignedTasks.length > 0 && (
-                    <div className="space-y-2">
-                      <h4 className="text-sm font-medium flex items-center gap-2">
-                        <Circle className="h-4 w-4" />
-                        Active ({goalAlignedTasks.length})
-                      </h4>
-                      {goalAlignedTasks.map((task) => (
-                        <div
-                          key={task.id}
-                          className="p-3 bg-muted/50 rounded-lg border"
-                        >
-                          <p className="font-medium text-sm">{task.title}</p>
-                          {task.alignment_reason && (
-                            <p className="text-xs text-muted-foreground mt-1">
-                              {task.alignment_reason}
-                            </p>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {completedGoalTasks.length > 0 && (
-                    <div className="space-y-2 pt-4 border-t">
-                      <h4 className="text-sm font-medium flex items-center gap-2 text-muted-foreground">
-                        <CheckCircle2 className="h-4 w-4" />
-                        Completed ({completedGoalTasks.length})
-                      </h4>
-                      {completedGoalTasks.slice(0, 5).map((task) => (
-                        <div
-                          key={task.id}
-                          className="p-3 bg-muted/30 rounded-lg border border-muted opacity-60"
-                        >
-                          <p className="font-medium text-sm line-through">{task.title}</p>
-                        </div>
-                      ))}
-                      {completedGoalTasks.length > 5 && (
-                        <p className="text-xs text-muted-foreground text-center pt-2">
-                          + {completedGoalTasks.length - 5} more completed
+                  {completedGoalTasks.slice(0, 5).map((task) => (
+                    <div
+                      key={task.id}
+                      className="p-3 bg-muted/30 rounded-lg border border-muted opacity-60"
+                    >
+                      <p className="font-medium text-sm line-through">{task.title}</p>
+                      {task.alignment_reason && (
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {task.alignment_reason}
                         </p>
                       )}
                     </div>
+                  ))}
+                  {completedGoalTasks.length > 5 && (
+                    <p className="text-xs text-muted-foreground text-center pt-2">
+                      + {completedGoalTasks.length - 5} more completed
+                    </p>
                   )}
                 </CardContent>
               </Card>
