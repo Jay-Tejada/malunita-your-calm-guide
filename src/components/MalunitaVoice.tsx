@@ -427,27 +427,45 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
               return;
             }
             
-            // Check for stop commands - more flexible matching
-            const defaultStopPhrases = ['stop recording', 'that\'s it', 'done', 'stop', 'finish'];
+            // Check for stop commands - more flexible matching for mobile
+            const defaultStopPhrases = [
+              'stop recording', 
+              'that\'s it', 
+              'done', 
+              'stop', 
+              'finish',
+              'i\'m done',
+              'im done',
+              'i am done'
+            ];
             // @ts-ignore - custom_stop_commands field exists after migration
             const customStopPhrases = profile?.custom_stop_commands || [];
             const stopPhrases = [...defaultStopPhrases, ...customStopPhrases];
             
             const isStopCommand = stopPhrases.some(phrase => {
               // Remove punctuation and extra spaces for better matching
-              const cleanTranscribed = lowerTranscribed.replace(/[.,!?;]+/g, '').trim();
+              const cleanTranscribed = lowerTranscribed.replace(/[.,!?;]+/g, '').replace(/'/g, '').trim();
               const words = cleanTranscribed.split(/\s+/);
+              const cleanPhrase = phrase.replace(/'/g, '');
               
-              // Check if the phrase appears as complete word(s) at the end or as the only content
-              if (phrase.includes(' ')) {
-                // Multi-word phrase (e.g., "stop recording", "that's it")
-                return cleanTranscribed.endsWith(phrase) || cleanTranscribed === phrase;
+              // Check if the phrase appears anywhere in the last part of the sentence
+              if (phrase.includes(' ') || cleanPhrase.includes(' ')) {
+                // Multi-word phrase - check if it appears at the end
+                return cleanTranscribed.endsWith(cleanPhrase) || 
+                       cleanTranscribed === cleanPhrase ||
+                       // Also check within the last 5 words
+                       words.slice(-5).join(' ').includes(cleanPhrase);
               } else {
-                // Single word - check if it's the last word or the only word
+                // Single word - be very flexible on mobile
                 const lastWord = words[words.length - 1];
-                return lastWord === phrase || cleanTranscribed === phrase || 
-                       // Also match if it's close to the end (within last 2 words)
-                       (words.length >= 2 && words[words.length - 2] === phrase && words[words.length - 1].length <= 3);
+                const secondLastWord = words.length >= 2 ? words[words.length - 2] : '';
+                
+                return lastWord === cleanPhrase || 
+                       cleanTranscribed === cleanPhrase || 
+                       // Match if preceded by short connector words
+                       (secondLastWord === cleanPhrase && lastWord.length <= 4) ||
+                       // Match "i done", "im done" patterns
+                       (words.length === 2 && secondLastWord.match(/^i'?m?$/) && lastWord === 'done');
               }
             });
             
