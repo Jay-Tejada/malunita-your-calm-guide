@@ -17,6 +17,7 @@ import { useCustomCategories } from "@/hooks/useCustomCategories";
 import { useWakeWord } from "@/hooks/useWakeWord";
 import { AppSidebar } from "@/components/AppSidebar";
 import { BottomNav } from "@/components/BottomNav";
+import { WakeWordIndicator } from "@/components/WakeWordIndicator";
 
 import { SidebarProvider, useSidebar } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
@@ -321,6 +322,12 @@ const Index = () => {
           {enableSmartPrompt && !showRunwayReview && (
             <SmartReflectionPrompt onReflect={() => setShowRunwayReview(true)} />
           )}
+          
+          {/* Wake Word Listening Indicator */}
+          <WakeWordIndicator 
+            isListening={isWakeWordListening} 
+            wakeWord={profile?.custom_wake_word}
+          />
         </main>
 
         {/* Runway Review Modal */}
