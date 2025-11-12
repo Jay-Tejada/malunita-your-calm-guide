@@ -8,6 +8,7 @@ import { NotificationPermission } from "@/components/NotificationPermission";
 import { GoalSetting } from "@/components/GoalSetting";
 import { CustomCategoryManager } from "@/components/CustomCategoryManager";
 import { VoiceCommandsManager } from "@/components/VoiceCommandsManager";
+import { PersonalizationInsights } from "@/components/PersonalizationInsights";
 
 
 interface ProfileSettingsProps {
@@ -39,6 +40,9 @@ export const ProfileSettings = ({ onClose }: ProfileSettingsProps) => {
 
         <ScrollArea className="h-[500px]">
           <div className="p-6 space-y-8">
+            {/* Personalization Insights */}
+            <PersonalizationInsights />
+
             {/* Analytics Section */}
             <div>
               <h3 className="text-lg font-medium mb-4 flex items-center gap-2">
