@@ -11,6 +11,15 @@ import { DndContext, DragEndEvent, DragOverlay, PointerSensor, useSensor, useSen
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { TaskCard } from "@/components/TaskCard";
 import { useToast } from "@/hooks/use-toast";
+import {
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+} from "@/components/ui/drawer";
 
 interface TaskListProps {
   category?: string;
@@ -22,6 +31,8 @@ export const TaskList = ({ category: externalCategory }: TaskListProps = {}) => 
   const [internalDomain, setInternalDomain] = useState("inbox");
   const [activeId, setActiveId] = useState<string | null>(null);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [categoryDrawerOpen, setCategoryDrawerOpen] = useState(false);
+  const [taskToMove, setTaskToMove] = useState<Task | null>(null);
   const { toast } = useToast();
   
   // Use external category if provided, otherwise use internal state
@@ -189,6 +200,53 @@ export const TaskList = ({ category: externalCategory }: TaskListProps = {}) => 
     deleteTask(id);
   };
 
+  const handleLongPress = (task: Task) => {
+    setTaskToMove(task);
+    setCategoryDrawerOpen(true);
+  };
+
+  const handleMoveToCategory = (category: string) => {
+    if (!taskToMove) return;
+    
+    updateTask({
+      id: taskToMove.id,
+      updates: { 
+        category,
+        custom_category_id: category.startsWith('custom-') ? category.replace('custom-', '') : null
+      },
+    });
+    
+    toast({
+      title: "Task moved",
+      description: `Moved to ${getCategoryLabel(category)}`,
+    });
+    
+    setCategoryDrawerOpen(false);
+    setTaskToMove(null);
+  };
+
+  const getCategoryLabel = (cat: string) => {
+    if (cat.startsWith("custom-")) {
+      const categoryId = cat.replace('custom-', '');
+      const customCategory = categories?.find(c => c.id === categoryId);
+      return customCategory?.name || cat;
+    }
+    return cat.charAt(0).toUpperCase() + cat.slice(1);
+  };
+
+  const allCategories = [
+    { id: 'inbox', label: 'Inbox', icon: '📥' },
+    { id: 'home', label: 'Home', icon: '🏠' },
+    { id: 'work', label: 'Work', icon: '💼' },
+    { id: 'gym', label: 'Gym', icon: '💪' },
+    { id: 'projects', label: 'Projects', icon: '📁' },
+    ...(categories || []).map(cat => ({
+      id: `custom-${cat.id}`,
+      label: cat.name,
+      icon: cat.icon || '📌'
+    }))
+  ];
+
   return (
     <DndContext
       sensors={sensors}
@@ -235,6 +293,7 @@ export const TaskList = ({ category: externalCategory }: TaskListProps = {}) => 
                     selected={selectedTaskId === task.id}
                     onToggle={() => handleToggleComplete(task)}
                     onSelect={() => setSelectedTaskId(task.id)}
+                    onLongPress={() => handleLongPress(task)}
                     goalAligned={task.goal_aligned}
                     alignmentReason={task.alignment_reason}
                   />
@@ -276,6 +335,38 @@ export const TaskList = ({ category: externalCategory }: TaskListProps = {}) => 
           </div>
         ) : null}
       </DragOverlay>
+
+      {/* Category Selector Drawer */}
+      <Drawer open={categoryDrawerOpen} onOpenChange={setCategoryDrawerOpen}>
+        <DrawerContent>
+          <DrawerHeader>
+            <DrawerTitle>Move task to...</DrawerTitle>
+            <DrawerDescription>
+              {taskToMove?.title}
+            </DrawerDescription>
+          </DrawerHeader>
+          
+          <div className="px-4 pb-6 grid grid-cols-2 gap-3">
+            {allCategories.map((cat) => (
+              <Button
+                key={cat.id}
+                variant={taskToMove?.category === cat.id ? "default" : "outline"}
+                className="h-auto py-4 flex flex-col gap-2"
+                onClick={() => handleMoveToCategory(cat.id)}
+              >
+                <span className="text-2xl">{cat.icon}</span>
+                <span className="text-sm">{cat.label}</span>
+              </Button>
+            ))}
+          </div>
+
+          <DrawerFooter>
+            <DrawerClose asChild>
+              <Button variant="outline">Cancel</Button>
+            </DrawerClose>
+          </DrawerFooter>
+        </DrawerContent>
+      </Drawer>
     </DndContext>
   );
 };

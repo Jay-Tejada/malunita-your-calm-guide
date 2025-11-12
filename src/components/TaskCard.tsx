@@ -3,6 +3,7 @@ import { cn } from "@/lib/utils";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useEffect, useRef } from "react";
 
 interface TaskCardProps {
   id: string;
@@ -14,11 +15,12 @@ interface TaskCardProps {
   onToggle?: () => void;
   onEdit?: () => void;
   onSelect?: () => void;
+  onLongPress?: () => void;
   goalAligned?: boolean | null;
   alignmentReason?: string | null;
 }
 
-export const TaskCard = ({ id, title, time, context, completed, selected, onToggle, onEdit, onSelect, goalAligned, alignmentReason }: TaskCardProps) => {
+export const TaskCard = ({ id, title, time, context, completed, selected, onToggle, onEdit, onSelect, onLongPress, goalAligned, alignmentReason }: TaskCardProps) => {
   const {
     attributes,
     listeners,
@@ -33,11 +35,46 @@ export const TaskCard = ({ id, title, time, context, completed, selected, onTogg
     transition,
   };
 
+  // Long press detection
+  const pressTimer = useRef<NodeJS.Timeout | null>(null);
+  const isPressing = useRef(false);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    isPressing.current = true;
+    pressTimer.current = setTimeout(() => {
+      if (isPressing.current) {
+        onLongPress?.();
+        // Haptic feedback if available
+        if (navigator.vibrate) {
+          navigator.vibrate(50);
+        }
+      }
+    }, 500); // 500ms for long press
+  };
+
+  const handleTouchEnd = () => {
+    isPressing.current = false;
+    if (pressTimer.current) {
+      clearTimeout(pressTimer.current);
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      if (pressTimer.current) {
+        clearTimeout(pressTimer.current);
+      }
+    };
+  }, []);
+
   return (
     <div
       ref={setNodeRef}
       style={style}
       onClick={onSelect}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+      onTouchCancel={handleTouchEnd}
       className={cn(
         "group flex items-start gap-3 p-4 rounded-2xl border transition-all duration-300",
         completed
