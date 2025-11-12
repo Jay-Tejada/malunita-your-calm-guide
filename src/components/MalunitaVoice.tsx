@@ -383,11 +383,22 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
               return;
             }
             
-            // Check for stop commands
+            // Check for stop commands - more flexible matching
             const stopPhrases = ['stop recording', 'that\'s it', 'done', 'stop', 'finish'];
-            const isStopCommand = stopPhrases.some(phrase => 
-              lowerTranscribed.endsWith(phrase) || lowerTranscribed === phrase
-            );
+            const isStopCommand = stopPhrases.some(phrase => {
+              // Remove punctuation and extra spaces for better matching
+              const cleanTranscribed = lowerTranscribed.replace(/[.,!?;]+/g, '').trim();
+              const words = cleanTranscribed.split(/\s+/);
+              
+              // Check if the phrase appears as complete word(s) at the end or as the only content
+              if (phrase.includes(' ')) {
+                // Multi-word phrase (e.g., "stop recording", "that's it")
+                return cleanTranscribed.endsWith(phrase) || cleanTranscribed === phrase;
+              } else {
+                // Single word - check if it's the last word or the only word
+                return words[words.length - 1] === phrase || cleanTranscribed === phrase;
+              }
+            });
             
             if (isStopCommand) {
               // Remove stop phrase from transcription
