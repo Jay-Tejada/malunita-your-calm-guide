@@ -11,11 +11,12 @@ interface VoiceOrbProps {
   onOrbReflectionTrigger?: () => void;
   isSaving?: boolean;
   showSuccess?: boolean;
+  stopWordDetected?: boolean;
 }
 
 type OrbMode = 'capture' | 'reflection' | 'planning' | 'quiet';
 
-export const VoiceOrb = ({ onVoiceInput, onPlanningModeActivated, onReflectionModeActivated, onOrbReflectionTrigger, isSaving = false, showSuccess = false }: VoiceOrbProps) => {
+export const VoiceOrb = ({ onVoiceInput, onPlanningModeActivated, onReflectionModeActivated, onOrbReflectionTrigger, isSaving = false, showSuccess = false, stopWordDetected = false }: VoiceOrbProps) => {
   const [isListening, setIsListening] = useState(false);
   const [isResponding, setIsResponding] = useState(false);
   const [audioLevels, setAudioLevels] = useState<number[]>(new Array(7).fill(0));
@@ -523,7 +524,7 @@ export const VoiceOrb = ({ onVoiceInput, onPlanningModeActivated, onReflectionMo
                 }}
               >
                 {/* Sound wave visualization when listening */}
-                {isListening && (
+                {isListening && !stopWordDetected && (
                   <div className="absolute inset-0 flex items-center justify-center gap-0.5 px-4">
                     {audioLevels.map((level, i) => (
                       <div
@@ -535,6 +536,18 @@ export const VoiceOrb = ({ onVoiceInput, onPlanningModeActivated, onReflectionMo
                         }}
                       />
                     ))}
+                  </div>
+                )}
+
+                {/* Stop word detected indicator */}
+                {stopWordDetected && isListening && (
+                  <div className="absolute inset-0 flex items-center justify-center animate-in scale-in duration-200">
+                    <div className="relative">
+                      <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center animate-pulse">
+                        <Check className="w-6 h-6 text-primary" strokeWidth={3} />
+                      </div>
+                      <div className="absolute inset-0 w-12 h-12 rounded-full bg-primary/30 animate-ping" />
+                    </div>
                   </div>
                 )}
 
@@ -570,7 +583,9 @@ export const VoiceOrb = ({ onVoiceInput, onPlanningModeActivated, onReflectionMo
                 malunita
               </p>
               <p className="text-[10px] sm:text-xs text-muted-foreground font-light">
-                {isListening 
+                {stopWordDetected && isListening
+                  ? 'stop word detected ✓'
+                  : isListening 
                   ? 'listening...' 
                   : isSaving
                   ? 'saving...'

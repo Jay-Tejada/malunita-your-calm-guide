@@ -39,6 +39,7 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [stopWordDetected, setStopWordDetected] = useState(false);
   const [transcribedText, setTranscribedText] = useState("");
   const [gptResponse, setGptResponse] = useState("");
   const [audioLevels, setAudioLevels] = useState<number[]>(new Array(7).fill(0));
@@ -401,6 +402,9 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
             });
             
             if (isStopCommand) {
+              // Show visual feedback that stop word was detected
+              setStopWordDetected(true);
+              setTimeout(() => setStopWordDetected(false), 1500);
               // Remove stop phrase from transcription
               let cleanedText = transcribed;
               for (const phrase of stopPhrases) {
@@ -834,6 +838,7 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
           onOrbReflectionTrigger={onOrbReflectionTrigger}
           isSaving={isSaving}
           showSuccess={showSuccess}
+          stopWordDetected={stopWordDetected}
         />
 
         {/* Action buttons */}
