@@ -405,6 +405,11 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
               // Show visual feedback that stop word was detected
               setStopWordDetected(true);
               setTimeout(() => setStopWordDetected(false), 1500);
+              
+              // Haptic feedback on mobile devices
+              if ('vibrate' in navigator) {
+                navigator.vibrate([50, 100, 50]); // Double pulse pattern
+              }
               // Remove stop phrase from transcription
               let cleanedText = transcribed;
               for (const phrase of stopPhrases) {
