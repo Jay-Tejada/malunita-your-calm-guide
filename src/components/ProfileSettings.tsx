@@ -10,6 +10,7 @@ import { GoalSetting } from "@/components/GoalSetting";
 import { CustomCategoryManager } from "@/components/CustomCategoryManager";
 import { VoiceCommandsManager } from "@/components/VoiceCommandsManager";
 import { PersonalizationInsights } from "@/components/PersonalizationInsights";
+import { WakeWordTraining } from "@/components/WakeWordTraining";
 import { useState } from "react";
 
 
@@ -192,6 +193,9 @@ export const ProfileSettings = ({ onClose }: ProfileSettingsProps) => {
                     <p className="text-xs text-muted-foreground">
                       Say "{customWakeWord}" to activate voice input hands-free
                     </p>
+                    
+                    {/* Wake Word Training */}
+                    <WakeWordTraining />
                   </div>
                 )}
               </div>
