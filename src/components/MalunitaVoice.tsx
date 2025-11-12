@@ -89,6 +89,27 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
         onTasksCreated();
       }
       
+      // Generate and play TTS confirmation
+      if (createdTasks && createdTasks.length > 0 && audioEnabled) {
+        const task = createdTasks[0];
+        const categoryName = (category || 'inbox').charAt(0).toUpperCase() + (category || 'inbox').slice(1);
+        const confirmationMessage = `You said: "${text}" I've added it to your tasks under ${categoryName}. Want to set a reminder?`;
+        
+        setGptResponse(confirmationMessage);
+        
+        try {
+          const { data: ttsData, error: ttsError } = await supabase.functions.invoke('text-to-speech', {
+            body: { text: confirmationMessage, voice: 'nova' }
+          });
+
+          if (!ttsError && ttsData?.audioContent) {
+            await playAudioResponse(ttsData.audioContent);
+          }
+        } catch (ttsError) {
+          console.error('TTS error:', ttsError);
+        }
+      }
+      
       // Show feedback dialog for the created task
       if (createdTasks && createdTasks.length > 0) {
         const task = createdTasks[0];
