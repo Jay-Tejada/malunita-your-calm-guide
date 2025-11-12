@@ -16,6 +16,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { CustomCategoryManager } from "@/components/CustomCategoryManager";
 import { BottomNav } from "@/components/BottomNav";
 import { TaskGoalTagging } from "@/components/TaskGoalTagging";
+import { GoalSuggestions } from "@/components/GoalSuggestions";
 
 const Goals = () => {
   const navigate = useNavigate();
@@ -76,6 +77,12 @@ const Goals = () => {
     }
   };
 
+  const handleSelectSuggestion = (suggestedGoal: string, suggestedTimeframe: string) => {
+    setGoal(suggestedGoal);
+    setTimeframe(suggestedTimeframe);
+    setIsEditing(true);
+  };
+
   // Calculate goal statistics
   const goalAlignedTasks = tasks.filter(t => t.goal_aligned && !t.completed);
   const completedGoalTasks = tasks.filter(t => t.goal_aligned && t.completed);
@@ -116,6 +123,11 @@ const Goals = () => {
           </TabsList>
 
           <TabsContent value="goal" className="space-y-6">
+            {/* AI Suggestions - Show when no goal or editing */}
+            {(!profile?.current_goal || isEditing) && (
+              <GoalSuggestions onSelectGoal={handleSelectSuggestion} />
+            )}
+
             {/* Goal Setting Card */}
             <Card>
               <CardHeader>

@@ -48,3 +48,6 @@ verify_jwt = true
 
 [functions.snooze-notifications]
 verify_jwt = true
+
+[functions.suggest-goals]
+verify_jwt = true
