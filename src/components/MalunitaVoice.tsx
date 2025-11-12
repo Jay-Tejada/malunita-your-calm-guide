@@ -386,6 +386,7 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
             
             // Check for stop commands - more flexible matching
             const defaultStopPhrases = ['stop recording', 'that\'s it', 'done', 'stop', 'finish'];
+            // @ts-ignore - custom_stop_commands field exists after migration
             const customStopPhrases = profile?.custom_stop_commands || [];
             const stopPhrases = [...defaultStopPhrases, ...customStopPhrases];
             

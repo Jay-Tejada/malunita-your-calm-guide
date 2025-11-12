@@ -12,6 +12,7 @@ export const VoiceCommandsManager = () => {
   const [newCommand, setNewCommand] = useState("");
 
   const defaultCommands = ['done', 'stop', 'finish', 'stop recording', "that's it"];
+  // @ts-ignore - custom_stop_commands field exists after migration
   const customCommands = profile?.custom_stop_commands || [];
 
   const handleAddCommand = async () => {
@@ -45,8 +46,9 @@ export const VoiceCommandsManager = () => {
     }
 
     await updateProfile({
+      // @ts-ignore - custom_stop_commands field exists after migration
       custom_stop_commands: [...customCommands, trimmed],
-    });
+    } as any);
 
     setNewCommand("");
     toast({
@@ -57,8 +59,9 @@ export const VoiceCommandsManager = () => {
 
   const handleRemoveCommand = async (command: string) => {
     await updateProfile({
+      // @ts-ignore - custom_stop_commands field exists after migration
       custom_stop_commands: customCommands.filter((c) => c !== command),
-    });
+    } as any);
 
     toast({
       title: "Command removed",
