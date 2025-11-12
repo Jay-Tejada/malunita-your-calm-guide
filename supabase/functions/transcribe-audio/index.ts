@@ -60,11 +60,11 @@ serve(async (req) => {
 
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      { global: { headers: { Authorization: authHeader } } }
+      Deno.env.get('SUPABASE_PUBLISHABLE_KEY') ?? ''
     )
 
-    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    const token = authHeader.replace('Bearer ', '')
+    const { data: { user }, error: userError } = await supabase.auth.getUser(token)
     console.log('User auth check:', { hasUser: !!user, error: userError?.message });
     
     if (userError || !user) {
