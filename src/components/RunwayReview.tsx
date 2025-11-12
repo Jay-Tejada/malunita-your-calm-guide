@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { X, Check, Clock, Archive, Edit3, Plus, Mic } from "lucide-react";
+import { X, Check, Clock, Archive, Edit3, Plus, Mic, Volume2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -33,6 +33,8 @@ export const RunwayReview = ({ onClose }: RunwayReviewProps) => {
   const [isListening, setIsListening] = useState(false);
   const [isProcessingVoice, setIsProcessingVoice] = useState(false);
   const [voiceTranscript, setVoiceTranscript] = useState("");
+  const [audioReady, setAudioReady] = useState(false);
+  const [audioBlob, setAudioBlob] = useState<string | null>(null);
   
   const { updateTask, deleteTask } = useTasks();
   const { toast } = useToast();
@@ -88,14 +90,33 @@ export const RunwayReview = ({ onClose }: RunwayReviewProps) => {
       });
       setTimeOfDay(data.timeOfDay || 'morning');
 
-      // Generate speech
-      const { data: ttsData, error: ttsError } = await supabase.functions.invoke('text-to-speech', {
-        body: { text: data.review, voice: 'alloy' }
-      });
+      // Generate speech - but don't fail the whole review if TTS fails
+      try {
+        console.log('Calling text-to-speech for runway review...');
+        const { data: ttsData, error: ttsError } = await supabase.functions.invoke('text-to-speech', {
+          body: { text: data.review, voice: 'alloy' }
+        });
 
-      if (ttsError) throw ttsError;
+        if (ttsError) {
+          console.error('TTS error:', ttsError);
+          throw ttsError;
+        }
 
-      await playAudioResponse(ttsData.audioContent);
+        if (ttsData?.audioContent) {
+          console.log('Playing audio response...');
+          await playAudioResponse(ttsData.audioContent);
+        } else {
+          console.warn('No audio content received from TTS');
+        }
+      } catch (ttsError) {
+        console.error('Failed to generate or play audio:', ttsError);
+        // Don't fail the whole review, just log and continue
+        toast({
+          title: "Audio unavailable",
+          description: "Showing text review only",
+          variant: "default",
+        });
+      }
 
     } catch (error: any) {
       toast({
@@ -110,9 +131,6 @@ export const RunwayReview = ({ onClose }: RunwayReviewProps) => {
 
   const playAudioResponse = async (base64Audio: string) => {
     try {
-      setIsSpeaking(true);
-      animateWaveform();
-      
       const binaryString = atob(base64Audio);
       const bytes = new Uint8Array(binaryString.length);
       for (let i = 0; i < binaryString.length; i++) {
@@ -120,17 +138,23 @@ export const RunwayReview = ({ onClose }: RunwayReviewProps) => {
       }
       const blob = new Blob([bytes], { type: 'audio/mpeg' });
       const audioUrl = URL.createObjectURL(blob);
+      
+      // Store for manual play if autoplay fails
+      setAudioBlob(audioUrl);
+      setAudioReady(true);
 
       const audio = new Audio(audioUrl);
       audioElementRef.current = audio;
       
       audio.onended = () => {
         setIsSpeaking(false);
+        setAudioReady(false);
         if (animationRef.current) {
           cancelAnimationFrame(animationRef.current);
         }
         setAudioLevels(new Array(20).fill(0));
         URL.revokeObjectURL(audioUrl);
+        setAudioBlob(null);
       };
       
       audio.onerror = () => {
@@ -142,14 +166,50 @@ export const RunwayReview = ({ onClose }: RunwayReviewProps) => {
         URL.revokeObjectURL(audioUrl);
       };
 
-      await audio.play();
+      // Try to play - will show play button if autoplay is blocked
+      try {
+        setIsSpeaking(true);
+        animateWaveform();
+        await audio.play();
+      } catch (playError) {
+        console.log('Autoplay blocked, showing play button:', playError);
+        setIsSpeaking(false);
+        if (animationRef.current) {
+          cancelAnimationFrame(animationRef.current);
+        }
+        setAudioLevels(new Array(20).fill(0));
+        // Keep audioReady true so play button shows
+        toast({
+          title: "Tap to hear",
+          description: "Audio is ready - tap the play button",
+        });
+      }
     } catch (error) {
       console.error('Audio playback error:', error);
       setIsSpeaking(false);
+      setAudioReady(false);
       if (animationRef.current) {
         cancelAnimationFrame(animationRef.current);
       }
       setAudioLevels(new Array(20).fill(0));
+    }
+  };
+
+  const handleManualPlay = async () => {
+    if (audioElementRef.current && audioReady) {
+      try {
+        setIsSpeaking(true);
+        animateWaveform();
+        await audioElementRef.current.play();
+        setAudioReady(false);
+      } catch (error) {
+        console.error('Manual play error:', error);
+        toast({
+          title: "Playback failed",
+          description: "Could not play audio",
+          variant: "destructive",
+        });
+      }
     }
   };
 
@@ -455,6 +515,23 @@ export const RunwayReview = ({ onClose }: RunwayReviewProps) => {
                 style={{ height: `${level * 100}%` }}
               />
             ))}
+          </div>
+        )}
+
+        {/* Play Button - shows if autoplay was blocked */}
+        {audioReady && !isSpeaking && (
+          <div className="flex flex-col items-center justify-center mb-8 gap-4">
+            <button
+              onClick={handleManualPlay}
+              className={`${
+                timeOfDay === 'morning' 
+                  ? 'bg-orange-500 hover:bg-orange-600' 
+                  : 'bg-purple-500 hover:bg-purple-600'
+              } text-white rounded-full p-6 shadow-lg transition-all hover:scale-105 animate-pulse`}
+            >
+              <Volume2 className="w-8 h-8" />
+            </button>
+            <p className={`text-sm ${theme.accent}`}>Tap to hear the review</p>
           </div>
         )}
 
