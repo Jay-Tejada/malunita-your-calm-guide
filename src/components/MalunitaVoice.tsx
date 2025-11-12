@@ -56,6 +56,8 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
     taskId: string;
     taskTitle: string;
     originalText: string;
+    suggestedCategory?: string;
+    actualCategory?: string;
   } | null>(null);
   
   const { profile } = useProfile();
@@ -117,6 +119,8 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
           taskId: task.id,
           taskTitle: task.title,
           originalText: text,
+          suggestedCategory: category,
+          actualCategory: category || 'inbox',
         });
         setShowFeedbackDialog(true);
       }
@@ -765,6 +769,7 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
     setIsProcessing(true);
 
     try {
+      const { data: { user } } = await supabase.auth.getUser();
       const today = new Date().toISOString().split('T')[0];
       const tasksToCreate = confirmedTasks.map(task => ({
         title: task.title,
@@ -775,7 +780,32 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
         completed: false,
       }));
 
-      await createTasks(tasksToCreate);
+      const createdTasks = await createTasks(tasksToCreate);
+      
+      // Store feedback for each task comparing AI suggestions vs user choices
+      if (user && createdTasks) {
+        const feedbackPromises = confirmedTasks.map(async (confirmedTask, index) => {
+          const originalSuggestion = pendingTasks[index];
+          if (originalSuggestion) {
+            const wasCorrected = 
+              confirmedTask.category !== originalSuggestion.suggested_category ||
+              confirmedTask.title !== originalSuggestion.title;
+
+            await supabase.from("task_learning_feedback").insert({
+              user_id: user.id,
+              original_text: originalVoiceText,
+              task_title: confirmedTask.title,
+              suggested_category: originalSuggestion.suggested_category,
+              actual_category: confirmedTask.category,
+              suggested_timeframe: originalSuggestion.suggested_timeframe || "",
+              actual_timeframe: originalSuggestion.suggested_timeframe || "",
+              was_corrected: wasCorrected,
+            });
+          }
+        });
+        
+        await Promise.all(feedbackPromises);
+      }
       
       setPendingTasks([]);
       toast({
@@ -925,6 +955,8 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
           taskId={feedbackTaskData.taskId}
           taskTitle={feedbackTaskData.taskTitle}
           originalText={feedbackTaskData.originalText}
+          suggestedCategory={feedbackTaskData.suggestedCategory}
+          actualCategory={feedbackTaskData.actualCategory}
         />
       )}
     </div>

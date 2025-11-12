@@ -8,6 +8,8 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Check, RotateCw, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -18,6 +20,10 @@ interface TaskFeedbackDialogProps {
   taskId: string;
   taskTitle: string;
   originalText: string;
+  suggestedCategory?: string;
+  actualCategory?: string;
+  suggestedTimeframe?: string;
+  actualTimeframe?: string;
 }
 
 export const TaskFeedbackDialog = ({
@@ -26,10 +32,16 @@ export const TaskFeedbackDialog = ({
   taskId,
   taskTitle,
   originalText,
+  suggestedCategory = "",
+  actualCategory = "",
+  suggestedTimeframe = "",
+  actualTimeframe = "",
 }: TaskFeedbackDialogProps) => {
   const { toast } = useToast();
   const [showRephraseInput, setShowRephraseInput] = useState(false);
   const [correctedText, setCorrectedText] = useState("");
+  const [correctedCategory, setCorrectedCategory] = useState(actualCategory);
+  const [correctedTimeframe, setCorrectedTimeframe] = useState(actualTimeframe);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleFeedback = async (
@@ -47,11 +59,11 @@ export const TaskFeedbackDialog = ({
       const { error } = await supabase.from("task_learning_feedback").insert({
         user_id: user.id,
         original_text: originalText,
-        task_title: taskTitle,
-        suggested_category: "", // Can be enhanced later
-        actual_category: "", // Can be enhanced later
-        suggested_timeframe: "",
-        actual_timeframe: "",
+        task_title: feedbackType === "rephrase" && correctedText.trim() ? correctedText.trim() : taskTitle,
+        suggested_category: suggestedCategory,
+        actual_category: feedbackType === "rephrase" ? correctedCategory : actualCategory,
+        suggested_timeframe: suggestedTimeframe,
+        actual_timeframe: feedbackType === "rephrase" ? correctedTimeframe : actualTimeframe,
         was_corrected: feedbackType === "rephrase",
       });
 
@@ -67,10 +79,14 @@ export const TaskFeedbackDialog = ({
           description: "Thanks for the feedback!",
         });
       } else if (feedbackType === "rephrase" && correctedText.trim()) {
-        // Update the task with corrected text
+        // Update the task with corrected text and category
+        const updates: any = { title: correctedText.trim() };
+        if (correctedCategory !== actualCategory) {
+          updates.category = correctedCategory;
+        }
         await supabase
           .from("tasks")
-          .update({ title: correctedText.trim() })
+          .update(updates)
           .eq("id", taskId);
         
         toast({
@@ -164,25 +180,59 @@ export const TaskFeedbackDialog = ({
               </Button>
             </div>
           ) : (
-            <div className="space-y-3">
-              <Textarea
-                placeholder="Enter the corrected text..."
-                value={correctedText}
-                onChange={(e) => setCorrectedText(e.target.value)}
-                className="min-h-[80px]"
-              />
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="corrected-text" className="text-sm mb-2">
+                  Correct the task title
+                </Label>
+                <Textarea
+                  id="corrected-text"
+                  placeholder="Enter the corrected text..."
+                  value={correctedText}
+                  onChange={(e) => setCorrectedText(e.target.value)}
+                  className="min-h-[80px]"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="corrected-category" className="text-sm mb-2">
+                  Correct the category
+                </Label>
+                <Select
+                  value={correctedCategory}
+                  onValueChange={setCorrectedCategory}
+                >
+                  <SelectTrigger id="corrected-category">
+                    <SelectValue placeholder="Select category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="inbox">Inbox</SelectItem>
+                    <SelectItem value="work">Work</SelectItem>
+                    <SelectItem value="home">Home</SelectItem>
+                    <SelectItem value="gym">Gym</SelectItem>
+                    <SelectItem value="projects">Projects</SelectItem>
+                  </SelectContent>
+                </Select>
+                {suggestedCategory && suggestedCategory !== correctedCategory && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    AI suggested: {suggestedCategory}
+                  </p>
+                )}
+              </div>
+
               <div className="flex gap-2">
                 <Button
                   onClick={handleSubmitRephrase}
                   disabled={isSubmitting || !correctedText.trim()}
                   className="flex-1"
                 >
-                  Submit
+                  Submit Correction
                 </Button>
                 <Button
                   onClick={() => {
                     setShowRephraseInput(false);
                     setCorrectedText("");
+                    setCorrectedCategory(actualCategory);
                   }}
                   disabled={isSubmitting}
                   variant="outline"
