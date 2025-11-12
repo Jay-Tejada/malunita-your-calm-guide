@@ -1,0 +1,282 @@
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.80.0";
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
+interface TaskAnalysis {
+  topCategories: Array<{ category: string; count: number; percentage: number }>;
+  preferredInputTime: string;
+  totalTasks: number;
+  completionRate: number;
+  avgTasksPerDay: number;
+  voiceVsTextRatio: { voice: number; text: number };
+}
+
+serve(async (req) => {
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    console.log('Starting personalization agent...');
+
+    // Initialize Supabase admin client
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        }
+      }
+    );
+
+    // Get all users
+    const { data: profiles, error: profilesError } = await supabaseAdmin
+      .from('profiles')
+      .select('id');
+
+    if (profilesError) {
+      throw profilesError;
+    }
+
+    console.log(`Processing ${profiles.length} users...`);
+
+    let processedCount = 0;
+    let errorCount = 0;
+
+    for (const profile of profiles) {
+      try {
+        await processUserPersonalization(supabaseAdmin, profile.id);
+        processedCount++;
+      } catch (error) {
+        console.error(`Error processing user ${profile.id}:`, error);
+        errorCount++;
+      }
+    }
+
+    console.log(`Personalization complete: ${processedCount} processed, ${errorCount} errors`);
+
+    return new Response(
+      JSON.stringify({ 
+        success: true, 
+        processed: processedCount,
+        errors: errorCount 
+      }),
+      { 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200 
+      }
+    );
+
+  } catch (error) {
+    console.error('Personalization agent error:', error);
+    return new Response(
+      JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
+      { 
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      }
+    );
+  }
+});
+
+async function processUserPersonalization(
+  supabaseAdmin: any,
+  userId: string
+) {
+  // Fetch user's tasks from the last 30 days
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+  const { data: tasks, error: tasksError } = await supabaseAdmin
+    .from('tasks')
+    .select('*')
+    .eq('user_id', userId)
+    .gte('created_at', thirtyDaysAgo.toISOString());
+
+  if (tasksError) {
+    throw tasksError;
+  }
+
+  if (!tasks || tasks.length === 0) {
+    console.log(`No tasks found for user ${userId} in last 30 days`);
+    return;
+  }
+
+  // Analyze task patterns
+  const analysis = analyzeTaskPatterns(tasks);
+
+  // Generate AI insights using Lovable AI
+  const insights = await generateAIInsights(analysis, tasks);
+
+  // Update profile with insights
+  const { error: updateError } = await supabaseAdmin
+    .from('profiles')
+    .update({
+      insights: {
+        topCategories: analysis.topCategories,
+        preferredInputTime: analysis.preferredInputTime,
+        completionRate: analysis.completionRate,
+        avgTasksPerDay: analysis.avgTasksPerDay,
+        voiceVsTextRatio: analysis.voiceVsTextRatio,
+        lastAnalyzed: new Date().toISOString(),
+      },
+      preferences_summary: insights,
+      last_personalization_run: new Date().toISOString(),
+    })
+    .eq('id', userId);
+
+  if (updateError) {
+    throw updateError;
+  }
+
+  console.log(`Updated personalization for user ${userId}`);
+}
+
+function analyzeTaskPatterns(tasks: any[]): TaskAnalysis {
+  // Count tasks by category
+  const categoryCount: Record<string, number> = {};
+  const hourCounts: Record<number, number> = {};
+  let completedCount = 0;
+  let voiceCount = 0;
+  let textCount = 0;
+
+  tasks.forEach(task => {
+    // Count categories
+    const category = task.category || task.custom_category_id || 'inbox';
+    categoryCount[category] = (categoryCount[category] || 0) + 1;
+
+    // Track creation hour
+    const hour = new Date(task.created_at).getHours();
+    hourCounts[hour] = (hourCounts[hour] || 0) + 1;
+
+    // Count completed tasks
+    if (task.completed) {
+      completedCount++;
+    }
+
+    // Count input methods
+    if (task.input_method === 'voice') {
+      voiceCount++;
+    } else {
+      textCount++;
+    }
+  });
+
+  // Get top 3 categories
+  const sortedCategories = Object.entries(categoryCount)
+    .map(([category, count]) => ({
+      category,
+      count,
+      percentage: Math.round((count / tasks.length) * 100),
+    }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 3);
+
+  // Determine preferred input time
+  const peakHour = Object.entries(hourCounts)
+    .sort((a, b) => b[1] - a[1])[0];
+
+  const preferredTime = peakHour 
+    ? getTimeOfDay(parseInt(peakHour[0]))
+    : 'morning';
+
+  return {
+    topCategories: sortedCategories,
+    preferredInputTime: preferredTime,
+    totalTasks: tasks.length,
+    completionRate: Math.round((completedCount / tasks.length) * 100),
+    avgTasksPerDay: Math.round((tasks.length / 30) * 10) / 10,
+    voiceVsTextRatio: {
+      voice: Math.round((voiceCount / tasks.length) * 100),
+      text: Math.round((textCount / tasks.length) * 100),
+    },
+  };
+}
+
+function getTimeOfDay(hour: number): string {
+  if (hour >= 5 && hour < 12) return 'morning';
+  if (hour >= 12 && hour < 17) return 'afternoon';
+  if (hour >= 17 && hour < 21) return 'evening';
+  return 'night';
+}
+
+async function generateAIInsights(
+  analysis: TaskAnalysis,
+  tasks: any[]
+): Promise<string> {
+  const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+  if (!LOVABLE_API_KEY) {
+    throw new Error('LOVABLE_API_KEY not configured');
+  }
+
+  const prompt = `Analyze this user's task management patterns and provide personalized insights:
+
+Task Statistics:
+- Total tasks in last 30 days: ${analysis.totalTasks}
+- Completion rate: ${analysis.completionRate}%
+- Average tasks per day: ${analysis.avgTasksPerDay}
+- Preferred input time: ${analysis.preferredInputTime}
+- Input method: ${analysis.voiceVsTextRatio.voice}% voice, ${analysis.voiceVsTextRatio.text}% text
+
+Top Categories:
+${analysis.topCategories.map(c => `- ${c.category}: ${c.count} tasks (${c.percentage}%)`).join('\n')}
+
+Recent Task Titles (sample):
+${tasks.slice(0, 10).map(t => `- ${t.title}`).join('\n')}
+
+Generate a brief, personalized summary (2-3 sentences) with:
+1. Their main focus areas
+2. Their productivity pattern
+3. One specific recommendation to improve their workflow
+
+Keep it conversational and encouraging.`;
+
+  try {
+    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'google/gemini-2.5-flash',
+        messages: [
+          {
+            role: 'system',
+            content: 'You are a helpful productivity coach analyzing task patterns to provide personalized insights.',
+          },
+          {
+            role: 'user',
+            content: prompt,
+          },
+        ],
+        max_tokens: 200,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('AI API error:', response.status, errorText);
+      return generateFallbackInsights(analysis);
+    }
+
+    const data = await response.json();
+    return data.choices[0].message.content;
+  } catch (error) {
+    console.error('Error generating AI insights:', error);
+    return generateFallbackInsights(analysis);
+  }
+}
+
+function generateFallbackInsights(analysis: TaskAnalysis): string {
+  const topCategory = analysis.topCategories[0]?.category || 'various areas';
+  const timeOfDay = analysis.preferredInputTime;
+  
+  return `You're most productive in the ${timeOfDay}, focusing primarily on ${topCategory}. With a ${analysis.completionRate}% completion rate and ${analysis.avgTasksPerDay} tasks per day, you're maintaining good momentum. Consider batching similar tasks together to boost efficiency even further.`;
+}

@@ -51,3 +51,6 @@ verify_jwt = true
 
 [functions.suggest-goals]
 verify_jwt = true
+
+[functions.personalization-agent]
+verify_jwt = false
