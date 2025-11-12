@@ -1,242 +1,208 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.80.0";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-serve(async (req) => {
-  if (req.method === "OPTIONS") {
+Deno.serve(async (req) => {
+  if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
-  try {
-    console.log("Starting global trends analysis...");
+  console.log('🔍 Starting global trends analysis...');
 
-    // Initialize Supabase client with service role
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  try {
+    // Initialize Supabase client with service role for admin access
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const lovableApiKey = Deno.env.get('LOVABLE_API_KEY')!;
+
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Fetch all task learning feedback (focus on corrections)
-    const { data: feedback, error: feedbackError } = await supabase
-      .from("task_learning_feedback")
-      .select("*")
-      .eq("was_corrected", true)
-      .order("created_at", { ascending: false })
-      .limit(1000); // Analyze last 1000 corrections
+    // Fetch all task learning feedback from the last 30 days
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    const { data: feedbackData, error: feedbackError } = await supabase
+      .from('task_learning_feedback')
+      .select('*')
+      .gte('created_at', thirtyDaysAgo.toISOString())
+      .order('created_at', { ascending: false });
 
     if (feedbackError) {
-      console.error("Error fetching feedback:", feedbackError);
+      console.error('Error fetching feedback:', feedbackError);
       throw feedbackError;
     }
 
-    console.log(`Analyzing ${feedback?.length || 0} corrections`);
+    console.log(`📊 Analyzing ${feedbackData?.length || 0} feedback entries`);
 
-    if (!feedback || feedback.length === 0) {
-      console.log("No corrections to analyze");
+    if (!feedbackData || feedbackData.length === 0) {
+      console.log('No feedback data to analyze');
       return new Response(
-        JSON.stringify({ message: "No corrections to analyze yet" }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ message: 'No feedback data available for analysis' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Aggregate misunderstood phrasings
-    const misunderstandings = feedback.map((f) => ({
-      original: f.original_text,
-      taskTitle: f.task_title,
-      suggestedCategory: f.suggested_category,
-      actualCategory: f.actual_category,
-      suggestedTimeframe: f.suggested_timeframe,
-      actualTimeframe: f.actual_timeframe,
-    }));
+    // Aggregate misunderstood phrasings (where was_corrected = true)
+    const corrections = feedbackData.filter(f => f.was_corrected);
+    const misunderstoodMap = new Map<string, any>();
 
-    // Group by suggested vs actual category to find patterns
-    const categoryMismatches: Record<string, number> = {};
-    feedback.forEach((f) => {
-      const key = `${f.suggested_category} → ${f.actual_category}`;
-      categoryMismatches[key] = (categoryMismatches[key] || 0) + 1;
+    corrections.forEach(correction => {
+      const key = correction.original_text.toLowerCase().trim();
+      if (!misunderstoodMap.has(key)) {
+        misunderstoodMap.set(key, {
+          original: correction.original_text,
+          taskTitle: correction.task_title,
+          suggestedCategory: correction.suggested_category,
+          actualCategory: correction.actual_category,
+          count: 0,
+        });
+      }
+      const entry = misunderstoodMap.get(key);
+      entry.count++;
     });
 
-    // Prepare data for AI analysis
-    const lovableApiKey = Deno.env.get("LOVABLE_API_KEY");
-    if (!lovableApiKey) {
-      throw new Error("LOVABLE_API_KEY not configured");
-    }
+    // Sort by count and get top 10
+    const topMisunderstood = Array.from(misunderstoodMap.values())
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10);
 
-    const systemPrompt = `You are an AI system analyzer that reviews task categorization patterns to improve accuracy.
+    // Aggregate common patterns across all tasks
+    const allPhrasings = feedbackData.map(f => ({
+      text: f.original_text,
+      title: f.task_title,
+      category: f.actual_category,
+    }));
 
-Analyze the provided misunderstood task phrasings and identify:
-1. Top 10 most common misunderstandings (specific phrases that were consistently miscategorized)
-2. Common patterns in user language that lead to errors
-3. Specific improvements for categorization prompts
-4. Specific improvements for task suggestion prompts
+    // Use Lovable AI to analyze patterns and generate improvements
+    const systemPrompt = `You are an AI learning system that analyzes task management patterns.
+Analyze the provided task feedback data and generate:
+1. Common phrasing patterns users employ
+2. Suggested improvements to categorization logic
+3. Suggested improvements to task suggestion logic
 
-Be concrete and actionable in your recommendations.`;
+Be specific and actionable. Focus on patterns that appear frequently.`;
 
-    const userPrompt = `Analyze these task categorization corrections:
+    const userPrompt = `Here is the feedback data:
 
-Total corrections: ${feedback.length}
+Top 10 Misunderstood Phrasings (${corrections.length} total corrections):
+${JSON.stringify(topMisunderstood, null, 2)}
 
-Category mismatches (top patterns):
-${Object.entries(categoryMismatches)
-  .sort((a, b) => b[1] - a[1])
-  .slice(0, 20)
-  .map(([key, count]) => `- ${key}: ${count} times`)
-  .join("\n")}
-
-Sample misunderstood phrasings (first 50):
-${misunderstandings
-  .slice(0, 50)
-  .map(
-    (m, i) =>
-      `${i + 1}. "${m.original}" → Task: "${m.taskTitle}"
-   Suggested: ${m.suggestedCategory}, Actual: ${m.actualCategory}`
-  )
-  .join("\n\n")}
+Sample of all task phrasings (${allPhrasings.length} total):
+${JSON.stringify(allPhrasings.slice(0, 50), null, 2)}
 
 Provide:
-1. Top 10 most problematic phrasings with explanations
-2. Common linguistic patterns causing errors
-3. Specific prompt improvements for categorization
-4. Specific prompt improvements for suggestions`;
+1. Common patterns you observe
+2. Specific improvements for categorization prompts
+3. Specific improvements for task suggestion prompts`;
 
-    console.log("Calling Lovable AI for analysis...");
+    console.log('🤖 Calling Lovable AI for analysis...');
 
-    const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
+    const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+      method: 'POST',
       headers: {
-        Authorization: `Bearer ${lovableApiKey}`,
-        "Content-Type": "application/json",
+        'Authorization': `Bearer ${lovableApiKey}`,
+        'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: 'google/gemini-2.5-flash',
         messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt },
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt },
         ],
         tools: [
           {
-            type: "function",
+            type: 'function',
             function: {
-              name: "analyze_trends",
-              description: "Analyze global task categorization trends and provide improvements",
+              name: 'analyze_trends',
+              description: 'Analyze task management trends and provide improvements',
               parameters: {
-                type: "object",
+                type: 'object',
                 properties: {
-                  top_misunderstood: {
-                    type: "array",
+                  commonPatterns: {
+                    type: 'array',
                     items: {
-                      type: "object",
+                      type: 'object',
                       properties: {
-                        phrase: { type: "string" },
-                        issue: { type: "string" },
-                        suggestion: { type: "string" },
-                        frequency: { type: "number" },
+                        pattern: { type: 'string' },
+                        frequency: { type: 'string' },
+                        recommendation: { type: 'string' },
                       },
-                      required: ["phrase", "issue", "suggestion"],
-                    },
-                    description: "Top 10 misunderstood phrasings with issues and fixes",
-                  },
-                  common_patterns: {
-                    type: "array",
-                    items: {
-                      type: "object",
-                      properties: {
-                        pattern: { type: "string" },
-                        description: { type: "string" },
-                        improvement: { type: "string" },
-                      },
-                      required: ["pattern", "description", "improvement"],
                     },
                   },
-                  categorization_improvements: {
-                    type: "string",
-                    description: "Specific improvements for categorization prompts",
-                  },
-                  suggestion_improvements: {
-                    type: "string",
-                    description: "Specific improvements for task suggestion prompts",
-                  },
+                  categorizationImprovements: { type: 'string' },
+                  suggestionImprovements: { type: 'string' },
                 },
-                required: [
-                  "top_misunderstood",
-                  "common_patterns",
-                  "categorization_improvements",
-                  "suggestion_improvements",
-                ],
+                required: ['commonPatterns', 'categorizationImprovements', 'suggestionImprovements'],
               },
             },
           },
         ],
-        tool_choice: { type: "function", function: { name: "analyze_trends" } },
+        tool_choice: { type: 'function', function: { name: 'analyze_trends' } },
       }),
     });
 
     if (!aiResponse.ok) {
       const errorText = await aiResponse.text();
-      console.error("AI API error:", aiResponse.status, errorText);
+      console.error('AI API error:', aiResponse.status, errorText);
       throw new Error(`AI API error: ${aiResponse.status}`);
     }
 
     const aiData = await aiResponse.json();
-    console.log("AI analysis complete");
-
-    // Extract structured data from tool call
     const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
-    if (!toolCall) {
-      throw new Error("No tool call in AI response");
+    const analysis = toolCall ? JSON.parse(toolCall.function.arguments) : null;
+
+    if (!analysis) {
+      throw new Error('No analysis returned from AI');
     }
 
-    const analysis = JSON.parse(toolCall.function.arguments);
+    console.log('✅ Analysis complete');
 
-    // Store analysis in learning_trends table
-    const { error: insertError } = await supabase.from("learning_trends").insert({
-      analysis_date: new Date().toISOString(),
-      top_misunderstood_phrasings: analysis.top_misunderstood,
-      common_patterns: analysis.common_patterns,
-      categorization_improvements: analysis.categorization_improvements,
-      suggestion_improvements: analysis.suggestion_improvements,
-      total_corrections_analyzed: feedback.length,
-    });
+    // Store results in learning_trends table
+    const { error: insertError } = await supabase
+      .from('learning_trends')
+      .insert({
+        top_misunderstood_phrasings: topMisunderstood,
+        common_patterns: analysis.commonPatterns,
+        categorization_improvements: analysis.categorizationImprovements,
+        suggestion_improvements: analysis.suggestionImprovements,
+        total_corrections_analyzed: corrections.length,
+      });
 
     if (insertError) {
-      console.error("Error storing analysis:", insertError);
+      console.error('Error storing trends:', insertError);
       throw insertError;
     }
 
-    console.log("Analysis stored successfully");
-
     // Log API usage
-    await supabase.from("api_usage_logs").insert({
-      function_name: "global-trends-analyzer",
-      model_used: "google/gemini-2.5-flash",
+    await supabase.from('api_usage_logs').insert({
+      user_id: '00000000-0000-0000-0000-000000000000', // System user
+      function_name: 'global-trends-analyzer',
+      model_used: 'google/gemini-2.5-flash',
       tokens_used: aiData.usage?.total_tokens || 0,
       estimated_cost: 0,
-      user_id: "00000000-0000-0000-0000-000000000000", // System user
     });
+
+    console.log('✨ Global trends analysis complete');
 
     return new Response(
       JSON.stringify({
         success: true,
-        corrections_analyzed: feedback.length,
-        top_misunderstood_count: analysis.top_misunderstood.length,
-        patterns_identified: analysis.common_patterns.length,
+        misunderstoodCount: topMisunderstood.length,
+        totalCorrections: corrections.length,
+        analysis,
       }),
-      {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      }
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
-    console.error("Error in global-trends-analyzer:", error);
+    console.error('Error in global-trends-analyzer:', error);
     return new Response(
-      JSON.stringify({
-        error: error instanceof Error ? error.message : "Unknown error",
-      }),
+      JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
       {
         status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       }
     );
   }
