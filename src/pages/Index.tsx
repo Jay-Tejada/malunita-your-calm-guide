@@ -266,7 +266,7 @@ const Index = () => {
               </div>
             ) : activeCategory ? (
               // Task Stream View
-              <div className="py-8">
+              <div className="py-8 pb-48">
                 <TaskStream 
                   category={activeCategory} 
                   onClose={() => setActiveCategory(null)}
@@ -274,37 +274,31 @@ const Index = () => {
                   hasPrev={hasPrevCategory}
                   hasNext={hasNextCategory}
                 />
-                
-                {/* Voice Note Pill Button */}
-                <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50">
-                  <Button
-                    onClick={() => malunitaVoiceRef.current?.startRecording()}
-                    className="rounded-full px-6 py-6 bg-primary/90 hover:bg-primary backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-300"
-                  >
-                    <Mic className="w-4 h-4 mr-2" />
-                    <span className="text-sm font-light">Voice Note</span>
-                  </Button>
-                </div>
               </div>
             ) : showTodaysFocus ? (
               // Today's Focus View
-              <div className="py-8">
+              <div className="py-8 pb-48">
                 <div className="w-full max-w-2xl mx-auto animate-fade-in">
                   <TodaysFocus onReflectClick={enableReflectButton ? () => setShowRunwayReview(true) : undefined} />
                 </div>
-                
-                {/* Voice Note Pill Button */}
-                <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50">
-                  <Button
-                    onClick={() => malunitaVoiceRef.current?.startRecording()}
-                    className="rounded-full px-6 py-6 bg-primary/90 hover:bg-primary backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-300"
-                  >
-                    <Mic className="w-4 h-4 mr-2" />
-                    <span className="text-sm font-light">Voice Note</span>
-                  </Button>
-                </div>
               </div>
             ) : null}
+            
+            {/* Always show voice orb when viewing tasks or focus */}
+            {(activeCategory || showTodaysFocus) && (
+              <div className="fixed bottom-0 left-0 right-0 flex justify-center pb-8 pointer-events-none" style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 2rem)' }}>
+                <div className="pointer-events-auto">
+                  <MalunitaVoice 
+                    ref={malunitaVoiceRef} 
+                    onSaveNote={handleSaveNote}
+                    onPlanningModeActivated={handlePlanningMode}
+                    onReflectionModeActivated={handleReflectionMode}
+                    onOrbReflectionTrigger={enableOrbReflectionTrigger ? () => setShowRunwayReview(true) : undefined}
+                    onTasksCreated={() => setShowTodaysFocus(true)}
+                  />
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Smart Reflection Prompt */}
