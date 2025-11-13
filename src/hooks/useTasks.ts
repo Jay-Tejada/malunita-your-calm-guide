@@ -12,6 +12,7 @@ export interface Task {
   completed: boolean;
   completed_at?: string;
   has_reminder: boolean;
+  reminder_time?: string;
   has_person_name: boolean;
   is_time_based: boolean;
   keywords?: string[];
