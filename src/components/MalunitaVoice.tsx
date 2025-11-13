@@ -301,13 +301,17 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
         if (event.data.size > 0) {
           audioChunksRef.current.push(event.data);
           
-          // Check for stop commands every 2 seconds during recording
-          if (!isStopCommandDetected && audioChunksRef.current.length >= 2) {
-            const recentChunks = audioChunksRef.current.slice(-2);
+          console.log('Audio chunk received, total chunks:', audioChunksRef.current.length);
+          
+          // Check for stop commands starting from the first chunk
+          if (!isStopCommandDetected && audioChunksRef.current.length >= 1) {
+            const recentChunks = audioChunksRef.current.slice(-3); // Check last 3 seconds
             const recentBlob = new Blob(recentChunks, { type: 'audio/webm' });
             
+            console.log('Checking for stop command, blob size:', recentBlob.size);
+            
             // Only check if blob is large enough (has actual audio)
-            if (recentBlob.size > 5000) {
+            if (recentBlob.size > 3000) {
               const reader = new FileReader();
               reader.readAsDataURL(recentBlob);
               reader.onloadend = async () => {
@@ -315,11 +319,17 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
                 if (!base64Audio) return;
                 
                 try {
-                  const { data: transcribeData } = await supabase.functions.invoke('transcribe-audio', {
+                  console.log('Transcribing audio chunk for stop detection...');
+                  const { data: transcribeData, error: transcribeError } = await supabase.functions.invoke('transcribe-audio', {
                     body: { audio: base64Audio }
                   });
                   
+                  if (transcribeError) {
+                    console.error('Transcription error during stop detection:', transcribeError);
+                  }
+                  
                   if (transcribeData?.text) {
+                    console.log('Transcribed chunk:', transcribeData.text);
                     const lowerTranscribed = transcribeData.text.toLowerCase().trim();
                     const stopPhrases = [
                       'stop recording', 
@@ -329,11 +339,15 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
                       'finish',
                       'i\'m done',
                       'im done',
-                      'i am done'
+                      'i am done',
+                      'stop done',
+                      'done stop'
                     ];
                     
                     const cleanTranscribed = lowerTranscribed.replace(/[.,!?;]+/g, '').replace(/'/g, '').trim();
                     const words = cleanTranscribed.split(/\s+/);
+                    
+                    console.log('Cleaned transcription:', cleanTranscribed, 'Words:', words);
                     
                     const hasStopCommand = stopPhrases.some(phrase => {
                       const cleanPhrase = phrase.replace(/'/g, '');
@@ -354,7 +368,7 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
                     });
                     
                     if (hasStopCommand) {
-                      console.log('Stop command detected during recording:', transcribeData.text);
+                      console.log('🛑 STOP COMMAND DETECTED during recording:', transcribeData.text);
                       isStopCommandDetected = true;
                       setStopWordDetected(true);
                       
@@ -363,10 +377,15 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
                         navigator.vibrate([50, 100, 50]);
                       }
                       
-                      // Stop recording
+                      // Stop recording immediately
+                      console.log('Stopping recording, current state:', mediaRecorder.state);
                       if (mediaRecorder.state === 'recording') {
+                        console.log('Calling mediaRecorder.stop()');
                         mediaRecorder.stop();
+                        stream.getTracks().forEach(track => track.stop());
                       }
+                    } else {
+                      console.log('No stop command found in transcription');
                     }
                   }
                 } catch (error) {
