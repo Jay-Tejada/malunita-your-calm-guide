@@ -479,6 +479,15 @@ export const VoiceOrb = ({ onVoiceInput, onPlanningModeActivated, onReflectionMo
                 />
               )}
               
+              {/* Success ripple effect when stop word detected */}
+              {stopWordDetected && (
+                <>
+                  <div className="absolute inset-0 rounded-full border-2 border-success animate-ripple" />
+                  <div className="absolute inset-0 rounded-full border-2 border-success animate-ripple" style={{ animationDelay: '0.15s' }} />
+                  <div className="absolute inset-0 rounded-full border-2 border-success animate-ripple" style={{ animationDelay: '0.3s' }} />
+                </>
+              )}
+              
               {/* Spinning colored rings when recording */}
               <>
                 {/* Ring 1 - Fast spin */}
