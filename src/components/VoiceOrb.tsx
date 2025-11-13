@@ -529,10 +529,10 @@ export const VoiceOrb = ({ onVoiceInput, onPlanningModeActivated, onReflectionMo
                 className={`relative w-20 h-20 rounded-full transition-all duration-700 ease-in-out
                   ${isListening 
                     ? (mode === 'reflection' || mode === 'quiet') 
-                      ? 'bg-orb-reflection scale-110' 
+                      ? 'bg-orb-reflection scale-105' 
                       : mode === 'planning'
-                      ? 'bg-orb-planning scale-110'
-                      : 'bg-orb-listening scale-110'
+                      ? 'bg-orb-planning scale-105'
+                      : 'bg-orb-listening scale-105'
                     : (isResponding || isSaving)
                     ? 'bg-orb-responding animate-breathing'
                     : (mode === 'reflection' || mode === 'quiet')
