@@ -402,6 +402,11 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
         setIsProcessing(true);
         setTranscribedText("");
         setGptResponse("");
+        
+        // Haptic feedback when recording stops
+        if ('vibrate' in navigator) {
+          navigator.vibrate([50, 50, 50]); // Double pulse
+        }
 
         const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
         
@@ -756,6 +761,11 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
       // Start recording with timeslice to get data chunks every 1 second
       mediaRecorder.start(1000);
       setIsListening(true);
+      
+      // Haptic feedback when recording starts
+      if ('vibrate' in navigator) {
+        navigator.vibrate(50); // Short single pulse
+      }
     } catch (error) {
       console.error('Error accessing microphone:', error);
       toast({
