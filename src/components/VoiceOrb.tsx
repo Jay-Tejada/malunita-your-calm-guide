@@ -558,8 +558,8 @@ export const VoiceOrb = ({ onVoiceInput, onPlanningModeActivated, onReflectionMo
                 }}
               >
               {/* Center dot pulse when listening */}
-              {isListening && !stopWordDetected && (
-                <div className="absolute inset-0 flex items-center justify-center">
+              {isListening && (
+                <div className={`absolute inset-0 flex items-center justify-center transition-opacity duration-500 ${stopWordDetected ? 'opacity-0' : 'opacity-100'}`}>
                   <div className="w-3 h-3 rounded-full animate-pulse" 
                     style={{
                       background: `hsl(var(${mode === 'reflection' || mode === 'quiet' ? '--orb-reflection-glow' : mode === 'planning' ? '--orb-planning-glow' : '--orb-listening-glow'}) / 0.8)`,
