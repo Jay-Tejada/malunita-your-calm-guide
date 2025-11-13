@@ -132,6 +132,8 @@ Guidelines:
 - Clean up rambling or vague language into clear task titles
 - Suggest appropriate categories: inbox, work, home, projects, gym
 - Suggest timeframes: today, this_week, later
+- Extract reminder times if mentioned (e.g., "remind me at 10 AM", "set reminder for 3 PM tomorrow")
+- Return reminder_time as ISO 8601 timestamp if time-based reminder is mentioned, otherwise null
 - Create friendly confirmation prompts for each task
 
 ${userProfile?.current_goal ? `Goal Alignment Evaluation:
@@ -152,6 +154,7 @@ Return valid JSON in this exact format:
       "suggested_category": "work",
       "suggested_timeframe": "today",
       "confidence": 0.85,
+      "reminder_time": "2024-01-15T10:00:00Z or null",
       "confirmation_prompt": "Should I add this to Work for today?"${userProfile?.current_goal ? `,
       "goal_aligned": true,
       "alignment_reason": "This directly supports your goal by..."` : ''}
