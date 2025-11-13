@@ -398,10 +398,12 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
       };
 
       mediaRecorder.onstop = async () => {
+        console.log('🛑 RECORDING STOPPED');
         setIsListening(false);
         setIsProcessing(true);
         setTranscribedText("");
         setGptResponse("");
+        console.log('Processing audio...');
         
         // Haptic feedback when recording stops
         if ('vibrate' in navigator) {
@@ -428,15 +430,20 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
 
           try {
             // Step 1: Transcribe audio
-            console.log('Transcribing audio...');
+            console.log('🎯 STEP 1: Transcribing audio...');
             const { data: transcribeData, error: transcribeError } = await supabase.functions.invoke('transcribe-audio', {
               body: { audio: base64Audio }
             });
 
-            if (transcribeError) throw transcribeError;
+            if (transcribeError) {
+              console.error('❌ Transcription error:', transcribeError);
+              throw transcribeError;
+            }
+            console.log('✅ Transcription successful');
 
             const transcribed = transcribeData.text;
             const lowerTranscribed = transcribed.toLowerCase().trim();
+            console.log('📝 Transcribed text:', transcribed);
             
             // Check for AI focus suggestion commands
             const focusSuggestionPhrases = [
@@ -656,10 +663,10 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
             }
             
             setTranscribedText(transcribed);
-            console.log('Transcribed:', transcribed);
+            console.log('📝 Transcribed text:', transcribed);
 
             // Step 2: Send to ChatGPT with full conversation history and user profile
-            console.log('Processing with ChatGPT...');
+            console.log('🤖 STEP 2: Processing with ChatGPT...');
             
             // Get user profile for personalization
             const { data: { user: currentUser } } = await supabase.auth.getUser();
@@ -689,11 +696,15 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
               }
             });
 
-            if (chatError) throw chatError;
+            if (chatError) {
+              console.error('❌ Chat completion error:', chatError);
+              throw chatError;
+            }
+            console.log('✅ Chat completion successful');
 
             const response = chatData.reply;
             setGptResponse(response);
-            console.log('GPT Response:', response);
+            console.log('💬 GPT Response:', response);
 
             // Show mood selector after response
             setShowMoodSelector(true);
@@ -727,14 +738,16 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
             }
 
             // Step 3: Convert to speech and play
+            console.log('🔊 STEP 3: Text-to-Speech');
+            console.log('Audio enabled:', audioEnabled);
             if (audioEnabled) {
-              console.log('Generating speech for response:', response);
+              console.log('🎵 Generating speech for response:', response);
               try {
                 const { data: ttsData, error: ttsError } = await supabase.functions.invoke('text-to-speech', {
                   body: { text: response, voice: 'nova' }
                 });
 
-                console.log('TTS response:', { ttsData, ttsError });
+                console.log('TTS response received:', { hasData: !!ttsData, hasError: !!ttsError });
 
                 if (ttsError) {
                   console.error('TTS Error:', ttsError);
@@ -746,9 +759,9 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
                   throw new Error('No audio content received from TTS');
                 }
 
-                console.log('Playing audio response...');
+                console.log('🔊 Playing audio response...');
                 await playAudioResponse(ttsData.audioContent);
-                console.log('Audio playback complete');
+                console.log('✅ Audio playback complete');
               } catch (ttsError: any) {
                 console.error('TTS processing failed:', ttsError);
                 toast({
@@ -758,7 +771,8 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
                 });
               }
             } else {
-              console.log('Audio playback disabled by user settings');
+              console.log('🔇 Audio playback disabled by user settings');
+              console.log('Profile wants_voice_playback:', profile?.wants_voice_playback);
             }
 
             setIsProcessing(false);
@@ -784,6 +798,9 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
       // Start recording with timeslice to get data chunks every 1 second
       mediaRecorder.start(1000);
       setIsListening(true);
+      console.log('🎤 RECORDING STARTED');
+      console.log('Audio enabled:', audioEnabled);
+      console.log('Profile wants_voice_playback:', profile?.wants_voice_playback);
       
       // Haptic feedback when recording starts
       if ('vibrate' in navigator) {
