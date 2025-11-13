@@ -728,14 +728,37 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
 
             // Step 3: Convert to speech and play
             if (audioEnabled) {
-              console.log('Generating speech...');
-              const { data: ttsData, error: ttsError } = await supabase.functions.invoke('text-to-speech', {
-                body: { text: response, voice: 'nova' } // Warm, friendly voice
-              });
+              console.log('Generating speech for response:', response);
+              try {
+                const { data: ttsData, error: ttsError } = await supabase.functions.invoke('text-to-speech', {
+                  body: { text: response, voice: 'nova' }
+                });
 
-              if (ttsError) throw ttsError;
+                console.log('TTS response:', { ttsData, ttsError });
 
-              await playAudioResponse(ttsData.audioContent);
+                if (ttsError) {
+                  console.error('TTS Error:', ttsError);
+                  throw ttsError;
+                }
+
+                if (!ttsData?.audioContent) {
+                  console.error('No audio content in TTS response');
+                  throw new Error('No audio content received from TTS');
+                }
+
+                console.log('Playing audio response...');
+                await playAudioResponse(ttsData.audioContent);
+                console.log('Audio playback complete');
+              } catch (ttsError: any) {
+                console.error('TTS processing failed:', ttsError);
+                toast({
+                  title: "Audio generation failed",
+                  description: ttsError.message || "Could not generate audio response",
+                  variant: "destructive",
+                });
+              }
+            } else {
+              console.log('Audio playback disabled by user settings');
             }
 
             setIsProcessing(false);
