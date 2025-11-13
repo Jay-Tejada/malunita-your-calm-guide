@@ -480,38 +480,36 @@ export const VoiceOrb = ({ onVoiceInput, onPlanningModeActivated, onReflectionMo
               )}
               
               {/* Spinning colored rings when recording */}
-              {isListening && !stopWordDetected && (
-                <>
-                  {/* Ring 1 - Fast spin */}
-                  <div className="absolute -inset-4 animate-spin" style={{ animationDuration: '2s' }}>
-                    <div className="absolute inset-0 rounded-full border-2 border-transparent"
-                      style={{
-                        borderTopColor: `hsl(var(${mode === 'reflection' || mode === 'quiet' ? '--orb-reflection-glow' : mode === 'planning' ? '--orb-planning-glow' : '--orb-listening-glow'}) / 0.6)`,
-                        borderRightColor: `hsl(var(${mode === 'reflection' || mode === 'quiet' ? '--orb-reflection-glow' : mode === 'planning' ? '--orb-planning-glow' : '--orb-listening-glow'}) / 0.3)`,
-                      }}
-                    />
-                  </div>
-                  
-                  {/* Ring 2 - Medium spin, opposite direction */}
-                  <div className="absolute -inset-6 animate-spin-reverse" style={{ animationDuration: '3s' }}>
-                    <div className="absolute inset-0 rounded-full border-2 border-transparent"
-                      style={{
-                        borderBottomColor: `hsl(var(${mode === 'reflection' || mode === 'quiet' ? '--orb-reflection-glow' : mode === 'planning' ? '--orb-planning-glow' : '--orb-listening-glow'}) / 0.5)`,
-                        borderLeftColor: `hsl(var(${mode === 'reflection' || mode === 'quiet' ? '--orb-reflection-glow' : mode === 'planning' ? '--orb-planning-glow' : '--orb-listening-glow'}) / 0.2)`,
-                      }}
-                    />
-                  </div>
-                  
-                  {/* Ring 3 - Slow spin */}
-                  <div className="absolute -inset-8 animate-spin" style={{ animationDuration: '4s' }}>
-                    <div className="absolute inset-0 rounded-full border border-transparent"
-                      style={{
-                        borderTopColor: `hsl(var(${mode === 'reflection' || mode === 'quiet' ? '--orb-reflection-glow' : mode === 'planning' ? '--orb-planning-glow' : '--orb-listening-glow'}) / 0.4)`,
-                      }}
-                    />
-                  </div>
-                </>
-              )}
+              <>
+                {/* Ring 1 - Fast spin */}
+                <div className={`absolute -inset-4 animate-spin transition-opacity duration-500 ${isListening && !stopWordDetected ? 'opacity-100' : 'opacity-0'}`} style={{ animationDuration: '2s' }}>
+                  <div className="absolute inset-0 rounded-full border-2 border-transparent"
+                    style={{
+                      borderTopColor: `hsl(var(${mode === 'reflection' || mode === 'quiet' ? '--orb-reflection-glow' : mode === 'planning' ? '--orb-planning-glow' : '--orb-listening-glow'}) / 0.6)`,
+                      borderRightColor: `hsl(var(${mode === 'reflection' || mode === 'quiet' ? '--orb-reflection-glow' : mode === 'planning' ? '--orb-planning-glow' : '--orb-listening-glow'}) / 0.3)`,
+                    }}
+                  />
+                </div>
+                
+                {/* Ring 2 - Medium spin, opposite direction */}
+                <div className={`absolute -inset-6 animate-spin-reverse transition-opacity duration-500 ${isListening && !stopWordDetected ? 'opacity-100' : 'opacity-0'}`} style={{ animationDuration: '3s' }}>
+                  <div className="absolute inset-0 rounded-full border-2 border-transparent"
+                    style={{
+                      borderBottomColor: `hsl(var(${mode === 'reflection' || mode === 'quiet' ? '--orb-reflection-glow' : mode === 'planning' ? '--orb-planning-glow' : '--orb-listening-glow'}) / 0.5)`,
+                      borderLeftColor: `hsl(var(${mode === 'reflection' || mode === 'quiet' ? '--orb-reflection-glow' : mode === 'planning' ? '--orb-planning-glow' : '--orb-listening-glow'}) / 0.2)`,
+                    }}
+                  />
+                </div>
+                
+                {/* Ring 3 - Slow spin */}
+                <div className={`absolute -inset-8 animate-spin transition-opacity duration-500 ${isListening && !stopWordDetected ? 'opacity-100' : 'opacity-0'}`} style={{ animationDuration: '4s' }}>
+                  <div className="absolute inset-0 rounded-full border border-transparent"
+                    style={{
+                      borderTopColor: `hsl(var(${mode === 'reflection' || mode === 'quiet' ? '--orb-reflection-glow' : mode === 'planning' ? '--orb-planning-glow' : '--orb-listening-glow'}) / 0.4)`,
+                    }}
+                  />
+                </div>
+              </>
               
               {/* Orbital lines and particles when NOT recording */}
               {!isListening && (
