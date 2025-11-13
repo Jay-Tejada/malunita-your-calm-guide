@@ -293,9 +293,86 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
       source.connect(analyser);
       analyzeAudio();
 
-      mediaRecorder.ondataavailable = (event) => {
+      let isStopCommandDetected = false;
+      
+      mediaRecorder.ondataavailable = async (event) => {
         if (event.data.size > 0) {
           audioChunksRef.current.push(event.data);
+          
+          // Check for stop commands every 2 seconds during recording
+          if (!isStopCommandDetected && audioChunksRef.current.length >= 2) {
+            const recentChunks = audioChunksRef.current.slice(-2);
+            const recentBlob = new Blob(recentChunks, { type: 'audio/webm' });
+            
+            // Only check if blob is large enough (has actual audio)
+            if (recentBlob.size > 5000) {
+              const reader = new FileReader();
+              reader.readAsDataURL(recentBlob);
+              reader.onloadend = async () => {
+                const base64Audio = reader.result?.toString().split(',')[1];
+                if (!base64Audio) return;
+                
+                try {
+                  const { data: transcribeData } = await supabase.functions.invoke('transcribe-audio', {
+                    body: { audio: base64Audio }
+                  });
+                  
+                  if (transcribeData?.text) {
+                    const lowerTranscribed = transcribeData.text.toLowerCase().trim();
+                    const stopPhrases = [
+                      'stop recording', 
+                      'that\'s it', 
+                      'done', 
+                      'stop', 
+                      'finish',
+                      'i\'m done',
+                      'im done',
+                      'i am done'
+                    ];
+                    
+                    const cleanTranscribed = lowerTranscribed.replace(/[.,!?;]+/g, '').replace(/'/g, '').trim();
+                    const words = cleanTranscribed.split(/\s+/);
+                    
+                    const hasStopCommand = stopPhrases.some(phrase => {
+                      const cleanPhrase = phrase.replace(/'/g, '');
+                      
+                      if (phrase.includes(' ')) {
+                        return cleanTranscribed.endsWith(cleanPhrase) || 
+                               cleanTranscribed === cleanPhrase ||
+                               words.slice(-5).join(' ').includes(cleanPhrase);
+                      } else {
+                        const lastWord = words[words.length - 1];
+                        const secondLastWord = words.length >= 2 ? words[words.length - 2] : '';
+                        
+                        return lastWord === cleanPhrase || 
+                               cleanTranscribed === cleanPhrase || 
+                               (secondLastWord === cleanPhrase && lastWord.length <= 4) ||
+                               (words.length === 2 && secondLastWord.match(/^i'?m?$/) && lastWord === 'done');
+                      }
+                    });
+                    
+                    if (hasStopCommand) {
+                      console.log('Stop command detected during recording:', transcribeData.text);
+                      isStopCommandDetected = true;
+                      setStopWordDetected(true);
+                      
+                      // Haptic feedback
+                      if ('vibrate' in navigator) {
+                        navigator.vibrate([50, 100, 50]);
+                      }
+                      
+                      // Stop recording
+                      if (mediaRecorder.state === 'recording') {
+                        mediaRecorder.stop();
+                      }
+                    }
+                  }
+                } catch (error) {
+                  console.error('Error checking for stop commands:', error);
+                }
+              };
+            }
+          }
         }
       };
 
@@ -655,7 +732,8 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
         stream.getTracks().forEach(track => track.stop());
       };
 
-      mediaRecorder.start();
+      // Start recording with timeslice to get data chunks every 1 second
+      mediaRecorder.start(1000);
       setIsListening(true);
     } catch (error) {
       console.error('Error accessing microphone:', error);
