@@ -54,15 +54,25 @@ export const ConversationalTaskFlow: React.FC<ConversationalTaskFlowProps> = ({
   }, []);
 
   const playTTS = async (text: string): Promise<void> => {
-    if (!audioEnabled) return;
+    console.log('playTTS called with audioEnabled:', audioEnabled, 'text:', text);
+    if (!audioEnabled) {
+      console.log('Audio disabled, skipping TTS');
+      return;
+    }
     
     setIsSpeaking(true);
     try {
+      console.log('Invoking text-to-speech function...');
       const { data, error } = await supabase.functions.invoke('text-to-speech', {
         body: { text, voice: 'nova' }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('TTS function error:', error);
+        throw error;
+      }
+
+      console.log('TTS response received:', data);
 
       if (data?.audioContent) {
         const binaryString = atob(data.audioContent);
@@ -73,11 +83,23 @@ export const ConversationalTaskFlow: React.FC<ConversationalTaskFlowProps> = ({
         const blob = new Blob([bytes], { type: 'audio/mp3' });
         const audio = new Audio(URL.createObjectURL(blob));
         
+        console.log('Playing audio...');
         await new Promise((resolve, reject) => {
-          audio.onended = resolve;
-          audio.onerror = reject;
-          audio.play();
+          audio.onended = () => {
+            console.log('Audio playback ended');
+            resolve(null);
+          };
+          audio.onerror = (e) => {
+            console.error('Audio playback error:', e);
+            reject(e);
+          };
+          audio.play().catch(e => {
+            console.error('Audio play() failed:', e);
+            reject(e);
+          });
         });
+      } else {
+        console.warn('No audioContent in TTS response');
       }
     } catch (error) {
       console.error('TTS error:', error);
@@ -87,11 +109,14 @@ export const ConversationalTaskFlow: React.FC<ConversationalTaskFlowProps> = ({
   };
 
   const startConversationalFlow = async () => {
+    console.log('Starting conversational flow with', tasks.length, 'tasks');
     // Read summary of extracted tasks
     const summary = generateTaskSummary();
+    console.log('Generated summary:', summary);
     setCurrentQuestion(summary);
     await playTTS(summary);
     
+    console.log('Summary TTS complete, waiting before asking about tasks...');
     // Wait a moment, then start asking about categories
     setTimeout(() => {
       askAboutNextTask();
@@ -278,6 +303,11 @@ export const ConversationalTaskFlow: React.FC<ConversationalTaskFlowProps> = ({
             <div className="flex items-center gap-2 text-accent">
               <div className="w-3 h-3 bg-accent rounded-full animate-pulse" />
               <span className="text-sm font-light">Listening for your response...</span>
+            </div>
+          )}
+          {!isSpeaking && !isListening && (
+            <div className="text-sm text-muted-foreground">
+              Organizing your tasks...
             </div>
           )}
         </div>
