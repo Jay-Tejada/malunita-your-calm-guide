@@ -6,6 +6,7 @@ import { useProfile } from "@/hooks/useProfile";
 import { useTasks } from "@/hooks/useTasks";
 import { MoodSelector } from "@/components/MoodSelector";
 import { TaskConfirmation } from "@/components/TaskConfirmation";
+import { ConversationalTaskFlow } from "@/components/ConversationalTaskFlow";
 import { TaskFeedbackDialog } from "@/components/TaskFeedbackDialog";
 import { VoiceOrb } from "@/components/VoiceOrb";
 
@@ -20,6 +21,9 @@ interface SuggestedTask {
   suggested_timeframe: string;
   confidence: number;
   confirmation_prompt: string;
+  reminder_time?: string | null;
+  goal_aligned?: boolean;
+  alignment_reason?: string;
 }
 
 interface MalunitaVoiceProps {
@@ -785,7 +789,7 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
     });
   };
 
-  const handleConfirmTasks = async (confirmedTasks: Array<{title: string; category: string; is_focus: boolean}>) => {
+  const handleConfirmTasks = async (confirmedTasks: Array<{title: string; category: string; is_focus: boolean; reminder_time?: string | null}>) => {
     setShowConfirmation(false);
     setIsProcessing(true);
 
@@ -798,6 +802,7 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
         input_method: 'voice' as const,
         is_focus: task.is_focus,
         focus_date: task.is_focus ? today : null,
+        reminder_time: task.reminder_time || null,
         completed: false,
       }));
 
@@ -953,18 +958,19 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
         )}
       </div>
 
-      {/* Task Confirmation Dialog */}
+      {/* Conversational Task Flow */}
       {showConfirmation && pendingTasks.length > 0 && (
-        <TaskConfirmation
+        <ConversationalTaskFlow
           tasks={pendingTasks}
           originalText={originalVoiceText}
-          onConfirm={handleConfirmTasks}
+          onComplete={handleConfirmTasks}
           onCancel={() => {
             setShowConfirmation(false);
             setPendingTasks([]);
             setOriginalVoiceText('');
             setIsProcessing(false);
           }}
+          audioEnabled={audioEnabled}
         />
       )}
 
