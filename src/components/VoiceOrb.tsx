@@ -536,7 +536,9 @@ export const VoiceOrb = ({ onVoiceInput, onPlanningModeActivated, onReflectionMo
                 onTouchStart={handleMouseDown}
                 onTouchEnd={handleMouseUp}
                 className={`relative w-20 h-20 rounded-full transition-all duration-700 ease-in-out
-                  ${isListening 
+                  ${stopWordDetected
+                    ? 'bg-success scale-105'
+                    : isListening 
                     ? (mode === 'reflection' || mode === 'quiet') 
                       ? 'bg-orb-reflection scale-105' 
                       : mode === 'planning'
@@ -551,7 +553,9 @@ export const VoiceOrb = ({ onVoiceInput, onPlanningModeActivated, onReflectionMo
                     : 'bg-orb-idle hover:scale-105 hover:bg-orb-idle-glow animate-breathing'
                   }`}
                 style={{
-                  boxShadow: isListening 
+                  boxShadow: stopWordDetected
+                    ? '0 8px 32px hsl(var(--success) / 0.5), inset 0 2px 8px hsl(var(--success) / 0.4)'
+                    : isListening 
                     ? (mode === 'reflection' || mode === 'quiet')
                       ? '0 8px 32px hsl(var(--orb-reflection-glow) / 0.4), inset 0 2px 8px hsl(var(--orb-reflection-glow) / 0.3)'
                       : mode === 'planning'
