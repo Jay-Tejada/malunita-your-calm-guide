@@ -132,8 +132,13 @@ Guidelines:
 - Clean up rambling or vague language into clear task titles
 - Suggest appropriate categories: inbox, work, home, projects, gym
 - Suggest timeframes: today, this_week, later
-- Extract reminder times if mentioned (e.g., "remind me at 10 AM", "set reminder for 3 PM tomorrow")
-- Return reminder_time as ISO 8601 timestamp if time-based reminder is mentioned, otherwise null
+- Extract reminder dates AND times if mentioned:
+  * Relative dates: "tomorrow at 10 AM", "next Monday at 3 PM", "in 3 days at noon"
+  * Absolute dates: "November 10th at 10 AM", "Dec 25 at 9:00", "on the 15th at 2 PM"
+  * Time only: "remind me at 10 AM" (assumes today)
+  * Date only: "remind me tomorrow" (assumes 9 AM)
+- Return reminder_time as complete ISO 8601 timestamp (YYYY-MM-DDTHH:MM:SSZ) including date and time
+- If no reminder mentioned, return null for reminder_time
 - Create friendly confirmation prompts for each task
 
 ${userProfile?.current_goal ? `Goal Alignment Evaluation:
@@ -154,14 +159,21 @@ Return valid JSON in this exact format:
       "suggested_category": "work",
       "suggested_timeframe": "today",
       "confidence": 0.85,
-      "reminder_time": "2024-01-15T10:00:00Z or null",
+      "reminder_time": "2024-11-10T10:00:00Z (complete ISO 8601 with date + time, or null if no reminder)",
       "confirmation_prompt": "Should I add this to Work for today?"${userProfile?.current_goal ? `,
       "goal_aligned": true,
       "alignment_reason": "This directly supports your goal by..."` : ''}
     }
   ],
   "conversation_reply": "Optional friendly reply if no tasks were found"
-}`;
+}
+
+Examples for reminder_time:
+- "remind me at 10 AM" → "2024-11-13T10:00:00Z" (today at 10 AM)
+- "remind me tomorrow at 3 PM" → "2024-11-14T15:00:00Z"
+- "remind me November 10th at 10 AM" → "2024-11-10T10:00:00Z"
+- "remind me next Monday at 9 AM" → calculate the date for next Monday
+- No reminder mentioned → null`;
 
     console.log('Extracting tasks from:', text);
     console.log('Using model:', preferredModel);
