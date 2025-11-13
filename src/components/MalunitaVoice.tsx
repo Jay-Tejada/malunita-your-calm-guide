@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useProfile } from "@/hooks/useProfile";
 import { useTasks } from "@/hooks/useTasks";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { MoodSelector } from "@/components/MoodSelector";
 import { TaskConfirmation } from "@/components/TaskConfirmation";
 import { ConversationalTaskFlow } from "@/components/ConversationalTaskFlow";
@@ -67,6 +68,7 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
   const { profile } = useProfile();
   const { tasks, updateTask, createTasks } = useTasks();
   const audioEnabled = profile?.wants_voice_playback ?? true;
+  const isMobile = useIsMobile();
   
   const handleVoiceTaskCapture = async (text: string, category?: 'inbox' | 'home' | 'work' | 'gym' | 'projects') => {
     try {
@@ -973,44 +975,63 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
     <div className="flex flex-col items-center justify-center px-6 py-8">
       <div className="w-full max-w-2xl flex flex-col items-center gap-8">
         
-        {/* Transcription and Response Display */}
-        <div className="w-full min-h-[200px] flex flex-col gap-4">
-          {transcribedText && (
-            <div className="bg-card rounded-2xl p-6 border border-secondary shadow-sm animate-in fade-in duration-300">
-              <p className="text-xs uppercase tracking-wider text-muted-foreground mb-2">You said:</p>
-              <p className="text-foreground leading-relaxed">{transcribedText}</p>
-            </div>
-          )}
-          
-          {gptResponse && (
-            <div className="bg-accent/30 rounded-2xl p-6 border border-accent shadow-sm animate-in fade-in duration-300">
-              <p className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Malunita:</p>
-              <p className="text-foreground leading-relaxed whitespace-pre-wrap break-words">{gptResponse}</p>
-            </div>
-          )}
+        {/* Transcription and Response Display - Hidden on mobile for cleaner UI */}
+        {!isMobile && (
+          <div className="w-full min-h-[200px] flex flex-col gap-4">
+            {transcribedText && (
+              <div className="bg-card rounded-2xl p-6 border border-secondary shadow-sm animate-in fade-in duration-300">
+                <p className="text-xs uppercase tracking-wider text-muted-foreground mb-2">You said:</p>
+                <p className="text-foreground leading-relaxed">{transcribedText}</p>
+              </div>
+            )}
+            
+            {gptResponse && (
+              <div className="bg-accent/30 rounded-2xl p-6 border border-accent shadow-sm animate-in fade-in duration-300">
+                <p className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Malunita:</p>
+                <p className="text-foreground leading-relaxed whitespace-pre-wrap break-words">{gptResponse}</p>
+              </div>
+            )}
 
-          {/* Mood Selector */}
-          {showMoodSelector && !isProcessing && !isSpeaking && (
-            <div className="animate-in fade-in duration-300">
-              <MoodSelector 
-                onMoodSelect={handleMoodSelect}
-                onSkip={handleSkipMood}
-              />
-            </div>
-          )}
+            {/* Mood Selector */}
+            {showMoodSelector && !isProcessing && !isSpeaking && (
+              <div className="animate-in fade-in duration-300">
+                <MoodSelector 
+                  onMoodSelect={handleMoodSelect}
+                  onSkip={handleSkipMood}
+                />
+              </div>
+            )}
 
-          {isProcessing && !transcribedText && (
-            <div className="bg-card rounded-2xl p-6 border border-secondary shadow-sm animate-in fade-in duration-300">
-              <p className="text-muted-foreground text-center">Transcribing...</p>
-            </div>
-          )}
+            {isProcessing && !transcribedText && (
+              <div className="bg-card rounded-2xl p-6 border border-secondary shadow-sm animate-in fade-in duration-300">
+                <p className="text-muted-foreground text-center">Transcribing...</p>
+              </div>
+            )}
 
-          {isProcessing && transcribedText && !gptResponse && (
-            <div className="bg-card rounded-2xl p-6 border border-secondary shadow-sm animate-in fade-in duration-300">
-              <p className="text-muted-foreground text-center">Thinking...</p>
-            </div>
-          )}
-        </div>
+            {isProcessing && transcribedText && !gptResponse && (
+              <div className="bg-card rounded-2xl p-6 border border-secondary shadow-sm animate-in fade-in duration-300">
+                <p className="text-muted-foreground text-center">Thinking...</p>
+              </div>
+            )}
+          </div>
+        )}
+        
+        {/* Mobile: Show minimal status indicator */}
+        {isMobile && (isProcessing || isSpeaking) && (
+          <div className="w-full flex justify-center py-4">
+            {isProcessing && (
+              <div className="text-sm text-muted-foreground animate-pulse">
+                {!transcribedText ? 'Processing...' : 'Organizing tasks...'}
+              </div>
+            )}
+            {isSpeaking && (
+              <div className="flex items-center gap-2 text-primary text-sm">
+                <Volume2 className="w-4 h-4 animate-pulse" />
+                <span>Speaking...</span>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Voice Control - Replaced with VoiceOrb */}
         <VoiceOrb 
@@ -1023,8 +1044,8 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
           stopWordDetected={stopWordDetected}
         />
 
-        {/* Action buttons */}
-        {gptResponse && !isProcessing && !isSpeaking && !showMoodSelector && (
+        {/* Action buttons - Only show on desktop */}
+        {!isMobile && gptResponse && !isProcessing && !isSpeaking && !showMoodSelector && (
           <div className="flex gap-3 animate-in fade-in duration-300">
             <button
               onClick={handleRetry}
