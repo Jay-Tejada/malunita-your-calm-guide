@@ -57,3 +57,6 @@ verify_jwt = false
 
 [functions.global-trends-analyzer]
 verify_jwt = false
+
+[functions.send-task-reminders]
+verify_jwt = false
