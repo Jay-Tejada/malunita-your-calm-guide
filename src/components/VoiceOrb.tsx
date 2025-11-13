@@ -479,10 +479,46 @@ export const VoiceOrb = ({ onVoiceInput, onPlanningModeActivated, onReflectionMo
                 />
               )}
               
-              {/* Orbital lines and particles */}
-              <div className="absolute inset-0 w-32 h-32 -left-6 -top-6">
-                <OrbitalParticles active={isListening} />
-              </div>
+              {/* Spinning colored rings when recording */}
+              {isListening && !stopWordDetected && (
+                <>
+                  {/* Ring 1 - Fast spin */}
+                  <div className="absolute -inset-4 animate-spin" style={{ animationDuration: '2s' }}>
+                    <div className="absolute inset-0 rounded-full border-2 border-transparent"
+                      style={{
+                        borderTopColor: `hsl(var(${mode === 'reflection' || mode === 'quiet' ? '--orb-reflection-glow' : mode === 'planning' ? '--orb-planning-glow' : '--orb-listening-glow'}) / 0.6)`,
+                        borderRightColor: `hsl(var(${mode === 'reflection' || mode === 'quiet' ? '--orb-reflection-glow' : mode === 'planning' ? '--orb-planning-glow' : '--orb-listening-glow'}) / 0.3)`,
+                      }}
+                    />
+                  </div>
+                  
+                  {/* Ring 2 - Medium spin, opposite direction */}
+                  <div className="absolute -inset-6 animate-spin-reverse" style={{ animationDuration: '3s' }}>
+                    <div className="absolute inset-0 rounded-full border-2 border-transparent"
+                      style={{
+                        borderBottomColor: `hsl(var(${mode === 'reflection' || mode === 'quiet' ? '--orb-reflection-glow' : mode === 'planning' ? '--orb-planning-glow' : '--orb-listening-glow'}) / 0.5)`,
+                        borderLeftColor: `hsl(var(${mode === 'reflection' || mode === 'quiet' ? '--orb-reflection-glow' : mode === 'planning' ? '--orb-planning-glow' : '--orb-listening-glow'}) / 0.2)`,
+                      }}
+                    />
+                  </div>
+                  
+                  {/* Ring 3 - Slow spin */}
+                  <div className="absolute -inset-8 animate-spin" style={{ animationDuration: '4s' }}>
+                    <div className="absolute inset-0 rounded-full border border-transparent"
+                      style={{
+                        borderTopColor: `hsl(var(${mode === 'reflection' || mode === 'quiet' ? '--orb-reflection-glow' : mode === 'planning' ? '--orb-planning-glow' : '--orb-listening-glow'}) / 0.4)`,
+                      }}
+                    />
+                  </div>
+                </>
+              )}
+              
+              {/* Orbital lines and particles when NOT recording */}
+              {!isListening && (
+                <div className="absolute inset-0 w-32 h-32 -left-6 -top-6">
+                  <OrbitalParticles active={false} />
+                </div>
+              )}
               
               <button
                 onClick={handleClick}
@@ -523,78 +559,20 @@ export const VoiceOrb = ({ onVoiceInput, onPlanningModeActivated, onReflectionMo
                     : '0 4px 16px hsl(var(--orb-idle-glow) / 0.2), inset 0 1px 4px hsl(var(--orb-idle-glow) / 0.3)'
                 }}
               >
-                {/* Spinning lines visualization when listening */}
-                {isListening && !stopWordDetected && (
-                  <div className="absolute inset-0 flex items-center justify-center overflow-hidden">
-                    {/* Rotating line group 1 */}
-                    <div className="absolute inset-0 animate-spin" style={{ animationDuration: '3s' }}>
-                      {[0, 45, 90, 135].map((angle) => (
-                        <div
-                          key={`line1-${angle}`}
-                          className="absolute top-1/2 left-1/2 origin-left"
-                          style={{
-                            transform: `rotate(${angle}deg) translateY(-50%)`,
-                            width: '35px',
-                            height: '2px',
-                            marginLeft: '-2px'
-                          }}
-                        >
-                          <div 
-                            className="h-full rounded-full transition-all duration-300"
-                            style={{
-                              background: `linear-gradient(to right, 
-                                hsl(var(${mode === 'reflection' || mode === 'quiet' ? '--orb-reflection-glow' : mode === 'planning' ? '--orb-planning-glow' : '--orb-listening-glow'}) / 0.8),
-                                hsl(var(${mode === 'reflection' || mode === 'quiet' ? '--orb-reflection-glow' : mode === 'planning' ? '--orb-planning-glow' : '--orb-listening-glow'}) / 0)
-                              )`,
-                            }}
-                          />
-                        </div>
-                      ))}
-                    </div>
-                    
-                    {/* Rotating line group 2 - opposite direction, thicker */}
-                    <div className="absolute inset-0 animate-spin" style={{ animationDuration: '4s', animationDirection: 'reverse' }}>
-                      {[22.5, 67.5, 112.5, 157.5].map((angle) => (
-                        <div
-                          key={`line2-${angle}`}
-                          className="absolute top-1/2 left-1/2 origin-left"
-                          style={{
-                            transform: `rotate(${angle}deg) translateY(-50%)`,
-                            width: '30px',
-                            height: '3px',
-                            marginLeft: '-2px'
-                          }}
-                        >
-                          <div 
-                            className="h-full rounded-full transition-all duration-300"
-                            style={{
-                              background: `linear-gradient(to right, 
-                                hsl(var(${mode === 'reflection' || mode === 'quiet' ? '--orb-reflection-glow' : mode === 'planning' ? '--orb-planning-glow' : '--orb-listening-glow'}) / 0.6),
-                                hsl(var(${mode === 'reflection' || mode === 'quiet' ? '--orb-reflection-glow' : mode === 'planning' ? '--orb-planning-glow' : '--orb-listening-glow'}) / 0)
-                              )`,
-                            }}
-                          />
-                        </div>
-                      ))}
-                    </div>
-                    
-                    {/* Inner pulsing ring */}
-                    <div className="absolute inset-0 flex items-center justify-center animate-pulse">
-                      <div 
-                        className="w-4 h-4 rounded-full"
-                        style={{
-                          background: `radial-gradient(circle, 
-                            hsl(var(${mode === 'reflection' || mode === 'quiet' ? '--orb-reflection-glow' : mode === 'planning' ? '--orb-planning-glow' : '--orb-listening-glow'}) / 0.4),
-                            hsl(var(${mode === 'reflection' || mode === 'quiet' ? '--orb-reflection-glow' : mode === 'planning' ? '--orb-planning-glow' : '--orb-listening-glow'}) / 0)
-                          )`,
-                        }}
-                      />
-                    </div>
-                  </div>
-                )}
+              {/* Center dot pulse when listening */}
+              {isListening && !stopWordDetected && (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-3 h-3 rounded-full animate-pulse" 
+                    style={{
+                      background: `hsl(var(${mode === 'reflection' || mode === 'quiet' ? '--orb-reflection-glow' : mode === 'planning' ? '--orb-planning-glow' : '--orb-listening-glow'}) / 0.8)`,
+                      boxShadow: `0 0 15px hsl(var(${mode === 'reflection' || mode === 'quiet' ? '--orb-reflection-glow' : mode === 'planning' ? '--orb-planning-glow' : '--orb-listening-glow'}) / 0.6)`
+                    }}
+                  />
+                </div>
+              )}
 
-                {/* Stop word detected indicator */}
-                {stopWordDetected && isListening && (
+              {/* Stop word detected indicator */}
+              {stopWordDetected && isListening && (
                   <div className="absolute inset-0 flex items-center justify-center animate-in scale-in duration-200">
                     <div className="relative">
                       <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center animate-pulse">
