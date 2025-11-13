@@ -1052,8 +1052,20 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
           </div>
         )}
 
+        {/* Stop Word Detection Confirmation */}
+        {stopWordDetected && (
+          <div className="w-full flex justify-center py-4 animate-in fade-in scale-in duration-300">
+            <div className="flex items-center gap-3 bg-primary/10 text-primary px-6 py-3 rounded-full border-2 border-primary shadow-lg animate-pulse">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+              </svg>
+              <span className="font-semibold text-sm">Stop detected</span>
+            </div>
+          </div>
+        )}
+
         {/* Voice Control - Replaced with VoiceOrb */}
-        <VoiceOrb 
+        <VoiceOrb
           onVoiceInput={handleVoiceTaskCapture} 
           onPlanningModeActivated={onPlanningModeActivated}
           onReflectionModeActivated={onReflectionModeActivated}
