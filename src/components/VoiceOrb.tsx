@@ -32,7 +32,52 @@ export const VoiceOrb = ({ onVoiceInput, onPlanningModeActivated, onReflectionMo
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const animationFrameRef = useRef<number | null>(null);
+  const hasPlayedStopSoundRef = useRef(false);
   const { toast } = useToast();
+
+  // Play confirmation sound when stop word is detected
+  useEffect(() => {
+    if (stopWordDetected && !hasPlayedStopSoundRef.current) {
+      hasPlayedStopSoundRef.current = true;
+      
+      // Create a pleasant two-tone confirmation sound
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      
+      // First tone (higher pitch)
+      const oscillator1 = audioContext.createOscillator();
+      const gainNode1 = audioContext.createGain();
+      oscillator1.connect(gainNode1);
+      gainNode1.connect(audioContext.destination);
+      
+      oscillator1.frequency.setValueAtTime(800, audioContext.currentTime);
+      gainNode1.gain.setValueAtTime(0.3, audioContext.currentTime);
+      gainNode1.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+      
+      oscillator1.start(audioContext.currentTime);
+      oscillator1.stop(audioContext.currentTime + 0.1);
+      
+      // Second tone (lower pitch, slightly delayed)
+      const oscillator2 = audioContext.createOscillator();
+      const gainNode2 = audioContext.createGain();
+      oscillator2.connect(gainNode2);
+      gainNode2.connect(audioContext.destination);
+      
+      oscillator2.frequency.setValueAtTime(600, audioContext.currentTime + 0.08);
+      gainNode2.gain.setValueAtTime(0, audioContext.currentTime + 0.08);
+      gainNode2.gain.setValueAtTime(0.3, audioContext.currentTime + 0.08);
+      gainNode2.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.25);
+      
+      oscillator2.start(audioContext.currentTime + 0.08);
+      oscillator2.stop(audioContext.currentTime + 0.25);
+      
+      // Clean up
+      setTimeout(() => {
+        audioContext.close();
+      }, 300);
+    } else if (!stopWordDetected) {
+      hasPlayedStopSoundRef.current = false;
+    }
+  }, [stopWordDetected]);
 
   // Determine mode based on time of day (only if auto mode is enabled)
   useEffect(() => {
