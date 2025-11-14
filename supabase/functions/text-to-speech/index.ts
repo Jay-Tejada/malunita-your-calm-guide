@@ -15,7 +15,7 @@ serve(async (req) => {
   }
 
   try {
-    // Extract JWT and validate user
+    // Get user from JWT (already validated by Supabase since verify_jwt = true)
     const authHeader = req.headers.get('Authorization')
     if (!authHeader) {
       return new Response(
@@ -24,23 +24,29 @@ serve(async (req) => {
       )
     }
 
+    // Create Supabase client for database operations
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      { global: { headers: { Authorization: authHeader } } }
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    const { data: { user }, error: userError } = await supabase.auth.getUser()
-    if (userError || !user) {
+    // Extract user ID from JWT
+    const jwt = authHeader.replace('Bearer ', '')
+    const payload = JSON.parse(atob(jwt.split('.')[1]))
+    const userId = payload.sub
+    
+    if (!userId) {
       return new Response(
         JSON.stringify({ error: 'Invalid authentication' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
+    console.log('User authenticated:', userId);
+
     // Check rate limit
     const { data: rateLimitOk } = await supabase.rpc('check_rate_limit', {
-      _user_id: user.id,
+      _user_id: userId,
       _endpoint: 'text-to-speech',
       _max_requests: 20,
       _window_minutes: 1
