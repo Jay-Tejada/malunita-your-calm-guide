@@ -158,7 +158,7 @@ const Index = () => {
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
       // Only handle Q if not typing in an input
-      if (e.key.toLowerCase() === 'q' && !(e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement)) {
+      if (e.key && e.key.toLowerCase() === 'q' && !(e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement)) {
         e.preventDefault();
         malunitaVoiceRef.current?.startRecording();
       }
