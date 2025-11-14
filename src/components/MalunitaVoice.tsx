@@ -260,7 +260,9 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
   };
 
   const handleVoiceLoop = async () => {
+    console.log('🎤 handleVoiceLoop called! isListening:', isListening);
     if (isListening) {
+      console.log('🛑 Stopping recording...');
       // Stop recording
       if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
         mediaRecorderRef.current.stop();
@@ -276,8 +278,11 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
     }
 
     // Start recording
+    console.log('🚀 Starting new recording...');
     try {
+      console.log('📱 Requesting microphone access...');
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      console.log('✅ Microphone access granted');
       const mediaRecorder = new MediaRecorder(stream);
       mediaRecorderRef.current = mediaRecorder;
       audioChunksRef.current = [];
@@ -1034,8 +1039,12 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
   // Expose startRecording method via ref
   useImperativeHandle(ref, () => ({
     startRecording: () => {
+      console.log('🎯 startRecording called! State:', { isListening, isProcessing, isSpeaking });
       if (!isListening && !isProcessing && !isSpeaking) {
+        console.log('✅ Conditions met, calling handleVoiceLoop');
         handleVoiceLoop();
+      } else {
+        console.log('❌ Blocked by state:', { isListening, isProcessing, isSpeaking });
       }
     }
   }));
