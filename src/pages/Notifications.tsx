@@ -6,7 +6,7 @@ import { Bell, BellOff, ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { BottomNav } from "@/components/BottomNav";
+
 import { NotificationSnooze } from "@/components/NotificationSnooze";
 
 const Notifications = () => {
@@ -244,8 +244,6 @@ const Notifications = () => {
           </Card>
         )}
       </main>
-      
-      <BottomNav />
     </div>
   );
 };

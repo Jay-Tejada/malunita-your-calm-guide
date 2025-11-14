@@ -14,7 +14,7 @@ import { useTasks } from "@/hooks/useTasks";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { CustomCategoryManager } from "@/components/CustomCategoryManager";
-import { BottomNav } from "@/components/BottomNav";
+
 import { TaskGoalTagging } from "@/components/TaskGoalTagging";
 import { GoalSuggestions } from "@/components/GoalSuggestions";
 
@@ -301,8 +301,6 @@ const Goals = () => {
           </TabsContent>
         </Tabs>
       </main>
-
-      <BottomNav />
     </div>
   );
 };

@@ -4,7 +4,7 @@ import { Header } from "@/components/Header";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
-import { BottomNav } from "@/components/BottomNav";
+
 
 const Inbox = () => {
   const navigate = useNavigate();
@@ -35,8 +35,6 @@ const Inbox = () => {
           <TaskList category="inbox" />
         </div>
       </main>
-      
-      <BottomNav />
     </div>
   );
 };
