@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Check, X, Edit2 } from "lucide-react";
@@ -10,10 +10,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
+import { useCustomCategories } from "@/hooks/useCustomCategories";
+import { CategorySuggestions } from "@/components/CategorySuggestions";
 
 interface SuggestedTask {
   title: string;
   suggested_category: string;
+  custom_category_id?: string;
   suggested_timeframe: string;
   confidence: number;
   confirmation_prompt: string;
@@ -22,22 +25,60 @@ interface SuggestedTask {
 interface TaskConfirmationProps {
   tasks: SuggestedTask[];
   originalText: string;
-  onConfirm: (confirmedTasks: Array<{title: string; category: string; is_focus: boolean}>) => void;
+  onConfirm: (confirmedTasks: Array<{title: string; category: string; is_focus: boolean; custom_category_id?: string}>) => void;
   onCancel: () => void;
 }
 
+interface CategorySuggestion {
+  category_id: string;
+  category_name: string;
+  confidence: number;
+  reason: string;
+}
+
 export const TaskConfirmation: React.FC<TaskConfirmationProps> = ({ tasks, originalText, onConfirm, onCancel }) => {
+  const { categories: customCategories } = useCustomCategories();
   const [editedTasks, setEditedTasks] = React.useState(
     tasks.map(task => ({
       title: task.title,
       category: task.suggested_category,
+      custom_category_id: task.custom_category_id,
       timeframe: task.suggested_timeframe
     }))
   );
+  const [categorySuggestions, setCategorySuggestions] = useState<Record<number, CategorySuggestion[]>>({});
 
-  const handleCategoryChange = (index: number, category: string) => {
+  // Fetch category suggestions for each task
+  useEffect(() => {
+    const fetchSuggestions = async () => {
+      if (!customCategories || customCategories.length === 0) return;
+
+      for (let i = 0; i < tasks.length; i++) {
+        const task = tasks[i];
+        try {
+          const { data, error } = await supabase.functions.invoke('suggest-custom-category', {
+            body: { taskText: task.title }
+          });
+
+          if (!error && data?.suggestions) {
+            setCategorySuggestions(prev => ({
+              ...prev,
+              [i]: data.suggestions
+            }));
+          }
+        } catch (err) {
+          console.error('Failed to fetch category suggestions:', err);
+        }
+      }
+    };
+
+    fetchSuggestions();
+  }, [tasks, customCategories]);
+
+  const handleCategoryChange = (index: number, category: string, customCategoryId?: string) => {
     const updated = [...editedTasks];
     updated[index].category = category;
+    updated[index].custom_category_id = customCategoryId;
     setEditedTasks(updated);
   };
 
@@ -45,6 +86,13 @@ export const TaskConfirmation: React.FC<TaskConfirmationProps> = ({ tasks, origi
     const updated = [...editedTasks];
     updated[index].timeframe = timeframe;
     setEditedTasks(updated);
+  };
+
+  const handleSuggestionSelect = (taskIndex: number, categoryId: string) => {
+    const category = customCategories?.find(c => c.id === categoryId);
+    if (category) {
+      handleCategoryChange(taskIndex, `custom-${categoryId}`, categoryId);
+    }
   };
 
   const handleConfirm = async () => {
@@ -76,6 +124,7 @@ export const TaskConfirmation: React.FC<TaskConfirmationProps> = ({ tasks, origi
     const confirmed = editedTasks.map(task => ({
       title: task.title,
       category: task.category,
+      custom_category_id: task.custom_category_id,
       is_focus: task.timeframe === 'today'
     }));
     onConfirm(confirmed);
@@ -98,13 +147,24 @@ export const TaskConfirmation: React.FC<TaskConfirmationProps> = ({ tasks, origi
                 <p className="font-normal mb-1">{task.title}</p>
                 <p className="text-xs text-muted-foreground">{task.confirmation_prompt}</p>
               </div>
+
+              {categorySuggestions[index] && categorySuggestions[index].length > 0 && (
+                <CategorySuggestions
+                  suggestions={categorySuggestions[index]}
+                  onSelectSuggestion={(categoryId) => handleSuggestionSelect(index, categoryId)}
+                  className="mb-3"
+                />
+              )}
               
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="text-xs text-muted-foreground mb-1 block">Category</label>
                   <Select
                     value={editedTasks[index].category}
-                    onValueChange={(value) => handleCategoryChange(index, value)}
+                    onValueChange={(value) => {
+                      const customCategory = customCategories?.find(c => `custom-${c.id}` === value);
+                      handleCategoryChange(index, value, customCategory?.id);
+                    }}
                   >
                     <SelectTrigger className="w-full">
                       <SelectValue />
@@ -115,6 +175,17 @@ export const TaskConfirmation: React.FC<TaskConfirmationProps> = ({ tasks, origi
                       <SelectItem value="home">Home</SelectItem>
                       <SelectItem value="projects">Projects</SelectItem>
                       <SelectItem value="gym">Gym</SelectItem>
+                      <SelectItem value="someday">Someday</SelectItem>
+                      {customCategories && customCategories.length > 0 && (
+                        <>
+                          <SelectItem value="divider" disabled>──────────</SelectItem>
+                          {customCategories.map(cat => (
+                            <SelectItem key={cat.id} value={`custom-${cat.id}`}>
+                              {cat.name}
+                            </SelectItem>
+                          ))}
+                        </>
+                      )}
                     </SelectContent>
                   </Select>
                 </div>
