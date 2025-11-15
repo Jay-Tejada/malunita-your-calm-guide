@@ -10,6 +10,7 @@ import { useSmartNotifications } from "@/hooks/useSmartNotifications";
 import { SmartNotificationCard } from "@/components/SmartNotificationCard";
 
 import { NotificationSnooze } from "@/components/NotificationSnooze";
+import { NotificationSettings } from "@/components/NotificationSettings";
 
 const Notifications = () => {
   const navigate = useNavigate();
@@ -267,17 +268,21 @@ const Notifications = () => {
         )}
 
         {isSubscribed && (
-          <Card className="mt-4">
-            <CardHeader>
-              <CardTitle>Snooze Reminders</CardTitle>
-              <CardDescription>
-                Need a break? Temporarily pause your focus task reminders
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <NotificationSnooze />
-            </CardContent>
-          </Card>
+          <>
+            <NotificationSettings />
+            
+            <Card className="mt-4">
+              <CardHeader>
+                <CardTitle>Snooze Reminders</CardTitle>
+                <CardDescription>
+                  Need a break? Temporarily pause your focus task reminders
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <NotificationSnooze />
+              </CardContent>
+            </Card>
+          </>
         )}
       </main>
     </div>

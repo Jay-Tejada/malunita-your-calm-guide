@@ -21,6 +21,7 @@ export interface UserProfile {
   goal_updated_at?: string;
   wake_word_enabled?: boolean;
   custom_wake_word?: string;
+  notification_preferences?: any;
 }
 
 export const useProfile = () => {

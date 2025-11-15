@@ -27,6 +27,18 @@ interface SmartNotification {
   last_sent_at: string | null;
 }
 
+interface NotificationPreferences {
+  frequency?: 'daily' | 'weekly' | 'custom';
+  customIntervalDays?: number;
+  quietHoursStart?: string;
+  quietHoursEnd?: string;
+}
+
+interface UserProfile {
+  id: string;
+  notification_preferences: NotificationPreferences;
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -114,10 +126,55 @@ Deno.serve(async (req) => {
 
     let sentCount = 0;
     let errorCount = 0;
+    let skippedCount = 0;
 
     // Send push notification for each notification
     for (const notification of notificationsToSend) {
       try {
+        // Get user's notification preferences
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('notification_preferences')
+          .eq('id', notification.user_id)
+          .single();
+
+        const prefs = (profile?.notification_preferences as NotificationPreferences) || {};
+
+        // Check quiet hours
+        if (prefs.quietHoursStart && prefs.quietHoursEnd) {
+          const quietStart = parseInt(prefs.quietHoursStart.split(':')[0]);
+          const quietEnd = parseInt(prefs.quietHoursEnd.split(':')[0]);
+          
+          const isInQuietHours = quietStart > quietEnd
+            ? currentHour >= quietStart || currentHour < quietEnd // Spans midnight
+            : currentHour >= quietStart && currentHour < quietEnd; // Same day
+          
+          if (isInQuietHours) {
+            console.log(`Skipping notification for user ${notification.user_id} - in quiet hours`);
+            skippedCount++;
+            continue;
+          }
+        }
+
+        // Check frequency preference
+        if (notification.last_sent_at && prefs.frequency) {
+          const lastSent = new Date(notification.last_sent_at);
+          const daysSinceLastSend = (now.getTime() - lastSent.getTime()) / (1000 * 60 * 60 * 24);
+          
+          let minDaysBetweenNotifications = 1; // Default daily
+          if (prefs.frequency === 'weekly') {
+            minDaysBetweenNotifications = 7;
+          } else if (prefs.frequency === 'custom' && prefs.customIntervalDays) {
+            minDaysBetweenNotifications = prefs.customIntervalDays;
+          }
+          
+          if (daysSinceLastSend < minDaysBetweenNotifications) {
+            console.log(`Skipping notification for user ${notification.user_id} - too soon (${daysSinceLastSend.toFixed(1)} days, needs ${minDaysBetweenNotifications})`);
+            skippedCount++;
+            continue;
+          }
+        }
+
         // Get user's push subscription
         const { data: subscriptions, error: subError } = await supabase
           .from('push_subscriptions')
@@ -164,13 +221,14 @@ Deno.serve(async (req) => {
       }
     }
 
-    console.log(`Sent ${sentCount} notifications with ${errorCount} errors`);
+    console.log(`Sent ${sentCount} notifications with ${errorCount} errors and ${skippedCount} skipped`);
 
     return new Response(
       JSON.stringify({
         message: 'Smart notification reminders processed',
         sent: sentCount,
         errors: errorCount,
+        skipped: skippedCount,
         total: notificationsToSend.length,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
