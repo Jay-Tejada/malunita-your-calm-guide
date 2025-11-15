@@ -88,7 +88,23 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: 'You are a task extraction assistant. Extract individual actionable tasks from user input. Return ONLY tasks, not general thoughts or statements.'
+            content: `You are an expert task extraction assistant. Your job is to:
+
+1. SPLIT compound inputs into separate, actionable tasks
+   - Example: "Buy stuff to wear in the sauna, look up sauna gear" → TWO tasks: "Buy stuff to wear in the sauna" AND "Look up sauna gear"
+   - Example: "Email John and call Sarah" → TWO tasks: "Email John" AND "Call Sarah"
+
+2. IGNORE conversational fillers and non-actionable statements
+   - Ignore: "Stop", "I'm done", "That's it", "Thank you", etc.
+   - Ignore: General thoughts without clear action verbs
+
+3. EXTRACT implicit timeframes and deadlines
+   - "by Friday", "this week", "tomorrow", "urgent", "ASAP" → mark as time-based
+   - Store the timeframe context for each task
+
+4. RETURN only clear, actionable tasks with action verbs
+   - Each task should be a distinct, completable action
+   - Keep task titles concise and action-oriented`
           },
           {
             role: 'user',
@@ -108,31 +124,35 @@ serve(async (req) => {
                     type: 'array',
                     items: {
                       type: 'object',
-                      properties: {
-                        title: { 
-                          type: 'string',
-                          description: 'Clear, concise task title'
-                        },
-                        has_person_name: { 
-                          type: 'boolean',
-                          description: 'Does this task mention a specific person name?'
-                        },
-                        has_reminder: { 
-                          type: 'boolean',
-                          description: 'Does this task need a reminder or follow-up?'
-                        },
-                        is_time_based: { 
-                          type: 'boolean',
-                          description: 'Is this task time-specific or has a deadline?'
-                        },
-                        keywords: {
-                          type: 'array',
-                          items: { type: 'string' },
-                          description: 'Key action words (e.g., email, call, follow-up, send)'
-                        }
-                      },
-                      required: ['title', 'has_person_name', 'has_reminder', 'is_time_based', 'keywords'],
-                      additionalProperties: false
+                  properties: {
+                    title: { 
+                      type: 'string',
+                      description: 'Clear, concise task title with action verb'
+                    },
+                    has_person_name: { 
+                      type: 'boolean',
+                      description: 'Does this task mention a specific person name?'
+                    },
+                    has_reminder: { 
+                      type: 'boolean',
+                      description: 'Does this task need a reminder or follow-up?'
+                    },
+                    is_time_based: { 
+                      type: 'boolean',
+                      description: 'Is this task time-specific or has a deadline (e.g., "by Friday", "tomorrow", "urgent", "ASAP")?'
+                    },
+                    timeframe: {
+                      type: 'string',
+                      description: 'Extracted timeframe if mentioned (e.g., "by Friday", "this week", "tomorrow", "urgent"). Empty string if none.'
+                    },
+                    keywords: {
+                      type: 'array',
+                      items: { type: 'string' },
+                      description: 'Key action words (e.g., buy, look up, email, call, research, send)'
+                    }
+                  },
+                  required: ['title', 'has_person_name', 'has_reminder', 'is_time_based', 'timeframe', 'keywords'],
+                  additionalProperties: false
                     }
                   }
                 },
