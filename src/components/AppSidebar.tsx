@@ -12,7 +12,8 @@ import {
   LogOut,
   CheckSquare,
   Target,
-  Sun
+  Sun,
+  TrendingUp
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAdmin } from "@/hooks/useAdmin";
@@ -154,6 +155,16 @@ export function AppSidebar({ onSettingsClick, onCategoryClick, activeCategory }:
                 >
                   <Sun className="mr-2 h-4 w-4" />
                   {!collapsed && <span>Daily Session</span>}
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              <SidebarMenuItem>
+                <SidebarMenuButton 
+                  onClick={() => navigate('/weekly-insights')}
+                  className="hover:bg-muted/50"
+                >
+                  <TrendingUp className="mr-2 h-4 w-4" />
+                  {!collapsed && <span>Weekly Insights</span>}
                 </SidebarMenuButton>
               </SidebarMenuItem>
 
