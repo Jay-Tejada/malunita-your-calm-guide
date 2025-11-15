@@ -3,6 +3,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { DailySession } from "./useDailySessions";
 import { startOfWeek, endOfWeek, format } from "date-fns";
 
+export interface Recommendation {
+  type: "productivity" | "consistency" | "scheduling" | "reflection" | "focus" | "getting_started";
+  title: string;
+  description: string;
+  priority: "high" | "medium" | "low";
+}
+
 export interface WeeklyInsights {
   sessions: DailySession[];
   completionRate: number;
@@ -13,6 +20,8 @@ export interface WeeklyInsights {
   reflectionRate: number;
   dayBreakdown: Array<{ date: string; hasSession: boolean; completed: boolean }>;
   focusConsistency: number;
+  weekStart: string;
+  weekEnd: string;
 }
 
 export const useWeeklyInsights = (weekOffset: number = 0) => {
@@ -112,7 +121,9 @@ export const useWeeklyInsights = (weekOffset: number = 0) => {
         deepWorkHours: Math.round(deepWorkHours * 10) / 10,
         reflectionRate,
         dayBreakdown,
-        focusConsistency
+        focusConsistency,
+        weekStart: format(weekStart, 'yyyy-MM-dd'),
+        weekEnd: format(weekEnd, 'yyyy-MM-dd')
       };
     },
   });

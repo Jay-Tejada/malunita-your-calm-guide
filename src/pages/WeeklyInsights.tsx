@@ -2,16 +2,41 @@ import { useState } from "react";
 import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { ArrowLeft, ChevronLeft, ChevronRight, TrendingUp, Target, Clock, Calendar } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight, TrendingUp, Target, Clock, Calendar, Lightbulb, Zap, CheckCircle2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useWeeklyInsights } from "@/hooks/useWeeklyInsights";
+import { useWeeklyRecommendations } from "@/hooks/useWeeklyRecommendations";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Cell } from "recharts";
 import { ChartContainer } from "@/components/ui/chart";
+import { Badge } from "@/components/ui/badge";
 
 const WeeklyInsights = () => {
   const navigate = useNavigate();
   const [weekOffset, setWeekOffset] = useState(0);
   const { data: insights, isLoading } = useWeeklyInsights(weekOffset);
+  const { data: recommendations, isLoading: isLoadingRecs } = useWeeklyRecommendations(
+    insights?.weekStart || '',
+    insights?.weekEnd || '',
+    insights?.sessions,
+    !!insights && weekOffset === 0 // Only fetch for current week
+  );
+
+  const getRecommendationIcon = (type: string) => {
+    switch (type) {
+      case 'productivity': return <Zap className="w-4 h-4" />;
+      case 'scheduling': return <Calendar className="w-4 h-4" />;
+      case 'consistency': return <CheckCircle2 className="w-4 h-4" />;
+      default: return <Lightbulb className="w-4 h-4" />;
+    }
+  };
+
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case 'high': return 'bg-accent text-accent-foreground';
+      case 'medium': return 'bg-secondary text-secondary-foreground';
+      default: return 'bg-muted text-muted-foreground';
+    }
+  };
 
   if (isLoading) {
     return (
@@ -148,6 +173,47 @@ const WeeklyInsights = () => {
             </ResponsiveContainer>
           </ChartContainer>
         </Card>
+
+        {/* AI Recommendations */}
+        {weekOffset === 0 && recommendations && recommendations.length > 0 && (
+          <Card className="p-6 bg-card border-border/40 mb-8">
+            <div className="flex items-center gap-2 mb-4">
+              <Lightbulb className="w-5 h-5 text-muted-foreground" />
+              <h3 className="text-sm font-light text-muted-foreground">Smart Recommendations</h3>
+              {isLoadingRecs && (
+                <span className="text-xs text-muted-foreground ml-auto">Analyzing patterns...</span>
+              )}
+            </div>
+            <div className="space-y-4">
+              {recommendations.map((rec, index) => (
+                <div 
+                  key={index}
+                  className="p-4 bg-background rounded-lg border border-border/40"
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0 mt-1">
+                      {getRecommendationIcon(rec.type)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h4 className="text-sm font-light">{rec.title}</h4>
+                        <Badge 
+                          variant="outline" 
+                          className={`text-xs ${getPriorityColor(rec.priority)}`}
+                        >
+                          {rec.priority}
+                        </Badge>
+                      </div>
+                      <p className="text-xs text-muted-foreground leading-relaxed">
+                        {rec.description}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Card>
+        )}
 
         {/* Top Focus Themes */}
         {insights?.topFocusThemes && insights.topFocusThemes.length > 0 && (
