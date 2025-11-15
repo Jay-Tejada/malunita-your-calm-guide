@@ -19,6 +19,7 @@ interface Message {
 interface SuggestedTask {
   title: string;
   suggested_category: string;
+  custom_category_id?: string;
   suggested_timeframe: string;
   confidence: number;
   confirmation_prompt: string;
@@ -943,7 +944,7 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
     });
   };
 
-  const handleConfirmTasks = async (confirmedTasks: Array<{title: string; category: string; is_focus: boolean; reminder_time?: string | null}>) => {
+  const handleConfirmTasks = async (confirmedTasks: Array<{title: string; category: string; is_focus: boolean; custom_category_id?: string; reminder_time?: string | null}>) => {
     setShowConfirmation(false);
     setIsProcessing(true);
 
@@ -953,6 +954,7 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
       const tasksToCreate = confirmedTasks.map(task => ({
         title: task.title,
         category: task.category,
+        custom_category_id: task.custom_category_id,
         input_method: 'voice' as const,
         is_focus: task.is_focus,
         focus_date: task.is_focus ? today : null,

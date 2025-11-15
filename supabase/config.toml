@@ -69,3 +69,6 @@ verify_jwt = false
 
 [functions.weekly-recommendations]
 verify_jwt = true
+
+[functions.suggest-custom-category]
+verify_jwt = true
