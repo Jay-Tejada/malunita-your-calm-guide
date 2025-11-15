@@ -60,3 +60,6 @@ verify_jwt = false
 
 [functions.send-task-reminders]
 verify_jwt = false
+
+[functions.weekly-recommendations]
+verify_jwt = true
