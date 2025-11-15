@@ -113,6 +113,60 @@ export type Database = {
         }
         Relationships: []
       }
+      daily_sessions: {
+        Row: {
+          created_at: string
+          date: string
+          deep_work_blocks: Json | null
+          id: string
+          idea_dump_processed: Json | null
+          idea_dump_raw: string | null
+          priority_three: string | null
+          priority_two: string | null
+          reflection_gratitude: string | null
+          reflection_improve: string | null
+          reflection_wins: string | null
+          tomorrow_focus: string | null
+          top_focus: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          deep_work_blocks?: Json | null
+          id?: string
+          idea_dump_processed?: Json | null
+          idea_dump_raw?: string | null
+          priority_three?: string | null
+          priority_two?: string | null
+          reflection_gratitude?: string | null
+          reflection_improve?: string | null
+          reflection_wins?: string | null
+          tomorrow_focus?: string | null
+          top_focus?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          deep_work_blocks?: Json | null
+          id?: string
+          idea_dump_processed?: Json | null
+          idea_dump_raw?: string | null
+          priority_three?: string | null
+          priority_two?: string | null
+          reflection_gratitude?: string | null
+          reflection_improve?: string | null
+          reflection_wins?: string | null
+          tomorrow_focus?: string | null
+          top_focus?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       learning_trends: {
         Row: {
           analysis_date: string
@@ -367,6 +421,7 @@ export type Database = {
           context: string | null
           created_at: string
           custom_category_id: string | null
+          daily_session_id: string | null
           focus_date: string | null
           goal_aligned: boolean | null
           has_person_name: boolean | null
@@ -389,6 +444,7 @@ export type Database = {
           context?: string | null
           created_at?: string
           custom_category_id?: string | null
+          daily_session_id?: string | null
           focus_date?: string | null
           goal_aligned?: boolean | null
           has_person_name?: boolean | null
@@ -411,6 +467,7 @@ export type Database = {
           context?: string | null
           created_at?: string
           custom_category_id?: string | null
+          daily_session_id?: string | null
           focus_date?: string | null
           goal_aligned?: boolean | null
           has_person_name?: boolean | null
@@ -431,6 +488,13 @@ export type Database = {
             columns: ["custom_category_id"]
             isOneToOne: false
             referencedRelation: "custom_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_daily_session_id_fkey"
+            columns: ["daily_session_id"]
+            isOneToOne: false
+            referencedRelation: "daily_sessions"
             referencedColumns: ["id"]
           },
         ]

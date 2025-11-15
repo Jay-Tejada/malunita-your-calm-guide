@@ -14,6 +14,7 @@ import TestAll from "./pages/TestAll";
 import Inbox from "./pages/Inbox";
 import Notifications from "./pages/Notifications";
 import Goals from "./pages/Goals";
+import DailySession from "./pages/DailySession";
 
 const queryClient = new QueryClient();
 
@@ -27,6 +28,7 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/inbox" element={<Inbox />} />
           <Route path="/goals" element={<Goals />} />
+          <Route path="/daily-session" element={<DailySession />} />
           <Route path="/notifications" element={<Notifications />} />
           <Route path="/install" element={<Install />} />
           <Route path="/admin" element={<Admin />} />
