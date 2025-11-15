@@ -11,7 +11,8 @@ import {
   ListTodo, 
   LogOut,
   CheckSquare,
-  Target
+  Target,
+  Sun
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAdmin } from "@/hooks/useAdmin";
@@ -146,6 +147,16 @@ export function AppSidebar({ onSettingsClick, onCategoryClick, activeCategory }:
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton 
+                  onClick={() => navigate('/daily-session')}
+                  className="hover:bg-muted/50"
+                >
+                  <Sun className="mr-2 h-4 w-4" />
+                  {!collapsed && <span>Daily Session</span>}
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
               <SidebarMenuItem>
                 <SidebarMenuButton 
                   onClick={() => navigate('/goals')}

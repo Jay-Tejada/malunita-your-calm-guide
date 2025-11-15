@@ -5,6 +5,7 @@ import { Auth } from "@/components/Auth";
 import { MalunitaVoice, MalunitaVoiceRef } from "@/components/MalunitaVoice";
 import { TaskList } from "@/components/TaskList";
 import { TodaysFocus } from "@/components/TodaysFocus";
+import { DailySummaryCard } from "@/components/DailySummaryCard";
 import { ProfileSettings } from "@/components/ProfileSettings";
 import { RunwayReview } from "@/components/RunwayReview";
 import { InstallPromptBanner } from "@/components/InstallPromptBanner";
@@ -325,7 +326,8 @@ const Index = () => {
             ) : showTodaysFocus ? (
               // Today's Focus View
               <div className="py-8 pb-48">
-                <div className="w-full max-w-2xl mx-auto animate-fade-in">
+                <div className="w-full max-w-2xl mx-auto animate-fade-in space-y-4">
+                  <DailySummaryCard />
                   <TodaysFocus onReflectClick={enableReflectButton ? () => setShowRunwayReview(true) : undefined} />
                 </div>
               </div>
