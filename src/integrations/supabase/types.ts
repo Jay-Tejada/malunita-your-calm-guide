@@ -338,6 +338,51 @@ export type Database = {
         }
         Relationships: []
       }
+      smart_notifications: {
+        Row: {
+          created_at: string | null
+          created_from_week: string | null
+          description: string
+          dismissed: boolean | null
+          id: string
+          is_active: boolean | null
+          recommendation_type: string
+          suggested_day: string | null
+          suggested_time: string | null
+          title: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          created_from_week?: string | null
+          description: string
+          dismissed?: boolean | null
+          id?: string
+          is_active?: boolean | null
+          recommendation_type: string
+          suggested_day?: string | null
+          suggested_time?: string | null
+          title: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          created_from_week?: string | null
+          description?: string
+          dismissed?: boolean | null
+          id?: string
+          is_active?: boolean | null
+          recommendation_type?: string
+          suggested_day?: string | null
+          suggested_time?: string | null
+          title?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       task_learning_feedback: {
         Row: {
           actual_category: string

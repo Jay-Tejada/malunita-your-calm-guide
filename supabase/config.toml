@@ -61,5 +61,8 @@ verify_jwt = false
 [functions.send-task-reminders]
 verify_jwt = false
 
+[functions.create-smart-notifications]
+verify_jwt = true
+
 [functions.weekly-recommendations]
 verify_jwt = true
