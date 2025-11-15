@@ -346,6 +346,7 @@ export type Database = {
           dismissed: boolean | null
           id: string
           is_active: boolean | null
+          last_sent_at: string | null
           recommendation_type: string
           suggested_day: string | null
           suggested_time: string | null
@@ -360,6 +361,7 @@ export type Database = {
           dismissed?: boolean | null
           id?: string
           is_active?: boolean | null
+          last_sent_at?: string | null
           recommendation_type: string
           suggested_day?: string | null
           suggested_time?: string | null
@@ -374,6 +376,7 @@ export type Database = {
           dismissed?: boolean | null
           id?: string
           is_active?: boolean | null
+          last_sent_at?: string | null
           recommendation_type?: string
           suggested_day?: string | null
           suggested_time?: string | null
