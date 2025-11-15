@@ -1,24 +1,64 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Badge } from './ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
-import { X, Plus, BookmarkPlus } from 'lucide-react';
+import { X, Plus, BookmarkPlus, Sparkles, Loader2 } from 'lucide-react';
 import { useCategoryKeywords } from '@/hooks/useCategoryKeywords';
 import { useCustomCategories } from '@/hooks/useCustomCategories';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+
+interface KeywordSuggestion {
+  keyword: string;
+  frequency: number;
+  type: 'word' | 'phrase';
+}
 
 export const CategoryKeywordTrainer = () => {
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
   const [newKeyword, setNewKeyword] = useState('');
+  const [suggestions, setSuggestions] = useState<KeywordSuggestion[]>([]);
+  const [loadingSuggestions, setLoadingSuggestions] = useState(false);
+  
   const { categories } = useCustomCategories();
   const { keywords, addKeyword, deleteKeyword } = useCategoryKeywords(selectedCategoryId || undefined);
 
-  const handleAddKeyword = async () => {
-    if (!selectedCategoryId || !newKeyword.trim()) return;
+  useEffect(() => {
+    if (selectedCategoryId) {
+      fetchKeywordSuggestions();
+    } else {
+      setSuggestions([]);
+    }
+  }, [selectedCategoryId]);
 
-    await addKeyword({ categoryId: selectedCategoryId, keyword: newKeyword });
+  const fetchKeywordSuggestions = async () => {
+    if (!selectedCategoryId) return;
+    
+    setLoadingSuggestions(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('suggest-keywords', {
+        body: { categoryId: selectedCategoryId }
+      });
+
+      if (error) throw error;
+      setSuggestions(data?.suggestions || []);
+    } catch (error) {
+      console.error('Failed to fetch keyword suggestions:', error);
+      toast.error('Failed to load keyword suggestions');
+    } finally {
+      setLoadingSuggestions(false);
+    }
+  };
+
+  const handleAddKeyword = async (keyword?: string) => {
+    const keywordToAdd = keyword || newKeyword.trim();
+    if (!selectedCategoryId || !keywordToAdd) return;
+
+    await addKeyword({ categoryId: selectedCategoryId, keyword: keywordToAdd });
     setNewKeyword('');
+    fetchKeywordSuggestions();
   };
 
   const selectedCategory = categories?.find(c => c.id === selectedCategoryId);
@@ -69,7 +109,7 @@ export const CategoryKeywordTrainer = () => {
                   onKeyDown={(e) => e.key === 'Enter' && handleAddKeyword()}
                 />
                 <Button 
-                  onClick={handleAddKeyword}
+                  onClick={() => handleAddKeyword()}
                   disabled={!newKeyword.trim()}
                   size="icon"
                 >

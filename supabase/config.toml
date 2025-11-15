@@ -72,3 +72,6 @@ verify_jwt = true
 
 [functions.suggest-custom-category]
 verify_jwt = true
+
+[functions.suggest-keywords]
+verify_jwt = true
