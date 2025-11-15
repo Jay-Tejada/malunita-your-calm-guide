@@ -19,6 +19,13 @@ interface TaskSuggestion {
   priority: 'low' | 'medium' | 'high';
   category: 'inbox' | 'home' | 'work' | 'gym' | 'projects';
   context: string;
+  suggestion_type?: 'breakdown' | 'related' | 'followup' | 'scheduled' | 'standard';
+  parent_task_title?: string;
+  suggested_due_date?: string;
+  is_recurring?: boolean;
+  recurrence_pattern?: string;
+  related_keywords?: string[];
+  contextual_note?: string;
 }
 
 interface TaskSuggestionsProps {
@@ -93,6 +100,36 @@ export const TaskSuggestions = ({ tasks, domain, onAddTask }: TaskSuggestionsPro
     }
   };
 
+  const getSuggestionTypeLabel = (type?: string) => {
+    switch (type) {
+      case 'breakdown': return '🔨 Task Breakdown';
+      case 'related': return '🔗 Related Task';
+      case 'followup': return '⏭️ Follow-up';
+      case 'scheduled': return '📅 Scheduled';
+      default: return '✨ Suggested';
+    }
+  };
+
+  const getSuggestionTypeColor = (type?: string) => {
+    switch (type) {
+      case 'breakdown': return 'bg-blue-500/10 text-blue-600 border-blue-500/20';
+      case 'related': return 'bg-purple-500/10 text-purple-600 border-purple-500/20';
+      case 'followup': return 'bg-green-500/10 text-green-600 border-green-500/20';
+      case 'scheduled': return 'bg-orange-500/10 text-orange-600 border-orange-500/20';
+      default: return 'bg-accent/10 text-accent border-accent/20';
+    }
+  };
+
+  // Group suggestions by type for better organization
+  const groupedSuggestions = suggestions.reduce((acc, suggestion) => {
+    const type = suggestion.suggestion_type || 'standard';
+    if (!acc[type]) acc[type] = [];
+    acc[type].push(suggestion);
+    return acc;
+  }, {} as Record<string, TaskSuggestion[]>);
+
+  const suggestionOrder = ['breakdown', 'scheduled', 'followup', 'related', 'standard'];
+
   return (
     <div className="mb-8">
       {!isExpanded ? (
@@ -135,39 +172,89 @@ export const TaskSuggestions = ({ tasks, domain, onAddTask }: TaskSuggestionsPro
               All suggestions have been added or dismissed
             </p>
           ) : (
-            <div className="space-y-3">
-              {suggestions.map((suggestion, index) => (
-                <Card key={index} className="p-4 bg-card border-secondary hover:border-accent transition-colors">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex-1 space-y-2">
-                      <div className="flex items-center gap-2">
-                        <Badge variant={getPriorityColor(suggestion.priority)}>
-                          {suggestion.priority}
-                        </Badge>
-                        {suggestion.category !== domain && (
-                          <Badge variant="outline" className="text-xs">
-                            {suggestion.category}
-                          </Badge>
-                        )}
-                      </div>
-                      <p className="text-sm font-medium text-foreground">
-                        {suggestion.title}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {suggestion.context}
-                      </p>
-                    </div>
-                    <Button
-                      onClick={() => handleAddSuggestion(suggestion)}
-                      size="sm"
-                      variant="ghost"
-                      className="shrink-0"
-                    >
-                      <Plus className="w-4 h-4" />
-                    </Button>
+            <div className="space-y-4">
+              {suggestionOrder.map(type => {
+                const typeSuggestions = groupedSuggestions[type];
+                if (!typeSuggestions || typeSuggestions.length === 0) return null;
+
+                return (
+                  <div key={type} className="space-y-3">
+                    {typeSuggestions.map((suggestion, index) => (
+                      <Card
+                        key={`${type}-${index}`}
+                        className="p-4 bg-card border-secondary hover:border-accent transition-colors"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex-1 space-y-2">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <Badge className={getSuggestionTypeColor(suggestion.suggestion_type)}>
+                                {getSuggestionTypeLabel(suggestion.suggestion_type)}
+                              </Badge>
+                              <Badge variant={getPriorityColor(suggestion.priority)}>
+                                {suggestion.priority}
+                              </Badge>
+                              {suggestion.category !== domain && (
+                                <Badge variant="outline" className="text-xs">
+                                  {suggestion.category}
+                                </Badge>
+                              )}
+                              {suggestion.is_recurring && (
+                                <Badge variant="outline" className="text-xs">
+                                  🔄 {suggestion.recurrence_pattern}
+                                </Badge>
+                              )}
+                              {suggestion.suggested_due_date && (
+                                <Badge variant="outline" className="text-xs">
+                                  📅 {new Date(suggestion.suggested_due_date).toLocaleDateString()}
+                                </Badge>
+                              )}
+                            </div>
+                            
+                            {suggestion.parent_task_title && (
+                              <p className="text-xs text-muted-foreground">
+                                ↳ From: {suggestion.parent_task_title}
+                              </p>
+                            )}
+                            
+                            <p className="text-sm font-medium text-foreground">
+                              {suggestion.title}
+                            </p>
+                            
+                            {suggestion.contextual_note && (
+                              <p className="text-xs text-muted-foreground italic">
+                                📝 {suggestion.contextual_note}
+                              </p>
+                            )}
+                            
+                            <p className="text-xs text-muted-foreground">
+                              {suggestion.context}
+                            </p>
+                            
+                            {suggestion.related_keywords && suggestion.related_keywords.length > 0 && (
+                              <div className="flex items-center gap-1 flex-wrap">
+                                <span className="text-xs text-muted-foreground">Related to:</span>
+                                {suggestion.related_keywords.map((keyword, i) => (
+                                  <Badge key={i} variant="secondary" className="text-xs">
+                                    {keyword}
+                                  </Badge>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                          <Button
+                            onClick={() => handleAddSuggestion(suggestion)}
+                            size="sm"
+                            variant="ghost"
+                            className="shrink-0"
+                          >
+                            <Plus className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </Card>
+                    ))}
                   </div>
-                </Card>
-              ))}
+                );
+              })}
             </div>
           )}
 
