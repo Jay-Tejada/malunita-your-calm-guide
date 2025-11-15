@@ -113,6 +113,39 @@ export type Database = {
         }
         Relationships: []
       }
+      learning_trends: {
+        Row: {
+          analysis_date: string
+          categorization_improvements: string | null
+          common_patterns: Json
+          created_at: string
+          id: string
+          suggestion_improvements: string | null
+          top_misunderstood_phrasings: Json
+          total_corrections_analyzed: number
+        }
+        Insert: {
+          analysis_date?: string
+          categorization_improvements?: string | null
+          common_patterns?: Json
+          created_at?: string
+          id?: string
+          suggestion_improvements?: string | null
+          top_misunderstood_phrasings?: Json
+          total_corrections_analyzed?: number
+        }
+        Update: {
+          analysis_date?: string
+          categorization_improvements?: string | null
+          common_patterns?: Json
+          created_at?: string
+          id?: string
+          suggestion_improvements?: string | null
+          top_misunderstood_phrasings?: Json
+          total_corrections_analyzed?: number
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           autocategorize_enabled: boolean | null
@@ -121,20 +154,25 @@ export type Database = {
           created_at: string
           current_goal: string | null
           custom_stop_commands: string[] | null
+          custom_wake_word: string | null
           goal_timeframe: string | null
           goal_updated_at: string | null
           id: string
+          insights: Json | null
+          last_personalization_run: string | null
           likes_routine_nudges: boolean | null
           notification_preferences: Json | null
           notification_snooze_until: string | null
           often_time_based: boolean | null
           peak_activity_time: string | null
+          preferences_summary: string | null
           preferred_gpt_model: string | null
           preferred_input_style: string | null
           total_tasks_logged: number | null
           updated_at: string
           uses_names: boolean | null
           uses_reminders: boolean | null
+          wake_word_enabled: boolean | null
           wants_voice_playback: boolean | null
         }
         Insert: {
@@ -144,20 +182,25 @@ export type Database = {
           created_at?: string
           current_goal?: string | null
           custom_stop_commands?: string[] | null
+          custom_wake_word?: string | null
           goal_timeframe?: string | null
           goal_updated_at?: string | null
           id: string
+          insights?: Json | null
+          last_personalization_run?: string | null
           likes_routine_nudges?: boolean | null
           notification_preferences?: Json | null
           notification_snooze_until?: string | null
           often_time_based?: boolean | null
           peak_activity_time?: string | null
+          preferences_summary?: string | null
           preferred_gpt_model?: string | null
           preferred_input_style?: string | null
           total_tasks_logged?: number | null
           updated_at?: string
           uses_names?: boolean | null
           uses_reminders?: boolean | null
+          wake_word_enabled?: boolean | null
           wants_voice_playback?: boolean | null
         }
         Update: {
@@ -167,20 +210,25 @@ export type Database = {
           created_at?: string
           current_goal?: string | null
           custom_stop_commands?: string[] | null
+          custom_wake_word?: string | null
           goal_timeframe?: string | null
           goal_updated_at?: string | null
           id?: string
+          insights?: Json | null
+          last_personalization_run?: string | null
           likes_routine_nudges?: boolean | null
           notification_preferences?: Json | null
           notification_snooze_until?: string | null
           often_time_based?: boolean | null
           peak_activity_time?: string | null
+          preferences_summary?: string | null
           preferred_gpt_model?: string | null
           preferred_input_style?: string | null
           total_tasks_logged?: number | null
           updated_at?: string
           uses_names?: boolean | null
           uses_reminders?: boolean | null
+          wake_word_enabled?: boolean | null
           wants_voice_playback?: boolean | null
         }
         Relationships: []
@@ -275,6 +323,41 @@ export type Database = {
         }
         Relationships: []
       }
+      task_reminders: {
+        Row: {
+          created_at: string
+          id: string
+          reminder_time: string
+          sent_at: string
+          task_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          reminder_time: string
+          sent_at?: string
+          task_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          reminder_time?: string
+          sent_at?: string
+          task_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_reminders_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tasks: {
         Row: {
           alignment_reason: string | null
@@ -293,6 +376,7 @@ export type Database = {
           is_focus: boolean | null
           is_time_based: boolean | null
           keywords: string[] | null
+          reminder_time: string | null
           title: string
           updated_at: string
           user_id: string
@@ -314,6 +398,7 @@ export type Database = {
           is_focus?: boolean | null
           is_time_based?: boolean | null
           keywords?: string[] | null
+          reminder_time?: string | null
           title: string
           updated_at?: string
           user_id: string
@@ -335,6 +420,7 @@ export type Database = {
           is_focus?: boolean | null
           is_time_based?: boolean | null
           keywords?: string[] | null
+          reminder_time?: string | null
           title?: string
           updated_at?: string
           user_id?: string
