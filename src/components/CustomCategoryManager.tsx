@@ -3,6 +3,8 @@ import { useCustomCategories } from "@/hooks/useCustomCategories";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { CategoryKeywordTrainer } from "./CategoryKeywordTrainer";
 import { Plus, Trash2, Edit2, Tag, Home, Briefcase, Heart, DollarSign, ShoppingCart, Baby, Car, Plane, Coffee, Book, Music, Gamepad2, Film, Star, Zap, GripVertical } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { DndContext, closestCenter, DragEndEvent, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
@@ -199,7 +201,14 @@ export const CustomCategoryManager = () => {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <Tabs defaultValue="categories" className="w-full">
+        <TabsList className="grid w-full grid-cols-2 mb-4">
+          <TabsTrigger value="categories">Categories</TabsTrigger>
+          <TabsTrigger value="keywords">Train Keywords</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="categories" className="space-y-4">
+          <div className="flex items-center justify-between">
         <h3 className="text-lg font-medium">Custom Categories</h3>
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
           <DialogTrigger asChild>
@@ -312,6 +321,12 @@ export const CustomCategoryManager = () => {
           </p>
         )}
       </div>
+        </TabsContent>
+
+        <TabsContent value="keywords">
+          <CategoryKeywordTrainer />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
