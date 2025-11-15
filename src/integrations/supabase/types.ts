@@ -44,6 +44,38 @@ export type Database = {
         }
         Relationships: []
       }
+      category_keywords: {
+        Row: {
+          created_at: string
+          custom_category_id: string
+          id: string
+          keyword: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          custom_category_id: string
+          id?: string
+          keyword: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          custom_category_id?: string
+          id?: string
+          keyword?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "category_keywords_custom_category_id_fkey"
+            columns: ["custom_category_id"]
+            isOneToOne: false
+            referencedRelation: "custom_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       conversation_history: {
         Row: {
           audio_played: boolean | null

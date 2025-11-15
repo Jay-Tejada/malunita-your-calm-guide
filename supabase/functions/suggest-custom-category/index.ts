@@ -51,11 +51,55 @@ serve(async (req) => {
       .eq('user_id', user.id)
       .order('display_order');
 
+    // Fetch user's trained keywords
+    const { data: trainedKeywords } = await supabase
+      .from('category_keywords')
+      .select('keyword, custom_category_id')
+      .eq('user_id', user.id);
+
     if (!customCategories || customCategories.length === 0) {
       return new Response(
         JSON.stringify({ suggestions: [] }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
+    }
+
+    // Check for trained keyword matches first (highest priority)
+    if (trainedKeywords && trainedKeywords.length > 0) {
+      const taskLower = taskText.toLowerCase();
+      const keywordMatches: Record<string, number> = {};
+      
+      for (const { keyword, custom_category_id } of trainedKeywords) {
+        if (taskLower.includes(keyword.toLowerCase())) {
+          keywordMatches[custom_category_id] = (keywordMatches[custom_category_id] || 0) + 1;
+        }
+      }
+
+      // If we have exact keyword matches, return them with high confidence
+      if (Object.keys(keywordMatches).length > 0) {
+        const suggestions = Object.entries(keywordMatches)
+          .sort(([, a], [, b]) => b - a)
+          .slice(0, 3)
+          .map(([catId, matchCount]) => {
+            const category = customCategories.find(c => c.id === catId);
+            if (!category) return null;
+            return {
+              category_id: catId,
+              category_name: category.name,
+              confidence: 0.95,
+              reason: `Matches ${matchCount} trained keyword${matchCount > 1 ? 's' : ''}`
+            };
+          })
+          .filter(Boolean);
+
+        if (suggestions.length > 0) {
+          console.log('Returning keyword-based suggestions:', suggestions);
+          return new Response(
+            JSON.stringify({ suggestions }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+      }
     }
 
     // Fetch user's past tasks for pattern analysis
@@ -74,6 +118,24 @@ Task: "${taskText}"
 
 Available custom categories:
 ${customCategories.map(c => `- ${c.name} (ID: ${c.id})`).join('\n')}`;
+
+    if (trainedKeywords && trainedKeywords.length > 0) {
+      const keywordsByCategory: Record<string, string[]> = {};
+      trainedKeywords.forEach(({ keyword, custom_category_id }) => {
+        if (!keywordsByCategory[custom_category_id]) {
+          keywordsByCategory[custom_category_id] = [];
+        }
+        keywordsByCategory[custom_category_id].push(keyword);
+      });
+
+      contextPrompt += `\n\nUser has trained these keywords (PRIORITIZE THESE):`;
+      Object.entries(keywordsByCategory).forEach(([catId, keywords]) => {
+        const category = customCategories.find(c => c.id === catId);
+        if (category) {
+          contextPrompt += `\n- ${category.name}: [${keywords.join(', ')}]`;
+        }
+      });
+    }
 
     if (pastTasks && pastTasks.length > 0) {
       const categoryPatterns: Record<string, string[]> = {};
