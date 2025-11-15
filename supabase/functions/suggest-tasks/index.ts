@@ -95,24 +95,40 @@ serve(async (req) => {
       `${t.completed ? '✓' : '○'} ${t.title}${t.context ? ` (${t.context})` : ''}`
     ).join('\n');
 
-    const systemPrompt = `You are a productivity assistant helping the user think clearly. Based on recent voice notes, unfinished tasks, and goal themes, suggest 3–5 tasks that are meaningful and time-sensitive. Keep it light, encouraging, and avoid generic fluff.
+    const systemPrompt = `You are an intelligent productivity assistant. Your role is to:
+
+1. **PROACTIVELY BREAK DOWN COMPLEX TASKS**
+   - Identify tasks containing multiple distinct actions (e.g., "Buy sauna gear and research saunas" → 2 tasks)
+   - Suggest sub-tasks for large or vague tasks
+   - Mark these as suggestion_type: "breakdown" and reference parent_task_title
+
+2. **AUTO-IDENTIFY TEMPORAL CUES AND SUGGEST SCHEDULES**
+   - Extract deadlines from phrases like "by Friday", "next week", "end of month", "urgent"
+   - Identify recurring patterns: "weekly", "monthly", "every Monday", "daily"
+   - Set suggested_due_date and is_recurring + recurrence_pattern accordingly
+   - Mark these as suggestion_type: "scheduled"
+
+3. **SUGGEST RELATED SUB-TASKS BASED ON KEYWORDS**
+   - If "client list" is mentioned → suggest "Verify client contact info", "Update client database"
+   - If "meeting" → suggest "Prepare agenda", "Send calendar invite", "Follow up notes"
+   - If "project" → suggest "Create timeline", "Assign resources", "Set milestones"
+   - Mark these as suggestion_type: "related" and include related_keywords
+   - Mark follow-up actions as suggestion_type: "followup"
+
+4. **HANDLE CONTEXTUAL INFORMATION AS NOTES**
+   - Extract non-actionable details (background info, reasoning, constraints)
+   - Store in contextual_note field to keep task titles concise
+   - Example: Task "Call John" + contextual_note: "Regarding Q4 budget discussion"
 
 Current domain: ${domain}
 
-Consider:
-- Incomplete tasks that might need follow-up actions
-- Patterns in the user's work and activities
-- Tasks that complement existing work
-- Balance between different types of activities
-- Realistic time commitments
-- What would be genuinely helpful right now
+Analyze existing tasks for:
+- Tasks that need breaking down (multiple actions in one)
+- Tasks with implicit deadlines or temporal cues
+- Keywords that suggest related workflows
+- Contextual information that should be notes
 
-Suggest tasks that are:
-- Specific and actionable
-- Relevant to the current domain (${domain})
-- Complementary to existing tasks
-- Not duplicates of existing tasks
-- Time-sensitive or meaningful to current goals`;
+Return 3-7 suggestions that are specific, actionable, and genuinely helpful.`;
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -134,7 +150,7 @@ Suggest tasks that are:
             type: "function",
             function: {
               name: "suggest_tasks",
-              description: "Return 3-5 actionable task suggestions based on user's current tasks and patterns",
+              description: "Return 3-7 intelligent task suggestions including breakdowns, schedules, and related sub-tasks",
               parameters: {
                 type: "object",
                 properties: {
@@ -160,13 +176,43 @@ Suggest tasks that are:
                         context: {
                           type: "string",
                           description: "Brief context or reason for this suggestion"
+                        },
+                        suggestion_type: {
+                          type: "string",
+                          enum: ["breakdown", "related", "followup", "scheduled", "standard"],
+                          description: "Type of suggestion: breakdown (from complex task), related (based on keywords), followup (next action), scheduled (has due date), standard (regular suggestion)"
+                        },
+                        parent_task_title: {
+                          type: "string",
+                          description: "If suggestion_type is 'breakdown', the title of the task being broken down"
+                        },
+                        suggested_due_date: {
+                          type: "string",
+                          description: "ISO date string if temporal cues detected (e.g., '2024-11-20'). Empty string if none."
+                        },
+                        is_recurring: {
+                          type: "boolean",
+                          description: "True if task should repeat (weekly, monthly, etc.)"
+                        },
+                        recurrence_pattern: {
+                          type: "string",
+                          description: "Human-readable recurrence (e.g., 'Weekly on Mondays', 'Every 2 weeks', 'Monthly'). Empty if not recurring."
+                        },
+                        related_keywords: {
+                          type: "array",
+                          items: { type: "string" },
+                          description: "Keywords that triggered related suggestions (e.g., ['client', 'meeting'])"
+                        },
+                        contextual_note: {
+                          type: "string",
+                          description: "Non-actionable background info to keep task title concise (e.g., 'Regarding Q4 budget'). Empty if none."
                         }
                       },
-                      required: ["title", "priority", "category", "context"],
+                      required: ["title", "priority", "category", "context", "suggestion_type"],
                       additionalProperties: false
                     },
                     minItems: 3,
-                    maxItems: 5
+                    maxItems: 7
                   }
                 },
                 required: ["suggestions"],
