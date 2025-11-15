@@ -63,7 +63,7 @@ const Index = () => {
   const { isAdmin } = useAdmin();
   const { tasks, updateTask } = useTasks();
   const { profile } = useProfile();
-  const { categories: customCategories } = useCustomCategories();
+  const { categories: customCategories, createCategory } = useCustomCategories();
   
   const { toast } = useToast();
 
