@@ -70,6 +70,12 @@ serve(async (req) => {
       )
     }
 
+    // Fetch user's custom categories
+    const { data: customCategories } = await supabase
+      .from('custom_categories')
+      .select('id, name')
+      .eq('user_id', user.id);
+
     const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
     if (!openaiApiKey) {
       throw new Error('OPENAI_API_KEY is not configured');
@@ -80,6 +86,45 @@ serve(async (req) => {
 
     console.log('Categorizing task:', text);
     console.log('Using model:', model);
+    console.log('User has custom categories:', customCategories?.map(c => c.name).join(', '));
+
+    // Build system prompt with custom categories
+    let systemPrompt = `You are Malunita, a helpful AI assistant that categorizes tasks. 
+Analyze the task and categorize it into one of these domains:
+- inbox: Default category for uncategorizable tasks or when unclear
+- home: Tasks related to personal life, hobbies, errands, home chores, relationships, family, etc.
+- work: Tasks related to work, business, professional development, career, office tasks, etc.
+- gym: Tasks related to fitness, exercise, workouts, sports, physical training, etc.
+- projects: Tasks related to personal projects, side projects, creative work, building things, etc.
+- someday: Tasks for the future, not urgent, ideas to revisit later, bucket list items, etc.`;
+
+    if (customCategories && customCategories.length > 0) {
+      systemPrompt += `\n\nThe user has also created these custom categories that you should prefer when they match:\n`;
+      customCategories.forEach(cat => {
+        systemPrompt += `- ${cat.name}: Use this when the user mentions "${cat.name}" or related keywords\n`;
+      });
+      systemPrompt += `\nWhen the user says to "tag this to [name]" or mentions a custom category name, use that custom category.`;
+    }
+
+    systemPrompt += `\n\nReturn ONLY a JSON object with this structure:
+{
+  "category": "inbox" | "home" | "work" | "gym" | "projects" | "someday" | "<custom_category_name>",
+  "confidence": "high" | "low",
+  "custom_category_id": "<id>" // Only include if it's a custom category
+}
+
+Examples:
+- "Buy groceries" → {"category": "home", "confidence": "high"}
+- "Finish the presentation for Monday" → {"category": "work", "confidence": "high"}
+- "Go for a run" → {"category": "gym", "confidence": "high"}
+- "Work on side project website" → {"category": "projects", "confidence": "high"}
+- "Learn Spanish someday" → {"category": "someday", "confidence": "high"}`;
+
+    if (customCategories && customCategories.length > 0) {
+      systemPrompt += `\n- "Tag this to ${customCategories[0].name}" → {"category": "${customCategories[0].name}", "confidence": "high", "custom_category_id": "${customCategories[0].id}"}`;
+    }
+
+    systemPrompt += `\n\nBe confident and decisive. Use "low" confidence only when truly ambiguous.`;
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -92,28 +137,7 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: `You are Malunita, a helpful AI assistant that categorizes tasks. 
-Analyze the task and categorize it into one of these domains:
-- inbox: Default category for uncategorizable tasks or when unclear
-- home: Tasks related to personal life, hobbies, errands, home chores, relationships, family, etc.
-- work: Tasks related to work, business, professional development, career, office tasks, etc.
-- gym: Tasks related to fitness, exercise, workouts, sports, physical training, etc.
-- projects: Tasks related to personal projects, side projects, creative work, building things, etc.
-
-Return ONLY a JSON object with this structure:
-{
-  "category": "inbox" | "home" | "work" | "gym" | "projects",
-  "confidence": "high" | "low"
-}
-
-Examples:
-- "Buy groceries" → {"category": "home", "confidence": "high"}
-- "Finish the presentation for Monday" → {"category": "work", "confidence": "high"}
-- "Go for a run" → {"category": "gym", "confidence": "high"}
-- "Work on side project website" → {"category": "projects", "confidence": "high"}
-- "Call someone" → {"category": "inbox", "confidence": "low"}
-
-Be confident and decisive. Use "low" confidence only when truly ambiguous.`
+            content: systemPrompt
           },
           {
             role: 'user',

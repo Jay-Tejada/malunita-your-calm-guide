@@ -28,7 +28,7 @@ interface TaskListProps {
 
 export const TaskList = ({ category: externalCategory }: TaskListProps = {}) => {
   const { tasks, isLoading, updateTask, deleteTask } = useTasks();
-  const { categories } = useCustomCategories();
+  const { categories, createCategory } = useCustomCategories();
   const [internalDomain, setInternalDomain] = useState("inbox");
   const [activeId, setActiveId] = useState<string | null>(null);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
@@ -39,6 +39,22 @@ export const TaskList = ({ category: externalCategory }: TaskListProps = {}) => 
   // Use external category if provided, otherwise use internal state
   const selectedDomain = externalCategory ?? internalDomain;
   const setSelectedDomain = externalCategory ? () => {} : setInternalDomain;
+
+  const handleCreateCategory = async (name: string) => {
+    try {
+      await createCategory({ name, icon: "Tag", color: "#6B7280" });
+      toast({
+        title: "Category created",
+        description: `"${name}" is now available for tagging tasks`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to create category",
+        variant: "destructive",
+      });
+    }
+  };
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -165,6 +181,7 @@ export const TaskList = ({ category: externalCategory }: TaskListProps = {}) => 
           onChange={setSelectedDomain} 
           isDragging={!!activeId}
           customCategories={categories || []}
+          onCreateCategory={handleCreateCategory}
         />
         <Card className="p-8 text-center text-muted-foreground mt-4">
           <p>No tasks yet. Start by speaking into Malunita.</p>
@@ -264,6 +281,7 @@ export const TaskList = ({ category: externalCategory }: TaskListProps = {}) => 
               onChange={setSelectedDomain} 
               isDragging={!!activeId}
               customCategories={categories || []}
+              onCreateCategory={handleCreateCategory}
             />
             <CategoryManager />
           </div>

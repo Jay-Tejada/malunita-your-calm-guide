@@ -81,6 +81,12 @@ serve(async (req) => {
       const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
       const supabase = createClient(supabaseUrl, supabaseKey);
       
+      // Get user's custom categories
+      const { data: customCategories } = await supabase
+        .from('custom_categories')
+        .select('id, name')
+        .eq('user_id', userId);
+      
       // Get recent corrections to learn from
       const { data: feedback } = await supabase
         .from('task_learning_feedback')
@@ -116,6 +122,15 @@ serve(async (req) => {
 - Timeframe preferences: ${Object.entries(timeframePatterns).map(([time, tasks]) => 
   `${time} for tasks like: ${tasks.slice(0, 3).join(', ')}`).join('; ')}`;
       }
+
+      // Add custom categories to learning insights
+      if (customCategories && customCategories.length > 0) {
+        learningInsights += `\n\nUser's custom categories:\n`;
+        customCategories.forEach(cat => {
+          learningInsights += `- "${cat.name}" (ID: ${cat.id}): Use when user mentions this category by name or related keywords\n`;
+        });
+        learningInsights += `When the user says "tag this to [name]", use that custom category if it exists.`;
+      }
     }
 
     const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
@@ -130,7 +145,7 @@ ${userProfile?.current_goal ? `🎯 USER'S CURRENT GOAL: "${userProfile.current_
 Guidelines:
 - Extract 1-3 clear, actionable tasks maximum
 - Clean up rambling or vague language into clear task titles
-- Suggest appropriate categories: inbox, work, home, projects, gym
+- Suggest appropriate categories: inbox, work, home, projects, gym, someday, or user's custom categories
 - Suggest timeframes: today, this_week, later
 - Extract reminder dates AND times if mentioned:
   * Relative dates: "tomorrow at 10 AM", "next Monday at 3 PM", "in 3 days at noon"
@@ -157,6 +172,7 @@ Return valid JSON in this exact format:
     {
       "title": "Clear task title",
       "suggested_category": "work",
+      "custom_category_id": "<id if custom category>",
       "suggested_timeframe": "today",
       "confidence": 0.85,
       "reminder_time": "2024-11-10T10:00:00Z (complete ISO 8601 with date + time, or null if no reminder)",
