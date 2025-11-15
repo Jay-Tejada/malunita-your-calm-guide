@@ -2,16 +2,19 @@ import { useState, useEffect } from "react";
 import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Bell, BellOff, ArrowLeft } from "lucide-react";
+import { Bell, BellOff, ArrowLeft, Sparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useSmartNotifications } from "@/hooks/useSmartNotifications";
+import { SmartNotificationCard } from "@/components/SmartNotificationCard";
 
 import { NotificationSnooze } from "@/components/NotificationSnooze";
 
 const Notifications = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { notifications: smartNotifications, isLoading: isLoadingNotifications, dismissNotification } = useSmartNotifications();
   const [permission, setPermission] = useState<NotificationPermission>("default");
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -229,6 +232,39 @@ const Notifications = () => {
             )}
           </CardContent>
         </Card>
+
+        {/* Smart Notifications Section */}
+        {smartNotifications && smartNotifications.length > 0 && (
+          <Card className="mt-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-accent" />
+                Smart Reminders
+              </CardTitle>
+              <CardDescription>
+                AI-powered suggestions based on your weekly patterns
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {isLoadingNotifications ? (
+                <div className="animate-pulse space-y-3">
+                  <div className="h-20 bg-muted rounded-lg" />
+                  <div className="h-20 bg-muted rounded-lg" />
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {smartNotifications.map((notification) => (
+                    <SmartNotificationCard
+                      key={notification.id}
+                      notification={notification}
+                      onDismiss={dismissNotification}
+                    />
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         {isSubscribed && (
           <Card className="mt-4">
