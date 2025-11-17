@@ -589,13 +589,12 @@ export const RunwayReview = ({ onClose }: RunwayReviewProps) => {
 
             {/* Fiesta Suggestion - if many small tasks detected */}
             {categories.stuckOverdue.length > 0 && findTinyTasks(categories.stuckOverdue).length >= 3 && (
-              <div className="mt-6 p-6 bg-gradient-to-br from-primary/10 to-accent/10 rounded-3xl border border-primary/20">
+              <div className="mt-6 p-6 bg-gradient-to-br from-primary/10 to-accent/10 rounded-3xl border border-primary/20 animate-fade-in">
                 <div className="flex items-start gap-4">
-                  <Sparkles className="w-6 h-6 text-primary flex-shrink-0 mt-1" />
+                  <Sparkles className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
                   <div className="flex-1 space-y-3">
-                    <h3 className="font-semibold text-lg">Tiny Task Fiesta?</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Many of your stuck items are tiny tasks. Want to clear them in a fun, focused sprint?
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      Many of your stuck items are tiny tasks. Want to start a Tiny Task Fiesta?
                     </p>
                     <Button 
                       onClick={() => {
@@ -603,10 +602,11 @@ export const RunwayReview = ({ onClose }: RunwayReviewProps) => {
                         navigate('/tiny-task-fiesta');
                       }}
                       size="sm"
-                      className="w-full"
+                      variant="secondary"
+                      className="gap-2"
                     >
-                      <Sparkles className="w-4 h-4 mr-2" />
-                      Start Tiny Task Fiesta
+                      <Sparkles className="w-4 h-4" />
+                      Start Fiesta
                     </Button>
                   </div>
                 </div>
