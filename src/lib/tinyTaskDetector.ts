@@ -1,4 +1,5 @@
 import { Task } from "@/hooks/useTasks";
+import { supabase } from "@/integrations/supabase/client";
 
 // Simple admin task keywords that indicate tiny tasks
 const TINY_TASK_KEYWORDS = [
@@ -21,7 +22,32 @@ export interface TinyTaskClassification {
 }
 
 /**
- * Classifies a task as tiny or big based on simple heuristics
+ * Classifies a task as tiny or big using AI (with fallback to heuristics)
+ */
+export const classifyTaskWithAI = async (task: Task): Promise<TinyTaskClassification> => {
+  try {
+    const { data, error } = await supabase.functions.invoke('classify-tiny-task', {
+      body: {
+        taskTitle: task.title,
+        taskContext: task.context
+      }
+    });
+
+    if (error) throw error;
+
+    return {
+      isTiny: data.is_tiny_task,
+      confidence: data.is_tiny_task ? 0.9 : 0.2,
+      reason: data.reason
+    };
+  } catch (error) {
+    console.error('AI classification failed, using heuristics:', error);
+    return classifyTask(task);
+  }
+};
+
+/**
+ * Classifies a task as tiny or big based on simple heuristics (fallback)
  */
 export const classifyTask = (task: Task): TinyTaskClassification => {
   const titleLower = task.title.toLowerCase();
