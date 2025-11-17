@@ -8,6 +8,17 @@ import { useToast } from "@/hooks/use-toast";
 import { useTasks, Task } from "@/hooks/useTasks";
 import { findTinyTasks } from "@/lib/tinyTaskDetector";
 import { useNavigate } from "react-router-dom";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useFiestaSessions } from "@/hooks/useFiestaSessions";
 
 interface Step {
   id: string;
@@ -95,8 +106,11 @@ export const DailySessionSteps = ({
   const [responses, setResponses] = useState<Record<string, string>>({});
   const [isListening, setIsListening] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [showFiestaDialog, setShowFiestaDialog] = useState(false);
+  const [pendingFiestaTaskIds, setPendingFiestaTaskIds] = useState<string[]>([]);
   const { toast } = useToast();
   const { createTasks } = useTasks();
+  const { createSession } = useFiestaSessions();
   const navigate = useNavigate();
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -260,7 +274,7 @@ export const DailySessionSteps = ({
         // Check if many of the created tasks are tiny tasks
         const taskObjects = tasksToCreate.map((t, i) => ({
           ...t,
-          id: `temp-${i}`,
+          id: createdTasks?.[i]?.id || `temp-${i}`,
           user_id: '',
           completed: false,
           has_reminder: false,
@@ -278,23 +292,10 @@ export const DailySessionSteps = ({
 
         const tinyTasks = findTinyTasks(taskObjects);
         
-        if (tinyTasks.length >= 5) {
-          // Suggest Tiny Task Fiesta
-          toast({
-            title: "Tasks created",
-            description: `${data.tasks.length} tasks extracted. You have ${tinyTasks.length} tiny tasks - want to bundle them into a Fiesta?`,
-            action: (
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => navigate('/tiny-task-fiesta')}
-                className="gap-2"
-              >
-                <Sparkles className="w-3 h-3" />
-                Start Fiesta
-              </Button>
-            ),
-          });
+        if (tinyTasks.length >= 3) {
+          // Show dialog to ask if user wants to bundle into Fiesta
+          setPendingFiestaTaskIds(tinyTasks.map(t => t.id));
+          setShowFiestaDialog(true);
         } else {
           toast({
             title: "Tasks created",
@@ -313,6 +314,38 @@ export const DailySessionSteps = ({
     } else {
       setCurrentStepIndex(prev => prev + 1);
     }
+  };
+
+  const handleConfirmFiesta = async () => {
+    try {
+      // Create a fiesta session with the tiny tasks
+      await createSession({
+        tasks_included: pendingFiestaTaskIds,
+        duration_minutes: 45, // Default duration
+      });
+
+      setShowFiestaDialog(false);
+      
+      toast({
+        title: "Fiesta Ready!",
+        description: "Your tiny tasks are bundled and ready. Check your home screen to start.",
+      });
+    } catch (error) {
+      console.error('Failed to create fiesta session:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create Fiesta session",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeclineFiesta = () => {
+    setShowFiestaDialog(false);
+    toast({
+      title: "Tasks created",
+      description: `${pendingFiestaTaskIds.length} tasks extracted from your brain dump`,
+    });
   };
 
   return (
@@ -418,6 +451,30 @@ export const DailySessionSteps = ({
           </Button>
         </div>
       </Card>
+
+      {/* Fiesta Confirmation Dialog */}
+      <AlertDialog open={showFiestaDialog} onOpenChange={setShowFiestaDialog}>
+        <AlertDialogContent className="font-mono">
+          <AlertDialogHeader>
+            <div className="flex items-center gap-2 mb-2">
+              <Sparkles className="w-5 h-5 text-primary" />
+              <AlertDialogTitle>Tiny Task Fiesta?</AlertDialogTitle>
+            </div>
+            <AlertDialogDescription className="text-base">
+              These look like perfect tiny tasks. Want me to bundle them into a Tiny Task Fiesta?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleDeclineFiesta}>
+              Not now
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmFiesta} className="gap-2">
+              <Sparkles className="w-4 h-4" />
+              Bundle into Fiesta
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
