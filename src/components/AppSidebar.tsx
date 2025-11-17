@@ -13,7 +13,8 @@ import {
   CheckSquare,
   Target,
   Sun,
-  TrendingUp
+  TrendingUp,
+  Sparkles
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAdmin } from "@/hooks/useAdmin";
@@ -165,6 +166,16 @@ export function AppSidebar({ onSettingsClick, onCategoryClick, activeCategory }:
                 >
                   <TrendingUp className="mr-2 h-4 w-4" />
                   {!collapsed && <span>Weekly Insights</span>}
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              <SidebarMenuItem>
+                <SidebarMenuButton 
+                  onClick={() => navigate('/tiny-task-fiesta')}
+                  className="hover:bg-muted/50"
+                >
+                  <Sparkles className="mr-2 h-4 w-4" />
+                  {!collapsed && <span>Tiny Task Fiesta</span>}
                 </SidebarMenuButton>
               </SidebarMenuItem>
 

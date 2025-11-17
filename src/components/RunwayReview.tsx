@@ -1,10 +1,12 @@
 import { useState, useEffect, useRef } from "react";
-import { X, Check, Clock, Archive, Edit3, Plus, Mic, Volume2 } from "lucide-react";
+import { X, Check, Clock, Archive, Edit3, Plus, Mic, Volume2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useTasks } from "@/hooks/useTasks";
 import { MoodSelector } from "@/components/MoodSelector";
+import { findTinyTasks } from "@/lib/tinyTaskDetector";
+import { useNavigate } from "react-router-dom";
 
 interface RunwayReviewProps {
   onClose: () => void;
@@ -38,6 +40,7 @@ export const RunwayReview = ({ onClose }: RunwayReviewProps) => {
   
   const { updateTask, deleteTask } = useTasks();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const audioElementRef = useRef<HTMLAudioElement | null>(null);
   const animationRef = useRef<number | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -582,6 +585,32 @@ export const RunwayReview = ({ onClose }: RunwayReviewProps) => {
                 onArchive={handleArchive}
                 variant="stuck"
               />
+            )}
+
+            {/* Fiesta Suggestion - if many small tasks detected */}
+            {categories.stuckOverdue.length > 0 && findTinyTasks(categories.stuckOverdue).length >= 3 && (
+              <div className="mt-6 p-6 bg-gradient-to-br from-primary/10 to-accent/10 rounded-3xl border border-primary/20">
+                <div className="flex items-start gap-4">
+                  <Sparkles className="w-6 h-6 text-primary flex-shrink-0 mt-1" />
+                  <div className="flex-1 space-y-3">
+                    <h3 className="font-semibold text-lg">Tiny Task Fiesta?</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Many of your stuck items are tiny tasks. Want to clear them in a fun, focused sprint?
+                    </p>
+                    <Button 
+                      onClick={() => {
+                        onClose();
+                        navigate('/tiny-task-fiesta');
+                      }}
+                      size="sm"
+                      className="w-full"
+                    >
+                      <Sparkles className="w-4 h-4 mr-2" />
+                      Start Tiny Task Fiesta
+                    </Button>
+                  </div>
+                </div>
+              </div>
             )}
           </div>
         )}

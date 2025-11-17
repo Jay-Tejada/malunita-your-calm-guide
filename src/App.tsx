@@ -16,6 +16,7 @@ import Notifications from "./pages/Notifications";
 import Goals from "./pages/Goals";
 import DailySession from "./pages/DailySession";
 import WeeklyInsights from "./pages/WeeklyInsights";
+import TinyTaskFiesta from "./pages/TinyTaskFiesta";
 
 const queryClient = new QueryClient();
 
@@ -31,6 +32,7 @@ const App = () => (
           <Route path="/goals" element={<Goals />} />
           <Route path="/daily-session" element={<DailySession />} />
           <Route path="/weekly-insights" element={<WeeklyInsights />} />
+          <Route path="/tiny-task-fiesta" element={<TinyTaskFiesta />} />
           <Route path="/notifications" element={<Notifications />} />
           <Route path="/install" element={<Install />} />
           <Route path="/admin" element={<Admin />} />

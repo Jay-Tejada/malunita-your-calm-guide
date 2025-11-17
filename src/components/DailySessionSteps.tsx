@@ -2,10 +2,12 @@ import { useState, useRef } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Mic, ArrowRight, Check } from "lucide-react";
+import { Mic, ArrowRight, Check, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { useTasks } from "@/hooks/useTasks";
+import { useTasks, Task } from "@/hooks/useTasks";
+import { findTinyTasks } from "@/lib/tinyTaskDetector";
+import { useNavigate } from "react-router-dom";
 
 interface Step {
   id: string;
@@ -95,6 +97,7 @@ export const DailySessionSteps = ({
   const [isProcessing, setIsProcessing] = useState(false);
   const { toast } = useToast();
   const { createTasks } = useTasks();
+  const navigate = useNavigate();
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
 
@@ -247,17 +250,57 @@ export const DailySessionSteps = ({
           input_method: 'voice' as const,
         }));
 
-        await createTasks(tasksToCreate);
+        const createdTasks = await createTasks(tasksToCreate);
 
         // Update session with processed tasks
         await onUpdateSession({
           idea_dump_processed: data.tasks
         });
 
-        toast({
-          title: "Tasks created",
-          description: `${data.tasks.length} tasks extracted from your brain dump`,
-        });
+        // Check if many of the created tasks are tiny tasks
+        const taskObjects = tasksToCreate.map((t, i) => ({
+          ...t,
+          id: `temp-${i}`,
+          user_id: '',
+          completed: false,
+          has_reminder: false,
+          reminder_time: undefined,
+          has_person_name: false,
+          is_time_based: false,
+          keywords: undefined,
+          is_focus: false,
+          focus_date: undefined,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          goal_aligned: null,
+          alignment_reason: null,
+        })) as Task[];
+
+        const tinyTasks = findTinyTasks(taskObjects);
+        
+        if (tinyTasks.length >= 5) {
+          // Suggest Tiny Task Fiesta
+          toast({
+            title: "Tasks created",
+            description: `${data.tasks.length} tasks extracted. You have ${tinyTasks.length} tiny tasks - want to bundle them into a Fiesta?`,
+            action: (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => navigate('/tiny-task-fiesta')}
+                className="gap-2"
+              >
+                <Sparkles className="w-3 h-3" />
+                Start Fiesta
+              </Button>
+            ),
+          });
+        } else {
+          toast({
+            title: "Tasks created",
+            description: `${data.tasks.length} tasks extracted from your brain dump`,
+          });
+        }
       }
     } catch (error: any) {
       console.error('Idea dump processing error:', error);
