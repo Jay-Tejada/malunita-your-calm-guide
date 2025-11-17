@@ -107,7 +107,8 @@ export const DailySessionSteps = ({
   const [isListening, setIsListening] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [showFiestaDialog, setShowFiestaDialog] = useState(false);
-  const [pendingFiestaTaskIds, setPendingFiestaTaskIds] = useState<string[]>([]);
+  const [pendingFiestaTasks, setPendingFiestaTasks] = useState<Task[]>([]);
+  const [selectedFiestaTaskIds, setSelectedFiestaTaskIds] = useState<string[]>([]);
   const { toast } = useToast();
   const { createTasks } = useTasks();
   const { createSession } = useFiestaSessions();
@@ -294,7 +295,8 @@ export const DailySessionSteps = ({
         
         if (tinyTasks.length >= 3) {
           // Show dialog to ask if user wants to bundle into Fiesta
-          setPendingFiestaTaskIds(tinyTasks.map(t => t.id));
+          setPendingFiestaTasks(tinyTasks);
+          setSelectedFiestaTaskIds(tinyTasks.map(t => t.id)); // Select all by default
           setShowFiestaDialog(true);
         } else {
           toast({
@@ -317,18 +319,29 @@ export const DailySessionSteps = ({
   };
 
   const handleConfirmFiesta = async () => {
+    if (selectedFiestaTaskIds.length === 0) {
+      toast({
+        title: "No tasks selected",
+        description: "Please select at least one task for the Fiesta",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
-      // Create a fiesta session with the tiny tasks
+      // Create a fiesta session with the selected tiny tasks
       await createSession({
-        tasks_included: pendingFiestaTaskIds,
+        tasks_included: selectedFiestaTaskIds,
         duration_minutes: 45, // Default duration
       });
 
       setShowFiestaDialog(false);
+      setPendingFiestaTasks([]);
+      setSelectedFiestaTaskIds([]);
       
       toast({
         title: "Fiesta Ready!",
-        description: "Your tiny tasks are bundled and ready. Check your home screen to start.",
+        description: `${selectedFiestaTaskIds.length} tasks bundled. Check your home screen to start.`,
       });
     } catch (error) {
       console.error('Failed to create fiesta session:', error);
@@ -342,10 +355,20 @@ export const DailySessionSteps = ({
 
   const handleDeclineFiesta = () => {
     setShowFiestaDialog(false);
+    setPendingFiestaTasks([]);
+    setSelectedFiestaTaskIds([]);
     toast({
       title: "Tasks created",
-      description: `${pendingFiestaTaskIds.length} tasks extracted from your brain dump`,
+      description: `Tasks extracted from your brain dump`,
     });
+  };
+
+  const handleToggleFiestaTask = (taskId: string) => {
+    setSelectedFiestaTaskIds(prev => 
+      prev.includes(taskId)
+        ? prev.filter(id => id !== taskId)
+        : [...prev, taskId]
+    );
   };
 
   return (
@@ -454,23 +477,54 @@ export const DailySessionSteps = ({
 
       {/* Fiesta Confirmation Dialog */}
       <AlertDialog open={showFiestaDialog} onOpenChange={setShowFiestaDialog}>
-        <AlertDialogContent className="font-mono">
+        <AlertDialogContent className="font-mono max-w-lg">
           <AlertDialogHeader>
             <div className="flex items-center gap-2 mb-2">
               <Sparkles className="w-5 h-5 text-primary" />
               <AlertDialogTitle>Tiny Task Fiesta?</AlertDialogTitle>
             </div>
             <AlertDialogDescription className="text-base">
-              These look like perfect tiny tasks. Want me to bundle them into a Tiny Task Fiesta?
+              These look like perfect tiny tasks. Select which ones to bundle into a Fiesta:
             </AlertDialogDescription>
           </AlertDialogHeader>
+
+          {/* Task Selection List */}
+          <div className="space-y-2 max-h-[300px] overflow-y-auto py-2">
+            {pendingFiestaTasks.map((task) => (
+              <div 
+                key={task.id}
+                className="flex items-start gap-3 p-3 rounded-lg border hover:bg-muted/50 transition-colors cursor-pointer"
+                onClick={() => handleToggleFiestaTask(task.id)}
+              >
+                <input
+                  type="checkbox"
+                  checked={selectedFiestaTaskIds.includes(task.id)}
+                  onChange={() => handleToggleFiestaTask(task.id)}
+                  className="mt-0.5 cursor-pointer"
+                  onClick={(e) => e.stopPropagation()}
+                />
+                <label className="flex-1 text-sm cursor-pointer">
+                  {task.title}
+                </label>
+              </div>
+            ))}
+          </div>
+
+          <div className="text-xs text-muted-foreground">
+            {selectedFiestaTaskIds.length} of {pendingFiestaTasks.length} tasks selected
+          </div>
+
           <AlertDialogFooter>
             <AlertDialogCancel onClick={handleDeclineFiesta}>
               Not now
             </AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmFiesta} className="gap-2">
+            <AlertDialogAction 
+              onClick={handleConfirmFiesta} 
+              className="gap-2"
+              disabled={selectedFiestaTaskIds.length === 0}
+            >
               <Sparkles className="w-4 h-4" />
-              Bundle into Fiesta
+              Bundle {selectedFiestaTaskIds.length > 0 && `(${selectedFiestaTaskIds.length})`}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
