@@ -75,3 +75,6 @@ verify_jwt = true
 
 [functions.suggest-keywords]
 verify_jwt = true
+
+[functions.classify-tiny-task]
+verify_jwt = true
