@@ -371,6 +371,14 @@ export const DailySessionSteps = ({
     );
   };
 
+  const handleSelectAllFiestaTasks = () => {
+    setSelectedFiestaTaskIds(pendingFiestaTasks.map(t => t.id));
+  };
+
+  const handleDeselectAllFiestaTasks = () => {
+    setSelectedFiestaTaskIds([]);
+  };
+
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       {/* Progress indicator */}
@@ -488,6 +496,33 @@ export const DailySessionSteps = ({
             </AlertDialogDescription>
           </AlertDialogHeader>
 
+          {/* Selection Controls */}
+          <div className="flex items-center justify-between gap-2 pb-2 border-b">
+            <div className="text-xs text-muted-foreground">
+              {selectedFiestaTaskIds.length} of {pendingFiestaTasks.length} selected
+            </div>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={handleSelectAllFiestaTasks}
+                className="h-7 text-xs"
+              >
+                Select All
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={handleDeselectAllFiestaTasks}
+                className="h-7 text-xs"
+              >
+                Deselect All
+              </Button>
+            </div>
+          </div>
+
           {/* Task Selection List */}
           <div className="space-y-2 max-h-[300px] overflow-y-auto py-2">
             {pendingFiestaTasks.map((task) => (
@@ -508,10 +543,6 @@ export const DailySessionSteps = ({
                 </label>
               </div>
             ))}
-          </div>
-
-          <div className="text-xs text-muted-foreground">
-            {selectedFiestaTaskIds.length} of {pendingFiestaTasks.length} tasks selected
           </div>
 
           <AlertDialogFooter>
