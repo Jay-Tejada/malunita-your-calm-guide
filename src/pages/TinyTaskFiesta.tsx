@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useFiestaSessions } from "@/hooks/useFiestaSessions";
 import { useTasks } from "@/hooks/useTasks";
@@ -7,12 +7,15 @@ import { TinyTaskFiestaTimer } from "@/components/TinyTaskFiestaTimer";
 import { TinyTaskFiestaTaskList } from "@/components/TinyTaskFiestaTaskList";
 import { TinyTaskFiestaSummary } from "@/components/TinyTaskFiestaSummary";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Pause, Play } from "lucide-react";
 
 const TinyTaskFiesta = () => {
   const navigate = useNavigate();
   const { activeSession, updateSession, endSession } = useFiestaSessions();
   const { tasks, updateTask, deleteTask } = useTasks();
+  const [isPaused, setIsPaused] = useState(false);
+  const [pausedAt, setPausedAt] = useState<number | null>(null);
+  const [totalPausedTime, setTotalPausedTime] = useState(0);
 
   const sessionTasks = tasks?.filter(t => 
     activeSession?.tasks_included.includes(t.id)
@@ -56,6 +59,21 @@ const TinyTaskFiesta = () => {
     }
   };
 
+  const handleTogglePause = () => {
+    if (isPaused) {
+      // Resume
+      const now = Date.now();
+      if (pausedAt) {
+        setTotalPausedTime(prev => prev + (now - pausedAt));
+      }
+      setPausedAt(null);
+    } else {
+      // Pause
+      setPausedAt(Date.now());
+    }
+    setIsPaused(!isPaused);
+  };
+
   // If session just ended, show summary
   if (activeSession?.ended_at) {
     return (
@@ -84,29 +102,67 @@ const TinyTaskFiesta = () => {
 
   // Active session view
   return (
-    <div className="container max-w-2xl mx-auto p-4 space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Fiesta Mode 🎉</h1>
-        <Button
-          variant="outline"
-          onClick={handleEndEarly}
-        >
-          End Early
-        </Button>
+    <div className="min-h-screen bg-background">
+      <div className="container max-w-3xl mx-auto p-4 space-y-6">
+        {/* Header */}
+        <div className="pt-4 space-y-2">
+          <div className="flex items-center justify-between">
+            <h1 className="text-3xl font-light tracking-tight font-mono">
+              Tiny Task Fiesta
+            </h1>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleEndEarly}
+              className="text-muted-foreground hover:text-foreground"
+            >
+              End Session
+            </Button>
+          </div>
+          <p className="text-sm text-muted-foreground font-light">
+            Clear your tiny tasks in a focused sprint
+          </p>
+        </div>
+
+        {/* Timer Section */}
+        <TinyTaskFiestaTimer
+          durationMinutes={activeSession.duration_minutes}
+          startedAt={activeSession.started_at}
+          onComplete={handleTimerComplete}
+          isPaused={isPaused}
+          totalPausedTime={totalPausedTime}
+        />
+
+        {/* Controls */}
+        <div className="flex justify-center gap-3">
+          <Button
+            variant="outline"
+            size="lg"
+            onClick={handleTogglePause}
+            className="gap-2 font-mono"
+          >
+            {isPaused ? (
+              <>
+                <Play className="w-4 h-4" />
+                Resume
+              </>
+            ) : (
+              <>
+                <Pause className="w-4 h-4" />
+                Pause
+              </>
+            )}
+          </Button>
+        </div>
+
+        {/* Task List */}
+        <TinyTaskFiestaTaskList
+          tasks={sessionTasks}
+          completedTaskIds={activeSession.tasks_completed}
+          onToggleTask={handleToggleTask}
+          onDeleteTask={handleDeleteTask}
+        />
       </div>
-
-      <TinyTaskFiestaTimer
-        durationMinutes={activeSession.duration_minutes}
-        startedAt={activeSession.started_at}
-        onComplete={handleTimerComplete}
-      />
-
-      <TinyTaskFiestaTaskList
-        tasks={sessionTasks}
-        completedTaskIds={activeSession.tasks_completed}
-        onToggleTask={handleToggleTask}
-        onDeleteTask={handleDeleteTask}
-      />
     </div>
   );
 };
