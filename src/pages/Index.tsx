@@ -11,6 +11,7 @@ import { RunwayReview } from "@/components/RunwayReview";
 import { InstallPromptBanner } from "@/components/InstallPromptBanner";
 import { SmartReflectionPrompt } from "@/components/SmartReflectionPrompt";
 import { TaskStream } from "@/components/TaskStream";
+import { FiestaHomeCard } from "@/components/FiestaHomeCard";
 import { useAdmin } from "@/hooks/useAdmin";
 import { useTasks } from "@/hooks/useTasks";
 import { useProfile } from "@/hooks/useProfile";
@@ -299,7 +300,7 @@ const Index = () => {
           <div className="flex-1 flex flex-col px-4 pt-16 pb-32 overflow-y-auto">
             {!activeCategory && !showTodaysFocus ? (
               // Default: Voice Orb Centered
-              <div className="flex flex-col items-center w-full group py-12">
+              <div className="flex flex-col items-center w-full group py-12 space-y-6">
                 <div className="flex justify-center w-full">
                   <MalunitaVoice 
                     ref={malunitaVoiceRef} 
@@ -311,6 +312,11 @@ const Index = () => {
                   />
                 </div>
                 <p className="mt-6 text-sm text-muted-foreground text-center w-full transition-all duration-300 group-hover:text-foreground group-hover:scale-105">What's on your mind?</p>
+                
+                {/* Fiesta Suggestion Card */}
+                <div className="w-full max-w-md px-4">
+                  <FiestaHomeCard />
+                </div>
               </div>
             ) : activeCategory ? (
               // Task Stream View

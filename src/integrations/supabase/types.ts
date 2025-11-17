@@ -579,6 +579,45 @@ export type Database = {
           },
         ]
       }
+      tiny_task_fiesta_sessions: {
+        Row: {
+          completion_rate: number | null
+          created_at: string
+          duration_minutes: number
+          ended_at: string | null
+          id: string
+          started_at: string
+          tasks_completed: string[]
+          tasks_included: string[]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          completion_rate?: number | null
+          created_at?: string
+          duration_minutes?: number
+          ended_at?: string | null
+          id?: string
+          started_at?: string
+          tasks_completed?: string[]
+          tasks_included?: string[]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          completion_rate?: number | null
+          created_at?: string
+          duration_minutes?: number
+          ended_at?: string | null
+          id?: string
+          started_at?: string
+          tasks_completed?: string[]
+          tasks_included?: string[]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string

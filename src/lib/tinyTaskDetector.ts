@@ -1,0 +1,102 @@
+import { Task } from "@/hooks/useTasks";
+
+// Simple admin task keywords that indicate tiny tasks
+const TINY_TASK_KEYWORDS = [
+  'pay', 'send', 'check', 'renew', 'schedule', 'reply', 'email',
+  'call', 'text', 'message', 'confirm', 'verify', 'submit',
+  'upload', 'download', 'forward', 'respond', 'acknowledge',
+  'approve', 'review', 'sign', 'file', 'update', 'quick'
+];
+
+// Keywords that suggest longer tasks
+const BIG_TASK_KEYWORDS = [
+  'research', 'analyze', 'design', 'develop', 'implement', 'create',
+  'build', 'write', 'draft', 'plan', 'strategy', 'meeting', 'presentation'
+];
+
+export interface TinyTaskClassification {
+  isTiny: boolean;
+  confidence: number;
+  reason: string;
+}
+
+/**
+ * Classifies a task as tiny or big based on simple heuristics
+ */
+export const classifyTask = (task: Task): TinyTaskClassification => {
+  const titleLower = task.title.toLowerCase();
+  const contextLower = task.context?.toLowerCase() || '';
+  const fullText = `${titleLower} ${contextLower}`;
+
+  // Check for tiny task keywords
+  const hasTinyKeywords = TINY_TASK_KEYWORDS.some(keyword => 
+    fullText.includes(keyword)
+  );
+
+  // Check for big task keywords
+  const hasBigKeywords = BIG_TASK_KEYWORDS.some(keyword => 
+    fullText.includes(keyword)
+  );
+
+  // Short titles are often tiny tasks
+  const isShortTitle = task.title.split(' ').length <= 5;
+
+  // Time-based tasks are often administrative
+  const isTimeBased = task.is_time_based;
+
+  // Calculate confidence
+  let confidence = 0;
+  let reason = '';
+
+  if (hasBigKeywords) {
+    confidence = 0.1;
+    reason = 'Contains keywords suggesting complex work';
+  } else if (hasTinyKeywords && isShortTitle) {
+    confidence = 0.9;
+    reason = 'Quick admin action with clear intent';
+  } else if (hasTinyKeywords) {
+    confidence = 0.7;
+    reason = 'Administrative action detected';
+  } else if (isShortTitle && isTimeBased) {
+    confidence = 0.6;
+    reason = 'Short time-based task';
+  } else if (isShortTitle) {
+    confidence = 0.5;
+    reason = 'Brief task description';
+  } else {
+    confidence = 0.3;
+    reason = 'May require more time or focus';
+  }
+
+  return {
+    isTiny: confidence >= 0.5,
+    confidence,
+    reason
+  };
+};
+
+/**
+ * Filters a list of tasks to find tiny tasks
+ */
+export const findTinyTasks = (tasks: Task[]): Task[] => {
+  return tasks
+    .filter(task => !task.completed)
+    .filter(task => {
+      const classification = classifyTask(task);
+      return classification.isTiny;
+    })
+    .sort((a, b) => {
+      // Sort by confidence (higher first)
+      const aClass = classifyTask(a);
+      const bClass = classifyTask(b);
+      return bClass.confidence - aClass.confidence;
+    });
+};
+
+/**
+ * Checks if user has enough tiny tasks to suggest a fiesta
+ */
+export const shouldSuggestFiesta = (tasks: Task[], minTasks = 5): boolean => {
+  const tinyTasks = findTinyTasks(tasks);
+  return tinyTasks.length >= minTasks;
+};
