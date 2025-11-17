@@ -37,6 +37,9 @@ export const RunwayReview = ({ onClose }: RunwayReviewProps) => {
   const [voiceTranscript, setVoiceTranscript] = useState("");
   const [audioReady, setAudioReady] = useState(false);
   const [audioBlob, setAudioBlob] = useState<string | null>(null);
+  const [fiestaSuggestionDismissed, setFiestaSuggestionDismissed] = useState(() => {
+    return localStorage.getItem('runway-fiesta-dismissed') === 'true';
+  });
   
   const { updateTask, deleteTask } = useTasks();
   const { toast } = useToast();
@@ -237,6 +240,11 @@ export const RunwayReview = ({ onClose }: RunwayReviewProps) => {
     deleteTask(taskId);
     setTasks(tasks.filter(t => t.id !== taskId));
     toast({ title: "Task archived" });
+  };
+
+  const handleDismissFiestaSuggestion = () => {
+    setFiestaSuggestionDismissed(true);
+    localStorage.setItem('runway-fiesta-dismissed', 'true');
   };
 
   const analyzeVoiceAudio = () => {
@@ -588,11 +596,18 @@ export const RunwayReview = ({ onClose }: RunwayReviewProps) => {
             )}
 
             {/* Fiesta Suggestion - if many small tasks detected */}
-            {categories.stuckOverdue.length > 0 && findTinyTasks(categories.stuckOverdue).length >= 3 && (
-              <div className="mt-6 p-6 bg-gradient-to-br from-primary/10 to-accent/10 rounded-3xl border border-primary/20 animate-fade-in">
+            {!fiestaSuggestionDismissed && categories.stuckOverdue.length > 0 && findTinyTasks(categories.stuckOverdue).length >= 3 && (
+              <div className="mt-6 p-6 bg-gradient-to-br from-primary/10 to-accent/10 rounded-3xl border border-primary/20 animate-fade-in relative">
+                <button
+                  onClick={handleDismissFiestaSuggestion}
+                  className="absolute top-3 right-3 text-muted-foreground hover:text-foreground transition-colors"
+                  aria-label="Dismiss suggestion"
+                >
+                  <X className="w-4 h-4" />
+                </button>
                 <div className="flex items-start gap-4">
                   <Sparkles className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
-                  <div className="flex-1 space-y-3">
+                  <div className="flex-1 space-y-3 pr-6">
                     <p className="text-sm text-muted-foreground leading-relaxed">
                       Many of your stuck items are tiny tasks. Want to start a Tiny Task Fiesta?
                     </p>
