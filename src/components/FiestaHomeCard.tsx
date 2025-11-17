@@ -25,22 +25,27 @@ export const FiestaHomeCard = () => {
   const tinyTaskCount = tasks.filter(t => !t.completed).length;
 
   return (
-    <Card className="p-4 bg-gradient-to-br from-primary/5 to-accent/10 border-primary/20 animate-fade-in">
+    <Card className="p-5 bg-[hsl(var(--primary)/0.04)] border-[hsl(var(--primary)/0.15)] rounded-xl animate-fade-in font-mono">
       <div className="flex items-start gap-4">
-        <div className="p-2 rounded-lg bg-primary/10">
+        {/* Icon Container */}
+        <div className="p-2.5 rounded-lg bg-[hsl(var(--primary)/0.1)] flex-shrink-0">
           <Sparkles className="w-5 h-5 text-primary" />
         </div>
-        <div className="flex-1 space-y-2">
-          <h3 className="font-semibold">Tiny Task Fiesta?</h3>
-          <p className="text-sm text-muted-foreground">
-            You have {tinyTaskCount} tiny tasks ready to clear. Want to start a fiesta?
+        
+        {/* Content */}
+        <div className="flex-1 space-y-3">
+          <h3 className="text-base font-semibold text-foreground">
+            Tiny Task Fiesta?
+          </h3>
+          <p className="text-sm text-muted-foreground font-light leading-relaxed">
+            You have {tinyTaskCount} tiny tasks ready to clear.
           </p>
           <Button
             onClick={() => navigate('/tiny-task-fiesta')}
             size="sm"
-            className="w-full"
+            className="w-full mt-2 gap-2 font-mono"
           >
-            <Sparkles className="w-4 h-4 mr-2" />
+            <Sparkles className="w-4 h-4" />
             Start Fiesta
           </Button>
         </div>
