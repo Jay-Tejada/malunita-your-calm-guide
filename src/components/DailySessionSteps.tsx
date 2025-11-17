@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -379,6 +379,28 @@ export const DailySessionSteps = ({
     setSelectedFiestaTaskIds([]);
   };
 
+  // Keyboard shortcuts for Fiesta dialog
+  useEffect(() => {
+    if (!showFiestaDialog) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ctrl+A or Cmd+A for Select All
+      if ((e.ctrlKey || e.metaKey) && e.key === 'a') {
+        e.preventDefault();
+        handleSelectAllFiestaTasks();
+      }
+      
+      // Escape to close
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        setShowFiestaDialog(false);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showFiestaDialog, pendingFiestaTasks]);
+
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       {/* Progress indicator */}
@@ -494,6 +516,9 @@ export const DailySessionSteps = ({
             <AlertDialogDescription className="text-base">
               These look like perfect tiny tasks. Select which ones to bundle into a Fiesta:
             </AlertDialogDescription>
+            <p className="text-xs text-muted-foreground mt-2">
+              Tip: Press <kbd className="px-1.5 py-0.5 bg-muted rounded text-[10px] font-mono">Ctrl+A</kbd> to select all
+            </p>
           </AlertDialogHeader>
 
           {/* Selection Controls */}
