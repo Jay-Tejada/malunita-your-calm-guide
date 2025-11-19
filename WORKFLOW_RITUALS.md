@@ -144,20 +144,76 @@ useWorkflowRituals();
 ## Push Notification Integration
 
 ### How It Works
-Each ritual sends a push notification via the `send-push-notification` edge function:
+Each ritual sends a push notification with **interactive action buttons** via the `send-push-notification` edge function:
 
 ```typescript
 await supabase.functions.invoke('send-push-notification', {
   body: {
     title: '🌅 Daily Command Center',
-    body: message.substring(0, 300), // Truncated for push
+    body: message.substring(0, 300),
     icon: '/icon-192.png',
     data: { 
       type: 'morning-ritual', 
       timestamp: Date.now() 
     },
+    actions: [
+      {
+        action: 'start-planning',
+        title: '📋 Start Planning',
+        icon: '/icon-192.png'
+      },
+      {
+        action: 'dismiss',
+        title: 'Later',
+        icon: '/icon-192.png'
+      }
+    ],
     userId: user.id,
   }
+});
+```
+
+### Action Buttons by Ritual
+
+**🌅 Morning Ritual:**
+- "📋 Start Planning" → Opens app to home page
+- "Later" → Dismisses notification
+
+**📘 Midday Check-in:**
+- "✓ View Tasks" → Opens app to task list
+- "Later" → Dismisses notification
+
+**🌙 Evening Shutdown:**
+- "📝 Review Day" → Opens app to home (Runway Review accessible)
+- "Done" → Dismisses notification
+
+**🗓️ Weekly Reset:**
+- "📊 View Insights" → Opens app to `/weekly-insights`
+- "Later" → Dismisses notification
+
+### Service Worker Click Handling
+The custom service worker (`public/sw.js`) handles notification clicks:
+
+1. **Action button clicked:** Routes to specific page based on action
+2. **Notification body clicked:** Routes based on ritual type
+3. **Already open app:** Focuses existing window and navigates
+4. **Closed app:** Opens new window at target URL
+
+```javascript
+// Service worker notification click handler
+self.addEventListener('notificationclick', (event) => {
+  const action = event.action;
+  const ritualType = event.notification.data.type;
+  
+  // Determine target URL
+  let targetUrl = action === 'view-insights' ? '/weekly-insights' : '/';
+  
+  // Open or focus app
+  event.waitUntil(
+    clients.matchAll({ type: 'window' }).then(clientList => {
+      // Focus existing window or open new one
+    })
+  );
 });
 ```
 
@@ -167,21 +223,43 @@ await supabase.functions.invoke('send-push-notification', {
 - Check: `document.visibilityState === 'visible'`
 
 ### Push Notification Data
-Each ritual includes metadata:
-- `morning-ritual` - Morning command center
-- `midday-checkin` - Midday status update
-- `evening-shutdown` - Evening wrap-up
-- `weekly-reset` - Weekly review
+Each ritual includes metadata and action buttons:
 
-This allows the service worker to handle clicks appropriately (future enhancement).
+**Ritual Types:**
+- `morning-ritual` - Morning command center with "Start Planning" action
+- `midday-checkin` - Midday status with "View Tasks" action
+- `evening-shutdown` - Evening wrap-up with "Review Day" action
+- `weekly-reset` - Weekly review with "View Insights" action
+
+**Action Handlers:**
+The service worker maps actions to app routes:
+- `start-planning` → `/` (home page)
+- `view-tasks` → `/` (home page with task list)
+- `review-day` → `/` (home page, Runway Review accessible)
+- `view-insights` → `/weekly-insights` (weekly insights page)
+- `dismiss` → Close notification without opening app
 
 ### Requirements
 Users must:
 1. Grant notification permission
 2. Have an active push subscription in `push_subscriptions` table
-3. Have the service worker registered
+3. Have the service worker registered (`public/sw.js` via VitePWA)
 
 If push fails, the ritual still logs to conversation history and shows toast (when visible).
+
+### Technical Implementation
+
+**Files Modified:**
+- `public/sw.js` - Custom service worker for notification handling
+- `vite.config.ts` - PWA config updated to use custom service worker
+- `src/hooks/useWorkflowRituals.ts` - Ritual functions updated with action buttons
+- `supabase/functions/send-push-notification/index.ts` - Edge function updated to support actions
+
+**Service Worker Strategy:**
+- Uses `injectManifest` strategy from VitePWA
+- Custom notification click handling
+- Smart app focus/open logic
+- Supports both action buttons and body clicks
 
 ---
 
@@ -228,13 +306,17 @@ All messages generated in ritual functions:
 
 ## Future Enhancements
 
-### Interactive Push Notifications
-Could add action buttons to push notifications:
-- Morning: "Start planning" → Opens app to Today's Focus
-- Evening: "Review day" → Opens Runway Review
-- Weekly: "View insights" → Opens Weekly Insights page
+### Enhanced Action Buttons
+Could add more sophisticated actions:
+- Morning: "Skip today" → Mark today as off day
+- Evening: "Add to tomorrow" → Specific task selection
+- Weekly: "Download report" → Generate PDF summary
 
-Service worker would handle `notificationclick` events.
+### Rich Notifications
+Could include:
+- Inline replies for quick task additions
+- Progress indicators in notification
+- Task completion checkboxes directly in notification
 
 ### Smart Notification Cards
 Could use `SmartNotificationCard` component instead of toasts:
