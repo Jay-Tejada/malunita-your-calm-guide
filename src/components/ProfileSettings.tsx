@@ -11,6 +11,7 @@ import { CustomCategoryManager } from "@/components/CustomCategoryManager";
 import { VoiceCommandsManager } from "@/components/VoiceCommandsManager";
 import { PersonalizationInsights } from "@/components/PersonalizationInsights";
 import { WakeWordTraining } from "@/components/WakeWordTraining";
+import { RitualPreferences } from "@/components/RitualPreferences";
 import { useState } from "react";
 
 
@@ -235,6 +236,9 @@ export const ProfileSettings = ({ onClose }: ProfileSettingsProps) => {
                 </div>
               )}
             </div>
+
+            {/* Workflow Rituals */}
+            <RitualPreferences />
           </div>
         </ScrollArea>
 

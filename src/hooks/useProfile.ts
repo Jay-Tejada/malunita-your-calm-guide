@@ -22,6 +22,7 @@ export interface UserProfile {
   wake_word_enabled?: boolean;
   custom_wake_word?: string;
   notification_preferences?: any;
+  ritual_preferences?: any;
 }
 
 export const useProfile = () => {
