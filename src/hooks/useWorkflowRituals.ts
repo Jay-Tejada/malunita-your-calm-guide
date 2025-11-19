@@ -104,7 +104,7 @@ export function useWorkflowRituals() {
       message += `\n\n🎉 ${fiestaReady.length} tiny tasks ready for a Fiesta session`;
     }
 
-    // Send push notification
+    // Send push notification with action buttons
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
       try {
@@ -114,6 +114,18 @@ export function useWorkflowRituals() {
             body: message.substring(0, 300), // Truncate for push notification
             icon: '/icon-192.png',
             data: { type: 'morning-ritual', timestamp: Date.now() },
+            actions: [
+              {
+                action: 'start-planning',
+                title: '📋 Start Planning',
+                icon: '/icon-192.png'
+              },
+              {
+                action: 'dismiss',
+                title: 'Later',
+                icon: '/icon-192.png'
+              }
+            ],
             userId: user.id,
           }
         });
@@ -173,7 +185,7 @@ export function useWorkflowRituals() {
       message += `\n${todayTasks.length} important task${todayTasks.length > 1 ? 's' : ''} remaining for today`;
     }
 
-    // Send push notification
+    // Send push notification with action buttons
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
       try {
@@ -183,6 +195,18 @@ export function useWorkflowRituals() {
             body: message,
             icon: '/icon-192.png',
             data: { type: 'midday-checkin', timestamp: Date.now() },
+            actions: [
+              {
+                action: 'view-tasks',
+                title: '✓ View Tasks',
+                icon: '/icon-192.png'
+              },
+              {
+                action: 'dismiss',
+                title: 'Later',
+                icon: '/icon-192.png'
+              }
+            ],
             userId: user.id,
           }
         });
@@ -249,7 +273,7 @@ export function useWorkflowRituals() {
 
     message += `\n\nRest well. Tomorrow is a fresh start.`;
 
-    // Send push notification
+    // Send push notification with action buttons
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
       try {
@@ -259,6 +283,18 @@ export function useWorkflowRituals() {
             body: message.substring(0, 300),
             icon: '/icon-192.png',
             data: { type: 'evening-shutdown', timestamp: Date.now() },
+            actions: [
+              {
+                action: 'review-day',
+                title: '📝 Review Day',
+                icon: '/icon-192.png'
+              },
+              {
+                action: 'dismiss',
+                title: 'Done',
+                icon: '/icon-192.png'
+              }
+            ],
             userId: user.id,
           }
         });
@@ -327,7 +363,7 @@ export function useWorkflowRituals() {
 
     message += `\nNext week: Focus on what truly matters.`;
 
-    // Send push notification
+    // Send push notification with action buttons
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
       try {
@@ -337,6 +373,18 @@ export function useWorkflowRituals() {
             body: message.substring(0, 300),
             icon: '/icon-192.png',
             data: { type: 'weekly-reset', timestamp: Date.now() },
+            actions: [
+              {
+                action: 'view-insights',
+                title: '📊 View Insights',
+                icon: '/icon-192.png'
+              },
+              {
+                action: 'dismiss',
+                title: 'Later',
+                icon: '/icon-192.png'
+              }
+            ],
             userId: user.id,
           }
         });

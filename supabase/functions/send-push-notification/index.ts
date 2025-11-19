@@ -21,6 +21,7 @@ interface PushNotificationPayload {
   icon?: string;
   badge?: string;
   data?: any;
+  actions?: Array<{ action: string; title: string; icon?: string }>;
   userId?: string;
 }
 
@@ -40,6 +41,7 @@ async function sendPushNotification(subscription: any, payload: PushNotification
     icon: payload.icon || '/icon-192.png',
     badge: payload.badge || '/icon-192.png',
     data: payload.data || {},
+    actions: payload.actions || [],
   });
 
   try {
@@ -110,7 +112,7 @@ serve(async (req) => {
       )
     }
 
-    const { title, body, icon, badge, data, userId } = await req.json() as PushNotificationPayload;
+    const { title, body, icon, badge, data, actions, userId } = await req.json() as PushNotificationPayload;
 
     // Input validation
     if (!title || !body || typeof title !== 'string' || typeof body !== 'string') {
@@ -155,7 +157,7 @@ serve(async (req) => {
     // Send notifications to all subscriptions
     const results = await Promise.allSettled(
       subscriptions.map(sub => 
-        sendPushNotification(sub.subscription, { title, body, icon, badge, data })
+        sendPushNotification(sub.subscription, { title, body, icon, badge, data, actions })
       )
     );
 
