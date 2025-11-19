@@ -7,6 +7,7 @@ import { PersonalityType } from "@/hooks/useCompanionIdentity";
 import { useCompanionMotion } from "@/hooks/useCompanionMotion";
 import { useCompanionEmotion } from "@/hooks/useCompanionEmotion";
 import { useCompanionGrowth } from "@/hooks/useCompanionGrowth";
+import { CompanionHabitat } from "@/components/CompanionHabitat";
 
 interface VoiceOrbProps {
   onVoiceInput?: (text: string, category?: 'inbox' | 'home' | 'work' | 'gym' | 'projects') => void;
@@ -608,8 +609,17 @@ export const VoiceOrb = ({
             </div>
           )}
 
-          {/* Voice Orb Container */}
+          {/* Voice Orb Container with Habitat */}
           <div className="relative flex flex-col items-center gap-4">
+            {/* Companion Habitat - Subtle ambient environment (behind everything) */}
+            <div className="absolute -inset-48 sm:-inset-64 pointer-events-none z-0 overflow-hidden rounded-full">
+              <CompanionHabitat
+                personality={personality}
+                emotion={emotion.emotion}
+                stage={growth.stage}
+              />
+            </div>
+            
             {/* Reflection Tooltip */}
             {showReflectionTooltip && (
               <div className="absolute -top-16 left-1/2 -translate-x-1/2 bg-background/95 backdrop-blur-sm border border-border rounded-full px-4 py-2 shadow-lg animate-in fade-in duration-200 whitespace-nowrap z-10">
@@ -619,7 +629,7 @@ export const VoiceOrb = ({
             
             {/* Main Orb with 3-Layer System + Motion Behaviors + Evolution */}
             <div 
-              className={`relative transition-all ${
+              className={`relative z-10 transition-all ${
                 growth.isEvolving ? 'animate-[evolution-bloom_3s_ease-in-out]' :
                 motion.motionState === 'fiesta' ? 'animate-companion-fiesta' :
                 motion.motionState === 'excited' ? 'animate-companion-wiggle' :
@@ -856,7 +866,7 @@ export const VoiceOrb = ({
             </div>
 
             {/* malunita text beneath orb */}
-            <div className="text-center space-y-1">
+            <div className="text-center space-y-1 relative z-10">
               <p className="text-xs sm:text-sm font-serif text-foreground tracking-wide lowercase">
                 malunita
               </p>
