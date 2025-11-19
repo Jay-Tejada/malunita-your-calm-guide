@@ -6,6 +6,7 @@ import { Check, Sparkles } from "lucide-react";
 import { PersonalityType } from "@/hooks/useCompanionIdentity";
 import { useCompanionMotion } from "@/hooks/useCompanionMotion";
 import { useCompanionEmotion } from "@/hooks/useCompanionEmotion";
+import { useCompanionGrowth } from "@/hooks/useCompanionGrowth";
 
 interface VoiceOrbProps {
   onVoiceInput?: (text: string, category?: 'inbox' | 'home' | 'work' | 'gym' | 'projects') => void;
@@ -91,6 +92,9 @@ export const VoiceOrb = ({
   
   // Companion emotion engine
   const emotion = useCompanionEmotion(personality);
+  
+  // Companion growth & evolution
+  const growth = useCompanionGrowth();
 
   // Trigger behaviors based on state changes
   useEffect(() => {
@@ -461,6 +465,9 @@ export const VoiceOrb = ({
                   onVoiceInput(transcribedText, 'inbox');
                 }
                 
+                // Award XP for voice capture
+                await growth.addXp(1, 'Voice task captured');
+                
                 toast({
                   title: "Task captured",
                   description: transcribedText,
@@ -610,9 +617,10 @@ export const VoiceOrb = ({
               </div>
             )}
             
-            {/* Main Orb with 3-Layer System + Motion Behaviors */}
+            {/* Main Orb with 3-Layer System + Motion Behaviors + Evolution */}
             <div 
               className={`relative transition-all ${
+                growth.isEvolving ? 'animate-[evolution-bloom_3s_ease-in-out]' :
                 motion.motionState === 'fiesta' ? 'animate-companion-fiesta' :
                 motion.motionState === 'excited' ? 'animate-companion-wiggle' :
                 motion.motionState === 'curious' ? 'animate-companion-curious' :
@@ -622,18 +630,30 @@ export const VoiceOrb = ({
               }`}
               style={{
                 '--tilt-angle': `${motion.tiltAngle}deg`,
-                '--emotion-glow-intensity': emotion.config.glowIntensity,
+                '--emotion-glow-intensity': emotion.config.glowIntensity * growth.stageConfig.glowIntensity,
                 '--emotion-pulse-speed': `${emotion.config.pulseSpeed}ms`,
                 '--emotion-color-shift': emotion.config.colorShift,
-                '--emotion-motion-intensity': emotion.config.motionIntensity,
+                '--emotion-motion-intensity': emotion.config.motionIntensity * growth.stageConfig.motionComplexity,
                 transitionDuration: `${motion.config.transitionSpeed}ms`,
+                transform: `scale(${growth.stageConfig.orbSize})`,
               } as React.CSSProperties}
             >
               
-              {/* Emotion indicator (dev only) */}
+              {/* Evolution ripples */}
+              {growth.isEvolving && (
+                <div className="absolute inset-0 pointer-events-none">
+                  <div className="absolute inset-0 rounded-full border-2 border-primary/50 animate-[evolution-ripple_2s_ease-out]" />
+                  <div className="absolute inset-0 rounded-full border-2 border-primary/30 animate-[evolution-ripple_2s_ease-out_0.5s]" />
+                  <div className="absolute inset-0 rounded-full border-2 border-primary/20 animate-[evolution-ripple_2s_ease-out_1s]" />
+                </div>
+              )}
+              
+              {/* Emotion & Stage indicators (dev only) */}
               {process.env.NODE_ENV === 'development' && (
-                <div className="absolute -top-12 left-1/2 -translate-x-1/2 text-xs opacity-40 pointer-events-none">
-                  {emotion.emotion}
+                <div className="absolute -top-16 left-1/2 -translate-x-1/2 text-xs opacity-40 pointer-events-none text-center">
+                  <div>{emotion.emotion}</div>
+                  <div>Stage {growth.stage}: {growth.stageConfig.name}</div>
+                  <div>{growth.xp} XP ({Math.round(growth.progressToNextStage * 100)}%)</div>
                 </div>
               )}
               
@@ -646,22 +666,26 @@ export const VoiceOrb = ({
                 </div>
               )}
               
-              {/* Layer 3: Outer Halo (ambient diffusion) */}
+              {/* Layer 3: Outer Halo (ambient diffusion) - Scales with stage */}
               <div 
-                className={`absolute inset-0 w-32 h-32 -left-6 -top-6 rounded-full blur-2xl transition-all duration-1000 animate-[emotion-glow-shift_var(--emotion-pulse-speed)_ease-in-out_infinite] ${
+                className={`absolute inset-0 rounded-full blur-2xl transition-all duration-1000 animate-[emotion-glow-shift_var(--emotion-pulse-speed)_ease-in-out_infinite] ${
                   motion.motionState === 'calm' ? 'animate-companion-calm-glow' :
                   isListening ? 'animate-listening-pulse' : 
                   (isResponding || isSaving) ? 'animate-thinking-shimmer' : 
                   'animate-companion-breath'
                 }`}
                 style={{
+                  width: `${32 * growth.stageConfig.haloRadius}rem`,
+                  height: `${32 * growth.stageConfig.haloRadius}rem`,
+                  left: `${-6 * growth.stageConfig.haloRadius}rem`,
+                  top: `${-6 * growth.stageConfig.haloRadius}rem`,
                   background: isListening 
                     ? `radial-gradient(circle, hsl(${colors.halo} / 0.5) 0%, hsl(${colors.halo} / 0.2) 50%, transparent 70%)`
                     : (isResponding || isSaving)
                     ? `radial-gradient(circle, hsl(var(--orb-halo-thinking) / 0.35) 0%, hsl(var(--orb-halo-speaking) / 0.2) 40%, transparent 70%)`
                     : `radial-gradient(circle, hsl(${colors.halo} / 0.3) 0%, hsl(${colors.halo} / 0.1) 50%, transparent 70%)`,
                   filter: 'blur(24px)',
-                  opacity: `calc(0.6 + ${emotion.config.glowIntensity} * 0.3)`,
+                  opacity: `calc(0.6 + ${emotion.config.glowIntensity * growth.stageConfig.glowIntensity} * 0.3)`,
                 }}
               />
               
@@ -683,6 +707,30 @@ export const VoiceOrb = ({
                   filter: 'blur(12px)',
                 }}
               />
+              
+              {/* Cosmic particles for higher stages */}
+              {growth.stage >= 3 && (
+                <div className="absolute -inset-16 pointer-events-none">
+                  {Array.from({ length: growth.stageConfig.particleCount }).map((_, i) => {
+                    const angle = (360 / growth.stageConfig.particleCount) * i;
+                    const x = Math.cos((angle * Math.PI) / 180) * 60;
+                    const y = Math.sin((angle * Math.PI) / 180) * 60;
+                    return (
+                      <div
+                        key={i}
+                        className="absolute w-1 h-1 rounded-full bg-primary/40 animate-[evolution-particles_4s_ease-in-out_infinite]"
+                        style={{
+                          left: '50%',
+                          top: '50%',
+                          '--particle-x': `${x}px`,
+                          '--particle-y': `${y}px`,
+                          animationDelay: `${i * 0.3}s`,
+                        } as React.CSSProperties}
+                      />
+                    );
+                  })}
+                </div>
+              )}
               
               {/* Success ripple effect when stop word detected */}
               {stopWordDetected && (
@@ -808,7 +856,7 @@ export const VoiceOrb = ({
             </div>
 
             {/* malunita text beneath orb */}
-            <div className="text-center space-y-0.5">
+            <div className="text-center space-y-1">
               <p className="text-xs sm:text-sm font-serif text-foreground tracking-wide lowercase">
                 malunita
               </p>
@@ -825,6 +873,28 @@ export const VoiceOrb = ({
                   ? 'transcribing...' 
                   : getModeDisplayName(mode)}
               </p>
+              
+              {/* XP Progress Bar */}
+              {growth.stage < 4 && (
+                <div className="w-32 mx-auto mt-2">
+                  <div className="h-1 bg-muted rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-primary/60 transition-all duration-500 rounded-full"
+                      style={{ width: `${growth.progressToNextStage * 100}%` }}
+                    />
+                  </div>
+                  <p className="text-[9px] text-muted-foreground mt-0.5">
+                    {growth.stageConfig.name} • {growth.xp}/{growth.stageConfig.maxXp} XP
+                  </p>
+                </div>
+              )}
+              
+              {/* Max stage indicator */}
+              {growth.stage === 4 && (
+                <p className="text-[9px] text-primary mt-1">
+                  ✨ {growth.stageConfig.name} • {growth.xp} XP
+                </p>
+              )}
             </div>
           </div>
         </div>

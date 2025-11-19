@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Trash2, User, Clock, Bell, Star } from "lucide-react";
 import { useTasks, Task } from "@/hooks/useTasks";
 import { useCustomCategories } from "@/hooks/useCustomCategories";
+import { useCompanionGrowth } from "@/hooks/useCompanionGrowth";
 import { DomainTabs } from "@/components/DomainTabs";
 import { CategoryManager } from "@/components/CategoryManager";
 import { DndContext, DragEndEvent, DragOverlay, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
@@ -29,6 +30,7 @@ interface TaskListProps {
 export const TaskList = ({ category: externalCategory }: TaskListProps = {}) => {
   const { tasks, isLoading, updateTask, deleteTask } = useTasks();
   const { categories, createCategory } = useCustomCategories();
+  const growth = useCompanionGrowth();
   const [internalDomain, setInternalDomain] = useState("inbox");
   const [activeId, setActiveId] = useState<string | null>(null);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
@@ -190,14 +192,22 @@ export const TaskList = ({ category: externalCategory }: TaskListProps = {}) => 
     );
   }
 
-  const handleToggleComplete = (task: Task) => {
+  const handleToggleComplete = async (task: Task) => {
+    const wasCompleted = task.completed;
+    const nowCompleted = !task.completed;
+    
     updateTask({
       id: task.id,
       updates: {
-        completed: !task.completed,
-        completed_at: !task.completed ? new Date().toISOString() : null,
+        completed: nowCompleted,
+        completed_at: nowCompleted ? new Date().toISOString() : null,
       },
     });
+    
+    // Award XP only when completing (not uncompleting)
+    if (nowCompleted && !wasCompleted) {
+      await growth.addXp(1, 'Task completed');
+    }
   };
 
   const handleAddToFocus = (taskId: string) => {
