@@ -13,6 +13,7 @@ import { SmartReflectionPrompt } from "@/components/SmartReflectionPrompt";
 import { TaskStream } from "@/components/TaskStream";
 import { FiestaHomeCard } from "@/components/FiestaHomeCard";
 import { CompanionOnboarding } from "@/components/CompanionOnboarding";
+import { CompanionIntroSequence } from "@/components/CompanionIntroSequence";
 import { useAdmin } from "@/hooks/useAdmin";
 import { useTasks } from "@/hooks/useTasks";
 import { useProfile } from "@/hooks/useProfile";
@@ -423,10 +424,9 @@ const Index = () => {
         {/* Runway Review Modal */}
         {showRunwayReview && <RunwayReview onClose={() => setShowRunwayReview(false)} />}
         
-        {/* Companion Onboarding Modal */}
+        {/* Companion Onboarding - Full Screen Intro Sequence */}
         {!isCompanionLoading && needsOnboarding && (
-          <CompanionOnboarding 
-            open={needsOnboarding} 
+          <CompanionIntroSequence 
             onComplete={handleCompanionComplete}
           />
         )}
