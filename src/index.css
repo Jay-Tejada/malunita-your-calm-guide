@@ -77,6 +77,12 @@ All colors MUST be HSL.
     --orb-cosmo-glow: 270 55% 65%; /* deeper purple */
     --orb-cosmo-halo: 270 60% 60%; /* purple halo */
     
+    /* Emotion-based modifiers */
+    --emotion-glow-intensity: 0.5;
+    --emotion-pulse-speed: 3000ms;
+    --emotion-color-shift: 0;
+    --emotion-motion-intensity: 0.5;
+    
     /* Legacy support */
     --orb-orbit: 0 0% 11%;
     
@@ -270,6 +276,28 @@ All colors MUST be HSL.
     50% { 
       opacity: 1;
       transform: scale(1.2) rotate(180deg);
+    }
+  }
+
+  /* Emotion-based pulse animations */
+  @keyframes emotion-pulse {
+    0%, 100% {
+      filter: brightness(1) saturate(1);
+      transform: scale(1);
+    }
+    50% {
+      filter: brightness(calc(1 + var(--emotion-glow-intensity) * 0.3)) 
+             saturate(calc(1 + var(--emotion-color-shift)));
+      transform: scale(calc(1 + var(--emotion-motion-intensity) * 0.05));
+    }
+  }
+
+  @keyframes emotion-glow-shift {
+    0%, 100% {
+      opacity: calc(0.6 + var(--emotion-glow-intensity) * 0.3);
+    }
+    50% {
+      opacity: calc(0.8 + var(--emotion-glow-intensity) * 0.2);
     }
   }
   
