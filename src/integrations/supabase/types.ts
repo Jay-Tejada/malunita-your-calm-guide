@@ -246,6 +246,7 @@ export type Database = {
           current_goal: string | null
           custom_stop_commands: string[] | null
           custom_wake_word: string | null
+          fiesta_completion_count: number | null
           goal_timeframe: string | null
           goal_updated_at: string | null
           id: string
@@ -261,11 +262,20 @@ export type Database = {
           preferences_summary: string | null
           preferred_gpt_model: string | null
           preferred_input_style: string | null
+          reflection_streak: number | null
           ritual_preferences: Json | null
+          selected_aura: string | null
+          selected_colorway: string | null
+          selected_trail: string | null
+          task_completion_streak: number | null
           total_tasks_logged: number | null
+          unlocked_auras: string[] | null
+          unlocked_colorways: string[] | null
+          unlocked_trails: string[] | null
           updated_at: string
           uses_names: boolean | null
           uses_reminders: boolean | null
+          voice_session_count: number | null
           wake_word_enabled: boolean | null
           wants_voice_playback: boolean | null
         }
@@ -282,6 +292,7 @@ export type Database = {
           current_goal?: string | null
           custom_stop_commands?: string[] | null
           custom_wake_word?: string | null
+          fiesta_completion_count?: number | null
           goal_timeframe?: string | null
           goal_updated_at?: string | null
           id: string
@@ -297,11 +308,20 @@ export type Database = {
           preferences_summary?: string | null
           preferred_gpt_model?: string | null
           preferred_input_style?: string | null
+          reflection_streak?: number | null
           ritual_preferences?: Json | null
+          selected_aura?: string | null
+          selected_colorway?: string | null
+          selected_trail?: string | null
+          task_completion_streak?: number | null
           total_tasks_logged?: number | null
+          unlocked_auras?: string[] | null
+          unlocked_colorways?: string[] | null
+          unlocked_trails?: string[] | null
           updated_at?: string
           uses_names?: boolean | null
           uses_reminders?: boolean | null
+          voice_session_count?: number | null
           wake_word_enabled?: boolean | null
           wants_voice_playback?: boolean | null
         }
@@ -318,6 +338,7 @@ export type Database = {
           current_goal?: string | null
           custom_stop_commands?: string[] | null
           custom_wake_word?: string | null
+          fiesta_completion_count?: number | null
           goal_timeframe?: string | null
           goal_updated_at?: string | null
           id?: string
@@ -333,11 +354,20 @@ export type Database = {
           preferences_summary?: string | null
           preferred_gpt_model?: string | null
           preferred_input_style?: string | null
+          reflection_streak?: number | null
           ritual_preferences?: Json | null
+          selected_aura?: string | null
+          selected_colorway?: string | null
+          selected_trail?: string | null
+          task_completion_streak?: number | null
           total_tasks_logged?: number | null
+          unlocked_auras?: string[] | null
+          unlocked_colorways?: string[] | null
+          unlocked_trails?: string[] | null
           updated_at?: string
           uses_names?: boolean | null
           uses_reminders?: boolean | null
+          voice_session_count?: number | null
           wake_word_enabled?: boolean | null
           wants_voice_playback?: boolean | null
         }

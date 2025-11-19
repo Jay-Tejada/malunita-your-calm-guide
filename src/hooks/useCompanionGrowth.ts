@@ -76,12 +76,14 @@ export interface CompanionGrowthHook {
   isEvolving: boolean;
   addXp: (amount: number, source: string) => Promise<void>;
   refetch: () => Promise<void>;
+  checkUnlocks?: () => Promise<void>; // Will be set by VoiceOrb after cosmetics hook is available
 }
 
 export const useCompanionGrowth = (): CompanionGrowthHook => {
   const [xp, setXp] = useState(0);
   const [stage, setStage] = useState<CompanionStage>(2); // Default to Companion
   const [isEvolving, setIsEvolving] = useState(false);
+  const [checkUnlocks, setCheckUnlocks] = useState<(() => Promise<void>) | undefined>(undefined);
   const { toast } = useToast();
 
   const stageConfig = STAGE_CONFIGS[stage];
@@ -187,8 +189,13 @@ export const useCompanionGrowth = (): CompanionGrowthHook => {
           });
         }
       }
+      
+      // Check for cosmetic unlocks
+      if (checkUnlocks) {
+        await checkUnlocks();
+      }
     },
-    [xp, stage, getStageFromXp, toast]
+    [xp, stage, getStageFromXp, toast, checkUnlocks]
   );
 
   // Initial fetch
@@ -204,5 +211,6 @@ export const useCompanionGrowth = (): CompanionGrowthHook => {
     isEvolving,
     addXp,
     refetch: fetchCompanionData,
+    checkUnlocks,
   };
 };
