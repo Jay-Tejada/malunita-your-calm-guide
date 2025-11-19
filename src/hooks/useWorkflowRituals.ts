@@ -104,17 +104,24 @@ export function useWorkflowRituals() {
       message += `\n\n🎉 ${fiestaReady.length} tiny tasks ready for a Fiesta session`;
     }
 
-    toast({
-      title: "Daily Command Center",
-      description: message,
-      duration: 10000,
-    });
-
-    saveRitualState({ ...ritualState, morningShown: true });
-
-    // Log to conversation history
+    // Send push notification
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
+      try {
+        await supabase.functions.invoke('send-push-notification', {
+          body: {
+            title: '🌅 Daily Command Center',
+            body: message.substring(0, 300), // Truncate for push notification
+            icon: '/icon-192.png',
+            data: { type: 'morning-ritual', timestamp: Date.now() },
+            userId: user.id,
+          }
+        });
+      } catch (error) {
+        console.error('Failed to send morning ritual push notification:', error);
+      }
+
+      // Log to conversation history
       await supabase.from('conversation_history').insert({
         user_id: user.id,
         session_id: `morning-${Date.now()}`,
@@ -122,6 +129,17 @@ export function useWorkflowRituals() {
         content: message,
       });
     }
+
+    // Show toast only if app is active
+    if (document.visibilityState === 'visible') {
+      toast({
+        title: "Daily Command Center",
+        description: message,
+        duration: 10000,
+      });
+    }
+
+    saveRitualState({ ...ritualState, morningShown: true });
   };
 
   const triggerMiddayCheckIn = async () => {
@@ -155,11 +173,32 @@ export function useWorkflowRituals() {
       message += `\n${todayTasks.length} important task${todayTasks.length > 1 ? 's' : ''} remaining for today`;
     }
 
-    toast({
-      title: "Midday Status",
-      description: message,
-      duration: 7000,
-    });
+    // Send push notification
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      try {
+        await supabase.functions.invoke('send-push-notification', {
+          body: {
+            title: '📘 Midday Status',
+            body: message,
+            icon: '/icon-192.png',
+            data: { type: 'midday-checkin', timestamp: Date.now() },
+            userId: user.id,
+          }
+        });
+      } catch (error) {
+        console.error('Failed to send midday check-in push notification:', error);
+      }
+    }
+
+    // Show toast only if app is active
+    if (document.visibilityState === 'visible') {
+      toast({
+        title: "Midday Status",
+        description: message,
+        duration: 7000,
+      });
+    }
 
     saveRitualState({ ...ritualState, middayShown: true });
   };
@@ -210,17 +249,24 @@ export function useWorkflowRituals() {
 
     message += `\n\nRest well. Tomorrow is a fresh start.`;
 
-    toast({
-      title: "Day Complete",
-      description: message,
-      duration: 8000,
-    });
-
-    saveRitualState({ ...ritualState, eveningShown: true });
-
-    // Log to conversation history
+    // Send push notification
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
+      try {
+        await supabase.functions.invoke('send-push-notification', {
+          body: {
+            title: '🌙 Day Complete',
+            body: message.substring(0, 300),
+            icon: '/icon-192.png',
+            data: { type: 'evening-shutdown', timestamp: Date.now() },
+            userId: user.id,
+          }
+        });
+      } catch (error) {
+        console.error('Failed to send evening shutdown push notification:', error);
+      }
+
+      // Log to conversation history
       await supabase.from('conversation_history').insert({
         user_id: user.id,
         session_id: `evening-${Date.now()}`,
@@ -228,6 +274,17 @@ export function useWorkflowRituals() {
         content: message,
       });
     }
+
+    // Show toast only if app is active
+    if (document.visibilityState === 'visible') {
+      toast({
+        title: "Day Complete",
+        description: message,
+        duration: 8000,
+      });
+    }
+
+    saveRitualState({ ...ritualState, eveningShown: true });
   };
 
   const triggerWeeklyReset = async () => {
@@ -270,11 +327,40 @@ export function useWorkflowRituals() {
 
     message += `\nNext week: Focus on what truly matters.`;
 
-    toast({
-      title: "Weekly Review",
-      description: message,
-      duration: 12000,
-    });
+    // Send push notification
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      try {
+        await supabase.functions.invoke('send-push-notification', {
+          body: {
+            title: '🗓️ Weekly Review',
+            body: message.substring(0, 300),
+            icon: '/icon-192.png',
+            data: { type: 'weekly-reset', timestamp: Date.now() },
+            userId: user.id,
+          }
+        });
+      } catch (error) {
+        console.error('Failed to send weekly reset push notification:', error);
+      }
+
+      // Log to conversation history
+      await supabase.from('conversation_history').insert({
+        user_id: user.id,
+        session_id: `weekly-${Date.now()}`,
+        role: 'assistant',
+        content: message,
+      });
+    }
+
+    // Show toast only if app is active
+    if (document.visibilityState === 'visible') {
+      toast({
+        title: "Weekly Review",
+        description: message,
+        duration: 12000,
+      });
+    }
 
     // Mark weekly as shown for the current week
     const sunday = new Date();
@@ -294,17 +380,6 @@ export function useWorkflowRituals() {
       .delete()
       .eq('completed', true)
       .lt('completed_at', thirtyDaysAgo.toISOString());
-
-    // Log to conversation history
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      await supabase.from('conversation_history').insert({
-        user_id: user.id,
-        session_id: `weekly-${Date.now()}`,
-        role: 'assistant',
-        content: message,
-      });
-    }
   };
 
   const checkRitualTriggers = () => {

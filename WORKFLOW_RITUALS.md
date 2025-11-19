@@ -23,8 +23,9 @@ The Workflow Rituals system automatically guides users through their day using c
   - 1 Big Task recommendation
   - Tiny Task Fiesta suggestion (if 3+ tiny tasks available)
 
-**UI:** Toast notification with 10-second duration
+**UI:** Push notification (when app closed) + Toast notification (when app active) with 10-second duration
 **Storage:** Logged to `conversation_history` table
+**Smart Delivery:** Only shows toast if app is visible; always sends push notification
 
 ---
 
@@ -37,8 +38,9 @@ The Workflow Rituals system automatically guides users through their day using c
 - Identifies remaining important tasks for today
 - Provides brief status snapshot
 
-**UI:** Toast notification with 7-second duration
+**UI:** Push notification (when app closed) + Toast notification (when app active) with 7-second duration
 **Tone:** Brief and encouraging
+**Smart Delivery:** Only shows toast if app is visible; always sends push notification
 
 ---
 
@@ -52,9 +54,10 @@ The Workflow Rituals system automatically guides users through their day using c
 - **Auto-rolls over** up to 5 incomplete tasks to tomorrow's focus
 - Provides gentle close-out message
 
-**UI:** Toast notification with 8-second duration
+**UI:** Push notification (when app closed) + Toast notification (when app active) with 8-second duration
 **Storage:** Logged to `conversation_history` table
 **Tone:** Calm and restorative
+**Smart Delivery:** Only shows toast if app is visible; always sends push notification
 
 ---
 
@@ -69,9 +72,10 @@ The Workflow Rituals system automatically guides users through their day using c
 - **Auto-cleans** completed tasks older than 30 days
 - Provides weekly summary and next-week focus guidance
 
-**UI:** Toast notification with 12-second duration
+**UI:** Push notification (when app closed) + Toast notification (when app active) with 12-second duration
 **Storage:** Logged to `conversation_history` table
 **Maintenance:** Deletes stale completed tasks
+**Smart Delivery:** Only shows toast if app is visible; always sends push notification
 
 ---
 
@@ -89,7 +93,8 @@ Located: `src/hooks/useWorkflowRituals.ts`
 **Dependencies:**
 - `useProfile` - User preferences and settings
 - `useTasks` - Task data and operations
-- `useToast` - UI notifications
+- `useToast` - In-app UI notifications
+- `supabase.functions.invoke('send-push-notification')` - Push notification delivery
 - `agendaRouter` - Task time-bucketing
 - `priorityScorer` - Task prioritization
 - `contextMapper` - Context extraction
@@ -117,11 +122,14 @@ useWorkflowRituals();
 ## Design Principles
 
 ### ✅ DO
-- Use existing UI components (toast notifications)
-- Keep messages concise and calm
+- Use existing UI components (toast notifications + push notifications)
+- Send push notifications even when app is closed
+- Only show toasts when app is active (check `document.visibilityState`)
+- Keep messages concise and calm (truncate to 300 chars for push)
 - Auto-handle routine maintenance (rollover, cleanup)
 - Log important rituals to conversation history
 - Respect user time (once-per-day triggers)
+- Include helpful metadata in push notification `data` field
 
 ### ❌ DON'T
 - Create new screens or modals
@@ -129,6 +137,51 @@ useWorkflowRituals();
 - Trigger more than once per time window
 - Overwhelm with excessive notifications
 - Use aggressive or nagging language
+- Show both toast and push when app is active (redundant)
+
+---
+
+## Push Notification Integration
+
+### How It Works
+Each ritual sends a push notification via the `send-push-notification` edge function:
+
+```typescript
+await supabase.functions.invoke('send-push-notification', {
+  body: {
+    title: '🌅 Daily Command Center',
+    body: message.substring(0, 300), // Truncated for push
+    icon: '/icon-192.png',
+    data: { 
+      type: 'morning-ritual', 
+      timestamp: Date.now() 
+    },
+    userId: user.id,
+  }
+});
+```
+
+### Smart Delivery Logic
+- **App Closed:** Push notification sent to device
+- **App Active:** Toast notification shown in-app
+- Check: `document.visibilityState === 'visible'`
+
+### Push Notification Data
+Each ritual includes metadata:
+- `morning-ritual` - Morning command center
+- `midday-checkin` - Midday status update
+- `evening-shutdown` - Evening wrap-up
+- `weekly-reset` - Weekly review
+
+This allows the service worker to handle clicks appropriately (future enhancement).
+
+### Requirements
+Users must:
+1. Grant notification permission
+2. Have an active push subscription in `push_subscriptions` table
+3. Have the service worker registered
+
+If push fails, the ritual still logs to conversation history and shows toast (when visible).
 
 ---
 
@@ -175,11 +228,13 @@ All messages generated in ritual functions:
 
 ## Future Enhancements
 
-### Push Notifications
-Could integrate with existing push notification system:
-- Send ritual messages via push when app not open
-- Use `send-push-notification` edge function
-- Requires push subscription setup
+### Interactive Push Notifications
+Could add action buttons to push notifications:
+- Morning: "Start planning" → Opens app to Today's Focus
+- Evening: "Review day" → Opens Runway Review
+- Weekly: "View insights" → Opens Weekly Insights page
+
+Service worker would handle `notificationclick` events.
 
 ### Smart Notification Cards
 Could use `SmartNotificationCard` component instead of toasts:
