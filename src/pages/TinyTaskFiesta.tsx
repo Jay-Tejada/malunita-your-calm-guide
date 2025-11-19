@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useFiestaSessions } from "@/hooks/useFiestaSessions";
 import { useTasks } from "@/hooks/useTasks";
+import { useCompanionGrowth } from "@/hooks/useCompanionGrowth";
 import { TinyTaskFiestaStart } from "@/components/TinyTaskFiestaStart";
 import { TinyTaskFiestaTimer } from "@/components/TinyTaskFiestaTimer";
 import { TinyTaskFiestaTaskList } from "@/components/TinyTaskFiestaTaskList";
@@ -13,6 +14,7 @@ const TinyTaskFiesta = () => {
   const navigate = useNavigate();
   const { activeSession, updateSession, endSession } = useFiestaSessions();
   const { tasks, updateTask, deleteTask } = useTasks();
+  const growth = useCompanionGrowth();
   const [isPaused, setIsPaused] = useState(false);
   const [pausedAt, setPausedAt] = useState<number | null>(null);
   const [totalPausedTime, setTotalPausedTime] = useState(0);
@@ -50,12 +52,16 @@ const TinyTaskFiesta = () => {
   const handleTimerComplete = async () => {
     if (!activeSession) return;
     await endSession(activeSession.id);
+    // Award XP for completing a fiesta session
+    await growth.addXp(2, 'Tiny Task Fiesta completed');
   };
 
   const handleEndEarly = async () => {
     if (!activeSession) return;
     if (confirm('End your fiesta early?')) {
       await endSession(activeSession.id);
+      // Award XP even for early completion
+      await growth.addXp(2, 'Tiny Task Fiesta completed');
     }
   };
 
