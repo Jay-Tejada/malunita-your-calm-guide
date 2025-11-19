@@ -343,6 +343,55 @@ All colors MUST be HSL.
       opacity: 0;
     }
   }
+
+  /* Habitat animations */
+  @keyframes drift-wave {
+    0%, 100% { 
+      transform: translate(-25%, -25%) rotate(0deg);
+    }
+    50% { 
+      transform: translate(-35%, -30%) rotate(45deg);
+    }
+  }
+
+  @keyframes light-trail {
+    0%, 100% { 
+      transform: translate(0, 0) scale(1);
+      opacity: 0.1;
+    }
+    50% { 
+      transform: translate(30px, 40px) scale(1.2);
+      opacity: 0.2;
+    }
+  }
+
+  @keyframes cosmic-shimmer {
+    0%, 100% { 
+      opacity: 0.03;
+      transform: scale(1);
+    }
+    50% { 
+      opacity: 0.06;
+      transform: scale(1.1);
+    }
+  }
+
+  @keyframes float-particle {
+    0% { 
+      transform: translateY(0) translateX(0);
+      opacity: 0;
+    }
+    10% {
+      opacity: 0.2;
+    }
+    90% {
+      opacity: 0.2;
+    }
+    100% { 
+      transform: translateY(-100vh) translateX(20px);
+      opacity: 0;
+    }
+  }
   
   .animate-companion-breath {
     animation: companion-breath 3.5s ease-in-out infinite;
