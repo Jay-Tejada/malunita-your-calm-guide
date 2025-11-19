@@ -11,6 +11,7 @@ import { ConversationalTaskFlow } from "@/components/ConversationalTaskFlow";
 import { TaskFeedbackDialog } from "@/components/TaskFeedbackDialog";
 import { VoiceOrb } from "@/components/VoiceOrb";
 import { contextMapper } from "@/lib/contextMapper";
+import { priorityScorer } from "@/lib/priorityScorer";
 
 interface Message {
   role: 'user' | 'assistant';
@@ -128,42 +129,6 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
       ...context,
       categories: Array.from(context.categories)
     };
-  };
-
-  // Priority Scorer: Mark tasks as MUST/SHOULD/COULD/BIG/TINY
-  const priorityScorer = (extractedTasks: any[], ideaAnalysis: any) => {
-    return extractedTasks.map((task: any) => {
-      let priority = 'SHOULD';
-      let taskType = 'NORMAL';
-
-      // Check task size
-      const wordCount = task.title.split(' ').length;
-      if (wordCount <= 5 && !task.has_reminder && task.suggested_timeframe === 'today') {
-        taskType = 'TINY_TASK';
-      } else if (wordCount > 10 || task.title.toLowerCase().includes('project') || task.title.toLowerCase().includes('plan')) {
-        taskType = 'BIG_TASK';
-      }
-
-      // Check priority based on timeframe and urgency
-      if (task.suggested_timeframe === 'today' || task.has_reminder) {
-        priority = 'MUST';
-      } else if (task.suggested_timeframe === 'this week') {
-        priority = 'SHOULD';
-      } else if (task.suggested_timeframe === 'someday') {
-        priority = 'COULD';
-      }
-
-      // Boost priority if emotional tone is urgent
-      if (ideaAnalysis?.emotional_tone && ['stressed', 'overwhelmed'].includes(ideaAnalysis.emotional_tone.toLowerCase())) {
-        if (priority === 'SHOULD') priority = 'MUST';
-      }
-
-      return {
-        ...task,
-        priority,
-        taskType
-      };
-    });
   };
 
   // Agenda Router: Auto-assign to Today/Tomorrow/Week/Upcoming/Someday
@@ -949,7 +914,7 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
 
             // Step 6: Priority scoring
             console.log('⭐ STEP 6: Priority scoring...');
-            const prioritizedTasks = priorityScorer(extractedTasks, ideaAnalysis);
+            const prioritizedTasks = priorityScorer(extractedTasks, ideaAnalysis, contextMap);
             console.log('🎯 Prioritized tasks:', prioritizedTasks);
 
             // Step 7: Agenda routing
