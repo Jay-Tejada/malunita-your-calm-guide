@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { X } from 'lucide-react';
 import { useCompanionCosmetics, Colorway, Aura, Trail } from '@/hooks/useCompanionCosmetics';
+import { useCompanionGrowth } from '@/hooks/useCompanionGrowth';
+import { CompanionPreview } from './CompanionPreview';
 import { Button } from './ui/button';
 import { ScrollArea } from './ui/scroll-area';
 import { Separator } from './ui/separator';
@@ -20,6 +22,7 @@ const COLORWAY_COLORS: Record<Colorway, { core: string; glow: string }> = {
 
 export const CompanionCustomization = ({ onClose }: CompanionCustomizationProps) => {
   const cosmetics = useCompanionCosmetics();
+  const growth = useCompanionGrowth();
   const [activeTab, setActiveTab] = useState<'colorways' | 'auras' | 'trails'>('colorways');
 
   if (cosmetics.isLoading) {
@@ -35,15 +38,27 @@ export const CompanionCustomization = ({ onClose }: CompanionCustomizationProps)
       <div className="w-full max-w-md bg-card border border-border rounded-lg shadow-lg overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-border">
-          <h2 className="text-lg font-medium text-foreground">Companion Cosmetics</h2>
+          <div className="flex-1">
+            <h2 className="text-lg font-medium text-foreground">Companion Cosmetics</h2>
+            <p className="text-xs text-muted-foreground">Customize your companion's appearance</p>
+          </div>
           <Button
             variant="ghost"
             size="icon"
             onClick={onClose}
-            className="h-8 w-8"
+            className="h-8 w-8 flex-shrink-0"
           >
             <X className="h-4 w-4" />
           </Button>
+        </div>
+        
+        {/* Live Preview */}
+        <div className="border-b border-border bg-muted/20 py-6 flex justify-center">
+          <CompanionPreview 
+            colorway={cosmetics.selectedColorway}
+            aura={cosmetics.selectedAura}
+            stage={growth.stage}
+          />
         </div>
 
         {/* Tabs */}
@@ -68,8 +83,9 @@ export const CompanionCustomization = ({ onClose }: CompanionCustomizationProps)
           <div className="p-6 space-y-4">
             {activeTab === 'colorways' && (
               <>
-                {(Object.keys(COLORWAY_COLORS) as Colorway[]).map((colorway) => {
-                  const isUnlocked = cosmetics.unlockedColorways.includes(colorway);
+                {(Object.keys(COLORWAY_COLORS) as Colorway[])
+                  .filter(colorway => cosmetics.unlockedColorways.includes(colorway))
+                  .map((colorway) => {
                   const isSelected = cosmetics.selectedColorway === colorway;
                   const info = cosmetics.getColorwayInfo(colorway);
                   const colors = COLORWAY_COLORS[colorway];
@@ -77,14 +93,11 @@ export const CompanionCustomization = ({ onClose }: CompanionCustomizationProps)
                   return (
                     <button
                       key={colorway}
-                      onClick={() => isUnlocked && cosmetics.selectColorway(colorway)}
-                      disabled={!isUnlocked}
+                      onClick={() => cosmetics.selectColorway(colorway)}
                       className={`w-full flex items-center gap-4 p-4 rounded-lg border transition-all ${
                         isSelected
                           ? 'border-primary bg-primary/5'
-                          : isUnlocked
-                          ? 'border-border hover:border-primary/50 hover:bg-muted/50'
-                          : 'border-border opacity-50 cursor-not-allowed'
+                          : 'border-border hover:border-primary/50 hover:bg-muted/50'
                       }`}
                     >
                       {/* Color Preview */}
@@ -108,9 +121,6 @@ export const CompanionCustomization = ({ onClose }: CompanionCustomizationProps)
                       {isSelected && (
                         <div className="text-xs text-primary font-medium">Selected</div>
                       )}
-                      {!isUnlocked && (
-                        <div className="text-xs text-muted-foreground">Locked</div>
-                      )}
                     </button>
                   );
                 })}
@@ -119,22 +129,20 @@ export const CompanionCustomization = ({ onClose }: CompanionCustomizationProps)
 
             {activeTab === 'auras' && (
               <>
-                {(Object.keys(cosmetics.getAuraInfo('calm-bloom') ? { 'calm-bloom': true, 'pulse-ring': true, 'dreamwave': true, 'starlight-halo': true } : {}) as Aura[]).map((aura) => {
-                  const isUnlocked = cosmetics.unlockedAuras.includes(aura);
+                {(Object.keys(cosmetics.getAuraInfo('calm-bloom') ? { 'calm-bloom': true, 'pulse-ring': true, 'dreamwave': true, 'starlight-halo': true } : {}) as Aura[])
+                  .filter(aura => cosmetics.unlockedAuras.includes(aura))
+                  .map((aura) => {
                   const isSelected = cosmetics.selectedAura === aura;
                   const info = cosmetics.getAuraInfo(aura);
 
                   return (
                     <button
                       key={aura}
-                      onClick={() => isUnlocked && cosmetics.selectAura(aura)}
-                      disabled={!isUnlocked}
+                      onClick={() => cosmetics.selectAura(aura)}
                       className={`w-full flex items-center gap-4 p-4 rounded-lg border transition-all ${
                         isSelected
                           ? 'border-primary bg-primary/5'
-                          : isUnlocked
-                          ? 'border-border hover:border-primary/50 hover:bg-muted/50'
-                          : 'border-border opacity-50 cursor-not-allowed'
+                          : 'border-border hover:border-primary/50 hover:bg-muted/50'
                       }`}
                     >
                       <div className="flex-1 text-left">
@@ -144,9 +152,6 @@ export const CompanionCustomization = ({ onClose }: CompanionCustomizationProps)
 
                       {isSelected && (
                         <div className="text-xs text-primary font-medium">Selected</div>
-                      )}
-                      {!isUnlocked && (
-                        <div className="text-xs text-muted-foreground">Locked</div>
                       )}
                     </button>
                   );
@@ -180,22 +185,20 @@ export const CompanionCustomization = ({ onClose }: CompanionCustomizationProps)
 
                 <Separator />
 
-                {(Object.keys(cosmetics.getTrailInfo('subtle-drift') ? { 'subtle-drift': true, 'star-flecks': true, 'ascending-dust': true } : {}) as Trail[]).map((trail) => {
-                  const isUnlocked = cosmetics.unlockedTrails.includes(trail);
+                {(Object.keys(cosmetics.getTrailInfo('subtle-drift') ? { 'subtle-drift': true, 'star-flecks': true, 'ascending-dust': true } : {}) as Trail[])
+                  .filter(trail => cosmetics.unlockedTrails.includes(trail))
+                  .map((trail) => {
                   const isSelected = cosmetics.selectedTrail === trail;
                   const info = cosmetics.getTrailInfo(trail);
 
                   return (
                     <button
                       key={trail}
-                      onClick={() => isUnlocked && cosmetics.selectTrail(trail)}
-                      disabled={!isUnlocked}
+                      onClick={() => cosmetics.selectTrail(trail)}
                       className={`w-full flex items-center gap-4 p-4 rounded-lg border transition-all ${
                         isSelected
                           ? 'border-primary bg-primary/5'
-                          : isUnlocked
-                          ? 'border-border hover:border-primary/50 hover:bg-muted/50'
-                          : 'border-border opacity-50 cursor-not-allowed'
+                          : 'border-border hover:border-primary/50 hover:bg-muted/50'
                       }`}
                     >
                       <div className="flex-1 text-left">
@@ -205,9 +208,6 @@ export const CompanionCustomization = ({ onClose }: CompanionCustomizationProps)
 
                       {isSelected && (
                         <div className="text-xs text-primary font-medium">Selected</div>
-                      )}
-                      {!isUnlocked && (
-                        <div className="text-xs text-muted-foreground">Locked</div>
                       )}
                     </button>
                   );

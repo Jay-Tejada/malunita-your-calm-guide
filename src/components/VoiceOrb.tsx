@@ -9,6 +9,7 @@ import { useCompanionEmotion } from "@/hooks/useCompanionEmotion";
 import { useCompanionGrowth } from "@/hooks/useCompanionGrowth";
 import { useVoiceReactions } from "@/hooks/useVoiceReactions";
 import { useLoreMoments } from "@/hooks/useLoreMoments";
+import { useCompanionCosmetics } from "@/hooks/useCompanionCosmetics";
 import { CompanionHabitat } from "@/components/CompanionHabitat";
 import { LoreMoment } from "@/components/LoreMoment";
 
@@ -61,8 +62,48 @@ export const VoiceOrb = ({
   const analyserRef = useRef<AnalyserNode | null>(null);
   const animationFrameRef = useRef<number | null>(null);
   const hasPlayedStopSoundRef = useRef(false);
-  // Get personality-based colors
-  const getPersonalityColors = () => {
+  
+  const { toast } = useToast();
+  
+  // Companion motion behavior
+  const motion = useCompanionMotion(personality, isListening || isResponding);
+  
+  // Companion emotion engine
+  const emotion = useCompanionEmotion(personality);
+  
+  // Companion growth & evolution
+  const growth = useCompanionGrowth();
+  
+  // Voice reaction system
+  const voiceReaction = useVoiceReactions(personality, companionName);
+  
+  // Lore moments system
+  const loreMoments = useLoreMoments(growth.stage, growth.isEvolving);
+  
+  // Companion cosmetics
+  const cosmetics = useCompanionCosmetics();
+  
+  // Connect cosmetics unlock checker to growth system
+  useEffect(() => {
+    if (cosmetics.checkUnlocks && !growth.checkUnlocks) {
+      // @ts-ignore - Adding checkUnlocks dynamically
+      growth.checkUnlocks = cosmetics.checkUnlocks;
+    }
+  }, [cosmetics.checkUnlocks, growth]);
+  
+  // Get colors based on selected colorway or fallback to personality
+  const getOrbColors = () => {
+    // If a colorway is selected, use it
+    if (cosmetics.selectedColorway && cosmetics.selectedColorway !== 'zen-default') {
+      const colorwayKey = cosmetics.selectedColorway.replace(/-/g, '-');
+      return {
+        core: `var(--colorway-${colorwayKey}-core)`,
+        glow: `var(--colorway-${colorwayKey}-glow)`,
+        halo: `var(--colorway-${colorwayKey}-halo)`,
+      };
+    }
+    
+    // Fallback to personality colors
     switch (personality) {
       case 'zen':
         return {
@@ -91,24 +132,7 @@ export const VoiceOrb = ({
     }
   };
 
-  const colors = getPersonalityColors();
-
-  const { toast } = useToast();
-  
-  // Companion motion behavior
-  const motion = useCompanionMotion(personality, isListening || isResponding);
-  
-  // Companion emotion engine
-  const emotion = useCompanionEmotion(personality);
-  
-  // Companion growth & evolution
-  const growth = useCompanionGrowth();
-  
-  // Voice reaction system
-  const voiceReaction = useVoiceReactions(personality, companionName);
-  
-  // Lore moments system
-  const loreMoments = useLoreMoments(growth.stage, growth.isEvolving);
+  const colors = getOrbColors();
 
   // Trigger behaviors based on state changes
   useEffect(() => {
