@@ -581,6 +581,89 @@ All colors MUST be HSL.
     }
   }
   
+  /* Semantic Reaction Animations */
+  @keyframes stress-shimmer {
+    0%, 100% {
+      filter: brightness(1) hue-rotate(0deg);
+    }
+    50% {
+      filter: brightness(1.2) hue-rotate(15deg);
+    }
+  }
+  
+  @keyframes urgency-spike {
+    0% {
+      transform: scale(1);
+      filter: brightness(1);
+    }
+    20% {
+      transform: scale(1.15);
+      filter: brightness(1.4);
+    }
+    100% {
+      transform: scale(1);
+      filter: brightness(1);
+    }
+  }
+  
+  @keyframes uncertainty-tilt {
+    0%, 100% {
+      transform: rotate(0deg);
+    }
+    25% {
+      transform: rotate(-3deg);
+    }
+    75% {
+      transform: rotate(3deg);
+    }
+  }
+  
+  @keyframes confidence-steady {
+    0%, 100% {
+      transform: scale(1);
+      filter: brightness(1);
+    }
+    50% {
+      transform: scale(1.02);
+      filter: brightness(1.1);
+    }
+  }
+  
+  @keyframes end-confirmation-pulse {
+    0% {
+      transform: scale(1);
+      opacity: 1;
+    }
+    50% {
+      transform: scale(1.08);
+      opacity: 0.9;
+    }
+    100% {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+  
+  .animate-stress-shimmer {
+    animation: stress-shimmer 3.5s ease-in-out infinite;
+  }
+  
+  .animate-urgency-spike {
+    animation: urgency-spike 1.2s ease-out;
+  }
+  
+  .animate-uncertainty-tilt {
+    animation: uncertainty-tilt 2.8s ease-in-out infinite;
+  }
+  
+  .animate-confidence-steady {
+    animation: confidence-steady 2s ease-in-out infinite;
+  }
+  
+  .animate-end-confirmation {
+    animation: end-confirmation-pulse 1s ease-out;
+  }
+  
   .animate-float {
     animation: float 4s ease-in-out infinite;
   }
