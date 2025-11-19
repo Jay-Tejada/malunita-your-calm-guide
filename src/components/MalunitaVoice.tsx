@@ -70,6 +70,76 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
   const { tasks, updateTask, createTasks } = useTasks();
   const audioEnabled = profile?.wants_voice_playback ?? true;
   const isMobile = useIsMobile();
+
+  // Helper functions for idea analysis
+  const createSummary = (text: string, tasks: any[]): string => {
+    if (tasks.length === 0) {
+      return `Free-form thought: ${text.substring(0, 100)}...`;
+    }
+    
+    const taskTitles = tasks.map((t: any) => `• ${t.title}`).join('\n');
+    return `Detected ${tasks.length} task(s):\n${taskTitles}`;
+  };
+
+  const extractInsights = (text: string, tasks: any[]): string[] => {
+    const insights: string[] = [];
+    
+    // Check for decisions
+    if (text.toLowerCase().includes('decide') || text.toLowerCase().includes('decision')) {
+      insights.push('Contains a decision point');
+    }
+    
+    // Check for questions
+    if (text.includes('?') || text.toLowerCase().includes('should i') || text.toLowerCase().includes('what if')) {
+      insights.push('Seeking clarification or guidance');
+    }
+    
+    // Check for urgency
+    if (text.toLowerCase().includes('urgent') || text.toLowerCase().includes('asap') || text.toLowerCase().includes('immediately')) {
+      insights.push('High urgency detected');
+    }
+    
+    // Check for follow-ups
+    if (text.toLowerCase().includes('follow up') || text.toLowerCase().includes('check in')) {
+      insights.push('Requires follow-up');
+    }
+
+    return insights;
+  };
+
+  const extractTopics = (text: string): string[] => {
+    const topics: string[] = [];
+    const lowerText = text.toLowerCase();
+    
+    if (lowerText.includes('work') || lowerText.includes('office') || lowerText.includes('meeting')) {
+      topics.push('Work');
+    }
+    if (lowerText.includes('home') || lowerText.includes('house') || lowerText.includes('family')) {
+      topics.push('Personal');
+    }
+    if (lowerText.includes('project')) {
+      topics.push('Project');
+    }
+    if (lowerText.includes('health') || lowerText.includes('gym') || lowerText.includes('exercise')) {
+      topics.push('Health');
+    }
+    
+    return topics;
+  };
+
+  const extractDeadlines = (tasks: any[]): string[] => {
+    const deadlines: string[] = [];
+    
+    tasks.forEach((task: any) => {
+      if (task.reminder_time) {
+        deadlines.push(`${task.title}: ${new Date(task.reminder_time).toLocaleString()}`);
+      } else if (task.suggested_timeframe && task.suggested_timeframe !== 'someday') {
+        deadlines.push(`${task.title}: ${task.suggested_timeframe}`);
+      }
+    });
+    
+    return deadlines;
+  };
   
   const handleVoiceTaskCapture = async (text: string, category?: 'inbox' | 'home' | 'work' | 'gym' | 'projects') => {
     try {
@@ -671,10 +741,47 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
             setTranscribedText(transcribed);
             console.log('📝 Transcribed text:', transcribed);
 
-            // Step 2: Send to ChatGPT with full conversation history and user profile
-            console.log('🤖 STEP 2: Processing with ChatGPT...');
-            
-            // Get user profile for personalization
+            // Step 2: Split into multiple tasks if needed
+            console.log('✂️ STEP 2: Splitting tasks...');
+            const { data: splitData, error: splitError } = await supabase.functions.invoke('split-tasks', {
+              body: { text: transcribed }
+            });
+
+            if (splitError) {
+              console.error('❌ Split tasks error:', splitError);
+            }
+
+            const taskTexts = splitData?.tasks || [transcribed];
+            console.log('✅ Split into', taskTexts.length, 'item(s)');
+
+            // Step 3: Extract and analyze tasks
+            console.log('🔍 STEP 3: Extracting and analyzing tasks...');
+            const { data: extractData, error: extractError } = await supabase.functions.invoke('extract-tasks', {
+              body: { text: transcribed }
+            });
+
+            if (extractError) {
+              console.error('❌ Extract tasks error:', extractError);
+            }
+
+            const extractedTasks = extractData?.tasks || [];
+            console.log('✅ Extracted', extractedTasks.length, 'task(s)');
+
+            // Step 4: Create idea analysis and summary
+            console.log('🧠 STEP 4: Analyzing ideas...');
+            const analysis = {
+              summary: createSummary(transcribed, extractedTasks),
+              tasks: extractedTasks,
+              insights: extractInsights(transcribed, extractedTasks),
+              topics: extractTopics(transcribed),
+              deadlines: extractDeadlines(extractedTasks),
+              rawText: transcribed
+            };
+
+            console.log('💡 Analysis:', analysis);
+
+            // Step 5: Get user profile for personalization
+            console.log('👤 STEP 5: Getting user profile...');
             const { data: { user: currentUser } } = await supabase.auth.getUser();
             let userProfileData = null;
             
@@ -687,8 +794,21 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
               
               userProfileData = profileData;
             }
+
+            // Save analysis summary to conversation history
+            if (currentUser && analysis.summary) {
+              await supabase.from('conversation_history').insert({
+                user_id: currentUser.id,
+                session_id: sessionId,
+                role: 'assistant_summary',
+                content: JSON.stringify(analysis),
+              });
+            }
+
+            // Step 6: Send structured analysis to ChatGPT
+            console.log('🤖 STEP 6: Processing with ChatGPT...');
             
-            // Build messages array with conversation history
+            // Build messages array with conversation history and structured analysis
             const messages: Message[] = [
               ...conversationHistory,
               { role: 'user', content: transcribed }
@@ -698,7 +818,8 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
               body: { 
                 messages,
                 userProfile: userProfileData,
-                currentMood 
+                currentMood,
+                analysis // Pass structured analysis
               }
             });
 
