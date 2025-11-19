@@ -17,6 +17,7 @@ import { useTasks } from "@/hooks/useTasks";
 import { useProfile } from "@/hooks/useProfile";
 import { useCustomCategories } from "@/hooks/useCustomCategories";
 import { useWakeWord } from "@/hooks/useWakeWord";
+import { useWorkflowRituals } from "@/hooks/useWorkflowRituals";
 import { AppSidebar } from "@/components/AppSidebar";
 
 import { WakeWordIndicator } from "@/components/WakeWordIndicator";
@@ -110,6 +111,9 @@ const Index = () => {
     },
     enabled: !!user && !showSettings && !showRunwayReview,
   });
+
+  // Workflow Rituals - Morning, Midday, Evening, Weekly
+  useWorkflowRituals();
 
   // Build complete category list for navigation
   const allCategories = [
