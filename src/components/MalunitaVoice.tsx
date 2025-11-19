@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useProfile } from "@/hooks/useProfile";
 import { useTasks } from "@/hooks/useTasks";
+import { useCompanionIdentity } from "@/hooks/useCompanionIdentity";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { MoodSelector } from "@/components/MoodSelector";
 import { TaskConfirmation } from "@/components/TaskConfirmation";
@@ -73,6 +74,7 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
   
   const { profile } = useProfile();
   const { tasks, updateTask, createTasks } = useTasks();
+  const { companion } = useCompanionIdentity();
   const audioEnabled = profile?.wants_voice_playback ?? true;
   const isMobile = useIsMobile();
 
@@ -1273,6 +1275,7 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
           isSaving={isSaving}
           showSuccess={showSuccess}
           stopWordDetected={stopWordDetected}
+          personality={companion?.personalityType || 'zen'}
         />
 
         {/* Action buttons - Only show on desktop */}

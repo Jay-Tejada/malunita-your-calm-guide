@@ -237,6 +237,11 @@ export type Database = {
           autocategorize_enabled: boolean | null
           average_tasks_per_day: number | null
           common_prefixes: string[] | null
+          companion_colorway: string | null
+          companion_name: string | null
+          companion_personality_type: string | null
+          companion_stage: number | null
+          companion_xp: number | null
           created_at: string
           current_goal: string | null
           custom_stop_commands: string[] | null
@@ -266,6 +271,11 @@ export type Database = {
           autocategorize_enabled?: boolean | null
           average_tasks_per_day?: number | null
           common_prefixes?: string[] | null
+          companion_colorway?: string | null
+          companion_name?: string | null
+          companion_personality_type?: string | null
+          companion_stage?: number | null
+          companion_xp?: number | null
           created_at?: string
           current_goal?: string | null
           custom_stop_commands?: string[] | null
@@ -295,6 +305,11 @@ export type Database = {
           autocategorize_enabled?: boolean | null
           average_tasks_per_day?: number | null
           common_prefixes?: string[] | null
+          companion_colorway?: string | null
+          companion_name?: string | null
+          companion_personality_type?: string | null
+          companion_stage?: number | null
+          companion_xp?: number | null
           created_at?: string
           current_goal?: string | null
           custom_stop_commands?: string[] | null

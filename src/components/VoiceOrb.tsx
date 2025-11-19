@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { CategoryDialog } from "./CategoryDialog";
 import { Check } from "lucide-react";
+import { PersonalityType } from "@/hooks/useCompanionIdentity";
 
 interface VoiceOrbProps {
   onVoiceInput?: (text: string, category?: 'inbox' | 'home' | 'work' | 'gym' | 'projects') => void;
@@ -12,11 +13,21 @@ interface VoiceOrbProps {
   isSaving?: boolean;
   showSuccess?: boolean;
   stopWordDetected?: boolean;
+  personality?: PersonalityType;
 }
 
 type OrbMode = 'capture' | 'reflection' | 'planning' | 'quiet';
 
-export const VoiceOrb = ({ onVoiceInput, onPlanningModeActivated, onReflectionModeActivated, onOrbReflectionTrigger, isSaving = false, showSuccess = false, stopWordDetected = false }: VoiceOrbProps) => {
+export const VoiceOrb = ({ 
+  onVoiceInput, 
+  onPlanningModeActivated, 
+  onReflectionModeActivated, 
+  onOrbReflectionTrigger, 
+  isSaving = false, 
+  showSuccess = false, 
+  stopWordDetected = false,
+  personality = 'zen'
+}: VoiceOrbProps) => {
   const [isListening, setIsListening] = useState(false);
   const [isResponding, setIsResponding] = useState(false);
   const [audioLevels, setAudioLevels] = useState<number[]>(new Array(7).fill(0));
@@ -33,6 +44,38 @@ export const VoiceOrb = ({ onVoiceInput, onPlanningModeActivated, onReflectionMo
   const analyserRef = useRef<AnalyserNode | null>(null);
   const animationFrameRef = useRef<number | null>(null);
   const hasPlayedStopSoundRef = useRef(false);
+  // Get personality-based colors
+  const getPersonalityColors = () => {
+    switch (personality) {
+      case 'zen':
+        return {
+          core: 'var(--orb-zen-core)',
+          glow: 'var(--orb-zen-glow)',
+          halo: 'var(--orb-zen-halo)',
+        };
+      case 'spark':
+        return {
+          core: 'var(--orb-spark-core)',
+          glow: 'var(--orb-spark-glow)',
+          halo: 'var(--orb-spark-halo)',
+        };
+      case 'cosmo':
+        return {
+          core: 'var(--orb-cosmo-core)',
+          glow: 'var(--orb-cosmo-glow)',
+          halo: 'var(--orb-cosmo-halo)',
+        };
+      default:
+        return {
+          core: 'var(--orb-core-idle)',
+          glow: 'var(--orb-glow-idle)',
+          halo: 'var(--orb-halo-idle)',
+        };
+    }
+  };
+
+  const colors = getPersonalityColors();
+
   const { toast } = useToast();
 
   // Play confirmation sound when stop word is detected
@@ -525,10 +568,10 @@ export const VoiceOrb = ({ onVoiceInput, onPlanningModeActivated, onReflectionMo
                 }`}
                 style={{
                   background: isListening 
-                    ? `radial-gradient(circle, hsl(var(--orb-halo-listening) / 0.4) 0%, hsl(var(--orb-halo-listening) / 0.1) 50%, transparent 70%)`
+                    ? `radial-gradient(circle, hsl(${colors.halo} / 0.5) 0%, hsl(${colors.halo} / 0.2) 50%, transparent 70%)`
                     : (isResponding || isSaving)
                     ? `radial-gradient(circle, hsl(var(--orb-halo-thinking) / 0.35) 0%, hsl(var(--orb-halo-speaking) / 0.2) 40%, transparent 70%)`
-                    : `radial-gradient(circle, hsl(var(--orb-halo-idle) / 0.25) 0%, hsl(var(--orb-halo-idle) / 0.08) 50%, transparent 70%)`,
+                    : `radial-gradient(circle, hsl(${colors.halo} / 0.3) 0%, hsl(${colors.halo} / 0.1) 50%, transparent 70%)`,
                   filter: 'blur(24px)',
                 }}
               />
@@ -544,10 +587,10 @@ export const VoiceOrb = ({ onVoiceInput, onPlanningModeActivated, onReflectionMo
                   background: stopWordDetected
                     ? `radial-gradient(circle, hsl(var(--success) / 0.5) 0%, hsl(var(--success) / 0.2) 60%, transparent 100%)`
                     : isListening
-                    ? `radial-gradient(circle, hsl(var(--orb-glow-listening) / 0.6) 0%, hsl(var(--orb-glow-listening) / 0.3) 60%, transparent 100%)`
+                    ? `radial-gradient(circle, hsl(${colors.glow} / 0.7) 0%, hsl(${colors.glow} / 0.35) 60%, transparent 100%)`
                     : (isResponding || isSaving)
                     ? `radial-gradient(circle, hsl(var(--orb-glow-thinking) / 0.5) 0%, hsl(var(--orb-glow-speaking) / 0.25) 50%, transparent 100%)`
-                    : `radial-gradient(circle, hsl(var(--orb-glow-idle) / 0.4) 0%, hsl(var(--orb-glow-idle) / 0.15) 60%, transparent 100%)`,
+                    : `radial-gradient(circle, hsl(${colors.glow} / 0.45) 0%, hsl(${colors.glow} / 0.2) 60%, transparent 100%)`,
                   filter: 'blur(12px)',
                 }}
               />
@@ -590,25 +633,25 @@ export const VoiceOrb = ({ onVoiceInput, onPlanningModeActivated, onReflectionMo
                   background: stopWordDetected
                     ? `linear-gradient(135deg, hsl(var(--success) / 0.95), hsl(var(--success) / 0.85))`
                     : isListening 
-                    ? `linear-gradient(135deg, hsl(var(--orb-core-listening) / 0.95), hsl(var(--orb-glow-listening) / 0.85))`
+                    ? `linear-gradient(135deg, hsl(${colors.core} / 0.95), hsl(${colors.glow} / 0.85))`
                     : (isResponding || isSaving)
                     ? `linear-gradient(135deg, hsl(var(--orb-core-thinking) / 0.9), hsl(var(--orb-core-speaking) / 0.85))`
-                    : `linear-gradient(135deg, hsl(var(--orb-core-idle) / 0.92), hsl(var(--orb-glow-idle) / 0.88))`,
+                    : `linear-gradient(135deg, hsl(${colors.core} / 0.92), hsl(${colors.glow} / 0.88))`,
                   boxShadow: stopWordDetected
                     ? '0 8px 24px hsl(var(--success) / 0.35), inset 0 1px 0 hsl(var(--success) / 0.5), inset 0 -1px 0 hsl(var(--success) / 0.3)'
                     : isListening 
-                    ? '0 6px 20px hsl(var(--orb-glow-listening) / 0.3), inset 0 1px 0 hsl(var(--orb-core-listening) / 0.6), inset 0 -1px 0 hsl(var(--orb-glow-listening) / 0.4)'
+                    ? `0 6px 20px hsl(${colors.glow} / 0.35), inset 0 1px 0 hsl(${colors.core} / 0.6), inset 0 -1px 0 hsl(${colors.glow} / 0.4)`
                     : (isResponding || isSaving)
                     ? '0 6px 18px hsl(var(--orb-glow-thinking) / 0.25), inset 0 1px 0 hsl(var(--orb-core-thinking) / 0.5), inset 0 -1px 0 hsl(var(--orb-glow-speaking) / 0.3)'
-                    : '0 4px 16px hsl(var(--orb-glow-idle) / 0.2), inset 0 1px 0 hsl(var(--orb-core-idle) / 0.5), inset 0 -1px 0 hsl(var(--orb-glow-idle) / 0.3)',
+                    : `0 4px 16px hsl(${colors.glow} / 0.22), inset 0 1px 0 hsl(${colors.core} / 0.5), inset 0 -1px 0 hsl(${colors.glow} / 0.3)`,
                   border: '1px solid',
                   borderColor: stopWordDetected
                     ? 'hsl(var(--success) / 0.3)'
                     : isListening
-                    ? 'hsl(var(--orb-glow-listening) / 0.3)'
+                    ? `hsl(${colors.glow} / 0.35)`
                     : (isResponding || isSaving)
                     ? 'hsl(var(--orb-glow-thinking) / 0.25)'
-                    : 'hsl(var(--orb-glow-idle) / 0.25)',
+                    : `hsl(${colors.glow} / 0.3)`,
                 }}
               >
                 {/* Center indicator */}
@@ -616,8 +659,8 @@ export const VoiceOrb = ({ onVoiceInput, onPlanningModeActivated, onReflectionMo
                   <div className="absolute inset-0 flex items-center justify-center">
                     <div className="w-3 h-3 rounded-full animate-listening-pulse" 
                       style={{
-                        background: `radial-gradient(circle, hsl(var(--orb-glow-listening) / 0.9), hsl(var(--orb-core-listening) / 0.7))`,
-                        boxShadow: `0 0 12px hsl(var(--orb-glow-listening) / 0.6), inset 0 0 6px hsl(var(--orb-glow-listening) / 0.4)`
+                        background: `radial-gradient(circle, hsl(${colors.glow} / 0.9), hsl(${colors.core} / 0.7))`,
+                        boxShadow: `0 0 12px hsl(${colors.glow} / 0.6), inset 0 0 6px hsl(${colors.glow} / 0.4)`
                       }}
                     />
                   </div>

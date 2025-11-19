@@ -12,12 +12,14 @@ import { InstallPromptBanner } from "@/components/InstallPromptBanner";
 import { SmartReflectionPrompt } from "@/components/SmartReflectionPrompt";
 import { TaskStream } from "@/components/TaskStream";
 import { FiestaHomeCard } from "@/components/FiestaHomeCard";
+import { CompanionOnboarding } from "@/components/CompanionOnboarding";
 import { useAdmin } from "@/hooks/useAdmin";
 import { useTasks } from "@/hooks/useTasks";
 import { useProfile } from "@/hooks/useProfile";
 import { useCustomCategories } from "@/hooks/useCustomCategories";
 import { useWakeWord } from "@/hooks/useWakeWord";
 import { useWorkflowRituals } from "@/hooks/useWorkflowRituals";
+import { useCompanionIdentity, PersonalityType } from "@/hooks/useCompanionIdentity";
 import { AppSidebar } from "@/components/AppSidebar";
 
 import { WakeWordIndicator } from "@/components/WakeWordIndicator";
@@ -66,8 +68,29 @@ const Index = () => {
   const { tasks, updateTask } = useTasks();
   const { profile } = useProfile();
   const { categories: customCategories, createCategory } = useCustomCategories();
+  const { companion, isLoading: isCompanionLoading, updateCompanion, needsOnboarding } = useCompanionIdentity();
   
   const { toast } = useToast();
+
+  // Companion onboarding handler
+  const handleCompanionComplete = async (name: string, personality: PersonalityType) => {
+    const colorwayMap = {
+      zen: 'zen-default',
+      spark: 'spark-default',
+      cosmo: 'cosmo-default',
+    };
+
+    await updateCompanion({
+      name,
+      personalityType: personality,
+      colorway: colorwayMap[personality],
+    });
+
+    toast({
+      title: `Welcome, ${name}!`,
+      description: `Your ${personality} companion is ready to help you.`,
+    });
+  };
 
   // Wake word detection - triggers voice input hands-free
   const { isListening: isWakeWordListening } = useWakeWord({
@@ -375,6 +398,14 @@ const Index = () => {
 
         {/* Runway Review Modal */}
         {showRunwayReview && <RunwayReview onClose={() => setShowRunwayReview(false)} />}
+        
+        {/* Companion Onboarding Modal */}
+        {!isCompanionLoading && needsOnboarding && (
+          <CompanionOnboarding 
+            open={needsOnboarding} 
+            onComplete={handleCompanionComplete}
+          />
+        )}
       </div>
     </SidebarProvider>
   );

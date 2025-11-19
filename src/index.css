@@ -43,6 +43,7 @@ All colors MUST be HSL.
     --radius: 1rem;
 
     /* Companion Core - 3-Layer Orb System */
+    /* Base idle state - adapts to personality */
     /* Layer 1: Inner Core (solid) */
     --orb-core-idle: 25 35% 88%; /* warm taupe-cream */
     --orb-core-listening: 39 60% 75%; /* warm amber gold */
@@ -60,6 +61,21 @@ All colors MUST be HSL.
     --orb-halo-listening: 39 75% 60%; /* golden halo */
     --orb-halo-thinking: 250 45% 65%; /* indigo halo */
     --orb-halo-speaking: 18 55% 65%; /* peach halo */
+    
+    /* Personality: Zen (calm blues) */
+    --orb-zen-core: 200 60% 75%; /* soft blue */
+    --orb-zen-glow: 200 65% 65%; /* deeper blue */
+    --orb-zen-halo: 200 70% 60%; /* blue halo */
+    
+    /* Personality: Spark (energetic golds) */
+    --orb-spark-core: 39 70% 75%; /* warm gold */
+    --orb-spark-glow: 39 75% 65%; /* rich gold */
+    --orb-spark-halo: 39 80% 60%; /* golden halo */
+    
+    /* Personality: Cosmo (mystical purples) */
+    --orb-cosmo-core: 270 50% 75%; /* soft purple */
+    --orb-cosmo-glow: 270 55% 65%; /* deeper purple */
+    --orb-cosmo-halo: 270 60% 60%; /* purple halo */
     
     /* Legacy support */
     --orb-orbit: 0 0% 11%;
