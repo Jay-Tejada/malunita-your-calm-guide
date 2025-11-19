@@ -4,7 +4,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Loader2, TrendingUp, Clock, MessageSquare, Mic } from "lucide-react";
+import { Loader2, TrendingUp, Clock, MessageSquare, Mic, Sparkles } from "lucide-react";
 import { NotificationPermission } from "@/components/NotificationPermission";
 import { GoalSetting } from "@/components/GoalSetting";
 import { CustomCategoryManager } from "@/components/CustomCategoryManager";
@@ -12,6 +12,7 @@ import { VoiceCommandsManager } from "@/components/VoiceCommandsManager";
 import { PersonalizationInsights } from "@/components/PersonalizationInsights";
 import { WakeWordTraining } from "@/components/WakeWordTraining";
 import { RitualPreferences } from "@/components/RitualPreferences";
+import { CompanionCustomization } from "@/components/CompanionCustomization";
 import { useState } from "react";
 
 
@@ -22,6 +23,7 @@ interface ProfileSettingsProps {
 export const ProfileSettings = ({ onClose }: ProfileSettingsProps) => {
   const { profile, isLoading, updateProfile } = useProfile();
   const [customWakeWord, setCustomWakeWord] = useState(profile?.custom_wake_word || 'hey malunita');
+  const [showCustomization, setShowCustomization] = useState(false);
 
   if (isLoading) {
     return (
@@ -81,6 +83,25 @@ export const ProfileSettings = ({ onClose }: ProfileSettingsProps) => {
 
             {/* Custom Categories */}
             <CustomCategoryManager />
+            
+            {/* Companion Cosmetics */}
+            <div>
+              <h3 className="text-lg font-medium mb-4 flex items-center gap-2">
+                <Sparkles className="w-5 h-5" />
+                Companion Cosmetics
+              </h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                Unlock colorways, auras, and particle trails through consistent engagement.
+              </p>
+              <Button 
+                onClick={() => setShowCustomization(true)}
+                variant="outline"
+                className="w-full"
+              >
+                <Sparkles className="w-4 h-4 mr-2" />
+                Customize Companion
+              </Button>
+            </div>
 
             {/* Voice Commands */}
             <VoiceCommandsManager />
@@ -250,6 +271,11 @@ export const ProfileSettings = ({ onClose }: ProfileSettingsProps) => {
           </div>
         )}
       </div>
+      
+      {/* Customization Drawer */}
+      {showCustomization && (
+        <CompanionCustomization onClose={() => setShowCustomization(false)} />
+      )}
     </div>
   );
 };
