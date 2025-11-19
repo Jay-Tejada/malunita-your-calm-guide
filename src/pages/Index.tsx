@@ -57,6 +57,8 @@ const Index = () => {
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [showTodaysFocus, setShowTodaysFocus] = useState(false);
   const [wakeWordDetected, setWakeWordDetected] = useState(0);
+  const [taskStreak, setTaskStreak] = useState(0);
+  const [lastTaskAddedTime, setLastTaskAddedTime] = useState<number | null>(null);
   const malunitaVoiceRef = useRef<MalunitaVoiceRef>(null);
   
   // Runway Review trigger settings (can be managed via settings in future)
@@ -134,6 +136,26 @@ const Index = () => {
     },
     enabled: !!user && !showSettings && !showRunwayReview,
   });
+
+  // Track task streak for companion behaviors
+  const handleTaskCreated = () => {
+    const now = Date.now();
+    
+    // Reset streak if more than 5 minutes since last task
+    if (lastTaskAddedTime && now - lastTaskAddedTime > 300000) {
+      setTaskStreak(1);
+    } else {
+      setTaskStreak(prev => prev + 1);
+    }
+    
+    setLastTaskAddedTime(now);
+    setShowTodaysFocus(true);
+    
+    // Reset streak after 10 seconds
+    setTimeout(() => {
+      setTaskStreak(0);
+    }, 10000);
+  };
 
   // Workflow Rituals - Morning, Midday, Evening, Weekly
   useWorkflowRituals();
@@ -335,7 +357,8 @@ const Index = () => {
                     onPlanningModeActivated={handlePlanningMode}
                     onReflectionModeActivated={handleReflectionMode}
                     onOrbReflectionTrigger={enableOrbReflectionTrigger ? () => setShowRunwayReview(true) : undefined}
-                    onTasksCreated={() => setShowTodaysFocus(true)}
+                    onTasksCreated={handleTaskCreated}
+                    taskStreak={taskStreak}
                   />
                 </div>
                 <p className="mt-6 text-sm text-muted-foreground text-center w-full transition-all duration-300 group-hover:text-foreground group-hover:scale-105">What's on your mind?</p>
@@ -376,7 +399,8 @@ const Index = () => {
                     onPlanningModeActivated={handlePlanningMode}
                     onReflectionModeActivated={handleReflectionMode}
                     onOrbReflectionTrigger={enableOrbReflectionTrigger ? () => setShowRunwayReview(true) : undefined}
-                    onTasksCreated={() => setShowTodaysFocus(true)}
+                    onTasksCreated={handleTaskCreated}
+                    taskStreak={taskStreak}
                   />
                 </div>
               </div>

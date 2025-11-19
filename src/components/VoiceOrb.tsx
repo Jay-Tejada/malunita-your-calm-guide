@@ -2,8 +2,9 @@ import { useState, useRef, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { CategoryDialog } from "./CategoryDialog";
-import { Check } from "lucide-react";
+import { Check, Sparkles } from "lucide-react";
 import { PersonalityType } from "@/hooks/useCompanionIdentity";
+import { useCompanionMotion } from "@/hooks/useCompanionMotion";
 
 interface VoiceOrbProps {
   onVoiceInput?: (text: string, category?: 'inbox' | 'home' | 'work' | 'gym' | 'projects') => void;
@@ -14,6 +15,9 @@ interface VoiceOrbProps {
   showSuccess?: boolean;
   stopWordDetected?: boolean;
   personality?: PersonalityType;
+  onTaskAdded?: () => void;
+  taskStreak?: number;
+  isFiestaMode?: boolean;
 }
 
 type OrbMode = 'capture' | 'reflection' | 'planning' | 'quiet';
@@ -26,7 +30,10 @@ export const VoiceOrb = ({
   isSaving = false, 
   showSuccess = false, 
   stopWordDetected = false,
-  personality = 'zen'
+  personality = 'zen',
+  onTaskAdded,
+  taskStreak = 0,
+  isFiestaMode = false,
 }: VoiceOrbProps) => {
   const [isListening, setIsListening] = useState(false);
   const [isResponding, setIsResponding] = useState(false);
@@ -77,6 +84,43 @@ export const VoiceOrb = ({
   const colors = getPersonalityColors();
 
   const { toast } = useToast();
+  
+  // Companion motion behavior
+  const motion = useCompanionMotion(personality, isListening || isResponding);
+
+  // Trigger behaviors based on state changes
+  useEffect(() => {
+    if (isListening) {
+      motion.triggerCurious();
+    } else if (isResponding || isSaving) {
+      // Let it stay in current state
+    } else {
+      motion.resetToIdle();
+    }
+  }, [isListening, isResponding, isSaving]);
+
+  // Success wiggle
+  useEffect(() => {
+    if (showSuccess) {
+      motion.triggerExcited();
+    }
+  }, [showSuccess]);
+
+  // Task streak sparkle
+  useEffect(() => {
+    if (taskStreak >= 3) {
+      motion.triggerExcited();
+    }
+  }, [taskStreak]);
+
+  // Fiesta mode
+  useEffect(() => {
+    if (isFiestaMode) {
+      motion.triggerFiesta();
+    } else if (motion.motionState === 'fiesta') {
+      motion.resetToIdle();
+    }
+  }, [isFiestaMode]);
 
   // Play confirmation sound when stop word is detected
   useEffect(() => {
@@ -556,12 +600,35 @@ export const VoiceOrb = ({
               </div>
             )}
             
-            {/* Main Orb with 3-Layer System */}
-            <div className={`relative ${!isListening && !isResponding ? 'animate-companion-float' : ''}`}>
+            {/* Main Orb with 3-Layer System + Motion Behaviors */}
+            <div 
+              className={`relative transition-all ${
+                motion.motionState === 'fiesta' ? 'animate-companion-fiesta' :
+                motion.motionState === 'excited' ? 'animate-companion-wiggle' :
+                motion.motionState === 'curious' ? 'animate-companion-curious' :
+                motion.motionState === 'sleepy' ? 'animate-companion-sleepy' :
+                motion.motionState === 'calm' ? '' :
+                !isListening && !isResponding ? 'animate-companion-float' : ''
+              }`}
+              style={{
+                '--tilt-angle': `${motion.tiltAngle}deg`,
+                transitionDuration: `${motion.config.transitionSpeed}ms`,
+              } as React.CSSProperties}
+            >
+              
+              {/* Task Streak Sparkles */}
+              {taskStreak >= 3 && (
+                <div className="absolute -inset-8 pointer-events-none">
+                  <Sparkles className="absolute top-0 left-0 w-4 h-4 text-primary animate-companion-sparkle" />
+                  <Sparkles className="absolute top-0 right-0 w-4 h-4 text-primary animate-companion-sparkle" style={{ animationDelay: '0.2s' }} />
+                  <Sparkles className="absolute bottom-0 left-1/2 w-4 h-4 text-primary animate-companion-sparkle" style={{ animationDelay: '0.4s' }} />
+                </div>
+              )}
               
               {/* Layer 3: Outer Halo (ambient diffusion) */}
               <div 
                 className={`absolute inset-0 w-32 h-32 -left-6 -top-6 rounded-full blur-2xl transition-all duration-1000 ${
+                  motion.motionState === 'calm' ? 'animate-companion-calm-glow' :
                   isListening ? 'animate-listening-pulse' : 
                   (isResponding || isSaving) ? 'animate-thinking-shimmer' : 
                   'animate-companion-breath'
@@ -654,6 +721,13 @@ export const VoiceOrb = ({
                     : `hsl(${colors.glow} / 0.3)`,
                 }}
               >
+                {/* Blink overlay */}
+                {motion.shouldBlink && !isListening && !isResponding && (
+                  <div 
+                    className="absolute inset-0 rounded-full bg-foreground/20 animate-companion-blink"
+                  />
+                )}
+                
                 {/* Center indicator */}
                 {isListening && !stopWordDetected && (
                   <div className="absolute inset-0 flex items-center justify-center">
