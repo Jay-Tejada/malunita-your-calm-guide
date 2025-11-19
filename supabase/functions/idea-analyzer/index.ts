@@ -60,77 +60,7 @@ serve(async (req) => {
       )
     }
 
-    const { text } = await req.json()
-    
-    // Input validation
-    if (!text || typeof text !== 'string') {
-      return new Response(
-        JSON.stringify({ error: 'Invalid text data' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
-    }
 
-    if (text.length > MAX_TEXT_LENGTH) {
-      return new Response(
-        JSON.stringify({ error: 'Text too long. Maximum 5000 characters.' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
-    }
-
-    console.log('Analyzing ideas for user:', userId)
-
-    const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
-    if (!openAIApiKey) {
-      throw new Error('OpenAI API key not configured');
-    }
-
-    const systemPrompt = `You are an expert thought analyzer for busy professionals. Your job is to deeply analyze stream-of-consciousness input and extract structured insights.
-
-Analyze the user's input and return a JSON object with:
-- summary: A clean 2-3 sentence summary of what they said
-- topics: Array of main topics/themes mentioned (max 5)
-- insights: Array of key insights or realizations (max 5)
-- decisions: Array of decisions made or needed (max 5)
-- ideas: Array of new ideas or thoughts (max 5)
-- questions: Array of questions they asked or need answered (max 5)
-- followups: Array of follow-up actions needed (max 5)
-- emotional_tone: String describing their emotional state (e.g., "stressed", "energized", "thoughtful", "overwhelmed", "calm")
-
-Be concise, insightful, and focus on what's actionable vs. what's just thinking out loud.`;
-
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${openAIApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gpt-4-turbo',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: text }
-        ],
-        response_format: { type: "json_object" },
-        temperature: 0.3,
-        max_tokens: 800,
-      }),
-    });
-
-    console.log('OpenAI API response status:', response.status);
-    
-    if (!response.ok) {
-      const errorText = await response.text()
-      console.error('OpenAI API error:', response.status, errorText)
-      return new Response(
-        JSON.stringify({ error: 'Analysis service temporarily unavailable', details: errorText }),
-        { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
-    }
-
-    const result = await response.json()
-    const analysis = JSON.parse(result.choices[0].message.content)
-    
-    console.log('Analysis successful:', analysis)
 
     return new Response(
       JSON.stringify({ analysis }),
