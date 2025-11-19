@@ -107,6 +107,9 @@ export function useWorkflowRituals() {
     // Send push notification with action buttons
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
+      const ritualPrefs = profile?.ritual_preferences || {};
+      const actionLabel = ritualPrefs.morning_ritual?.action_button || 'Start Planning';
+      
       try {
         await supabase.functions.invoke('send-push-notification', {
           body: {
@@ -117,7 +120,7 @@ export function useWorkflowRituals() {
             actions: [
               {
                 action: 'start-planning',
-                title: '📋 Start Planning',
+                title: `📋 ${actionLabel}`,
                 icon: '/icon-192.png'
               },
               {
@@ -188,6 +191,9 @@ export function useWorkflowRituals() {
     // Send push notification with action buttons
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
+      const ritualPrefs = profile?.ritual_preferences || {};
+      const actionLabel = ritualPrefs.midday_checkin?.action_button || 'View Tasks';
+      
       try {
         await supabase.functions.invoke('send-push-notification', {
           body: {
@@ -198,7 +204,7 @@ export function useWorkflowRituals() {
             actions: [
               {
                 action: 'view-tasks',
-                title: '✓ View Tasks',
+                title: `✓ ${actionLabel}`,
                 icon: '/icon-192.png'
               },
               {
@@ -276,6 +282,9 @@ export function useWorkflowRituals() {
     // Send push notification with action buttons
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
+      const ritualPrefs = profile?.ritual_preferences || {};
+      const actionLabel = ritualPrefs.evening_shutdown?.action_button || 'Review Day';
+      
       try {
         await supabase.functions.invoke('send-push-notification', {
           body: {
@@ -286,7 +295,7 @@ export function useWorkflowRituals() {
             actions: [
               {
                 action: 'review-day',
-                title: '📝 Review Day',
+                title: `📝 ${actionLabel}`,
                 icon: '/icon-192.png'
               },
               {
@@ -366,6 +375,9 @@ export function useWorkflowRituals() {
     // Send push notification with action buttons
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
+      const ritualPrefs = profile?.ritual_preferences || {};
+      const actionLabel = ritualPrefs.weekly_reset?.action_button || 'View Insights';
+      
       try {
         await supabase.functions.invoke('send-push-notification', {
           body: {
@@ -376,7 +388,7 @@ export function useWorkflowRituals() {
             actions: [
               {
                 action: 'view-insights',
-                title: '📊 View Insights',
+                title: `📊 ${actionLabel}`,
                 icon: '/icon-192.png'
               },
               {
@@ -439,23 +451,35 @@ export function useWorkflowRituals() {
 
     resetDailyRituals();
 
-    // Morning Ritual: 6am - 10am
-    if (hour >= 6 && hour < 10 && !ritualState.morningShown) {
+    // Get ritual preferences with defaults
+    const ritualPrefs = profile.ritual_preferences || {
+      morning_ritual: { enabled: true, start_hour: 6, end_hour: 10, action_button: "Start Planning" },
+      midday_checkin: { enabled: true, start_hour: 12, end_hour: 15, action_button: "View Tasks" },
+      evening_shutdown: { enabled: true, start_hour: 18, end_hour: 22, action_button: "Review Day" },
+      weekly_reset: { enabled: true, day: 0, hour: 19, action_button: "View Insights" }
+    };
+
+    // Morning Ritual
+    const morningPref = ritualPrefs.morning_ritual;
+    if (morningPref.enabled && hour >= morningPref.start_hour && hour < morningPref.end_hour && !ritualState.morningShown) {
       triggerMorningRitual();
     }
 
-    // Midday Check-in: 12pm - 3pm
-    if (hour >= 12 && hour < 15 && !ritualState.middayShown) {
+    // Midday Check-in
+    const middayPref = ritualPrefs.midday_checkin;
+    if (middayPref.enabled && hour >= middayPref.start_hour && hour < middayPref.end_hour && !ritualState.middayShown) {
       triggerMiddayCheckIn();
     }
 
-    // Evening Shutdown: 6pm - 10pm
-    if (hour >= 18 && hour < 22 && !ritualState.eveningShown) {
+    // Evening Shutdown
+    const eveningPref = ritualPrefs.evening_shutdown;
+    if (eveningPref.enabled && hour >= eveningPref.start_hour && hour < eveningPref.end_hour && !ritualState.eveningShown) {
       triggerEveningShutdown();
     }
 
-    // Weekly Reset: Sunday morning
-    if (dayOfWeek === 0 && hour >= 8 && hour < 12 && !ritualState.weeklyShown) {
+    // Weekly Reset
+    const weeklyPref = ritualPrefs.weekly_reset;
+    if (weeklyPref.enabled && dayOfWeek === weeklyPref.day && hour >= weeklyPref.hour && !ritualState.weeklyShown) {
       triggerWeeklyReset();
     }
   };

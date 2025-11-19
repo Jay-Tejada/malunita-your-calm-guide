@@ -254,6 +254,7 @@ export type Database = {
           preferences_summary: string | null
           preferred_gpt_model: string | null
           preferred_input_style: string | null
+          ritual_preferences: Json | null
           total_tasks_logged: number | null
           updated_at: string
           uses_names: boolean | null
@@ -282,6 +283,7 @@ export type Database = {
           preferences_summary?: string | null
           preferred_gpt_model?: string | null
           preferred_input_style?: string | null
+          ritual_preferences?: Json | null
           total_tasks_logged?: number | null
           updated_at?: string
           uses_names?: boolean | null
@@ -310,6 +312,7 @@ export type Database = {
           preferences_summary?: string | null
           preferred_gpt_model?: string | null
           preferred_input_style?: string | null
+          ritual_preferences?: Json | null
           total_tasks_logged?: number | null
           updated_at?: string
           uses_names?: boolean | null
