@@ -900,42 +900,6 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
               console.error('❌ Split tasks error:', splitError);
             }
 
-            const taskTexts = splitData?.tasks || [transcribed];
-            console.log('✅ Split into', taskTexts.length, 'item(s)');
-
-            // Step 3: Extract tasks
-            console.log('🔍 STEP 3: Extracting tasks...');
-            const { data: extractData, error: extractError } = await supabase.functions.invoke('extract-tasks', {
-              body: { text: transcribed }
-            });
-
-            if (extractError) {
-              console.error('❌ Extract tasks error:', extractError);
-            }
-
-            const extractedTasks = extractData?.tasks || [];
-            console.log('✅ Extracted', extractedTasks.length, 'task(s)');
-
-            // Step 4: Deep idea analysis using GPT-4-turbo
-            console.log('🧠 STEP 4: Idea analysis (GPT-4)...');
-            const { data: ideaData, error: ideaError } = await supabase.functions.invoke('idea-analyzer', {
-              body: { text: transcribed }
-            });
-
-            if (ideaError) {
-              console.error('❌ Idea analyzer error:', ideaError);
-            }
-
-            const ideaAnalysis = ideaData?.analysis || {};
-            console.log('💡 Idea analysis:', ideaAnalysis);
-
-            // Step 5: Context mapping
-            console.log('🗺️ STEP 5: Context mapping...');
-            const contextMap = contextMapper(extractedTasks, ideaAnalysis);
-            console.log('📍 Context map:', contextMap);
-
-            // Step 6: Priority scoring
-            console.log('⭐ STEP 6: Priority scoring...');
             const prioritizedTasks = priorityScorer(extractedTasks, ideaAnalysis);
             console.log('🎯 Prioritized tasks:', prioritizedTasks);
 
