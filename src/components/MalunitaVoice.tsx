@@ -40,13 +40,21 @@ interface MalunitaVoiceProps {
   onReflectionModeActivated?: () => void;
   onOrbReflectionTrigger?: () => void;
   onTasksCreated?: () => void;
+  taskStreak?: number;
 }
 
 export interface MalunitaVoiceRef {
   startRecording: () => void;
 }
 
-export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({ onSaveNote, onPlanningModeActivated, onReflectionModeActivated, onOrbReflectionTrigger, onTasksCreated }, ref) => {
+export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({ 
+  onSaveNote, 
+  onPlanningModeActivated, 
+  onReflectionModeActivated, 
+  onOrbReflectionTrigger, 
+  onTasksCreated,
+  taskStreak = 0,
+}, ref) => {
   const [isListening, setIsListening] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -1276,6 +1284,7 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
           showSuccess={showSuccess}
           stopWordDetected={stopWordDetected}
           personality={companion?.personalityType || 'zen'}
+          taskStreak={taskStreak}
         />
 
         {/* Action buttons - Only show on desktop */}

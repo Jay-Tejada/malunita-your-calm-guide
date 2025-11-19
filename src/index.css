@@ -201,6 +201,77 @@ All colors MUST be HSL.
       opacity: 0;
     }
   }
+
+  /* Companion Behavior Animations */
+  @keyframes companion-blink {
+    0%, 100% { 
+      opacity: 1;
+      transform: scaleY(1);
+    }
+    50% { 
+      opacity: 0.3;
+      transform: scaleY(0.1);
+    }
+  }
+
+  @keyframes companion-wiggle {
+    0%, 100% { transform: rotate(0deg) scale(1); }
+    15% { transform: rotate(-4deg) scale(1.05); }
+    30% { transform: rotate(4deg) scale(1.08); }
+    45% { transform: rotate(-3deg) scale(1.05); }
+    60% { transform: rotate(3deg) scale(1.03); }
+    75% { transform: rotate(-1deg) scale(1.01); }
+  }
+
+  @keyframes companion-fiesta {
+    0%, 100% { transform: translateY(0) scale(1); }
+    10% { transform: translateY(-8px) scale(1.08) rotate(2deg); }
+    20% { transform: translateY(0) scale(1) rotate(0deg); }
+    30% { transform: translateY(-6px) scale(1.06) rotate(-2deg); }
+    40% { transform: translateY(0) scale(1) rotate(0deg); }
+    50% { transform: translateY(-10px) scale(1.1) rotate(3deg); }
+    60% { transform: translateY(0) scale(1) rotate(0deg); }
+    70% { transform: translateY(-4px) scale(1.04) rotate(-1deg); }
+    80% { transform: translateY(0) scale(1) rotate(0deg); }
+  }
+
+  @keyframes companion-calm-glow {
+    0%, 100% { 
+      opacity: 0.5;
+      filter: blur(16px);
+    }
+    50% { 
+      opacity: 0.8;
+      filter: blur(20px);
+    }
+  }
+
+  @keyframes companion-sleepy {
+    0%, 100% { 
+      opacity: 0.4;
+      transform: scale(0.95);
+    }
+    50% { 
+      opacity: 0.6;
+      transform: scale(0.97);
+    }
+  }
+
+  @keyframes companion-curious-tilt {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(var(--tilt-angle, 5deg)); }
+  }
+
+  @keyframes companion-sparkle {
+    0%, 100% { 
+      opacity: 0;
+      transform: scale(0.5) rotate(0deg);
+    }
+    50% { 
+      opacity: 1;
+      transform: scale(1.2) rotate(180deg);
+    }
+  }
   
   .animate-companion-breath {
     animation: companion-breath 3.5s ease-in-out infinite;
@@ -224,6 +295,34 @@ All colors MUST be HSL.
   
   .animate-tap-ripple {
     animation: tap-ripple 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+
+  .animate-companion-blink {
+    animation: companion-blink 0.8s ease-in-out;
+  }
+
+  .animate-companion-wiggle {
+    animation: companion-wiggle 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .animate-companion-fiesta {
+    animation: companion-fiesta 1s ease-in-out infinite;
+  }
+
+  .animate-companion-calm-glow {
+    animation: companion-calm-glow 4s ease-in-out infinite;
+  }
+
+  .animate-companion-sleepy {
+    animation: companion-sleepy 6s ease-in-out infinite;
+  }
+
+  .animate-companion-curious {
+    animation: companion-curious-tilt 0.3s ease-out forwards;
+  }
+
+  .animate-companion-sparkle {
+    animation: companion-sparkle 0.8s ease-in-out;
   }
   
   .animate-expand-in {
