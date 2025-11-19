@@ -13,6 +13,7 @@ import { VoiceOrb } from "@/components/VoiceOrb";
 import { contextMapper } from "@/lib/contextMapper";
 import { priorityScorer } from "@/lib/priorityScorer";
 import { agendaRouter } from "@/lib/agendaRouter";
+import { clarificationPrompter } from "@/lib/clarificationPrompter";
 
 interface Message {
   role: 'user' | 'assistant';
@@ -132,37 +133,7 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
     };
   };
 
-  // Clarification Prompter: Generate questions for missing context
-  const clarificationPrompter = (tasks: any[], ideaAnalysis: any) => {
-    const questions: string[] = [];
-
-    // Check for tasks without timeframes
-    const noTimeframe = tasks.filter((t: any) => !t.suggested_timeframe || t.suggested_timeframe === 'someday');
-    if (noTimeframe.length > 0) {
-      questions.push(`When would you like to tackle "${noTimeframe[0].title}"? Today or later?`);
-    }
-
-    // Check for tasks without categories
-    const noCategory = tasks.filter((t: any) => !t.category && !t.custom_category_id);
-    if (noCategory.length > 0 && questions.length < 2) {
-      questions.push(`What area does "${noCategory[0].title}" belong to? Work or Personal?`);
-    }
-
-    // Check for vague decisions
-    if (ideaAnalysis?.decisions && ideaAnalysis.decisions.length > 0) {
-      const firstDecision = ideaAnalysis.decisions[0];
-      if (firstDecision && questions.length < 2) {
-        questions.push(`About "${firstDecision}" - have you decided yet?`);
-      }
-    }
-
-    // Check for unanswered questions
-    if (ideaAnalysis?.questions && ideaAnalysis.questions.length > 0 && questions.length < 2) {
-      questions.push(`I noticed you asked: "${ideaAnalysis.questions[0]}" - want to explore this?`);
-    }
-
-    return questions.slice(0, 2); // Max 2 clarification questions
-  };
+  // Legacy clarification function removed - now using lib/clarificationPrompter.ts
 
   // Summary Composer: Create notebook-style summary
   const summaryComposer = (
@@ -171,7 +142,7 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
     contextMap: any,
     prioritizedTasks: any[],
     routedTasks: { today: string[]; tomorrow: string[]; this_week: string[]; upcoming: string[]; someday: string[] },
-    clarifications: string[]
+    clarifications: { questions: Array<{ task_id: string; question: string }> }
   ) => {
     const mustTasks = prioritizedTasks.filter((t: any) => t.priority === 'MUST');
     const tinyTasks = prioritizedTasks.filter((t: any) => t.taskType === 'TINY_TASK');
@@ -208,7 +179,7 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
         summary.nextActions.push(`Start with: ${firstTodayTask.title}`);
       }
     }
-    if (clarifications.length > 0) {
+    if (clarifications.questions.length > 0) {
       summary.nextActions.push('Answer clarification questions to organize better');
     }
     if (ideaAnalysis?.followups && ideaAnalysis.followups.length > 0) {
@@ -890,7 +861,7 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
 
             // Step 8: Clarification prompting
             console.log('❓ STEP 8: Clarification prompting...');
-            const clarifications = clarificationPrompter(extractedTasks, ideaAnalysis);
+            const clarifications = clarificationPrompter(extractedTasks, contextMap, prioritizedTasks, ideaAnalysis);
             console.log('💬 Clarifications needed:', clarifications);
 
             // Step 9: Summary composition
