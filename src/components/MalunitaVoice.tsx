@@ -10,6 +10,7 @@ import { TaskConfirmation } from "@/components/TaskConfirmation";
 import { ConversationalTaskFlow } from "@/components/ConversationalTaskFlow";
 import { TaskFeedbackDialog } from "@/components/TaskFeedbackDialog";
 import { VoiceOrb } from "@/components/VoiceOrb";
+import { contextMapper } from "@/lib/contextMapper";
 
 interface Message {
   role: 'user' | 'assistant';
