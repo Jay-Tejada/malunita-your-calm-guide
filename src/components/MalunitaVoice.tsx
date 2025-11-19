@@ -12,6 +12,7 @@ import { TaskFeedbackDialog } from "@/components/TaskFeedbackDialog";
 import { VoiceOrb } from "@/components/VoiceOrb";
 import { contextMapper } from "@/lib/contextMapper";
 import { priorityScorer } from "@/lib/priorityScorer";
+import { agendaRouter } from "@/lib/agendaRouter";
 
 interface Message {
   role: 'user' | 'assistant';
@@ -131,44 +132,6 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
     };
   };
 
-  // Agenda Router: Auto-assign to Today/Tomorrow/Week/Upcoming/Someday
-  const agendaRouter = (tasks: any[], ideaAnalysis: any) => {
-    return tasks.map((task: any) => {
-      let agenda = 'Upcoming';
-
-      // Route based on timeframe
-      if (task.suggested_timeframe === 'today') {
-        agenda = 'Today';
-      } else if (task.suggested_timeframe === 'tomorrow') {
-        agenda = 'Tomorrow';
-      } else if (task.suggested_timeframe === 'this week') {
-        agenda = 'This Week';
-      } else if (task.suggested_timeframe === 'someday') {
-        agenda = 'Someday';
-      }
-
-      // Check for time-based keywords
-      const title = task.title.toLowerCase();
-      if (title.includes('tonight') || title.includes('this evening')) {
-        agenda = 'Today';
-      } else if (title.includes('tomorrow') || title.includes('next day')) {
-        agenda = 'Tomorrow';
-      } else if (title.includes('next week') || title.includes('this week')) {
-        agenda = 'This Week';
-      }
-
-      // Boost MUST items to Today if not already scheduled
-      if (task.priority === 'MUST' && agenda === 'Upcoming') {
-        agenda = 'Today';
-      }
-
-      return {
-        ...task,
-        agenda
-      };
-    });
-  };
-
   // Clarification Prompter: Generate questions for missing context
   const clarificationPrompter = (tasks: any[], ideaAnalysis: any) => {
     const questions: string[] = [];
@@ -207,7 +170,7 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
     extractedTasks: any[],
     contextMap: any,
     prioritizedTasks: any[],
-    routedTasks: any[],
+    routedTasks: { today: string[]; tomorrow: string[]; this_week: string[]; upcoming: string[]; someday: string[] },
     clarifications: string[]
   ) => {
     const mustTasks = prioritizedTasks.filter((t: any) => t.priority === 'MUST');
@@ -238,9 +201,12 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
     }
 
     // Generate next actions
-    const todayTasks = routedTasks.filter((t: any) => t.agenda === 'Today');
-    if (todayTasks.length > 0) {
-      summary.nextActions.push(`Start with: ${todayTasks[0].title}`);
+    if (routedTasks.today.length > 0) {
+      const firstTodayTaskId = routedTasks.today[0];
+      const firstTodayTask = extractedTasks.find((t: any) => t.id === firstTodayTaskId);
+      if (firstTodayTask) {
+        summary.nextActions.push(`Start with: ${firstTodayTask.title}`);
+      }
     }
     if (clarifications.length > 0) {
       summary.nextActions.push('Answer clarification questions to organize better');
@@ -919,12 +885,12 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
 
             // Step 7: Agenda routing
             console.log('📅 STEP 7: Agenda routing...');
-            const routedTasks = agendaRouter(prioritizedTasks, ideaAnalysis);
+            const routedTasks = agendaRouter(extractedTasks, contextMap, prioritizedTasks);
             console.log('🗓️ Routed tasks:', routedTasks);
 
             // Step 8: Clarification prompting
             console.log('❓ STEP 8: Clarification prompting...');
-            const clarifications = clarificationPrompter(routedTasks, ideaAnalysis);
+            const clarifications = clarificationPrompter(extractedTasks, ideaAnalysis);
             console.log('💬 Clarifications needed:', clarifications);
 
             // Step 9: Summary composition
@@ -990,11 +956,11 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
               nextActions: structuredSummary.nextActions,
               clarifications,
               agenda: {
-                today: routedTasks.filter((t: any) => t.agenda === 'Today').length,
-                tomorrow: routedTasks.filter((t: any) => t.agenda === 'Tomorrow').length,
-                thisWeek: routedTasks.filter((t: any) => t.agenda === 'This Week').length,
-                upcoming: routedTasks.filter((t: any) => t.agenda === 'Upcoming').length,
-                someday: routedTasks.filter((t: any) => t.agenda === 'Someday').length,
+                today: routedTasks.today.length,
+                tomorrow: routedTasks.tomorrow.length,
+                thisWeek: routedTasks.this_week.length,
+                upcoming: routedTasks.upcoming.length,
+                someday: routedTasks.someday.length,
               }
             };
 
