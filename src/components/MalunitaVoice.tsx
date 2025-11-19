@@ -71,74 +71,219 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
   const audioEnabled = profile?.wants_voice_playback ?? true;
   const isMobile = useIsMobile();
 
-  // Helper functions for idea analysis
-  const createSummary = (text: string, tasks: any[]): string => {
-    if (tasks.length === 0) {
-      return `Free-form thought: ${text.substring(0, 100)}...`;
-    }
-    
-    const taskTitles = tasks.map((t: any) => `• ${t.title}`).join('\n');
-    return `Detected ${tasks.length} task(s):\n${taskTitles}`;
-  };
+  // ============================================================
+  // THOUGHT ENGINE 2.0: Helper Functions
+  // ============================================================
 
-  const extractInsights = (text: string, tasks: any[]): string[] => {
-    const insights: string[] = [];
-    
-    // Check for decisions
-    if (text.toLowerCase().includes('decide') || text.toLowerCase().includes('decision')) {
-      insights.push('Contains a decision point');
-    }
-    
-    // Check for questions
-    if (text.includes('?') || text.toLowerCase().includes('should i') || text.toLowerCase().includes('what if')) {
-      insights.push('Seeking clarification or guidance');
-    }
-    
-    // Check for urgency
-    if (text.toLowerCase().includes('urgent') || text.toLowerCase().includes('asap') || text.toLowerCase().includes('immediately')) {
-      insights.push('High urgency detected');
-    }
-    
-    // Check for follow-ups
-    if (text.toLowerCase().includes('follow up') || text.toLowerCase().includes('check in')) {
-      insights.push('Requires follow-up');
+  // Context Mapper: Infer projects, categories, people, deadlines
+  const contextMapper = (extractedTasks: any[], ideaAnalysis: any) => {
+    const context: any = {
+      inferredProjects: [],
+      categories: new Set(),
+      relatedPeople: [],
+      deadlines: [],
+      impliedContext: [],
+      timeSensitivity: 'normal'
+    };
+
+    // Extract projects from topics
+    if (ideaAnalysis?.topics) {
+      context.inferredProjects = ideaAnalysis.topics.filter((t: string) => 
+        !['Work', 'Personal', 'Health'].includes(t)
+      );
     }
 
-    return insights;
-  };
-
-  const extractTopics = (text: string): string[] => {
-    const topics: string[] = [];
-    const lowerText = text.toLowerCase();
-    
-    if (lowerText.includes('work') || lowerText.includes('office') || lowerText.includes('meeting')) {
-      topics.push('Work');
-    }
-    if (lowerText.includes('home') || lowerText.includes('house') || lowerText.includes('family')) {
-      topics.push('Personal');
-    }
-    if (lowerText.includes('project')) {
-      topics.push('Project');
-    }
-    if (lowerText.includes('health') || lowerText.includes('gym') || lowerText.includes('exercise')) {
-      topics.push('Health');
-    }
-    
-    return topics;
-  };
-
-  const extractDeadlines = (tasks: any[]): string[] => {
-    const deadlines: string[] = [];
-    
-    tasks.forEach((task: any) => {
+    // Map tasks to categories
+    extractedTasks.forEach((task: any) => {
+      if (task.category) context.categories.add(task.category);
+      if (task.custom_category_id) context.categories.add('custom');
+      
+      // Extract deadlines
       if (task.reminder_time) {
-        deadlines.push(`${task.title}: ${new Date(task.reminder_time).toLocaleString()}`);
-      } else if (task.suggested_timeframe && task.suggested_timeframe !== 'someday') {
-        deadlines.push(`${task.title}: ${task.suggested_timeframe}`);
+        context.deadlines.push({
+          task: task.title,
+          when: new Date(task.reminder_time).toLocaleString()
+        });
+      }
+      
+      // Check if has person name
+      if (task.has_person_name) {
+        const words = task.title.split(' ');
+        const capitalizedWords = words.filter((w: string) => /^[A-Z]/.test(w));
+        context.relatedPeople.push(...capitalizedWords);
       }
     });
-    
-    return deadlines;
+
+    // Detect time sensitivity from emotional tone
+    if (ideaAnalysis?.emotional_tone) {
+      if (['stressed', 'overwhelmed', 'urgent'].includes(ideaAnalysis.emotional_tone.toLowerCase())) {
+        context.timeSensitivity = 'high';
+      } else if (['calm', 'thoughtful'].includes(ideaAnalysis.emotional_tone.toLowerCase())) {
+        context.timeSensitivity = 'low';
+      }
+    }
+
+    return {
+      ...context,
+      categories: Array.from(context.categories)
+    };
+  };
+
+  // Priority Scorer: Mark tasks as MUST/SHOULD/COULD/BIG/TINY
+  const priorityScorer = (extractedTasks: any[], ideaAnalysis: any) => {
+    return extractedTasks.map((task: any) => {
+      let priority = 'SHOULD';
+      let taskType = 'NORMAL';
+
+      // Check task size
+      const wordCount = task.title.split(' ').length;
+      if (wordCount <= 5 && !task.has_reminder && task.suggested_timeframe === 'today') {
+        taskType = 'TINY_TASK';
+      } else if (wordCount > 10 || task.title.toLowerCase().includes('project') || task.title.toLowerCase().includes('plan')) {
+        taskType = 'BIG_TASK';
+      }
+
+      // Check priority based on timeframe and urgency
+      if (task.suggested_timeframe === 'today' || task.has_reminder) {
+        priority = 'MUST';
+      } else if (task.suggested_timeframe === 'this week') {
+        priority = 'SHOULD';
+      } else if (task.suggested_timeframe === 'someday') {
+        priority = 'COULD';
+      }
+
+      // Boost priority if emotional tone is urgent
+      if (ideaAnalysis?.emotional_tone && ['stressed', 'overwhelmed'].includes(ideaAnalysis.emotional_tone.toLowerCase())) {
+        if (priority === 'SHOULD') priority = 'MUST';
+      }
+
+      return {
+        ...task,
+        priority,
+        taskType
+      };
+    });
+  };
+
+  // Agenda Router: Auto-assign to Today/Tomorrow/Week/Upcoming/Someday
+  const agendaRouter = (tasks: any[], ideaAnalysis: any) => {
+    return tasks.map((task: any) => {
+      let agenda = 'Upcoming';
+
+      // Route based on timeframe
+      if (task.suggested_timeframe === 'today') {
+        agenda = 'Today';
+      } else if (task.suggested_timeframe === 'tomorrow') {
+        agenda = 'Tomorrow';
+      } else if (task.suggested_timeframe === 'this week') {
+        agenda = 'This Week';
+      } else if (task.suggested_timeframe === 'someday') {
+        agenda = 'Someday';
+      }
+
+      // Check for time-based keywords
+      const title = task.title.toLowerCase();
+      if (title.includes('tonight') || title.includes('this evening')) {
+        agenda = 'Today';
+      } else if (title.includes('tomorrow') || title.includes('next day')) {
+        agenda = 'Tomorrow';
+      } else if (title.includes('next week') || title.includes('this week')) {
+        agenda = 'This Week';
+      }
+
+      // Boost MUST items to Today if not already scheduled
+      if (task.priority === 'MUST' && agenda === 'Upcoming') {
+        agenda = 'Today';
+      }
+
+      return {
+        ...task,
+        agenda
+      };
+    });
+  };
+
+  // Clarification Prompter: Generate questions for missing context
+  const clarificationPrompter = (tasks: any[], ideaAnalysis: any) => {
+    const questions: string[] = [];
+
+    // Check for tasks without timeframes
+    const noTimeframe = tasks.filter((t: any) => !t.suggested_timeframe || t.suggested_timeframe === 'someday');
+    if (noTimeframe.length > 0) {
+      questions.push(`When would you like to tackle "${noTimeframe[0].title}"? Today or later?`);
+    }
+
+    // Check for tasks without categories
+    const noCategory = tasks.filter((t: any) => !t.category && !t.custom_category_id);
+    if (noCategory.length > 0 && questions.length < 2) {
+      questions.push(`What area does "${noCategory[0].title}" belong to? Work or Personal?`);
+    }
+
+    // Check for vague decisions
+    if (ideaAnalysis?.decisions && ideaAnalysis.decisions.length > 0) {
+      const firstDecision = ideaAnalysis.decisions[0];
+      if (firstDecision && questions.length < 2) {
+        questions.push(`About "${firstDecision}" - have you decided yet?`);
+      }
+    }
+
+    // Check for unanswered questions
+    if (ideaAnalysis?.questions && ideaAnalysis.questions.length > 0 && questions.length < 2) {
+      questions.push(`I noticed you asked: "${ideaAnalysis.questions[0]}" - want to explore this?`);
+    }
+
+    return questions.slice(0, 2); // Max 2 clarification questions
+  };
+
+  // Summary Composer: Create notebook-style summary
+  const summaryComposer = (
+    ideaAnalysis: any,
+    extractedTasks: any[],
+    contextMap: any,
+    prioritizedTasks: any[],
+    routedTasks: any[],
+    clarifications: string[]
+  ) => {
+    const mustTasks = prioritizedTasks.filter((t: any) => t.priority === 'MUST');
+    const tinyTasks = prioritizedTasks.filter((t: any) => t.taskType === 'TINY_TASK');
+    const bigTasks = prioritizedTasks.filter((t: any) => t.taskType === 'BIG_TASK');
+
+    const summary = {
+      insight: ideaAnalysis?.summary || 'Capturing your thoughts...',
+      extractedTasks: extractedTasks.map((t: any) => t.title),
+      decisions: ideaAnalysis?.decisions || [],
+      recommendations: [],
+      suggestedProjects: contextMap.inferredProjects || [],
+      nextActions: []
+    };
+
+    // Generate recommendations
+    if (mustTasks.length > 0) {
+      summary.recommendations.push(`Focus on ${mustTasks.length} high-priority item${mustTasks.length > 1 ? 's' : ''} first`);
+    }
+    if (tinyTasks.length >= 3) {
+      summary.recommendations.push(`Bundle ${tinyTasks.length} tiny tasks into a Fiesta session`);
+    }
+    if (bigTasks.length > 0) {
+      summary.recommendations.push(`Break down "${bigTasks[0].title}" into smaller steps`);
+    }
+    if (contextMap.timeSensitivity === 'high') {
+      summary.recommendations.push('Take a breath - let\'s tackle this step by step');
+    }
+
+    // Generate next actions
+    const todayTasks = routedTasks.filter((t: any) => t.agenda === 'Today');
+    if (todayTasks.length > 0) {
+      summary.nextActions.push(`Start with: ${todayTasks[0].title}`);
+    }
+    if (clarifications.length > 0) {
+      summary.nextActions.push('Answer clarification questions to organize better');
+    }
+    if (ideaAnalysis?.followups && ideaAnalysis.followups.length > 0) {
+      summary.nextActions.push(ideaAnalysis.followups[0]);
+    }
+
+    return summary;
   };
   
   const handleVoiceTaskCapture = async (text: string, category?: 'inbox' | 'home' | 'work' | 'gym' | 'projects') => {
@@ -741,7 +886,11 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
             setTranscribedText(transcribed);
             console.log('📝 Transcribed text:', transcribed);
 
-            // Step 2: Split into multiple tasks if needed
+            // ===========================================================
+            // THOUGHT ENGINE 2.0 PIPELINE
+            // ===========================================================
+
+            // Step 2: Split into multiple tasks
             console.log('✂️ STEP 2: Splitting tasks...');
             const { data: splitData, error: splitError } = await supabase.functions.invoke('split-tasks', {
               body: { text: transcribed }
@@ -754,8 +903,8 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
             const taskTexts = splitData?.tasks || [transcribed];
             console.log('✅ Split into', taskTexts.length, 'item(s)');
 
-            // Step 3: Extract and analyze tasks
-            console.log('🔍 STEP 3: Extracting and analyzing tasks...');
+            // Step 3: Extract tasks
+            console.log('🔍 STEP 3: Extracting tasks...');
             const { data: extractData, error: extractError } = await supabase.functions.invoke('extract-tasks', {
               body: { text: transcribed }
             });
@@ -767,21 +916,53 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
             const extractedTasks = extractData?.tasks || [];
             console.log('✅ Extracted', extractedTasks.length, 'task(s)');
 
-            // Step 4: Create idea analysis and summary
-            console.log('🧠 STEP 4: Analyzing ideas...');
-            const analysis = {
-              summary: createSummary(transcribed, extractedTasks),
-              tasks: extractedTasks,
-              insights: extractInsights(transcribed, extractedTasks),
-              topics: extractTopics(transcribed),
-              deadlines: extractDeadlines(extractedTasks),
-              rawText: transcribed
-            };
+            // Step 4: Deep idea analysis using GPT-4-turbo
+            console.log('🧠 STEP 4: Idea analysis (GPT-4)...');
+            const { data: ideaData, error: ideaError } = await supabase.functions.invoke('idea-analyzer', {
+              body: { text: transcribed }
+            });
 
-            console.log('💡 Analysis:', analysis);
+            if (ideaError) {
+              console.error('❌ Idea analyzer error:', ideaError);
+            }
 
-            // Step 5: Get user profile for personalization
-            console.log('👤 STEP 5: Getting user profile...');
+            const ideaAnalysis = ideaData?.analysis || {};
+            console.log('💡 Idea analysis:', ideaAnalysis);
+
+            // Step 5: Context mapping
+            console.log('🗺️ STEP 5: Context mapping...');
+            const contextMap = contextMapper(extractedTasks, ideaAnalysis);
+            console.log('📍 Context map:', contextMap);
+
+            // Step 6: Priority scoring
+            console.log('⭐ STEP 6: Priority scoring...');
+            const prioritizedTasks = priorityScorer(extractedTasks, ideaAnalysis);
+            console.log('🎯 Prioritized tasks:', prioritizedTasks);
+
+            // Step 7: Agenda routing
+            console.log('📅 STEP 7: Agenda routing...');
+            const routedTasks = agendaRouter(prioritizedTasks, ideaAnalysis);
+            console.log('🗓️ Routed tasks:', routedTasks);
+
+            // Step 8: Clarification prompting
+            console.log('❓ STEP 8: Clarification prompting...');
+            const clarifications = clarificationPrompter(routedTasks, ideaAnalysis);
+            console.log('💬 Clarifications needed:', clarifications);
+
+            // Step 9: Summary composition
+            console.log('📝 STEP 9: Summary composition...');
+            const structuredSummary = summaryComposer(
+              ideaAnalysis,
+              extractedTasks,
+              contextMap,
+              prioritizedTasks,
+              routedTasks,
+              clarifications
+            );
+            console.log('📊 Structured summary:', structuredSummary);
+
+            // Step 10: Get user profile
+            console.log('👤 STEP 10: Getting user profile...');
             const { data: { user: currentUser } } = await supabase.auth.getUser();
             let userProfileData = null;
             
@@ -793,33 +974,58 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
                 .single();
               
               userProfileData = profileData;
-            }
 
-            // Save analysis summary to conversation history
-            if (currentUser && analysis.summary) {
+              // Save structured summary to conversation history
               await supabase.from('conversation_history').insert({
                 user_id: currentUser.id,
                 session_id: sessionId,
                 role: 'assistant_summary',
-                content: JSON.stringify(analysis),
+                content: JSON.stringify({
+                  ideaAnalysis,
+                  contextMap,
+                  structuredSummary,
+                  clarifications
+                }),
               });
             }
 
-            // Step 6: Send structured analysis to ChatGPT
-            console.log('🤖 STEP 6: Processing with ChatGPT...');
+            // Step 11: Send to chat-completion with FULL STRUCTURED CONTEXT
+            console.log('🤖 STEP 11: Chat completion with structured context...');
             
-            // Build messages array with conversation history and structured analysis
             const messages: Message[] = [
               ...conversationHistory,
               { role: 'user', content: transcribed }
             ];
+
+            const fullAnalysis = {
+              summary: structuredSummary.insight,
+              tasks: routedTasks,
+              insights: ideaAnalysis.insights || [],
+              topics: ideaAnalysis.topics || [],
+              decisions: ideaAnalysis.decisions || [],
+              ideas: ideaAnalysis.ideas || [],
+              questions: ideaAnalysis.questions || [],
+              followups: ideaAnalysis.followups || [],
+              emotionalTone: ideaAnalysis.emotional_tone,
+              contextMap,
+              recommendations: structuredSummary.recommendations,
+              nextActions: structuredSummary.nextActions,
+              clarifications,
+              agenda: {
+                today: routedTasks.filter((t: any) => t.agenda === 'Today').length,
+                tomorrow: routedTasks.filter((t: any) => t.agenda === 'Tomorrow').length,
+                thisWeek: routedTasks.filter((t: any) => t.agenda === 'This Week').length,
+                upcoming: routedTasks.filter((t: any) => t.agenda === 'Upcoming').length,
+                someday: routedTasks.filter((t: any) => t.agenda === 'Someday').length,
+              }
+            };
 
             const { data: chatData, error: chatError } = await supabase.functions.invoke('chat-completion', {
               body: { 
                 messages,
                 userProfile: userProfileData,
                 currentMood,
-                analysis // Pass structured analysis
+                analysis: fullAnalysis
               }
             });
 
