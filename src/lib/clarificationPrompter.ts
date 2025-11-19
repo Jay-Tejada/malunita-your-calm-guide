@@ -36,10 +36,13 @@ interface TaskScore {
 interface ClarificationQuestion {
   task_id: string;
   question: string;
+  type: 'deadline' | 'category' | 'project' | 'priority' | 'agenda';
 }
 
 interface ClarificationOutput {
   questions: ClarificationQuestion[];
+  needs_clarification: boolean;
+  total_questions: number;
 }
 
 const MAX_QUESTIONS = 3; // Limit to avoid overwhelming users
@@ -119,6 +122,7 @@ export function clarificationPrompter(
       questions.push({
         task_id: task.id,
         question: generateDeadlineQuestion(task),
+        type: 'deadline',
       });
     }
   }
@@ -133,6 +137,7 @@ export function clarificationPrompter(
       questions.push({
         task_id: task.id,
         question: generateCategoryQuestion(task),
+        type: 'category',
       });
     }
   }
@@ -155,6 +160,7 @@ export function clarificationPrompter(
           questions.push({
             task_id: task.id,
             question: generateProjectQuestion(task, project.name),
+            type: 'project',
           });
         }
       }
@@ -176,6 +182,7 @@ export function clarificationPrompter(
         questions.push({
           task_id: task.id,
           question: generatePriorityQuestion(task),
+          type: 'priority',
         });
       }
     }
@@ -193,6 +200,7 @@ export function clarificationPrompter(
         questions.push({
           task_id: task.id,
           question: generateAgendaQuestion(task),
+          type: 'agenda',
         });
         break; // Only ask once when overwhelmed
       }
@@ -201,5 +209,7 @@ export function clarificationPrompter(
   
   return {
     questions: questions.slice(0, MAX_QUESTIONS),
+    needs_clarification: questions.length > 0,
+    total_questions: questions.length,
   };
 }

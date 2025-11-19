@@ -14,6 +14,7 @@ import { contextMapper } from "@/lib/contextMapper";
 import { priorityScorer } from "@/lib/priorityScorer";
 import { agendaRouter } from "@/lib/agendaRouter";
 import { clarificationPrompter } from "@/lib/clarificationPrompter";
+import { summaryComposer } from "@/lib/summaryComposer";
 
 interface Message {
   role: 'user' | 'assistant';
@@ -76,118 +77,8 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
   const isMobile = useIsMobile();
 
   // ============================================================
-  // THOUGHT ENGINE 2.0: Helper Functions
+  // THOUGHT ENGINE 2.0: All helper functions imported from src/lib/
   // ============================================================
-
-  // Context Mapper: Infer projects, categories, people, deadlines
-  const contextMapper = (extractedTasks: any[], ideaAnalysis: any) => {
-    const context: any = {
-      inferredProjects: [],
-      categories: new Set(),
-      relatedPeople: [],
-      deadlines: [],
-      impliedContext: [],
-      timeSensitivity: 'normal'
-    };
-
-    // Extract projects from topics
-    if (ideaAnalysis?.topics) {
-      context.inferredProjects = ideaAnalysis.topics.filter((t: string) => 
-        !['Work', 'Personal', 'Health'].includes(t)
-      );
-    }
-
-    // Map tasks to categories
-    extractedTasks.forEach((task: any) => {
-      if (task.category) context.categories.add(task.category);
-      if (task.custom_category_id) context.categories.add('custom');
-      
-      // Extract deadlines
-      if (task.reminder_time) {
-        context.deadlines.push({
-          task: task.title,
-          when: new Date(task.reminder_time).toLocaleString()
-        });
-      }
-      
-      // Check if has person name
-      if (task.has_person_name) {
-        const words = task.title.split(' ');
-        const capitalizedWords = words.filter((w: string) => /^[A-Z]/.test(w));
-        context.relatedPeople.push(...capitalizedWords);
-      }
-    });
-
-    // Detect time sensitivity from emotional tone
-    if (ideaAnalysis?.emotional_tone) {
-      if (['stressed', 'overwhelmed', 'urgent'].includes(ideaAnalysis.emotional_tone.toLowerCase())) {
-        context.timeSensitivity = 'high';
-      } else if (['calm', 'thoughtful'].includes(ideaAnalysis.emotional_tone.toLowerCase())) {
-        context.timeSensitivity = 'low';
-      }
-    }
-
-    return {
-      ...context,
-      categories: Array.from(context.categories)
-    };
-  };
-
-  // Legacy clarification function removed - now using lib/clarificationPrompter.ts
-
-  // Summary Composer: Create notebook-style summary
-  const summaryComposer = (
-    ideaAnalysis: any,
-    extractedTasks: any[],
-    contextMap: any,
-    prioritizedTasks: any[],
-    routedTasks: { today: string[]; tomorrow: string[]; this_week: string[]; upcoming: string[]; someday: string[] },
-    clarifications: { questions: Array<{ task_id: string; question: string }> }
-  ) => {
-    const mustTasks = prioritizedTasks.filter((t: any) => t.priority === 'MUST');
-    const tinyTasks = prioritizedTasks.filter((t: any) => t.taskType === 'TINY_TASK');
-    const bigTasks = prioritizedTasks.filter((t: any) => t.taskType === 'BIG_TASK');
-
-    const summary = {
-      insight: ideaAnalysis?.summary || 'Capturing your thoughts...',
-      extractedTasks: extractedTasks.map((t: any) => t.title),
-      decisions: ideaAnalysis?.decisions || [],
-      recommendations: [],
-      suggestedProjects: contextMap.inferredProjects || [],
-      nextActions: []
-    };
-
-    // Generate recommendations
-    if (mustTasks.length > 0) {
-      summary.recommendations.push(`Focus on ${mustTasks.length} high-priority item${mustTasks.length > 1 ? 's' : ''} first`);
-    }
-    if (tinyTasks.length >= 3) {
-      summary.recommendations.push(`Bundle ${tinyTasks.length} tiny tasks into a Fiesta session`);
-    }
-    if (bigTasks.length > 0) {
-      summary.recommendations.push(`Break down "${bigTasks[0].title}" into smaller steps`);
-    }
-    if (contextMap.timeSensitivity === 'high') {
-      summary.recommendations.push('Take a breath - let\'s tackle this step by step');
-    }
-
-    // Generate next actions
-    if (routedTasks.today.length > 0) {
-      const firstTodayTaskId = routedTasks.today[0];
-      const firstTodayTask = extractedTasks.find((t: any) => t.id === firstTodayTaskId);
-      if (firstTodayTask) {
-        summary.nextActions.push(`Start with: ${firstTodayTask.title}`);
-      }
-    }
-    if (clarifications.questions.length > 0) {
-      summary.nextActions.push('Answer clarification questions to organize better');
-    }
-    if (ideaAnalysis?.followups && ideaAnalysis.followups.length > 0) {
-      summary.nextActions.push(ideaAnalysis.followups[0]);
-    }
-
-    return summary;
-  };
   
   const handleVoiceTaskCapture = async (text: string, category?: 'inbox' | 'home' | 'work' | 'gym' | 'projects') => {
     try {
@@ -866,15 +757,16 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
 
             // Step 9: Summary composition
             console.log('📝 STEP 9: Summary composition...');
-            const structuredSummary = summaryComposer(
-              ideaAnalysis,
+            const notebookSummary = summaryComposer(
               extractedTasks,
+              ideaAnalysis,
               contextMap,
               prioritizedTasks,
               routedTasks,
               clarifications
             );
-            console.log('📊 Structured summary:', structuredSummary);
+            console.log('📊 Notebook summary generated');
+            console.log('📝 Summary sections:', Object.keys(notebookSummary.sections));
 
             // Step 10: Get user profile
             console.log('👤 STEP 10: Getting user profile...');
@@ -891,14 +783,17 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
               userProfileData = profileData;
 
               // Save structured summary to conversation history
+              // Save notebook summary to conversation history
               await supabase.from('conversation_history').insert({
                 user_id: currentUser.id,
                 session_id: sessionId,
                 role: 'assistant_summary',
                 content: JSON.stringify({
+                  notebookMarkdown: notebookSummary.markdown,
                   ideaAnalysis,
                   contextMap,
-                  structuredSummary,
+                  priorityScores: prioritizedTasks,
+                  agendaRouting: routedTasks,
                   clarifications
                 }),
               });
@@ -912,8 +807,11 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
               { role: 'user', content: transcribed }
             ];
 
+            // Send full structured analysis to chat-completion
             const fullAnalysis = {
-              summary: structuredSummary.insight,
+              notebookSummary: notebookSummary.markdown,
+              summary: ideaAnalysis.summary,
+              extractedTasks: extractedTasks.length,
               tasks: routedTasks,
               insights: ideaAnalysis.insights || [],
               topics: ideaAnalysis.topics || [],
@@ -923,8 +821,7 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
               followups: ideaAnalysis.followups || [],
               emotionalTone: ideaAnalysis.emotional_tone,
               contextMap,
-              recommendations: structuredSummary.recommendations,
-              nextActions: structuredSummary.nextActions,
+              priorityScores: prioritizedTasks,
               clarifications,
               agenda: {
                 today: routedTasks.today.length,
