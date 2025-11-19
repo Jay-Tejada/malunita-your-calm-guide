@@ -250,8 +250,10 @@ export type Database = {
           goal_updated_at: string | null
           id: string
           insights: Json | null
+          last_lore_shown_at: string | null
           last_personalization_run: string | null
           likes_routine_nudges: boolean | null
+          lore_moments_seen: number | null
           notification_preferences: Json | null
           notification_snooze_until: string | null
           often_time_based: boolean | null
@@ -284,8 +286,10 @@ export type Database = {
           goal_updated_at?: string | null
           id: string
           insights?: Json | null
+          last_lore_shown_at?: string | null
           last_personalization_run?: string | null
           likes_routine_nudges?: boolean | null
+          lore_moments_seen?: number | null
           notification_preferences?: Json | null
           notification_snooze_until?: string | null
           often_time_based?: boolean | null
@@ -318,8 +322,10 @@ export type Database = {
           goal_updated_at?: string | null
           id?: string
           insights?: Json | null
+          last_lore_shown_at?: string | null
           last_personalization_run?: string | null
           likes_routine_nudges?: boolean | null
+          lore_moments_seen?: number | null
           notification_preferences?: Json | null
           notification_snooze_until?: string | null
           often_time_based?: boolean | null

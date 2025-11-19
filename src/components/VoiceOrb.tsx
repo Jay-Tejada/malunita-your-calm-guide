@@ -8,7 +8,9 @@ import { useCompanionMotion } from "@/hooks/useCompanionMotion";
 import { useCompanionEmotion } from "@/hooks/useCompanionEmotion";
 import { useCompanionGrowth } from "@/hooks/useCompanionGrowth";
 import { useVoiceReactions } from "@/hooks/useVoiceReactions";
+import { useLoreMoments } from "@/hooks/useLoreMoments";
 import { CompanionHabitat } from "@/components/CompanionHabitat";
+import { LoreMoment } from "@/components/LoreMoment";
 
 interface VoiceOrbProps {
   onVoiceInput?: (text: string, category?: 'inbox' | 'home' | 'work' | 'gym' | 'projects') => void;
@@ -104,6 +106,9 @@ export const VoiceOrb = ({
   
   // Voice reaction system
   const voiceReaction = useVoiceReactions(personality, companionName);
+  
+  // Lore moments system
+  const loreMoments = useLoreMoments(growth.stage, growth.isEvolving);
 
   // Trigger behaviors based on state changes
   useEffect(() => {
@@ -646,6 +651,12 @@ export const VoiceOrb = ({
                 stage={growth.stage}
               />
             </div>
+            
+            {/* Lore Moments - Poetic worldbuilding text */}
+            <LoreMoment 
+              text={loreMoments.currentLore?.text || null}
+              onDismiss={loreMoments.dismissLore}
+            />
             
             {/* Reflection Tooltip */}
             {showReflectionTooltip && (
