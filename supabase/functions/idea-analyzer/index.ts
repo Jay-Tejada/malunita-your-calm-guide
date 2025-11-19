@@ -60,7 +60,109 @@ serve(async (req) => {
       )
     }
 
+    // Get request body
+    const { text, extractedTasks } = await req.json();
+    
+    if (!text || typeof text !== 'string') {
+      return new Response(
+        JSON.stringify({ error: 'Text is required' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
 
+    if (text.length > MAX_TEXT_LENGTH) {
+      return new Response(
+        JSON.stringify({ error: 'Text too long' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    console.log('Analyzing text:', text.substring(0, 100));
+
+    const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
+    if (!openAIApiKey) {
+      throw new Error('OpenAI API key not configured');
+    }
+
+    const systemPrompt = `You are an expert at analyzing raw user input and extracting structured meaning.
+
+Your job is to analyze the user's input and return a JSON object with the following structure:
+{
+  "summary": "A brief summary of what the user said (1-2 sentences max)",
+  "topics": ["topic1", "topic2"],
+  "insights": ["key insight 1", "key insight 2"],
+  "decisions": ["decision 1", "decision 2"],
+  "ideas": ["idea 1", "idea 2"],
+  "followups": ["followup 1", "followup 2"],
+  "questions": ["question they're asking themselves"],
+  "emotional_tone": "neutral|overwhelmed|focused|stressed"
+}
+
+Guidelines:
+- Keep summary SHORT (under 20 words)
+- Infer implicit topics from context
+- Extract clear decisions they've made
+- Identify questions they're asking themselves (not asking you)
+- Detect emotional tone from language patterns
+- Identify actionable follow-ups
+- Be concise and specific`;
+
+    const userPrompt = `Analyze this input:
+
+"${text}"
+
+${extractedTasks && extractedTasks.length > 0 ? `\nExtracted tasks: ${extractedTasks.map((t: any) => t.title).join(', ')}` : ''}
+
+Return ONLY the JSON object, no other text.`;
+
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${openAIApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'gpt-4-turbo',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt }
+        ],
+        temperature: 0.7,
+        max_tokens: 800,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('OpenAI API error:', response.status, errorText);
+      throw new Error(`OpenAI API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    const content = data.choices[0].message.content;
+    
+    console.log('Raw GPT response:', content);
+
+    // Parse the JSON response
+    let analysis;
+    try {
+      analysis = JSON.parse(content);
+    } catch (parseError) {
+      console.error('Failed to parse GPT response:', content);
+      // Return a default structure if parsing fails
+      analysis = {
+        summary: text.substring(0, 100),
+        topics: [],
+        insights: [],
+        decisions: [],
+        ideas: [],
+        followups: [],
+        questions: [],
+        emotional_tone: 'neutral'
+      };
+    }
+
+    console.log('Structured analysis:', analysis);
 
     return new Response(
       JSON.stringify({ analysis }),
