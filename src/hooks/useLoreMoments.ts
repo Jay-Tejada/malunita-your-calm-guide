@@ -7,7 +7,8 @@ export type LoreTrigger =
   | 'weekly' 
   | 'return' 
   | 'growth' 
-  | 'focus';
+  | 'focus'
+  | 'inactivity';
 
 interface LoreMoment {
   text: string;
@@ -44,6 +45,12 @@ const LORE_LIBRARY: Record<LoreTrigger, string[]> = {
     "Focus draws them closer, orbit tightening.",
     "In your concentration, they find harmony.",
     "Together, you create a field of clarity.",
+  ],
+  inactivity: [
+    "Your companion blinked awake… they missed you.",
+    "A soft ripple — they noticed your absence.",
+    "They drift closer, as if to say: welcome back.",
+    "Their glow brightens with your return.",
   ],
 };
 

@@ -10,7 +10,9 @@ export type EmotionState =
   | 'calm' 
   | 'sleepy' 
   | 'excited' 
-  | 'encouraging';
+  | 'encouraging'
+  | 'inspired'
+  | 'overwhelmed';
 
 interface EmotionConfig {
   glowIntensity: number; // 0-1
@@ -32,6 +34,8 @@ const personalityEmotionConfigs: Record<
     sleepy: { glowIntensity: 0.2, pulseSpeed: 6000, colorShift: -0.1, motionIntensity: 0.2 },
     excited: { glowIntensity: 0.9, pulseSpeed: 2000, colorShift: 0.4, motionIntensity: 0.8 },
     encouraging: { glowIntensity: 0.7, pulseSpeed: 2800, colorShift: 0.2, motionIntensity: 0.6 },
+    inspired: { glowIntensity: 0.85, pulseSpeed: 2600, colorShift: 0.35, motionIntensity: 0.65 },
+    overwhelmed: { glowIntensity: 0.35, pulseSpeed: 5500, colorShift: -0.15, motionIntensity: 0.25 },
   },
   spark: {
     neutral: { glowIntensity: 0.6, pulseSpeed: 2500, colorShift: 0, motionIntensity: 0.6 },
@@ -42,6 +46,8 @@ const personalityEmotionConfigs: Record<
     sleepy: { glowIntensity: 0.3, pulseSpeed: 4000, colorShift: -0.1, motionIntensity: 0.3 },
     excited: { glowIntensity: 1, pulseSpeed: 1200, colorShift: 0.5, motionIntensity: 1 },
     encouraging: { glowIntensity: 0.85, pulseSpeed: 1600, colorShift: 0.3, motionIntensity: 0.8 },
+    inspired: { glowIntensity: 0.95, pulseSpeed: 1700, colorShift: 0.45, motionIntensity: 0.75 },
+    overwhelmed: { glowIntensity: 0.4, pulseSpeed: 4500, colorShift: -0.2, motionIntensity: 0.3 },
   },
   cosmo: {
     neutral: { glowIntensity: 0.55, pulseSpeed: 3500, colorShift: 0, motionIntensity: 0.55 },
@@ -52,6 +58,8 @@ const personalityEmotionConfigs: Record<
     sleepy: { glowIntensity: 0.25, pulseSpeed: 5500, colorShift: -0.1, motionIntensity: 0.25 },
     excited: { glowIntensity: 0.95, pulseSpeed: 1800, colorShift: 0.45, motionIntensity: 0.9 },
     encouraging: { glowIntensity: 0.8, pulseSpeed: 2400, colorShift: 0.25, motionIntensity: 0.7 },
+    inspired: { glowIntensity: 0.88, pulseSpeed: 2300, colorShift: 0.4, motionIntensity: 0.7 },
+    overwhelmed: { glowIntensity: 0.38, pulseSpeed: 5000, colorShift: -0.18, motionIntensity: 0.28 },
   },
 };
 
@@ -65,6 +73,8 @@ const emotionToMotionMap: Record<EmotionState, MotionState> = {
   sleepy: 'sleepy',
   excited: 'excited',
   encouraging: 'curious',
+  inspired: 'curious',
+  overwhelmed: 'calm',
 };
 
 export interface CompanionEmotionHook {
