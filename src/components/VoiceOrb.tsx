@@ -7,6 +7,7 @@ import { PersonalityType } from "@/hooks/useCompanionIdentity";
 import { useCompanionMotion } from "@/hooks/useCompanionMotion";
 import { useCompanionEmotion } from "@/hooks/useCompanionEmotion";
 import { useCompanionGrowth } from "@/hooks/useCompanionGrowth";
+import { useVoiceReactions } from "@/hooks/useVoiceReactions";
 import { CompanionHabitat } from "@/components/CompanionHabitat";
 
 interface VoiceOrbProps {
@@ -21,6 +22,8 @@ interface VoiceOrbProps {
   onTaskAdded?: () => void;
   taskStreak?: number;
   isFiestaMode?: boolean;
+  companionName?: string;
+  isSpeaking?: boolean;
 }
 
 type OrbMode = 'capture' | 'reflection' | 'planning' | 'quiet';
@@ -37,6 +40,8 @@ export const VoiceOrb = ({
   onTaskAdded,
   taskStreak = 0,
   isFiestaMode = false,
+  companionName,
+  isSpeaking = false,
 }: VoiceOrbProps) => {
   const [isListening, setIsListening] = useState(false);
   const [isResponding, setIsResponding] = useState(false);
@@ -96,19 +101,28 @@ export const VoiceOrb = ({
   
   // Companion growth & evolution
   const growth = useCompanionGrowth();
+  
+  // Voice reaction system
+  const voiceReaction = useVoiceReactions(personality, companionName);
 
   // Trigger behaviors based on state changes
   useEffect(() => {
     if (isListening) {
       motion.triggerCurious();
       emotion.setEmotion('curious');
+      voiceReaction.setListening();
+    } else if (isSpeaking) {
+      emotion.setEmotion('focused');
+      voiceReaction.setSpeaking(true);
     } else if (isResponding || isSaving) {
       emotion.setEmotion('focused');
+      voiceReaction.setThinking();
     } else {
       motion.resetToIdle();
       emotion.setEmotion('neutral');
+      voiceReaction.resetToIdle();
     }
-  }, [isListening, isResponding, isSaving]);
+  }, [isListening, isResponding, isSaving, isSpeaking]);
 
   // Success wiggle
   useEffect(() => {
@@ -261,6 +275,10 @@ export const VoiceOrb = ({
 
     const dataArray = new Uint8Array(analyserRef.current.frequencyBinCount);
     analyserRef.current.getByteFrequencyData(dataArray);
+
+    // Calculate average audio level (0-1)
+    const average = dataArray.reduce((sum, value) => sum + value, 0) / dataArray.length / 255;
+    voiceReaction.setListening(average);
 
     // Split frequency data into 7 bands
     const bands = 7;
@@ -439,6 +457,11 @@ export const VoiceOrb = ({
 
               const transcribedText = data.text;
               
+              // Check for companion name mention
+              if (companionName && transcribedText.toLowerCase().includes(companionName.toLowerCase())) {
+                voiceReaction.triggerNameMention();
+              }
+              
               // Check for mode switch command
               const detectedMode = detectModeSwitch(transcribedText);
               if (detectedMode) {
@@ -494,6 +517,10 @@ export const VoiceOrb = ({
             } catch (error) {
               console.error('Transcription error:', error);
               const errorMessage = error instanceof Error ? error.message : 'Failed to transcribe audio';
+              
+              // Trigger misheard reaction
+              voiceReaction.setMisheard();
+              
               toast({
                 title: "Error",
                 description: errorMessage,
@@ -627,10 +654,13 @@ export const VoiceOrb = ({
               </div>
             )}
             
-            {/* Main Orb with 3-Layer System + Motion Behaviors + Evolution */}
+            {/* Main Orb with 3-Layer System + Motion + Evolution + Voice Reactions */}
             <div 
               className={`relative z-10 transition-all ${
                 growth.isEvolving ? 'animate-[evolution-bloom_3s_ease-in-out]' :
+                voiceReaction.reactionState === 'listening' ? 'animate-[voice-lean-forward_0.5s_ease-out_forwards]' :
+                voiceReaction.reactionState === 'thinking' ? 'animate-[voice-thinking-wobble_4s_ease-in-out_infinite]' :
+                voiceReaction.reactionState === 'misheard' ? 'animate-[voice-lean-forward_0.5s_ease-out_forwards]' :
                 motion.motionState === 'fiesta' ? 'animate-companion-fiesta' :
                 motion.motionState === 'excited' ? 'animate-companion-wiggle' :
                 motion.motionState === 'curious' ? 'animate-companion-curious' :
@@ -640,6 +670,10 @@ export const VoiceOrb = ({
               }`}
               style={{
                 '--tilt-angle': `${motion.tiltAngle}deg`,
+                '--lean-angle': `${voiceReaction.config.leanAngle}deg`,
+                '--halo-intensity': voiceReaction.config.haloIntensity,
+                '--audio-level': voiceReaction.audioLevel,
+                '--expansion': voiceReaction.config.expansionAmount,
                 '--emotion-glow-intensity': emotion.config.glowIntensity * growth.stageConfig.glowIntensity,
                 '--emotion-pulse-speed': `${emotion.config.pulseSpeed}ms`,
                 '--emotion-color-shift': emotion.config.colorShift,
@@ -660,10 +694,19 @@ export const VoiceOrb = ({
               
               {/* Emotion & Stage indicators (dev only) */}
               {process.env.NODE_ENV === 'development' && (
-                <div className="absolute -top-16 left-1/2 -translate-x-1/2 text-xs opacity-40 pointer-events-none text-center">
-                  <div>{emotion.emotion}</div>
+                <div className="absolute -top-20 left-1/2 -translate-x-1/2 text-xs opacity-40 pointer-events-none text-center">
+                  <div>{emotion.emotion} | {voiceReaction.reactionState}</div>
                   <div>Stage {growth.stage}: {growth.stageConfig.name}</div>
                   <div>{growth.xp} XP ({Math.round(growth.progressToNextStage * 100)}%)</div>
+                  <div>Audio: {Math.round(voiceReaction.audioLevel * 100)}%</div>
+                </div>
+              )}
+              
+              {/* Name mention flash */}
+              {voiceReaction.reactionState === 'nameMention' && (
+                <div className="absolute inset-0 pointer-events-none">
+                  <div className="absolute inset-0 rounded-full bg-primary/30 animate-[voice-name-flash_1.5s_ease-out]" />
+                  <div className="absolute inset-0 rounded-full bg-primary/20 animate-[voice-name-flash_1.5s_ease-out_0.2s]" />
                 </div>
               )}
               
@@ -676,9 +719,11 @@ export const VoiceOrb = ({
                 </div>
               )}
               
-              {/* Layer 3: Outer Halo (ambient diffusion) - Scales with stage */}
+              {/* Layer 3: Outer Halo (ambient diffusion) - Reacts to voice */}
               <div 
-                className={`absolute inset-0 rounded-full blur-2xl transition-all duration-1000 animate-[emotion-glow-shift_var(--emotion-pulse-speed)_ease-in-out_infinite] ${
+                className={`absolute inset-0 rounded-full blur-2xl transition-all duration-1000 ${
+                  voiceReaction.reactionState === 'listening' ? 'animate-[voice-halo-pulse_var(--voice-pulse-speed)_ease-in-out_infinite]' :
+                  voiceReaction.reactionState === 'speaking' ? 'animate-[voice-halo-pulse_var(--voice-pulse-speed)_ease-in-out_infinite]' :
                   motion.motionState === 'calm' ? 'animate-companion-calm-glow' :
                   isListening ? 'animate-listening-pulse' : 
                   (isResponding || isSaving) ? 'animate-thinking-shimmer' : 
@@ -689,24 +734,36 @@ export const VoiceOrb = ({
                   height: `${32 * growth.stageConfig.haloRadius}rem`,
                   left: `${-6 * growth.stageConfig.haloRadius}rem`,
                   top: `${-6 * growth.stageConfig.haloRadius}rem`,
+                  '--voice-pulse-speed': `${voiceReaction.config.pulseSpeed}ms`,
                   background: isListening 
-                    ? `radial-gradient(circle, hsl(${colors.halo} / 0.5) 0%, hsl(${colors.halo} / 0.2) 50%, transparent 70%)`
+                    ? `radial-gradient(circle, hsl(${colors.halo} / ${0.5 * voiceReaction.config.haloIntensity}) 0%, hsl(${colors.halo} / ${0.2 * voiceReaction.config.haloIntensity}) 50%, transparent 70%)`
                     : (isResponding || isSaving)
                     ? `radial-gradient(circle, hsl(var(--orb-halo-thinking) / 0.35) 0%, hsl(var(--orb-halo-speaking) / 0.2) 40%, transparent 70%)`
                     : `radial-gradient(circle, hsl(${colors.halo} / 0.3) 0%, hsl(${colors.halo} / 0.1) 50%, transparent 70%)`,
                   filter: 'blur(24px)',
                   opacity: `calc(0.6 + ${emotion.config.glowIntensity * growth.stageConfig.glowIntensity} * 0.3)`,
-                }}
+                } as React.CSSProperties}
               />
+              {/* Waveform ripple ring - reacts to audio during listening */}
+              {voiceReaction.reactionState === 'listening' && voiceReaction.audioLevel > 0 && (
+                <div 
+                  className="absolute inset-0 w-28 h-28 -left-4 -top-4 rounded-full border-2 border-primary/40 animate-[voice-waveform-ripple_0.5s_ease-out_infinite]"
+                  style={{
+                    '--audio-level': voiceReaction.audioLevel,
+                  } as React.CSSProperties}
+                />
+              )}
               
-              {/* Layer 2: Middle Glow Ring (soft gradient) */}
+              {/* Layer 2: Middle Glow Ring (soft gradient) - Reacts to speaking */}
               <div 
-                className={`absolute inset-0 w-24 h-24 -left-2 -top-2 rounded-full transition-all duration-700 animate-[emotion-pulse_var(--emotion-pulse-speed)_ease-in-out_infinite] ${
+                className={`absolute inset-0 w-24 h-24 -left-2 -top-2 rounded-full transition-all duration-700 ${
+                  voiceReaction.reactionState === 'speaking' ? 'animate-[voice-speaking-heartbeat_var(--voice-pulse-speed)_ease-in-out_infinite]' :
                   isListening ? 'animate-listening-pulse' : 
                   (isResponding || isSaving) ? 'animate-thinking-shimmer' : 
                   ''
-                }`}
+                } animate-[emotion-pulse_var(--emotion-pulse-speed)_ease-in-out_infinite]`}
                 style={{
+                  '--voice-pulse-speed': `${voiceReaction.config.pulseSpeed}ms`,
                   background: stopWordDetected
                     ? `radial-gradient(circle, hsl(var(--success) / 0.5) 0%, hsl(var(--success) / 0.2) 60%, transparent 100%)`
                     : isListening
@@ -715,7 +772,7 @@ export const VoiceOrb = ({
                     ? `radial-gradient(circle, hsl(var(--orb-glow-thinking) / 0.5) 0%, hsl(var(--orb-glow-speaking) / 0.25) 50%, transparent 100%)`
                     : `radial-gradient(circle, hsl(${colors.glow} / 0.45) 0%, hsl(${colors.glow} / 0.2) 60%, transparent 100%)`,
                   filter: 'blur(12px)',
-                }}
+                } as React.CSSProperties}
               />
               
               {/* Cosmic particles for higher stages */}
@@ -739,6 +796,15 @@ export const VoiceOrb = ({
                       />
                     );
                   })}
+                </div>
+              )}
+              
+              {/* Thinking sparkles - rare tiny blinks */}
+              {voiceReaction.reactionState === 'thinking' && (
+                <div className="absolute -inset-8 pointer-events-none">
+                  <div className="absolute top-2 left-2 w-1 h-1 rounded-full bg-primary/60 animate-[voice-sparkle-blink_5s_ease-in-out_infinite]" />
+                  <div className="absolute top-4 right-6 w-1 h-1 rounded-full bg-primary/50 animate-[voice-sparkle-blink_6s_ease-in-out_infinite]" style={{ animationDelay: '2s' }} />
+                  <div className="absolute bottom-3 left-8 w-1 h-1 rounded-full bg-primary/40 animate-[voice-sparkle-blink_7s_ease-in-out_infinite]" style={{ animationDelay: '4s' }} />
                 </div>
               )}
               
@@ -768,7 +834,9 @@ export const VoiceOrb = ({
                 onTouchStart={handleMouseDown}
                 onTouchEnd={handleMouseUp}
                 className={`relative w-20 h-20 rounded-full transition-all duration-700 ease-in-out backdrop-blur-sm
-                  ${stopWordDetected
+                  ${voiceReaction.reactionState === 'speaking' 
+                    ? 'animate-[voice-speaking-heartbeat_var(--voice-pulse-speed)_ease-in-out_infinite]'
+                    : stopWordDetected
                     ? 'scale-105'
                     : isListening 
                     ? 'scale-105' 
@@ -777,8 +845,12 @@ export const VoiceOrb = ({
                     : 'hover:scale-105 animate-companion-breath'
                   }`}
                 style={{
+                  '--voice-pulse-speed': `${voiceReaction.config.pulseSpeed}ms`,
+                  '--expansion': voiceReaction.config.expansionAmount,
                   background: stopWordDetected
                     ? `linear-gradient(135deg, hsl(var(--success) / 0.95), hsl(var(--success) / 0.85))`
+                    : voiceReaction.reactionState === 'speaking'
+                    ? `linear-gradient(135deg, hsl(39 70% 75% / 0.95), hsl(39 75% 65% / 0.85))` // Warm golden for speaking
                     : isListening 
                     ? `linear-gradient(135deg, hsl(${colors.core} / 0.95), hsl(${colors.glow} / 0.85))`
                     : (isResponding || isSaving)
@@ -786,6 +858,8 @@ export const VoiceOrb = ({
                     : `linear-gradient(135deg, hsl(${colors.core} / 0.92), hsl(${colors.glow} / 0.88))`,
                   boxShadow: stopWordDetected
                     ? '0 8px 24px hsl(var(--success) / 0.35), inset 0 1px 0 hsl(var(--success) / 0.5), inset 0 -1px 0 hsl(var(--success) / 0.3)'
+                    : voiceReaction.reactionState === 'speaking'
+                    ? '0 8px 28px hsl(39 75% 65% / 0.4), inset 0 1px 0 hsl(39 70% 75% / 0.6), inset 0 -1px 0 hsl(39 75% 65% / 0.5)'
                     : isListening 
                     ? `0 6px 20px hsl(${colors.glow} / 0.35), inset 0 1px 0 hsl(${colors.core} / 0.6), inset 0 -1px 0 hsl(${colors.glow} / 0.4)`
                     : (isResponding || isSaving)
@@ -794,12 +868,14 @@ export const VoiceOrb = ({
                   border: '1px solid',
                   borderColor: stopWordDetected
                     ? 'hsl(var(--success) / 0.3)'
+                    : voiceReaction.reactionState === 'speaking'
+                    ? 'hsl(39 75% 65% / 0.4)'
                     : isListening
                     ? `hsl(${colors.glow} / 0.35)`
                     : (isResponding || isSaving)
                     ? 'hsl(var(--orb-glow-thinking) / 0.25)'
                     : `hsl(${colors.glow} / 0.3)`,
-                }}
+                } as React.CSSProperties}
               >
                 {/* Blink overlay */}
                 {motion.shouldBlink && !isListening && !isResponding && (

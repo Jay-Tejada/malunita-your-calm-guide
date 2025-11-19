@@ -1285,6 +1285,8 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
           stopWordDetected={stopWordDetected}
           personality={companion?.personalityType || 'zen'}
           taskStreak={taskStreak}
+          companionName={companion?.name}
+          isSpeaking={isSpeaking}
         />
 
         {/* Action buttons - Only show on desktop */}
