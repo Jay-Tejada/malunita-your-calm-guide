@@ -5,6 +5,7 @@ import { CategoryDialog } from "./CategoryDialog";
 import { Check, Sparkles } from "lucide-react";
 import { PersonalityType } from "@/hooks/useCompanionIdentity";
 import { useCompanionMotion } from "@/hooks/useCompanionMotion";
+import { useCompanionEmotion } from "@/hooks/useCompanionEmotion";
 
 interface VoiceOrbProps {
   onVoiceInput?: (text: string, category?: 'inbox' | 'home' | 'work' | 'gym' | 'projects') => void;
@@ -87,15 +88,20 @@ export const VoiceOrb = ({
   
   // Companion motion behavior
   const motion = useCompanionMotion(personality, isListening || isResponding);
+  
+  // Companion emotion engine
+  const emotion = useCompanionEmotion(personality);
 
   // Trigger behaviors based on state changes
   useEffect(() => {
     if (isListening) {
       motion.triggerCurious();
+      emotion.setEmotion('curious');
     } else if (isResponding || isSaving) {
-      // Let it stay in current state
+      emotion.setEmotion('focused');
     } else {
       motion.resetToIdle();
+      emotion.setEmotion('neutral');
     }
   }, [isListening, isResponding, isSaving]);
 
@@ -103,13 +109,17 @@ export const VoiceOrb = ({
   useEffect(() => {
     if (showSuccess) {
       motion.triggerExcited();
+      emotion.setEmotion('proud');
     }
   }, [showSuccess]);
 
   // Task streak sparkle
   useEffect(() => {
-    if (taskStreak >= 3) {
+    if (taskStreak >= 5) {
       motion.triggerExcited();
+      emotion.setEmotion('excited');
+    } else if (taskStreak >= 3) {
+      emotion.setEmotion('proud');
     }
   }, [taskStreak]);
 
@@ -612,9 +622,20 @@ export const VoiceOrb = ({
               }`}
               style={{
                 '--tilt-angle': `${motion.tiltAngle}deg`,
+                '--emotion-glow-intensity': emotion.config.glowIntensity,
+                '--emotion-pulse-speed': `${emotion.config.pulseSpeed}ms`,
+                '--emotion-color-shift': emotion.config.colorShift,
+                '--emotion-motion-intensity': emotion.config.motionIntensity,
                 transitionDuration: `${motion.config.transitionSpeed}ms`,
               } as React.CSSProperties}
             >
+              
+              {/* Emotion indicator (dev only) */}
+              {process.env.NODE_ENV === 'development' && (
+                <div className="absolute -top-12 left-1/2 -translate-x-1/2 text-xs opacity-40 pointer-events-none">
+                  {emotion.emotion}
+                </div>
+              )}
               
               {/* Task Streak Sparkles */}
               {taskStreak >= 3 && (
@@ -627,7 +648,7 @@ export const VoiceOrb = ({
               
               {/* Layer 3: Outer Halo (ambient diffusion) */}
               <div 
-                className={`absolute inset-0 w-32 h-32 -left-6 -top-6 rounded-full blur-2xl transition-all duration-1000 ${
+                className={`absolute inset-0 w-32 h-32 -left-6 -top-6 rounded-full blur-2xl transition-all duration-1000 animate-[emotion-glow-shift_var(--emotion-pulse-speed)_ease-in-out_infinite] ${
                   motion.motionState === 'calm' ? 'animate-companion-calm-glow' :
                   isListening ? 'animate-listening-pulse' : 
                   (isResponding || isSaving) ? 'animate-thinking-shimmer' : 
@@ -640,12 +661,13 @@ export const VoiceOrb = ({
                     ? `radial-gradient(circle, hsl(var(--orb-halo-thinking) / 0.35) 0%, hsl(var(--orb-halo-speaking) / 0.2) 40%, transparent 70%)`
                     : `radial-gradient(circle, hsl(${colors.halo} / 0.3) 0%, hsl(${colors.halo} / 0.1) 50%, transparent 70%)`,
                   filter: 'blur(24px)',
+                  opacity: `calc(0.6 + ${emotion.config.glowIntensity} * 0.3)`,
                 }}
               />
               
               {/* Layer 2: Middle Glow Ring (soft gradient) */}
               <div 
-                className={`absolute inset-0 w-24 h-24 -left-2 -top-2 rounded-full transition-all duration-700 ${
+                className={`absolute inset-0 w-24 h-24 -left-2 -top-2 rounded-full transition-all duration-700 animate-[emotion-pulse_var(--emotion-pulse-speed)_ease-in-out_infinite] ${
                   isListening ? 'animate-listening-pulse' : 
                   (isResponding || isSaving) ? 'animate-thinking-shimmer' : 
                   ''
