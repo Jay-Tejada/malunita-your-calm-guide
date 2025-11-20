@@ -12,6 +12,7 @@ import { useLoreMoments } from "@/hooks/useLoreMoments";
 import { useCompanionCosmetics } from "@/hooks/useCompanionCosmetics";
 import { CompanionHabitat } from "@/components/CompanionHabitat";
 import { LoreMoment } from "@/components/LoreMoment";
+import { useAudioSmoothing } from "@/hooks/useAudioSmoothing";
 
 interface VoiceOrbProps {
   onVoiceInput?: (text: string, category?: 'inbox' | 'home' | 'work' | 'gym' | 'projects') => void;
@@ -48,7 +49,7 @@ export const VoiceOrb = ({
 }: VoiceOrbProps) => {
   const [isListening, setIsListening] = useState(false);
   const [isResponding, setIsResponding] = useState(false);
-  const [audioLevels, setAudioLevels] = useState<number[]>(new Array(7).fill(0));
+  const [smoothedAmplitude, setSmoothedAmplitude] = useState(0);
   const [showCategoryDialog, setShowCategoryDialog] = useState(false);
   const [pendingTask, setPendingTask] = useState<string>("");
   const [mode, setMode] = useState<OrbMode>('capture');
@@ -82,6 +83,9 @@ export const VoiceOrb = ({
   
   // Companion cosmetics
   const cosmetics = useCompanionCosmetics();
+  
+  // Audio smoothing for stable animations
+  const audioSmoothing = useAudioSmoothing();
   
   // Connect cosmetics unlock checker to growth system
   useEffect(() => {
@@ -306,24 +310,17 @@ export const VoiceOrb = ({
     analyserRef.current.getByteFrequencyData(dataArray);
 
     // Calculate average audio level (0-1)
-    const average = dataArray.reduce((sum, value) => sum + value, 0) / dataArray.length / 255;
-    voiceReaction.setListening(average);
+    const rawAverage = dataArray.reduce((sum, value) => sum + value, 0) / dataArray.length / 255;
+    
+    // Apply exponential smoothing to prevent jitter
+    const smoothed = audioSmoothing.smoothAmplitude(rawAverage, 0.85);
+    
+    // Update smoothed amplitude for halo animation
+    setSmoothedAmplitude(smoothed);
+    
+    // Pass smoothed value to voice reaction system
+    voiceReaction.setListening(smoothed);
 
-    // Split frequency data into 7 bands
-    const bands = 7;
-    const bandSize = Math.floor(dataArray.length / bands);
-    const newLevels = [];
-
-    for (let i = 0; i < bands; i++) {
-      const start = i * bandSize;
-      const end = start + bandSize;
-      const bandData = dataArray.slice(start, end);
-      const average = bandData.reduce((sum, val) => sum + val, 0) / bandData.length;
-      // Normalize to 0-1 range and add a minimum height
-      newLevels.push(Math.max(0.2, Math.min(1, average / 128)));
-    }
-
-    setAudioLevels(newLevels);
     animationFrameRef.current = requestAnimationFrame(analyzeAudio);
   };
 
@@ -410,6 +407,7 @@ export const VoiceOrb = ({
     
     if (isListening) {
       // Stop recording
+      audioSmoothing.reset();
       if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
         mediaRecorderRef.current.stop();
       }
@@ -422,6 +420,7 @@ export const VoiceOrb = ({
       }
     } else {
       // Start recording
+      audioSmoothing.reset();
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         const mediaRecorder = new MediaRecorder(stream);
@@ -754,13 +753,27 @@ export const VoiceOrb = ({
                 </div>
               )}
               
-              {/* Layer 3: Outer Halo (ambient diffusion) - Reacts to voice */}
+              {/* Pulse Halo Listener - Smooth amplitude-responsive halo */}
+              {isListening && (
+                <div 
+                  className="absolute inset-0 rounded-full pointer-events-none transition-all duration-200 ease-out"
+                  style={{
+                    width: `${28 + (smoothedAmplitude * 12)}rem`,
+                    height: `${28 + (smoothedAmplitude * 12)}rem`,
+                    left: `${-7 - (smoothedAmplitude * 3)}rem`,
+                    top: `${-7 - (smoothedAmplitude * 3)}rem`,
+                    background: `radial-gradient(circle, hsl(${colors.halo} / ${0.15 + (smoothedAmplitude * 0.15)}) 0%, hsl(${colors.halo} / ${0.08 + (smoothedAmplitude * 0.08)}) 50%, transparent 70%)`,
+                    filter: 'blur(32px)',
+                    animation: smoothedAmplitude > 0.2 ? 'pulse-halo-listener 2s ease-in-out infinite' : 'pulse-halo-baseline 3s ease-in-out infinite',
+                  } as React.CSSProperties}
+                />
+              )}
+              
+              {/* Layer 3: Outer Halo (ambient diffusion) - Stable background glow */}
               <div 
                 className={`absolute inset-0 rounded-full blur-2xl transition-all duration-1000 ${
-                  voiceReaction.reactionState === 'listening' ? 'animate-[voice-halo-pulse_var(--voice-pulse-speed)_ease-in-out_infinite]' :
                   voiceReaction.reactionState === 'speaking' ? 'animate-[voice-halo-pulse_var(--voice-pulse-speed)_ease-in-out_infinite]' :
                   motion.motionState === 'calm' ? 'animate-companion-calm-glow' :
-                  isListening ? 'animate-listening-pulse' : 
                   (isResponding || isSaving) ? 'animate-thinking-shimmer' : 
                   'animate-companion-breath'
                 }`}
@@ -770,24 +783,13 @@ export const VoiceOrb = ({
                   left: `${-6 * growth.stageConfig.haloRadius}rem`,
                   top: `${-6 * growth.stageConfig.haloRadius}rem`,
                   '--voice-pulse-speed': `${voiceReaction.config.pulseSpeed}ms`,
-                  background: isListening 
-                    ? `radial-gradient(circle, hsl(${colors.halo} / ${0.5 * voiceReaction.config.haloIntensity}) 0%, hsl(${colors.halo} / ${0.2 * voiceReaction.config.haloIntensity}) 50%, transparent 70%)`
-                    : (isResponding || isSaving)
+                  background: (isResponding || isSaving)
                     ? `radial-gradient(circle, hsl(var(--orb-halo-thinking) / 0.35) 0%, hsl(var(--orb-halo-speaking) / 0.2) 40%, transparent 70%)`
                     : `radial-gradient(circle, hsl(${colors.halo} / 0.3) 0%, hsl(${colors.halo} / 0.1) 50%, transparent 70%)`,
                   filter: 'blur(24px)',
-                  opacity: `calc(0.6 + ${emotion.config.glowIntensity * growth.stageConfig.glowIntensity} * 0.3)`,
+                  opacity: isListening ? 0.4 : `calc(0.6 + ${emotion.config.glowIntensity * growth.stageConfig.glowIntensity} * 0.3)`,
                 } as React.CSSProperties}
               />
-              {/* Waveform ripple ring - reacts to audio during listening */}
-              {voiceReaction.reactionState === 'listening' && voiceReaction.audioLevel > 0 && (
-                <div 
-                  className="absolute inset-0 w-28 h-28 -left-4 -top-4 rounded-full border-2 border-primary/40 animate-[voice-waveform-ripple_0.5s_ease-out_infinite]"
-                  style={{
-                    '--audio-level': voiceReaction.audioLevel,
-                  } as React.CSSProperties}
-                />
-              )}
               
               {/* Layer 2: Middle Glow Ring (soft gradient) - Reacts to speaking */}
               <div 
