@@ -419,6 +419,28 @@ All colors MUST be HSL.
   }
 
   /* Voice reaction animations */
+  @keyframes pulse-halo-listener {
+    0%, 100% {
+      transform: scale(1);
+      opacity: 0.15;
+    }
+    50% {
+      transform: scale(1.08);
+      opacity: 0.25;
+    }
+  }
+
+  @keyframes pulse-halo-baseline {
+    0%, 100% {
+      transform: scale(1);
+      opacity: 0.08;
+    }
+    50% {
+      transform: scale(1.02);
+      opacity: 0.12;
+    }
+  }
+
   @keyframes voice-lean-forward {
     0% { transform: translateY(0) rotate(0deg); }
     100% { transform: translateY(-3px) rotate(var(--lean-angle, 3deg)); }
