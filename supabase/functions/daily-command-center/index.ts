@@ -19,13 +19,12 @@ interface Task {
 }
 
 interface DailySummary {
-  priority: string[];
-  dueToday: string[];
-  thisWeek: string[];
-  smallTasks: string[];
+  priorityTasks: string[];
+  todaysSchedule: string[];
+  lowEffortWins: string[];
   tinyTaskCount: number;
-  staleFromYesterday: string[];
-  insights: string[];
+  contextNotes: string[];
+  insightOfTheDay: string;
   tone: 'calm' | 'direct' | 'urgent';
 }
 
@@ -117,91 +116,74 @@ serve(async (req) => {
     // Step 3: Categorize tasks intelligently
     const now = new Date();
     const today = now.toISOString().split('T')[0];
-    const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-    const thisWeekEnd = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
     // Detect tone
     const tone = detectTone(text, allTasks.length + extractedTasks.length);
 
-    // Priority tasks: focus tasks or high-urgency
-    const priority = allTasks
-      .filter(t => t.is_focus || (t.is_time_based && t.reminder_time))
-      .slice(0, 3)
+    // Priority Tasks: High-impact, focus items, or urgent
+    const priorityTasks = allTasks
+      .filter(t => t.is_focus || t.category === 'urgent')
+      .slice(0, 5)
       .map(t => t.title);
 
-    // Due today: tasks with today's date or immediate reminders
-    const dueToday = allTasks
+    // Today's Schedule: Time-sensitive or deadline-linked items
+    const todaysSchedule = allTasks
       .filter(t => {
         if (t.reminder_time) {
           const reminderDate = new Date(t.reminder_time).toISOString().split('T')[0];
           return reminderDate === today;
         }
-        return false;
-      })
-      .map(t => t.title);
-
-    // This week: recently created or marked for this week
-    const thisWeek = allTasks
-      .filter(t => {
-        if (!t.is_focus && !priority.includes(t.title) && !dueToday.includes(t.title)) {
-          const createdDate = new Date(t.created_at).toISOString().split('T')[0];
-          return createdDate >= today && createdDate <= thisWeekEnd;
-        }
-        return false;
+        return t.is_time_based && !priorityTasks.includes(t.title);
       })
       .slice(0, 5)
       .map(t => t.title);
 
-    // Small tasks: simple, non-time-based tasks
-    const smallTasks = allTasks
-      .filter(t => !t.is_time_based && !priority.includes(t.title) && !dueToday.includes(t.title))
+    // Low Effort Wins: Small, non-time-based tasks
+    const lowEffortWins = allTasks
+      .filter(t => 
+        !t.is_time_based && 
+        !priorityTasks.includes(t.title) && 
+        !todaysSchedule.includes(t.title) &&
+        t.title.split(' ').length <= 8
+      )
       .slice(0, 5)
       .map(t => t.title);
 
-    // Tiny tasks: check extracted tasks for tiny ones
+    // Tiny tasks: check both extracted and existing tasks
     let tinyTaskCount = 0;
+    const tinyWords = ['buy', 'call', 'email', 'text', 'check', 'send', 'reply', 'look up', 'find', 'book', 'schedule'];
+    
+    // Count from extracted tasks
     if (extractedTasks.length > 0) {
-      const tinyWords = ['buy', 'call', 'email', 'text', 'check', 'send', 'reply', 'look up', 'find'];
-      tinyTaskCount = extractedTasks.filter((t: any) => {
+      tinyTaskCount += extractedTasks.filter((t: any) => {
         const title = t.title.toLowerCase();
         return tinyWords.some(word => title.includes(word)) && title.split(' ').length <= 5;
       }).length;
     }
+    
+    // Count from existing tasks not already categorized
+    tinyTaskCount += allTasks.filter(t => {
+      if (priorityTasks.includes(t.title) || todaysSchedule.includes(t.title) || lowEffortWins.includes(t.title)) {
+        return false;
+      }
+      const title = t.title.toLowerCase();
+      return tinyWords.some(word => title.includes(word)) && title.split(' ').length <= 5;
+    }).length;
 
-    // Stale from yesterday
-    const staleFromYesterday = allTasks
-      .filter(t => {
-        const createdDate = new Date(t.created_at).toISOString().split('T')[0];
-        return createdDate <= yesterday && !t.completed;
-      })
-      .slice(0, 3)
-      .map(t => t.title);
-
-    // Generate insights using AI
-    const insightsPrompt = `You are analyzing a user's daily task landscape. 
+    // Extract context notes (non-actionable information from user's text)
+    const contextPrompt = `Extract any non-actionable contextual notes from this text. These are pieces of information that don't need to be turned into tasks but are important context.
 
 User's input: "${text}"
 
-Existing tasks:
-- Priority: ${priority.length}
-- Due today: ${dueToday.length}
-- This week: ${thisWeek.length}
-- Small tasks: ${smallTasks.length}
-- Tiny tasks extracted: ${tinyTaskCount}
-- Stale from yesterday: ${staleFromYesterday.length}
+Examples of context notes:
+- "Working from home today"
+- "Client meeting went well"
+- "Feeling overwhelmed with deadlines"
+- "Team is on vacation this week"
 
-Total open tasks: ${allTasks.length}
-Tone detected: ${tone}
+Return ONLY bullet points of context notes found, or return "No context notes" if there are none. Keep each note under 10 words.`;
 
-Generate 2-3 brief, actionable insights as bullet points. Examples:
-- "You have 12 tiny tasks ready for a Fiesta session"
-- "Your biggest priority today is [task]"
-- "Consider archiving 3 stale tasks from yesterday"
-- "Focus on closing out time-sensitive items first"
-
-Keep insights specific, motivating, and under 15 words each. Return ONLY the bullet points, no extra text.`;
-
-    const insightsResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+    const contextResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${lovableApiKey}`,
@@ -210,34 +192,70 @@ Keep insights specific, motivating, and under 15 words each. Return ONLY the bul
       body: JSON.stringify({
         model: 'google/gemini-2.5-flash',
         messages: [
-          { role: 'system', content: 'You are a productivity insights generator. Return only bullet points.' },
-          { role: 'user', content: insightsPrompt }
+          { role: 'system', content: 'You extract contextual notes from user input.' },
+          { role: 'user', content: contextPrompt }
         ],
       }),
     });
 
-    if (!insightsResponse.ok) {
-      console.error('Insights generation failed:', await insightsResponse.text());
-      throw new Error('Failed to generate insights');
-    }
-
-    const insightsData = await insightsResponse.json();
-    const insightsText = insightsData.choices?.[0]?.message?.content || '';
-    const insights = insightsText
+    const contextData = await contextResponse.json();
+    const contextText = contextData.choices?.[0]?.message?.content || 'No context notes';
+    const contextNotes = contextText === 'No context notes' ? [] : contextText
       .split('\n')
       .filter((line: string) => line.trim().startsWith('-') || line.trim().startsWith('•'))
       .map((line: string) => line.replace(/^[-•]\s*/, '').trim())
-      .filter((line: string) => line.length > 0)
-      .slice(0, 3);
+      .filter((line: string) => line.length > 0);
+
+    // Generate single insight of the day
+    const insightPrompt = `You are analyzing a user's daily task landscape. Generate a single 1-2 sentence personalized insight.
+
+User's input: "${text}"
+
+Task summary:
+- Priority tasks: ${priorityTasks.length}
+- Today's schedule: ${todaysSchedule.length}
+- Low effort wins: ${lowEffortWins.length}
+- Tiny tasks: ${tinyTaskCount}
+- Total open tasks: ${allTasks.length}
+- Tone: ${tone}
+
+Examples:
+- "You have 12 tiny tasks ready—perfect for a quick Fiesta session to build momentum."
+- "Focus on your 3 priority items first, then tackle time-sensitive tasks."
+- "Your schedule is light today—great chance to knock out low-effort wins."
+
+Keep it ${tone === 'calm' ? 'calming and reassuring' : tone === 'urgent' ? 'focused and actionable' : 'strategic and direct'}. Return ONLY the insight, no extra text.`;
+
+    const insightResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${lovableApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'google/gemini-2.5-flash',
+        messages: [
+          { role: 'system', content: 'You are a productivity insight generator. Return only the insight.' },
+          { role: 'user', content: insightPrompt }
+        ],
+      }),
+    });
+
+    if (!insightResponse.ok) {
+      console.error('Insight generation failed:', await insightResponse.text());
+      throw new Error('Failed to generate insight');
+    }
+
+    const insightData = await insightResponse.json();
+    const insightOfTheDay = insightData.choices?.[0]?.message?.content?.trim() || 'Ready to capture your day.';
 
     const summary: DailySummary = {
-      priority: priority.length > 0 ? priority : ['No priority tasks set'],
-      dueToday: dueToday.length > 0 ? dueToday : ['Nothing due today'],
-      thisWeek: thisWeek.length > 0 ? thisWeek : ['No tasks scheduled this week'],
-      smallTasks: smallTasks.length > 0 ? smallTasks : ['No small tasks'],
+      priorityTasks: priorityTasks.length > 0 ? priorityTasks : [],
+      todaysSchedule: todaysSchedule.length > 0 ? todaysSchedule : [],
+      lowEffortWins: lowEffortWins.length > 0 ? lowEffortWins : [],
       tinyTaskCount,
-      staleFromYesterday: staleFromYesterday.length > 0 ? staleFromYesterday : [],
-      insights: insights.length > 0 ? insights : ['Ready to capture your day'],
+      contextNotes,
+      insightOfTheDay,
       tone,
     };
 
