@@ -43,7 +43,7 @@ export const ConversationalTaskFlow: React.FC<ConversationalTaskFlowProps> = ({
   const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [currentQuestion, setCurrentQuestion] = useState('');
-  const [flowState, setFlowState] = useState<'summary' | 'asking_category' | 'complete'>('summary');
+  const [flowState, setFlowState] = useState<'summary' | 'asking_category' | 'asking_reminder' | 'asking_reminder_time' | 'complete'>('summary');
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -185,33 +185,6 @@ export const ConversationalTaskFlow: React.FC<ConversationalTaskFlowProps> = ({
     }
   };
 
-  const processVoiceResponse = async (audioBlob: Blob) => {
-    try {
-      // Convert to base64
-      const reader = new FileReader();
-      reader.readAsDataURL(audioBlob);
-      const base64Audio = await new Promise<string>((resolve) => {
-        reader.onloadend = () => {
-          const result = reader.result?.toString().split(',')[1];
-          resolve(result || '');
-        };
-      });
-
-      // Transcribe
-      const { data: transcribeData, error: transcribeError } = await supabase.functions.invoke('transcribe-audio', {
-        body: { audio: base64Audio }
-      });
-
-      if (transcribeError) throw transcribeError;
-
-      const response = transcribeData.text.toLowerCase().trim();
-      await handleCategoryResponse(response);
-    } catch (error) {
-      console.error('Error processing voice response:', error);
-      // Retry asking
-      setTimeout(() => askAboutNextTask(), 1000);
-    }
-  };
 
   const handleCategoryResponse = async (response: string) => {
     const task = tasks[currentTaskIndex];
@@ -239,19 +212,138 @@ export const ConversationalTaskFlow: React.FC<ConversationalTaskFlowProps> = ({
       category = 'inbox';
     }
 
-    // Confirm and move to next
+    // Confirm category
     const confirmation = `Got it, adding to ${category}.`;
     await playTTS(confirmation);
 
+    // Ask about reminder
+    setFlowState('asking_reminder');
+    const reminderQuestion = `Would you like a reminder for this task?`;
+    setCurrentQuestion(reminderQuestion);
+    await playTTS(reminderQuestion);
+    
+    // Store current task info temporarily
     setConfirmedTasks(prev => [...prev, {
       title: task.title,
       category,
       is_focus: task.suggested_timeframe === 'today',
-      reminder_time: task.reminder_time
+      reminder_time: null // Will be filled in if user wants reminder
     }]);
+    
+    startListeningForResponse();
+  };
 
-    setCurrentTaskIndex(prev => prev + 1);
-    setTimeout(() => askAboutNextTask(), 800);
+  const handleReminderResponse = async (response: string) => {
+    const currentTask = confirmedTasks[confirmedTasks.length - 1];
+    
+    if (response.includes('yes') || response.includes('yeah') || response.includes('sure')) {
+      // Ask for time
+      setFlowState('asking_reminder_time');
+      const timeQuestion = `What time should I remind you? For example, say "10 AM" or "3 PM tomorrow".`;
+      setCurrentQuestion(timeQuestion);
+      await playTTS(timeQuestion);
+      startListeningForResponse();
+    } else if (response.includes('no') || response.includes('nope') || response.includes('skip')) {
+      // No reminder, move to next task
+      setCurrentTaskIndex(prev => prev + 1);
+      setTimeout(() => askAboutNextTask(), 800);
+    } else {
+      // Didn't understand, ask again
+      const clarifyQuestion = `Sorry, I didn't catch that. Do you want a reminder? Say yes or no.`;
+      setCurrentQuestion(clarifyQuestion);
+      await playTTS(clarifyQuestion);
+      startListeningForResponse();
+    }
+  };
+
+  const handleReminderTimeResponse = async (response: string) => {
+    try {
+      // Parse time from response using AI
+      const { data, error } = await supabase.functions.invoke('chat-completion', {
+        body: {
+          messages: [
+            {
+              role: 'system',
+              content: `You are a time parser. Extract a specific datetime from the user's input and return it in ISO 8601 format. 
+              If they say "10 AM" assume today at 10 AM. If they say "tomorrow at 3 PM" use tomorrow at 3 PM.
+              Current time is ${new Date().toISOString()}.
+              Return ONLY the ISO datetime string, nothing else.`
+            },
+            {
+              role: 'user',
+              content: response
+            }
+          ]
+        }
+      });
+
+      if (error) throw error;
+
+      const reminderTime = data?.message?.trim();
+      
+      // Update the last confirmed task with reminder time
+      setConfirmedTasks(prev => {
+        const updated = [...prev];
+        updated[updated.length - 1].reminder_time = reminderTime;
+        return updated;
+      });
+
+      const confirmation = `Perfect! I'll remind you then.`;
+      await playTTS(confirmation);
+
+      // Move to next task
+      setCurrentTaskIndex(prev => prev + 1);
+      setTimeout(() => askAboutNextTask(), 800);
+    } catch (error) {
+      console.error('Error parsing reminder time:', error);
+      const retryQuestion = `Sorry, I didn't understand that time. Can you say it again? For example, "10 AM" or "3 PM tomorrow".`;
+      setCurrentQuestion(retryQuestion);
+      await playTTS(retryQuestion);
+      startListeningForResponse();
+    }
+  };
+
+  // Update processVoiceResponse to route to the right handler
+  const processVoiceResponse = async (audioBlob: Blob) => {
+    try {
+      // Convert to base64
+      const reader = new FileReader();
+      reader.readAsDataURL(audioBlob);
+      const base64Audio = await new Promise<string>((resolve) => {
+        reader.onloadend = () => {
+          const result = reader.result?.toString().split(',')[1];
+          resolve(result || '');
+        };
+      });
+
+      // Transcribe
+      const { data: transcribeData, error: transcribeError } = await supabase.functions.invoke('transcribe-audio', {
+        body: { audio: base64Audio }
+      });
+
+      if (transcribeError) throw transcribeError;
+
+      const response = transcribeData.text.toLowerCase().trim();
+      
+      // Route to appropriate handler based on flow state
+      if (flowState === 'asking_category') {
+        await handleCategoryResponse(response);
+      } else if (flowState === 'asking_reminder') {
+        await handleReminderResponse(response);
+      } else if (flowState === 'asking_reminder_time') {
+        await handleReminderTimeResponse(response);
+      }
+    } catch (error) {
+      console.error('Error processing voice response:', error);
+      // Retry asking
+      setTimeout(() => {
+        if (flowState === 'asking_category') {
+          askAboutNextTask();
+        } else if (flowState === 'asking_reminder' || flowState === 'asking_reminder_time') {
+          startListeningForResponse();
+        }
+      }, 1000);
+    }
   };
 
   const completeFlow = async () => {
