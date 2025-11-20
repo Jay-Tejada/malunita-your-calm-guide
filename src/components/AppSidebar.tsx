@@ -14,7 +14,8 @@ import {
   Target,
   Sun,
   TrendingUp,
-  Sparkles
+  Sparkles,
+  Bell
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAdmin } from "@/hooks/useAdmin";
@@ -186,6 +187,16 @@ export function AppSidebar({ onSettingsClick, onCategoryClick, activeCategory }:
                 >
                   <Target className="mr-2 h-4 w-4" />
                   {!collapsed && <span>Goals</span>}
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              <SidebarMenuItem>
+                <SidebarMenuButton 
+                  onClick={() => navigate('/reminders')}
+                  className="hover:bg-muted/50"
+                >
+                  <Bell className="mr-2 h-4 w-4" />
+                  {!collapsed && <span>Reminders</span>}
                 </SidebarMenuButton>
               </SidebarMenuItem>
 
