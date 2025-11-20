@@ -90,43 +90,51 @@ export function useWorkflowRituals() {
         throw new Error('No summary received');
       }
 
-      // Format structured summary
-      let message = `🌅 **Daily Command Center**\n\n`;
+      // Format structured summary with exact template
+      let message = `🧭 **Daily Command Center**\nHere's your clarity for today.\n\n`;
 
-      // Priority section
-      if (summary.priority && summary.priority.length > 0 && summary.priority[0] !== 'No priority tasks set') {
-        message += `**🔥 Priority**\n${summary.priority.map((t: string) => `• ${t}`).join('\n')}\n\n`;
+      // 🔥 Priority Tasks
+      message += `**🔥 Priority Tasks**\nHigh-impact items you should do first.\n`;
+      if (summary.priorityTasks && summary.priorityTasks.length > 0) {
+        message += `${summary.priorityTasks.map((t: string) => `• ${t}`).join('\n')}\n\n`;
+      } else {
+        message += `• No items today\n\n`;
       }
 
-      // Due Today section
-      if (summary.dueToday && summary.dueToday.length > 0 && summary.dueToday[0] !== 'Nothing due today') {
-        message += `**📅 Due Today**\n${summary.dueToday.map((t: string) => `• ${t}`).join('\n')}\n\n`;
+      // 📅 Today's Schedule
+      message += `**📅 Today's Schedule**\nTime-sensitive or deadline-linked items.\n`;
+      if (summary.todaysSchedule && summary.todaysSchedule.length > 0) {
+        message += `${summary.todaysSchedule.map((t: string) => `• ${t}`).join('\n')}\n\n`;
+      } else {
+        message += `• No items today\n\n`;
       }
 
-      // This Week section
-      if (summary.thisWeek && summary.thisWeek.length > 0 && summary.thisWeek[0] !== 'No tasks scheduled this week') {
-        message += `**📌 This Week**\n${summary.thisWeek.slice(0, 3).map((t: string) => `• ${t}`).join('\n')}\n\n`;
+      // 🪶 Low Effort Wins
+      message += `**🪶 Low Effort Wins**\nSmall tasks that build momentum.\n`;
+      if (summary.lowEffortWins && summary.lowEffortWins.length > 0) {
+        message += `${summary.lowEffortWins.map((t: string) => `• ${t}`).join('\n')}\n\n`;
+      } else {
+        message += `• No items today\n\n`;
       }
 
-      // Small Tasks section
-      if (summary.smallTasks && summary.smallTasks.length > 0 && summary.smallTasks[0] !== 'No small tasks') {
-        message += `**🪶 Small Tasks**\n${summary.smallTasks.slice(0, 3).map((t: string) => `• ${t}`).join('\n')}\n\n`;
-      }
-
-      // Tiny Task Fiesta
+      // 🎉 Tiny Task Fiesta
+      message += `**🎉 Tiny Task Fiesta**\n`;
       if (summary.tinyTaskCount > 0) {
-        message += `**🎉 Tiny Task Fiesta**\n• ${summary.tinyTaskCount} tiny tasks ready to blast through\n\n`;
+        message += `You have ${summary.tinyTaskCount} tiny tasks ready to clear.\n\n`;
+      } else {
+        message += `No tiny tasks detected.\n\n`;
       }
 
-      // Stale from yesterday
-      if (summary.staleFromYesterday && summary.staleFromYesterday.length > 0) {
-        message += `**💤 Stale / Leftover**\n${summary.staleFromYesterday.map((t: string) => `• ${t}`).join('\n')}\n\n`;
+      // 🧩 Context Notes
+      message += `**🧩 Context Notes**\nNon-actionable notes extracted from your input.\n`;
+      if (summary.contextNotes && summary.contextNotes.length > 0) {
+        message += `${summary.contextNotes.map((n: string) => `• ${n}`).join('\n')}\n\n`;
+      } else {
+        message += `• No context notes\n\n`;
       }
 
-      // Insights footer
-      if (summary.insights && summary.insights.length > 0) {
-        message += `**💡 Insights**\n${summary.insights.map((i: string) => `• ${i}`).join('\n')}`;
-      }
+      // 💡 Insight of the Day
+      message += `**💡 Insight of the Day**\n${summary.insightOfTheDay || 'Ready to capture your day.'}`;
 
       showMorningMessage(message);
 
