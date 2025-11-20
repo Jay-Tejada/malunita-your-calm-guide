@@ -94,7 +94,7 @@ export function useWorkflowRituals() {
       let message = `🧭 **Daily Command Center**\nHere's your clarity for today.\n\n`;
 
       // 🔥 Priority Tasks
-      message += `**🔥 Priority Tasks**\nHigh-impact items you should do first.\n`;
+      message += `**🔥 Priority Tasks**\nWhat moves the needle the most.\n`;
       if (summary.priorityTasks && summary.priorityTasks.length > 0) {
         message += `${summary.priorityTasks.map((t: string) => `• ${t}`).join('\n')}\n\n`;
       } else {
@@ -102,39 +102,34 @@ export function useWorkflowRituals() {
       }
 
       // 📅 Today's Schedule
-      message += `**📅 Today's Schedule**\nTime-sensitive or deadline-linked items.\n`;
+      message += `**📅 Today's Schedule**\nTime-sensitive items.\n`;
       if (summary.todaysSchedule && summary.todaysSchedule.length > 0) {
         message += `${summary.todaysSchedule.map((t: string) => `• ${t}`).join('\n')}\n\n`;
       } else {
         message += `• No items today\n\n`;
       }
 
-      // 🪶 Low Effort Wins
-      message += `**🪶 Low Effort Wins**\nSmall tasks that build momentum.\n`;
-      if (summary.lowEffortWins && summary.lowEffortWins.length > 0) {
-        message += `${summary.lowEffortWins.map((t: string) => `• ${t}`).join('\n')}\n\n`;
+      // 🪶 Quick Wins
+      message += `**🪶 Quick Wins**\nFast clears to build momentum.\n`;
+      if (summary.quickWins && summary.quickWins.length > 0) {
+        message += `${summary.quickWins.map((t: string) => `• ${t}`).join('\n')}\n\n`;
       } else {
         message += `• No items today\n\n`;
       }
 
       // 🎉 Tiny Task Fiesta
-      message += `**🎉 Tiny Task Fiesta**\n`;
-      if (summary.tinyTaskCount > 0) {
-        message += `You have ${summary.tinyTaskCount} tiny tasks ready to clear.\n\n`;
-      } else {
-        message += `No tiny tasks detected.\n\n`;
-      }
+      message += `**🎉 Tiny Task Fiesta**\nYou have ${summary.tinyTaskCount || 0} tiny tasks ready to clear.\n\n`;
 
       // 🧩 Context Notes
-      message += `**🧩 Context Notes**\nNon-actionable notes extracted from your input.\n`;
+      message += `**🧩 Context Notes**\nNon-actionable notes extracted from the ramble.\n`;
       if (summary.contextNotes && summary.contextNotes.length > 0) {
         message += `${summary.contextNotes.map((n: string) => `• ${n}`).join('\n')}\n\n`;
       } else {
-        message += `• No context notes\n\n`;
+        message += `• No items today\n\n`;
       }
 
-      // 💡 Insight of the Day
-      message += `**💡 Insight of the Day**\n${summary.insightOfTheDay || 'Ready to capture your day.'}`;
+      // 💡 Executive Insight
+      message += `**💡 Executive Insight**\n${summary.executiveInsight || 'Here is what actually matters today.'}`;
 
       showMorningMessage(message);
 
