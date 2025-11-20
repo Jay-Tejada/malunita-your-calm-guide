@@ -21,6 +21,8 @@ interface ConversationalTaskFlowProps {
     category: string;
     is_focus: boolean;
     reminder_time?: string | null;
+    recurrence_pattern?: 'none' | 'daily' | 'weekly' | 'monthly';
+    recurrence_day?: number;
   }>) => void;
   onCancel: () => void;
   audioEnabled: boolean;
@@ -39,6 +41,8 @@ export const ConversationalTaskFlow: React.FC<ConversationalTaskFlowProps> = ({
     category: string;
     is_focus: boolean;
     reminder_time?: string | null;
+    recurrence_pattern?: 'none' | 'daily' | 'weekly' | 'monthly';
+    recurrence_day?: number;
   }>>([]);
   const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -258,6 +262,33 @@ export const ConversationalTaskFlow: React.FC<ConversationalTaskFlowProps> = ({
 
   const handleReminderTimeResponse = async (response: string) => {
     try {
+      const lowerResponse = response.toLowerCase();
+      
+      // Check for recurring patterns
+      let recurrencePattern: 'none' | 'daily' | 'weekly' | 'monthly' = 'none';
+      let recurrenceDay: number | undefined;
+      
+      if (lowerResponse.includes('every day') || lowerResponse.includes('daily')) {
+        recurrencePattern = 'daily';
+      } else if (lowerResponse.includes('every week') || lowerResponse.includes('weekly') || 
+                 lowerResponse.includes('every monday') || lowerResponse.includes('every tuesday') ||
+                 lowerResponse.includes('every wednesday') || lowerResponse.includes('every thursday') ||
+                 lowerResponse.includes('every friday') || lowerResponse.includes('every saturday') ||
+                 lowerResponse.includes('every sunday')) {
+        recurrencePattern = 'weekly';
+        
+        // Extract day of week
+        const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+        for (let i = 0; i < days.length; i++) {
+          if (lowerResponse.includes(days[i])) {
+            recurrenceDay = i;
+            break;
+          }
+        }
+      } else if (lowerResponse.includes('every month') || lowerResponse.includes('monthly')) {
+        recurrencePattern = 'monthly';
+      }
+
       // Parse time from response using AI
       const { data, error } = await supabase.functions.invoke('chat-completion', {
         body: {
@@ -266,6 +297,7 @@ export const ConversationalTaskFlow: React.FC<ConversationalTaskFlowProps> = ({
               role: 'system',
               content: `You are a time parser. Extract a specific datetime from the user's input and return it in ISO 8601 format. 
               If they say "10 AM" assume today at 10 AM. If they say "tomorrow at 3 PM" use tomorrow at 3 PM.
+              If they say "every Monday at 9 AM", use next Monday at 9 AM.
               Current time is ${new Date().toISOString()}.
               Return ONLY the ISO datetime string, nothing else.`
             },
@@ -281,14 +313,20 @@ export const ConversationalTaskFlow: React.FC<ConversationalTaskFlowProps> = ({
 
       const reminderTime = data?.message?.trim();
       
-      // Update the last confirmed task with reminder time
+      // Update the last confirmed task with reminder time and recurrence
       setConfirmedTasks(prev => {
         const updated = [...prev];
         updated[updated.length - 1].reminder_time = reminderTime;
+        updated[updated.length - 1].recurrence_pattern = recurrencePattern;
+        updated[updated.length - 1].recurrence_day = recurrenceDay;
         return updated;
       });
 
-      const confirmation = `Perfect! I'll remind you then.`;
+      const recurrenceText = recurrencePattern !== 'none' 
+        ? ` I'll make it repeat ${recurrencePattern}.`
+        : '';
+
+      const confirmation = `Perfect! I'll remind you then.${recurrenceText}`;
       await playTTS(confirmation);
 
       // Move to next task
@@ -296,7 +334,7 @@ export const ConversationalTaskFlow: React.FC<ConversationalTaskFlowProps> = ({
       setTimeout(() => askAboutNextTask(), 800);
     } catch (error) {
       console.error('Error parsing reminder time:', error);
-      const retryQuestion = `Sorry, I didn't understand that time. Can you say it again? For example, "10 AM" or "3 PM tomorrow".`;
+      const retryQuestion = `Sorry, I didn't understand that time. Can you say it again? For example, "10 AM" or "every Monday at 9 AM".`;
       setCurrentQuestion(retryQuestion);
       await playTTS(retryQuestion);
       startListeningForResponse();

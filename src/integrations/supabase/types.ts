@@ -565,6 +565,9 @@ export type Database = {
           is_focus: boolean | null
           is_time_based: boolean | null
           keywords: string[] | null
+          recurrence_day: number | null
+          recurrence_end_date: string | null
+          recurrence_pattern: string | null
           reminder_time: string | null
           title: string
           updated_at: string
@@ -588,6 +591,9 @@ export type Database = {
           is_focus?: boolean | null
           is_time_based?: boolean | null
           keywords?: string[] | null
+          recurrence_day?: number | null
+          recurrence_end_date?: string | null
+          recurrence_pattern?: string | null
           reminder_time?: string | null
           title: string
           updated_at?: string
@@ -611,6 +617,9 @@ export type Database = {
           is_focus?: boolean | null
           is_time_based?: boolean | null
           keywords?: string[] | null
+          recurrence_day?: number | null
+          recurrence_end_date?: string | null
+          recurrence_pattern?: string | null
           reminder_time?: string | null
           title?: string
           updated_at?: string
