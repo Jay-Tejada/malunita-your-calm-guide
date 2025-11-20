@@ -22,12 +22,14 @@ import { useWakeWord } from "@/hooks/useWakeWord";
 import { useWorkflowRituals } from "@/hooks/useWorkflowRituals";
 import { useCompanionIdentity, PersonalityType } from "@/hooks/useCompanionIdentity";
 import { AppSidebar } from "@/components/AppSidebar";
+import { VoiceCommandCenter } from "@/components/VoiceCommandCenter";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 import { WakeWordIndicator } from "@/components/WakeWordIndicator";
 
 import { SidebarProvider, useSidebar } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
-import { Globe2, Mic } from "lucide-react";
+import { Globe2, Mic, MicOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const CustomSidebarTrigger = ({ hasUrgentTasks }: { hasUrgentTasks: boolean }) => {
@@ -55,6 +57,7 @@ const Index = () => {
   const [loading, setLoading] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
   const [showRunwayReview, setShowRunwayReview] = useState(false);
+  const [showVoiceCommandCenter, setShowVoiceCommandCenter] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [showTodaysFocus, setShowTodaysFocus] = useState(false);
   const [wakeWordDetected, setWakeWordDetected] = useState(0);
@@ -364,6 +367,17 @@ const Index = () => {
                 </div>
                 <p className="mt-6 text-sm text-muted-foreground text-center w-full transition-all duration-300 group-hover:text-foreground group-hover:scale-105">What's on your mind?</p>
                 
+                {/* Voice Command Center Button */}
+                <Button
+                  onClick={() => setShowVoiceCommandCenter(true)}
+                  variant="outline"
+                  size="lg"
+                  className="gap-2 bg-primary/5 hover:bg-primary/10 border-primary/20"
+                >
+                  <Mic className="h-5 w-5" />
+                  Voice Command Center
+                </Button>
+                
                 {/* Fiesta Suggestion Card */}
                 <div className="w-full max-w-md px-4">
                   <FiestaHomeCard />
@@ -423,6 +437,13 @@ const Index = () => {
 
         {/* Runway Review Modal */}
         {showRunwayReview && <RunwayReview onClose={() => setShowRunwayReview(false)} />}
+        
+        {/* Voice Command Center Dialog */}
+        <Dialog open={showVoiceCommandCenter} onOpenChange={setShowVoiceCommandCenter}>
+          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+            <VoiceCommandCenter onClose={() => setShowVoiceCommandCenter(false)} />
+          </DialogContent>
+        </Dialog>
         
         {/* Companion Onboarding - Full Screen Intro Sequence */}
         {!isCompanionLoading && needsOnboarding && (

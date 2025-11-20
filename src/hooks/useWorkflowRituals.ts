@@ -53,8 +53,8 @@ export function useWorkflowRituals() {
     }
   };
 
-  const triggerMorningRitual = async () => {
-    if (!tasks || ritualState.morningShown) return;
+  const triggerMorningRitual = async (skipCheck = false) => {
+    if (!tasks || (!skipCheck && ritualState.morningShown)) return;
 
     const incompleteTasks = tasks.filter(t => !t.completed);
 
