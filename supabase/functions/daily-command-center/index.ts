@@ -21,10 +21,10 @@ interface Task {
 interface DailySummary {
   priorityTasks: string[];
   todaysSchedule: string[];
-  lowEffortWins: string[];
+  quickWins: string[];
   tinyTaskCount: number;
   contextNotes: string[];
-  insightOfTheDay: string;
+  executiveInsight: string;
   tone: 'calm' | 'direct' | 'urgent';
 }
 
@@ -247,15 +247,15 @@ Keep it ${tone === 'calm' ? 'calming and reassuring' : tone === 'urgent' ? 'focu
     }
 
     const insightData = await insightResponse.json();
-    const insightOfTheDay = insightData.choices?.[0]?.message?.content?.trim() || 'Ready to capture your day.';
+    const executiveInsight = insightData.choices?.[0]?.message?.content?.trim() || 'Here's what actually matters today.';
 
     const summary: DailySummary = {
       priorityTasks: priorityTasks.length > 0 ? priorityTasks : [],
       todaysSchedule: todaysSchedule.length > 0 ? todaysSchedule : [],
-      lowEffortWins: lowEffortWins.length > 0 ? lowEffortWins : [],
+      quickWins: quickWins.length > 0 ? quickWins : [],
       tinyTaskCount,
       contextNotes,
-      insightOfTheDay,
+      executiveInsight,
       tone,
     };
 
