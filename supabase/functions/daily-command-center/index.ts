@@ -138,8 +138,8 @@ serve(async (req) => {
       .slice(0, 5)
       .map(t => t.title);
 
-    // Low Effort Wins: Small, non-time-based tasks
-    const lowEffortWins = allTasks
+    // Quick Wins: Small, non-time-based tasks
+    const quickWins = allTasks
       .filter(t => 
         !t.is_time_based && 
         !priorityTasks.includes(t.title) && 
@@ -163,7 +163,7 @@ serve(async (req) => {
     
     // Count from existing tasks not already categorized
     tinyTaskCount += allTasks.filter(t => {
-      if (priorityTasks.includes(t.title) || todaysSchedule.includes(t.title) || lowEffortWins.includes(t.title)) {
+      if (priorityTasks.includes(t.title) || todaysSchedule.includes(t.title) || quickWins.includes(t.title)) {
         return false;
       }
       const title = t.title.toLowerCase();
@@ -214,7 +214,7 @@ User's input: "${text}"
 Task summary:
 - Priority tasks: ${priorityTasks.length}
 - Today's schedule: ${todaysSchedule.length}
-- Low effort wins: ${lowEffortWins.length}
+- Quick wins: ${quickWins.length}
 - Tiny tasks: ${tinyTaskCount}
 - Total open tasks: ${allTasks.length}
 - Tone: ${tone}
@@ -222,7 +222,7 @@ Task summary:
 Examples:
 - "You have 12 tiny tasks ready—perfect for a quick Fiesta session to build momentum."
 - "Focus on your 3 priority items first, then tackle time-sensitive tasks."
-- "Your schedule is light today—great chance to knock out low-effort wins."
+- "Your schedule is light today—great chance to knock out quick wins."
 
 Keep it ${tone === 'calm' ? 'calming and reassuring' : tone === 'urgent' ? 'focused and actionable' : 'strategic and direct'}. Return ONLY the insight, no extra text.`;
 
@@ -247,7 +247,7 @@ Keep it ${tone === 'calm' ? 'calming and reassuring' : tone === 'urgent' ? 'focu
     }
 
     const insightData = await insightResponse.json();
-    const executiveInsight = insightData.choices?.[0]?.message?.content?.trim() || 'Here's what actually matters today.';
+    const executiveInsight = insightData.choices?.[0]?.message?.content?.trim() || "Here is what actually matters today.";
 
     const summary: DailySummary = {
       priorityTasks: priorityTasks.length > 0 ? priorityTasks : [],
