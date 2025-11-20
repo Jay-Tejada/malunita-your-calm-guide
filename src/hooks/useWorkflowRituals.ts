@@ -110,7 +110,7 @@ export function useWorkflowRituals() {
       }
 
       // 🪶 Quick Wins
-      message += `**🪶 Quick Wins**\nFast clears to build momentum.\n`;
+      message += `**🪶 Quick Wins**\nSimple clears to build momentum.\n`;
       if (summary.quickWins && summary.quickWins.length > 0) {
         message += `${summary.quickWins.map((t: string) => `• ${t}`).join('\n')}\n\n`;
       } else {
@@ -118,10 +118,12 @@ export function useWorkflowRituals() {
       }
 
       // 🎉 Tiny Task Fiesta
-      message += `**🎉 Tiny Task Fiesta**\nYou have ${summary.tinyTaskCount || 0} tiny tasks ready to clear.\n\n`;
+      if (summary.tinyTaskCount > 0) {
+        message += `**🎉 Tiny Task Fiesta**\nYou have ${summary.tinyTaskCount} tiny tasks queued.\nA perfect batch for a short sweep.\n\n`;
+      }
 
       // 🧩 Context Notes
-      message += `**🧩 Context Notes**\nNon-actionable notes extracted from the ramble.\n`;
+      message += `**🧩 Context Notes**\nDetails worth remembering, not doing.\n`;
       if (summary.contextNotes && summary.contextNotes.length > 0) {
         message += `${summary.contextNotes.map((n: string) => `• ${n}`).join('\n')}\n\n`;
       } else {
