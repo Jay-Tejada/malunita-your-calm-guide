@@ -26,21 +26,39 @@ interface DailySummary {
   contextNotes: string[];
   executiveInsight: string;
   tone: 'calm' | 'direct' | 'urgent';
+  mood: 'calm' | 'focused' | 'rushed' | 'overwhelmed';
 }
 
-const detectTone = (text: string, taskCount: number): 'calm' | 'direct' | 'urgent' => {
-  const overwhelmedWords = ['overwhelmed', 'stressed', 'too much', 'can\'t', 'impossible', 'drowning'];
+const detectMood = (text: string, taskCount: number): { mood: 'calm' | 'focused' | 'rushed' | 'overwhelmed', tone: 'calm' | 'direct' | 'urgent' } => {
+  const overwhelmedWords = ['overwhelmed', 'stressed', 'too much', 'can\'t', 'impossible', 'drowning', 'swamped', 'buried'];
+  const rushedWords = ['rushed', 'hurry', 'quick', 'fast', 'late', 'behind', 'catch up'];
+  const calmWords = ['steady', 'relaxed', 'clear', 'ready', 'good', 'organized'];
+  const focusedWords = ['focus', 'prioritize', 'important', 'critical', 'key', 'main'];
   const urgentWords = ['asap', 'urgent', 'now', 'immediately', 'deadline', 'today', 'due'];
   
   const lowerText = text.toLowerCase();
   
+  let mood: 'calm' | 'focused' | 'rushed' | 'overwhelmed' = 'calm';
+  let tone: 'calm' | 'direct' | 'urgent' = 'direct';
+  
   if (overwhelmedWords.some(word => lowerText.includes(word)) || taskCount > 15) {
-    return 'calm';
+    mood = 'overwhelmed';
+    tone = 'calm';
+  } else if (rushedWords.some(word => lowerText.includes(word))) {
+    mood = 'rushed';
+    tone = 'urgent';
+  } else if (focusedWords.some(word => lowerText.includes(word))) {
+    mood = 'focused';
+    tone = 'direct';
+  } else if (calmWords.some(word => lowerText.includes(word))) {
+    mood = 'calm';
+    tone = 'calm';
+  } else if (urgentWords.some(word => lowerText.includes(word))) {
+    mood = 'rushed';
+    tone = 'urgent';
   }
-  if (urgentWords.some(word => lowerText.includes(word))) {
-    return 'urgent';
-  }
-  return 'direct';
+  
+  return { mood, tone };
 };
 
 serve(async (req) => {
@@ -113,12 +131,22 @@ serve(async (req) => {
     const allTasks = existingTasks || [];
     console.log('Existing open tasks:', allTasks.length);
 
-    // Step 3: Categorize tasks intelligently
+    // Step 3: Fetch companion state
+    const { data: profileData } = await supabase
+      .from('profiles')
+      .select('companion_personality_type, companion_stage')
+      .eq('id', user.id)
+      .single();
+
+    const companionPersonality = profileData?.companion_personality_type || 'zen';
+    const companionStage = profileData?.companion_stage || 1;
+
+    // Step 4: Categorize tasks intelligently
     const now = new Date();
     const today = now.toISOString().split('T')[0];
 
-    // Detect tone
-    const tone = detectTone(text, allTasks.length + extractedTasks.length);
+    // Detect mood and tone
+    const { mood, tone } = detectMood(text, allTasks.length + extractedTasks.length);
 
     // Priority Tasks: High-impact, focus items, or urgent
     const priorityTasks = allTasks
@@ -206,10 +234,13 @@ Return ONLY bullet points of context notes found, or return "No context notes" i
       .map((line: string) => line.replace(/^[-•]\s*/, '').trim())
       .filter((line: string) => line.length > 0);
 
-    // Generate single insight of the day
-    const insightPrompt = `You are analyzing a user's daily task landscape. Generate a single 1-2 sentence personalized insight.
+    // Generate Executive Insight with mood-aware, companion-aware tone
+    const insightPrompt = `You are an Executive Assistant with these attributes: clean, direct, minimalist, slightly dry humor, mood-aware, companion-aware.
 
 User's input: "${text}"
+User's mood: ${mood}
+Companion personality: ${companionPersonality}
+Companion stage: ${companionStage}
 
 Task summary:
 - Priority tasks: ${priorityTasks.length}
@@ -217,14 +248,27 @@ Task summary:
 - Quick wins: ${quickWins.length}
 - Tiny tasks: ${tinyTaskCount}
 - Total open tasks: ${allTasks.length}
-- Tone: ${tone}
 
-Examples:
-- "You have 12 tiny tasks ready—perfect for a quick Fiesta session to build momentum."
-- "Focus on your 3 priority items first, then tackle time-sensitive tasks."
-- "Your schedule is light today—great chance to knock out quick wins."
+Generate ONE direct sentence shaped by the user's mood. Optionally include a subtle companion reference ONLY if it fits naturally.
 
-Keep it ${tone === 'calm' ? 'calming and reassuring' : tone === 'urgent' ? 'focused and actionable' : 'strategic and direct'}. Return ONLY the insight, no extra text.`;
+Tone rules:
+- Clean, direct, minimalist
+- Use dry humor ONLY when natural (e.g., "Let's not let this one become a roommate.")
+- No corporate tone. No forced enthusiasm.
+- Should feel like: "Here's what actually matters today. Let's move smart."
+
+Mood-based adjustments:
+- ${mood === 'overwhelmed' ? 'Calming, grounded. Focus on one thing at a time.' : ''}
+- ${mood === 'rushed' ? 'Direct, efficient. Cut to what matters now.' : ''}
+- ${mood === 'focused' ? 'Strategic, sharp. Reinforce their momentum.' : ''}
+- ${mood === 'calm' ? 'Steady, clear. Match their composed energy.' : ''}
+
+Companion context (use subtly if natural):
+- Personality: ${companionPersonality} (zen=calm/grounded, spark=energetic/quick, cosmo=thoughtful/deep)
+- Stage: ${companionStage} (1=seedling, 2=sprout, 3=bloom, 4=radiant)
+- Example subtle reference: "Your companion is calm this morning — match that pace."
+
+Return ONLY the insight sentence. No extra text.`;
 
     const insightResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
@@ -257,6 +301,7 @@ Keep it ${tone === 'calm' ? 'calming and reassuring' : tone === 'urgent' ? 'focu
       contextNotes,
       executiveInsight,
       tone,
+      mood,
     };
 
     return new Response(

@@ -203,6 +203,7 @@ export function VoiceCommandCenter({ onClose }: VoiceCommandCenterProps) {
     let text = '🧭 Daily Command Center\nHere\'s your clarity for today.\n\n';
 
     text += '🔥 Priority Tasks\n';
+    text += 'What moves the needle the most.\n';
     if (summary.priorityTasks?.length > 0) {
       text += summary.priorityTasks.map((t: string) => `• ${t}`).join('\n');
     } else {
@@ -211,6 +212,7 @@ export function VoiceCommandCenter({ onClose }: VoiceCommandCenterProps) {
     text += '\n\n';
 
     text += '📅 Today\'s Schedule\n';
+    text += 'Time-sensitive items.\n';
     if (summary.todaysSchedule?.length > 0) {
       text += summary.todaysSchedule.map((t: string) => `• ${t}`).join('\n');
     } else {
@@ -218,33 +220,38 @@ export function VoiceCommandCenter({ onClose }: VoiceCommandCenterProps) {
     }
     text += '\n\n';
 
-    text += '🪶 Low Effort Wins\n';
-    if (summary.lowEffortWins?.length > 0) {
-      text += summary.lowEffortWins.map((t: string) => `• ${t}`).join('\n');
+    text += '🪶 Quick Wins\n';
+    text += 'Simple clears to build momentum.\n';
+    if (summary.quickWins?.length > 0) {
+      text += summary.quickWins.map((t: string) => `• ${t}`).join('\n');
     } else {
       text += '• No items today';
     }
     text += '\n\n';
 
     text += '🎉 Tiny Task Fiesta\n';
-    text += summary.tinyTaskCount > 0 
-      ? `You have ${summary.tinyTaskCount} tiny tasks ready to clear.\n\n`
-      : 'No tiny tasks detected.\n\n';
+    if (summary.tinyTaskCount > 0) {
+      text += `You have ${summary.tinyTaskCount} tiny tasks queued.\n`;
+      text += 'A perfect batch for a short sweep.\n\n';
+    } else {
+      text += 'No tiny tasks detected.\n\n';
+    }
 
     if (summary.contextNotes?.length > 0) {
       text += '🧩 Context Notes\n';
+      text += 'Details worth remembering, not doing.\n';
       text += summary.contextNotes.map((n: string) => `• ${n}`).join('\n');
       text += '\n\n';
     }
 
-    text += '💡 Insight of the Day\n';
-    text += summary.insightOfTheDay || 'Ready to capture your day.';
+    text += '💡 Executive Insight\n';
+    text += summary.executiveInsight || 'Here is what actually matters today.';
 
     return text;
   };
 
   const formatSummaryForSpeech = (summary: any): string => {
-    let text = 'Good morning. Here\'s your daily command center brief. ';
+    let text = 'Here is your command center brief. ';
 
     if (summary.priorityTasks?.length > 0) {
       text += `Your priority tasks are: ${summary.priorityTasks.join(', ')}. `;
@@ -254,16 +261,16 @@ export function VoiceCommandCenter({ onClose }: VoiceCommandCenterProps) {
       text += `On today's schedule: ${summary.todaysSchedule.join(', ')}. `;
     }
 
-    if (summary.lowEffortWins?.length > 0) {
-      text += `For quick wins, consider: ${summary.lowEffortWins.slice(0, 3).join(', ')}. `;
+    if (summary.quickWins?.length > 0) {
+      text += `For quick wins, consider: ${summary.quickWins.slice(0, 3).join(', ')}. `;
     }
 
     if (summary.tinyTaskCount > 0) {
-      text += `You have ${summary.tinyTaskCount} tiny tasks ready for a fiesta session. `;
+      text += `You have ${summary.tinyTaskCount} tiny tasks queued. A perfect batch for a short sweep. `;
     }
 
-    if (summary.insightOfTheDay) {
-      text += summary.insightOfTheDay;
+    if (summary.executiveInsight) {
+      text += summary.executiveInsight;
     }
 
     return text;
