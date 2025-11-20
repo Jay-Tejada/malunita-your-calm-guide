@@ -57,64 +57,97 @@ export function useWorkflowRituals() {
     if (!tasks || ritualState.morningShown) return;
 
     const incompleteTasks = tasks.filter(t => !t.completed);
-    if (incompleteTasks.length === 0) return;
 
-    // Prepare analysis data
-    const ideaAnalysis = {
-      summary: 'Morning planning session',
-      topics: [],
-      insights: [],
-      decisions: [],
-      ideas: [],
-      followups: [],
-      questions: [],
-      emotional_tone: 'focused' as const,
-    };
-
-    const context = contextMapper(incompleteTasks, ideaAnalysis);
-    const priorities = priorityScorer(incompleteTasks, ideaAnalysis, context);
-    const routing = agendaRouter(incompleteTasks, context, priorities);
-
-    const mustTasks = priorities.filter(p => p.priority === 'MUST').slice(0, 3);
-    const bigTasks = priorities.filter(p => p.big_task);
-    const fiestaReady = priorities.filter(p => p.fiesta_ready);
-
-    let message = `🌅 Good morning! `;
-
-    if (routing.today.length > 0) {
-      message += `You have ${routing.today.length} tasks for today. `;
-    }
-
-    if (mustTasks.length > 0) {
-      const mustTaskTitles = mustTasks
-        .map(mt => incompleteTasks.find(t => t.id === mt.task_id)?.title)
-        .filter(Boolean)
-        .slice(0, 3);
-      message += `\n\nPriority tasks:\n${mustTaskTitles.map(t => `• ${t}`).join('\n')}`;
-    }
-
-    if (bigTasks.length > 0) {
-      const bigTask = incompleteTasks.find(t => t.id === bigTasks[0].task_id);
-      if (bigTask) {
-        message += `\n\n📦 Big focus: ${bigTask.title}`;
+    try {
+      // Get recent idea dumps or tasks for context
+      let contextText = `Morning check-in for ${new Date().toLocaleDateString()}. `;
+      
+      if (incompleteTasks.length > 0) {
+        const recentTaskTitles = incompleteTasks
+          .slice(0, 10)
+          .map(t => t.title)
+          .join('. ');
+        contextText += recentTaskTitles;
+      } else {
+        contextText += "What's on your mind today?";
       }
-    }
 
-    if (fiestaReady.length >= 3) {
-      message += `\n\n🎉 ${fiestaReady.length} tiny tasks ready for a Fiesta session`;
-    }
+      // Call the intelligent Daily Command Center
+      const { data: commandData, error: commandError } = await supabase.functions.invoke('daily-command-center', {
+        body: { text: contextText }
+      });
 
-    // Send push notification with action buttons
+      if (commandError) {
+        console.error('Command center error:', commandError);
+        // Fallback to simple message
+        const fallbackMessage = '🌅 Good morning! Ready to capture your day?';
+        showMorningMessage(fallbackMessage);
+        return;
+      }
+
+      const summary = commandData?.summary;
+      if (!summary) {
+        throw new Error('No summary received');
+      }
+
+      // Format structured summary
+      let message = `🌅 **Daily Command Center**\n\n`;
+
+      // Priority section
+      if (summary.priority && summary.priority.length > 0 && summary.priority[0] !== 'No priority tasks set') {
+        message += `**🔥 Priority**\n${summary.priority.map((t: string) => `• ${t}`).join('\n')}\n\n`;
+      }
+
+      // Due Today section
+      if (summary.dueToday && summary.dueToday.length > 0 && summary.dueToday[0] !== 'Nothing due today') {
+        message += `**📅 Due Today**\n${summary.dueToday.map((t: string) => `• ${t}`).join('\n')}\n\n`;
+      }
+
+      // This Week section
+      if (summary.thisWeek && summary.thisWeek.length > 0 && summary.thisWeek[0] !== 'No tasks scheduled this week') {
+        message += `**📌 This Week**\n${summary.thisWeek.slice(0, 3).map((t: string) => `• ${t}`).join('\n')}\n\n`;
+      }
+
+      // Small Tasks section
+      if (summary.smallTasks && summary.smallTasks.length > 0 && summary.smallTasks[0] !== 'No small tasks') {
+        message += `**🪶 Small Tasks**\n${summary.smallTasks.slice(0, 3).map((t: string) => `• ${t}`).join('\n')}\n\n`;
+      }
+
+      // Tiny Task Fiesta
+      if (summary.tinyTaskCount > 0) {
+        message += `**🎉 Tiny Task Fiesta**\n• ${summary.tinyTaskCount} tiny tasks ready to blast through\n\n`;
+      }
+
+      // Stale from yesterday
+      if (summary.staleFromYesterday && summary.staleFromYesterday.length > 0) {
+        message += `**💤 Stale / Leftover**\n${summary.staleFromYesterday.map((t: string) => `• ${t}`).join('\n')}\n\n`;
+      }
+
+      // Insights footer
+      if (summary.insights && summary.insights.length > 0) {
+        message += `**💡 Insights**\n${summary.insights.map((i: string) => `• ${i}`).join('\n')}`;
+      }
+
+      showMorningMessage(message);
+
+    } catch (error) {
+      console.error('Morning ritual error:', error);
+      const fallbackMessage = '🌅 Good morning! Ready to start your day?';
+      showMorningMessage(fallbackMessage);
+    }
+  };
+
+  const showMorningMessage = async (message: string) => {
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
       const ritualPrefs = profile?.ritual_preferences || {};
-      const actionLabel = ritualPrefs.morning_ritual?.action_button || 'Start Planning';
+      const actionLabel = ritualPrefs?.morning_ritual?.action_button || 'Start Planning';
       
       try {
         await supabase.functions.invoke('send-push-notification', {
           body: {
             title: '🌅 Daily Command Center',
-            body: message.substring(0, 300), // Truncate for push notification
+            body: message.substring(0, 300),
             icon: '/icon-192.png',
             data: { type: 'morning-ritual', timestamp: Date.now() },
             actions: [
@@ -136,7 +169,6 @@ export function useWorkflowRituals() {
         console.error('Failed to send morning ritual push notification:', error);
       }
 
-      // Log to conversation history
       await supabase.from('conversation_history').insert({
         user_id: user.id,
         session_id: `morning-${Date.now()}`,
@@ -145,12 +177,11 @@ export function useWorkflowRituals() {
       });
     }
 
-    // Show toast only if app is active
     if (document.visibilityState === 'visible') {
       toast({
         title: "Daily Command Center",
         description: message,
-        duration: 10000,
+        duration: 15000,
       });
     }
 

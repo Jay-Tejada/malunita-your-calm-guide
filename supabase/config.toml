@@ -31,6 +31,9 @@ verify_jwt = true
 [functions.daily-runway-reminder]
 verify_jwt = false
 
+[functions.daily-command-center]
+verify_jwt = true
+
 [functions.send-push-notification]
 verify_jwt = true
 
