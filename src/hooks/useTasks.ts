@@ -23,6 +23,9 @@ export interface Task {
   updated_at: string;
   goal_aligned?: boolean | null;
   alignment_reason?: string | null;
+  recurrence_pattern?: 'none' | 'daily' | 'weekly' | 'monthly';
+  recurrence_day?: number;
+  recurrence_end_date?: string;
 }
 
 export const useTasks = () => {

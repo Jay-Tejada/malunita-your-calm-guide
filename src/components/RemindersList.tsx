@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Clock, Trash2, Edit2, Mic, MicOff, Calendar } from 'lucide-react';
+import { Clock, Trash2, Edit2, Mic, MicOff, Calendar, Repeat } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { format, isPast, isFuture, isToday, isTomorrow } from 'date-fns';
@@ -12,6 +13,8 @@ interface TaskWithReminder {
   reminder_time: string;
   category: string;
   completed: boolean;
+  recurrence_pattern?: 'none' | 'daily' | 'weekly' | 'monthly';
+  recurrence_day?: number;
 }
 
 export function RemindersList() {
@@ -56,14 +59,14 @@ export function RemindersList() {
 
       const { data, error } = await supabase
         .from('tasks')
-        .select('id, title, reminder_time, category, completed')
+        .select('id, title, reminder_time, category, completed, recurrence_pattern, recurrence_day')
         .eq('user_id', user.id)
         .not('reminder_time', 'is', null)
         .order('reminder_time', { ascending: true });
 
       if (error) throw error;
 
-      setReminders(data || []);
+      setReminders((data || []) as TaskWithReminder[]);
     } catch (error) {
       console.error('Error fetching reminders:', error);
       toast({
@@ -363,14 +366,36 @@ interface ReminderCardProps {
 }
 
 function ReminderCard({ reminder, isListening, onVoiceCommand, onDelete, getRelativeTime, isOverdue, isCompleted }: ReminderCardProps) {
+  const getRecurrenceLabel = () => {
+    if (!reminder.recurrence_pattern || reminder.recurrence_pattern === 'none') return null;
+    
+    if (reminder.recurrence_pattern === 'daily') return 'Daily';
+    if (reminder.recurrence_pattern === 'monthly') return 'Monthly';
+    if (reminder.recurrence_pattern === 'weekly') {
+      const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+      return reminder.recurrence_day !== undefined ? `Every ${days[reminder.recurrence_day]}` : 'Weekly';
+    }
+    return null;
+  };
+
+  const recurrenceLabel = getRecurrenceLabel();
+
   return (
     <Card className={isOverdue ? 'border-destructive' : ''}>
       <CardContent className="p-4">
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1 min-w-0">
-            <h3 className={`font-medium ${isCompleted ? 'line-through text-muted-foreground' : ''}`}>
-              {reminder.title}
-            </h3>
+            <div className="flex items-center gap-2 mb-1">
+              <h3 className={`font-medium ${isCompleted ? 'line-through text-muted-foreground' : ''}`}>
+                {reminder.title}
+              </h3>
+              {recurrenceLabel && (
+                <Badge variant="outline" className="text-xs gap-1">
+                  <Repeat className="w-3 h-3" />
+                  {recurrenceLabel}
+                </Badge>
+              )}
+            </div>
             <div className="flex items-center gap-2 mt-2">
               <Clock className={`w-4 h-4 ${isOverdue ? 'text-destructive' : 'text-muted-foreground'}`} />
               <span className={`text-sm ${isOverdue ? 'text-destructive' : 'text-muted-foreground'}`}>

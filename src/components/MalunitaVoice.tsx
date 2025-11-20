@@ -1093,7 +1093,15 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
     });
   };
 
-  const handleConfirmTasks = async (confirmedTasks: Array<{title: string; category: string; is_focus: boolean; custom_category_id?: string; reminder_time?: string | null}>) => {
+  const handleConfirmTasks = async (confirmedTasks: Array<{
+    title: string; 
+    category: string; 
+    is_focus: boolean; 
+    custom_category_id?: string; 
+    reminder_time?: string | null;
+    recurrence_pattern?: 'none' | 'daily' | 'weekly' | 'monthly';
+    recurrence_day?: number;
+  }>) => {
     setShowConfirmation(false);
     setIsProcessing(true);
 
@@ -1108,6 +1116,9 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
         is_focus: task.is_focus,
         focus_date: task.is_focus ? today : null,
         reminder_time: task.reminder_time || null,
+        has_reminder: !!task.reminder_time,
+        recurrence_pattern: task.recurrence_pattern || 'none',
+        recurrence_day: task.recurrence_day,
         completed: false,
       }));
 
