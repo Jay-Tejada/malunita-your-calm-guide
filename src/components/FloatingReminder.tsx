@@ -20,38 +20,37 @@ export const FloatingReminder = () => {
     format(new Date(session.started_at), 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd')
   );
 
-  const shouldShow = tasks && shouldSuggestFiesta(tasks, 5) && !activeSession && !hadFiestaToday && !isDismissed;
+  // Check if reminder was shown recently (within last 6 hours)
+  const wasShownRecently = () => {
+    const lastShown = localStorage.getItem('fiestaReminderLastShown');
+    if (!lastShown) return false;
+    const sixHoursAgo = Date.now() - (6 * 60 * 60 * 1000);
+    return parseInt(lastShown) > sixHoursAgo;
+  };
+
+  const shouldShow = tasks && shouldSuggestFiesta(tasks, 5) && !activeSession && !hadFiestaToday && !isDismissed && !wasShownRecently();
 
   useEffect(() => {
     if (!shouldShow) return;
 
-    // Show after 3 seconds
+    // Mark as shown and store timestamp
+    localStorage.setItem('fiestaReminderLastShown', Date.now().toString());
+
+    // Show after 5 seconds
     const showTimer = setTimeout(() => {
       setIsVisible(true);
-    }, 3000);
+    }, 5000);
 
-    // Auto-hide after 8 seconds
+    // Auto-hide after 10 seconds
     const hideTimer = setTimeout(() => {
       setIsVisible(false);
-    }, 11000);
+    }, 15000);
 
     return () => {
       clearTimeout(showTimer);
       clearTimeout(hideTimer);
     };
   }, [shouldShow]);
-
-  // Re-show every 2 minutes if still applicable
-  useEffect(() => {
-    if (!shouldShow || isDismissed) return;
-
-    const interval = setInterval(() => {
-      setIsVisible(true);
-      setTimeout(() => setIsVisible(false), 8000);
-    }, 120000); // 2 minutes
-
-    return () => clearInterval(interval);
-  }, [shouldShow, isDismissed]);
 
   if (!shouldShow || !isVisible) return null;
 
