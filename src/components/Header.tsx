@@ -1,4 +1,5 @@
 import { Sparkles } from "lucide-react";
+import { ThemeToggle } from "./ThemeToggle";
 
 export const Header = () => {
   return (
@@ -12,11 +13,14 @@ export const Header = () => {
           <p className="text-xs text-muted-foreground">Your thinking partner</p>
         </div>
       </div>
-      <div className="text-right">
-        <p className="text-xs text-muted-foreground">Today</p>
-        <p className="text-sm font-normal text-foreground">
-          {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
-        </p>
+      <div className="flex items-center gap-4">
+        <ThemeToggle />
+        <div className="text-right">
+          <p className="text-xs text-muted-foreground">Today</p>
+          <p className="text-sm font-normal text-foreground">
+            {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
+          </p>
+        </div>
       </div>
     </header>
   );
