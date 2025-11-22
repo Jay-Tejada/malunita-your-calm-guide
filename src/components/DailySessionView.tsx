@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
+import { useSwipeable } from "react-swipeable";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, X } from "lucide-react";
+import { X, ChevronLeft, ChevronRight } from "lucide-react";
 import { useDailySessions } from "@/hooks/useDailySessions";
 import { DailySessionStart } from "@/components/DailySessionStart";
 import { DailySessionSteps } from "@/components/DailySessionSteps";
@@ -12,13 +13,18 @@ type ViewMode = 'start' | 'morning' | 'evening' | 'summary' | 'history';
 
 interface DailySessionViewProps {
   onClose: () => void;
+  onNavigate?: (direction: 'prev' | 'next') => void;
+  hasPrev?: boolean;
+  hasNext?: boolean;
 }
 
-export const DailySessionView = ({ onClose }: DailySessionViewProps) => {
+export const DailySessionView = ({ onClose, onNavigate, hasPrev, hasNext }: DailySessionViewProps) => {
   const { toast } = useToast();
   const { todaySession, sessions, isLoading, createSession, updateSession } = useDailySessions();
   const [viewMode, setViewMode] = useState<ViewMode>('start');
   const [selectedSession, setSelectedSession] = useState<any>(null);
+  const [swipeOffset, setSwipeOffset] = useState(0);
+  const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | 'down' | null>(null);
 
   useEffect(() => {
     if (!isLoading) {
@@ -97,6 +103,68 @@ export const DailySessionView = ({ onClose }: DailySessionViewProps) => {
     }
   };
 
+  const handlers = useSwipeable({
+    onSwiping: (eventData) => {
+      const { deltaX, deltaY, dir } = eventData;
+      
+      // Vertical swipe down to dismiss
+      if (dir === 'Down' && Math.abs(deltaY) > Math.abs(deltaX)) {
+        setSwipeDirection('down');
+        setSwipeOffset(Math.min(deltaY, 200));
+      }
+      // Horizontal swipes to navigate
+      else if ((dir === 'Left' && hasNext) || (dir === 'Right' && hasPrev)) {
+        setSwipeDirection(dir === 'Left' ? 'left' : 'right');
+        setSwipeOffset(deltaX);
+      }
+    },
+    onSwiped: (eventData) => {
+      const { deltaX, deltaY, dir, velocity } = eventData;
+      
+      // Swipe down to dismiss (threshold: 100px or velocity > 0.5)
+      if (dir === 'Down' && (deltaY > 100 || velocity > 0.5)) {
+        onClose();
+        toast({
+          title: "View dismissed",
+          description: "Swipe down to close",
+        });
+      }
+      // Swipe left to next view
+      else if (dir === 'Left' && hasNext && (Math.abs(deltaX) > 100 || velocity > 0.5)) {
+        onNavigate?.('next');
+        toast({
+          title: "Next view",
+        });
+      }
+      // Swipe right to previous view
+      else if (dir === 'Right' && hasPrev && (Math.abs(deltaX) > 100 || velocity > 0.5)) {
+        onNavigate?.('prev');
+        toast({
+          title: "Previous view",
+        });
+      }
+      
+      // Reset offset and direction
+      setSwipeOffset(0);
+      setSwipeDirection(null);
+    },
+    trackMouse: false, // Only track touch, not mouse
+    trackTouch: true,
+    preventScrollOnSwipe: false,
+  });
+
+  // Calculate opacity based on swipe
+  const opacity = swipeDirection === 'down' 
+    ? Math.max(0.3, 1 - swipeOffset / 200)
+    : 1;
+
+  // Calculate transform based on swipe
+  const transform = swipeDirection === 'down'
+    ? `translateY(${swipeOffset}px)`
+    : swipeDirection === 'left' || swipeDirection === 'right'
+    ? `translateX(${swipeOffset}px)`
+    : 'translateY(0)';
+
   if (isLoading) {
     return (
       <div className="w-full max-w-4xl mx-auto animate-fade-in">
@@ -108,22 +176,59 @@ export const DailySessionView = ({ onClose }: DailySessionViewProps) => {
   }
 
   return (
-    <div className="w-full max-w-4xl mx-auto animate-fade-in">
-      <div className="flex items-center gap-4 mb-6">
+    <div 
+      {...handlers}
+      className="w-full max-w-4xl mx-auto animate-fade-in touch-pan-y"
+      style={{
+        opacity,
+        transform,
+        transition: swipeOffset === 0 ? 'all 0.3s ease-out' : 'none',
+      }}
+    >
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-2">
+          {hasPrev && onNavigate && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => onNavigate('prev')}
+              className="text-muted-foreground hover:text-foreground md:hidden"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </Button>
+          )}
+          <div>
+            <h1 className="text-3xl font-light">Daily Session</h1>
+            <p className="text-muted-foreground mt-1">
+              Start your day with intention
+            </p>
+          </div>
+          {hasNext && onNavigate && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => onNavigate('next')}
+              className="text-muted-foreground hover:text-foreground md:hidden"
+            >
+              <ChevronRight className="w-5 h-5" />
+            </Button>
+          )}
+        </div>
         <Button
           variant="ghost"
           size="icon"
           onClick={onClose}
-          className="hover:bg-muted/50"
+          className="text-muted-foreground hover:text-foreground"
         >
-          <X className="h-5 w-5" />
+          <X className="w-5 h-5" />
         </Button>
-        <div>
-          <h1 className="text-3xl font-light">Daily Session</h1>
-          <p className="text-muted-foreground mt-1">
-            Start your day with intention
-          </p>
-        </div>
+      </div>
+
+      {/* Swipe hint for mobile */}
+      <div className="md:hidden text-xs text-center text-muted-foreground mb-4 flex items-center justify-center gap-4">
+        {hasPrev && <span>← Swipe</span>}
+        <span>Swipe down to close</span>
+        {hasNext && <span>Swipe →</span>}
       </div>
 
       {viewMode === 'start' && (
