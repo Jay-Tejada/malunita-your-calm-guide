@@ -955,6 +955,22 @@ All colors MUST be HSL.
     100% { transform: translateX(40px) translateY(-20px) rotate(var(--tw-rotate)); opacity: 0; }
   }
 
+  /* Stats change notification animation */
+  @keyframes stats-change {
+    0%, 100% { 
+      transform: scale(1);
+      box-shadow: 0 0 0 0 hsl(var(--primary) / 0.4);
+    }
+    50% { 
+      transform: scale(1.15);
+      box-shadow: 0 0 0 3px hsl(var(--primary) / 0.2);
+    }
+  }
+
+  .animate-stats-change {
+    animation: stats-change 0.6s ease-out;
+  }
+
   @keyframes hatch-flash {
     0% { opacity: 0; transform: scale(0.8); }
     10% { opacity: 1; transform: scale(1.5); }

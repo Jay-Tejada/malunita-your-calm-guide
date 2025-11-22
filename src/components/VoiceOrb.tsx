@@ -89,9 +89,27 @@ export const VoiceOrb = ({
     return saved === 'true';
   });
   
+  // Track stat changes for icon animation
+  const [statsChanged, setStatsChanged] = useState(false);
+  const previousXp = useRef(growth.xp);
+  const previousEmotion = useRef(emotion.emotion);
+  
   useEffect(() => {
     localStorage.setItem('companion-stats-visible', showStats.toString());
   }, [showStats]);
+  
+  // Animate icon when stats change
+  useEffect(() => {
+    if (growth.xp !== previousXp.current || emotion.emotion !== previousEmotion.current) {
+      setStatsChanged(true);
+      previousXp.current = growth.xp;
+      previousEmotion.current = emotion.emotion;
+      
+      // Clear animation after 2 seconds
+      const timer = setTimeout(() => setStatsChanged(false), 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [growth.xp, emotion.emotion]);
   
   // Voice reaction system
   const voiceReaction = useVoiceReactions(personality, companionName);
@@ -1748,10 +1766,12 @@ export const VoiceOrb = ({
                     </p>
                     <button
                       onClick={() => setShowStats(!showStats)}
-                      className="inline-flex items-center justify-center h-3 w-3 hover:bg-primary/10 rounded-full transition-colors"
+                      className={`inline-flex items-center justify-center h-3 w-3 hover:bg-primary/10 rounded-full transition-colors ${
+                        statsChanged && !showStats ? 'animate-stats-change' : ''
+                      }`}
                       title={showStats ? "Hide stats" : "Show stats"}
                     >
-                      <Info className={`h-2.5 w-2.5 ${showStats ? 'text-primary' : 'text-muted-foreground/60'}`} />
+                      <Info className={`h-2.5 w-2.5 transition-colors ${showStats ? 'text-primary' : 'text-muted-foreground/60'}`} />
                     </button>
                   </div>
                 </div>
@@ -1765,10 +1785,12 @@ export const VoiceOrb = ({
                   </p>
                   <button
                     onClick={() => setShowStats(!showStats)}
-                    className="inline-flex items-center justify-center h-3 w-3 hover:bg-primary/10 rounded-full transition-colors"
+                    className={`inline-flex items-center justify-center h-3 w-3 hover:bg-primary/10 rounded-full transition-colors ${
+                      statsChanged && !showStats ? 'animate-stats-change' : ''
+                    }`}
                     title={showStats ? "Hide stats" : "Show stats"}
                   >
-                    <Info className={`h-2.5 w-2.5 ${showStats ? 'text-primary' : 'text-muted-foreground/60'}`} />
+                    <Info className={`h-2.5 w-2.5 transition-colors ${showStats ? 'text-primary' : 'text-muted-foreground/60'}`} />
                   </button>
                 </div>
               )}
