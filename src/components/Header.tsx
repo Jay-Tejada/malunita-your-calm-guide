@@ -1,6 +1,7 @@
 import { Sparkles } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useState } from "react";
+import { toast } from "sonner";
 
 export const Header = () => {
   const { theme, setTheme } = useTheme();
@@ -10,7 +11,9 @@ export const Header = () => {
   const handlePressStart = () => {
     setIsPressed(true);
     const timer = setTimeout(() => {
-      setTheme(theme === "dark" ? "light" : "dark");
+      const newTheme = theme === "dark" ? "light" : "dark";
+      setTheme(newTheme);
+      toast.success(`Switched to ${newTheme} mode`);
       setIsPressed(false);
     }, 800); // 800ms long press
     setPressTimer(timer);
