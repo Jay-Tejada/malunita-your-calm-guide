@@ -71,7 +71,7 @@ export function AppSidebar({ onSettingsClick, onCategoryClick, activeCategory }:
 
   return (
     <Sidebar
-      className="w-64"
+      className="w-64 animate-slide-in-left"
       collapsible="offcanvas"
     >
       <SidebarContent className="bg-card">
