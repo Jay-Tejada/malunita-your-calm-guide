@@ -30,9 +30,14 @@ import { SidebarProvider, useSidebar } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Globe2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useTheme } from "next-themes";
 
 const CustomSidebarTrigger = ({ hasUrgentTasks }: { hasUrgentTasks: boolean }) => {
   const { toggleSidebar } = useSidebar();
+  const { theme, setTheme } = useTheme();
+  const { toast } = useToast();
+  const [pressTimer, setPressTimer] = useState<NodeJS.Timeout | null>(null);
+  const [isPressed, setIsPressed] = useState(false);
   
   const handleClick = () => {
     // Haptic feedback for mobile devices
@@ -41,16 +46,75 @@ const CustomSidebarTrigger = ({ hasUrgentTasks }: { hasUrgentTasks: boolean }) =
     }
     toggleSidebar();
   };
+
+  const handlePressStart = (e: React.MouseEvent | React.TouchEvent) => {
+    e.preventDefault();
+    setIsPressed(true);
+    const timer = setTimeout(() => {
+      const newTheme = theme === "dark" ? "light" : "dark";
+      setTheme(newTheme);
+      toast({
+        title: `Switched to ${newTheme} mode`,
+        description: "Long press the globe again to switch back",
+      });
+      setIsPressed(false);
+      
+      // Haptic feedback
+      if ('vibrate' in navigator) {
+        navigator.vibrate([50, 30, 50]);
+      }
+    }, 800);
+    setPressTimer(timer);
+  };
+
+  const handlePressEnd = () => {
+    if (pressTimer) {
+      clearTimeout(pressTimer);
+      setPressTimer(null);
+      // If released before timeout, open sidebar
+      if (isPressed) {
+        handleClick();
+      }
+    }
+    setIsPressed(false);
+  };
   
   return (
     <Button
       variant="ghost"
       size="icon"
-      onClick={handleClick}
+      onMouseDown={handlePressStart}
+      onMouseUp={handlePressEnd}
+      onMouseLeave={handlePressEnd}
+      onTouchStart={handlePressStart}
+      onTouchEnd={handlePressEnd}
       className="hover:bg-muted/50 p-2 group transition-all duration-300 relative h-auto w-auto"
     >
+      {/* Progress ring */}
+      <svg
+        className="absolute inset-0 w-full h-full -rotate-90 pointer-events-none"
+        style={{ 
+          opacity: isPressed ? 1 : 0,
+          transition: 'opacity 0.2s ease'
+        }}
+      >
+        <circle
+          cx="18"
+          cy="18"
+          r="16"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeDasharray="100"
+          strokeDashoffset="100"
+          className="text-primary"
+          style={{
+            animation: isPressed ? 'progress-ring 800ms linear forwards' : 'none'
+          }}
+        />
+      </svg>
       <Globe2 
-        className={`w-5 h-5 text-primary animate-float-spin transition-all duration-300 group-hover:drop-shadow-[0_0_8px_hsl(var(--primary)/0.6)] group-hover:scale-110 ${hasUrgentTasks ? 'animate-alert-pulse' : ''}`} 
+        className={`w-5 h-5 text-primary animate-float-spin transition-all duration-300 group-hover:drop-shadow-[0_0_8px_hsl(var(--primary)/0.6)] group-hover:scale-110 ${hasUrgentTasks ? 'animate-alert-pulse' : ''} relative z-10`} 
       />
       {hasUrgentTasks && (
         <span className="absolute top-1 right-1 w-2 h-2 bg-destructive rounded-full animate-pulse" />
