@@ -111,11 +111,21 @@ export const DailySessionView = ({ onClose, onNavigate, hasPrev, hasNext }: Dail
       if (dir === 'Down' && Math.abs(deltaY) > Math.abs(deltaX)) {
         setSwipeDirection('down');
         setSwipeOffset(Math.min(deltaY, 200));
+        
+        // Light haptic feedback at 50% progress
+        if (deltaY > 100 && deltaY < 105 && 'vibrate' in navigator) {
+          navigator.vibrate(10);
+        }
       }
       // Horizontal swipes to navigate
       else if ((dir === 'Left' && hasNext) || (dir === 'Right' && hasPrev)) {
         setSwipeDirection(dir === 'Left' ? 'left' : 'right');
         setSwipeOffset(deltaX);
+        
+        // Light haptic feedback at 50% progress
+        if (Math.abs(deltaX) > 100 && Math.abs(deltaX) < 105 && 'vibrate' in navigator) {
+          navigator.vibrate(10);
+        }
       }
     },
     onSwiped: (eventData) => {
@@ -123,6 +133,10 @@ export const DailySessionView = ({ onClose, onNavigate, hasPrev, hasNext }: Dail
       
       // Swipe down to dismiss (threshold: 100px or velocity > 0.5)
       if (dir === 'Down' && (deltaY > 100 || velocity > 0.5)) {
+        // Success haptic: short-medium-short pattern
+        if ('vibrate' in navigator) {
+          navigator.vibrate([30, 20, 30]);
+        }
         onClose();
         toast({
           title: "View dismissed",
@@ -131,6 +145,10 @@ export const DailySessionView = ({ onClose, onNavigate, hasPrev, hasNext }: Dail
       }
       // Swipe left to next view
       else if (dir === 'Left' && hasNext && (Math.abs(deltaX) > 100 || velocity > 0.5)) {
+        // Navigation haptic: double tap pattern
+        if ('vibrate' in navigator) {
+          navigator.vibrate([15, 10, 15]);
+        }
         onNavigate?.('next');
         toast({
           title: "Next view",
@@ -138,10 +156,20 @@ export const DailySessionView = ({ onClose, onNavigate, hasPrev, hasNext }: Dail
       }
       // Swipe right to previous view
       else if (dir === 'Right' && hasPrev && (Math.abs(deltaX) > 100 || velocity > 0.5)) {
+        // Navigation haptic: double tap pattern
+        if ('vibrate' in navigator) {
+          navigator.vibrate([15, 10, 15]);
+        }
         onNavigate?.('prev');
         toast({
           title: "Previous view",
         });
+      }
+      // Failed swipe - light feedback
+      else if (swipeDirection) {
+        if ('vibrate' in navigator) {
+          navigator.vibrate(5);
+        }
       }
       
       // Reset offset and direction
