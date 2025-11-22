@@ -163,31 +163,27 @@ export const CompanionAvatar = ({
   return (
     <div 
       className={`
-        relative w-48 h-48 sm:w-56 sm:h-56 md:w-64 md:h-64
-        flex items-center justify-center
+        relative
+        flex flex-col items-center justify-center
+        select-none
+        ${animationClasses}
       `}
+      style={{
+        width: 'auto',
+        height: 'auto',
+        background: 'transparent',
+      }}
     >
-      {/* Drop shadow */}
-      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-3/4 h-4 bg-foreground/10 rounded-full blur-md" />
-      
-      {/* Companion Image with WebP/PNG fallback */}
-      <div 
-        className={`
-          relative w-full h-full flex items-center justify-center
-          ${animationClasses}
-          transition-opacity duration-150
-        `}
-      >
-        <picture className="w-full h-full">
-          <source srcSet={assets.webp} type="image/webp" />
-          <img
-            src={assets.png}
-            alt="Malunita companion"
-            className="w-full h-full object-contain select-none pointer-events-none"
-            draggable={false}
-          />
-        </picture>
-      </div>
+      <picture>
+        <source srcSet={assets.webp} type="image/webp" />
+        <img
+          src={assets.png}
+          alt="Malunita companion"
+          className="w-[140px] sm:w-[180px] md:w-[240px] lg:w-[260px] object-contain drop-shadow-[0_4px_12px_rgba(0,0,0,0.15)]"
+          style={{ background: 'transparent' }}
+          draggable={false}
+        />
+      </picture>
     </div>
   );
 };
