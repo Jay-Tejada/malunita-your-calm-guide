@@ -96,56 +96,63 @@ export const VoiceOrb = ({
     if (previousStage === 0 && growth.stage === 1 && growth.isEvolving) {
       setIsHatching(true);
       
-      // Import and trigger confetti
+      // Import and trigger confetti with personality-specific colors
       import('canvas-confetti').then((confetti) => {
         const count = 200;
         const defaults = {
           origin: { y: 0.7 },
           zIndex: 9999,
         };
+        
+        // Personality-specific colors
+        const colors = personality === 'zen' 
+          ? ['#60A5FA', '#93C5FD', '#67E8F9', '#A5F3FC'] // Blues and cyans
+          : personality === 'spark'
+          ? ['#FBBF24', '#F59E0B', '#FB923C', '#FDBA74'] // Golds and oranges
+          : ['#A78BFA', '#C4B5FD', '#818CF8', '#A5B4FC']; // Purples and indigos
 
         function fire(particleRatio: number, opts: any) {
           confetti.default({
             ...defaults,
             ...opts,
+            colors,
             particleCount: Math.floor(count * particleRatio),
           });
         }
 
-        // Burst of confetti
-        fire(0.25, {
-          spread: 26,
-          startVelocity: 55,
-        });
-
-        fire(0.2, {
-          spread: 60,
-        });
-
-        fire(0.35, {
-          spread: 100,
-          decay: 0.91,
-          scalar: 0.8,
-        });
-
-        fire(0.1, {
-          spread: 120,
-          startVelocity: 25,
-          decay: 0.92,
-          scalar: 1.2,
-        });
-
-        fire(0.1, {
-          spread: 120,
-          startVelocity: 45,
-        });
+        // Personality-specific confetti patterns
+        if (personality === 'zen') {
+          // Gentle, flowing confetti
+          fire(0.3, { spread: 40, startVelocity: 35, decay: 0.95 });
+          fire(0.2, { spread: 60, startVelocity: 30, decay: 0.96 });
+          fire(0.3, { spread: 80, startVelocity: 25, decay: 0.97 });
+        } else if (personality === 'spark') {
+          // Explosive, energetic confetti
+          fire(0.25, { spread: 26, startVelocity: 65 });
+          fire(0.2, { spread: 60, startVelocity: 55 });
+          fire(0.35, { spread: 100, decay: 0.91, scalar: 0.8 });
+          fire(0.1, { spread: 120, startVelocity: 45 });
+        } else {
+          // Mystical, spiraling confetti
+          fire(0.25, { spread: 50, startVelocity: 40, gravity: 0.5 });
+          fire(0.25, { spread: 70, startVelocity: 35, gravity: 0.6 });
+          fire(0.3, { spread: 90, startVelocity: 30, gravity: 0.7, scalar: 1.2 });
+        }
       });
       
-      // Play celebratory sound
+      // Play celebratory sound with personality variation
       const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
       
-      // Bright cheerful melody
-      const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+      // Personality-specific melodies
+      const melodies = {
+        zen: [523.25, 587.33, 659.25, 783.99], // C5, D5, E5, G5 - calm progression
+        spark: [659.25, 783.99, 987.77, 1174.66], // E5, G5, B5, D6 - energetic jump
+        cosmo: [493.88, 587.33, 739.99, 987.77], // B4, D5, F#5, B5 - mystical interval
+      };
+      
+      const notes = melodies[personality];
+      const tempo = personality === 'spark' ? 0.12 : personality === 'zen' ? 0.18 : 0.15;
+      
       notes.forEach((freq, i) => {
         const oscillator = audioContext.createOscillator();
         const gainNode = audioContext.createGain();
@@ -153,17 +160,23 @@ export const VoiceOrb = ({
         oscillator.connect(gainNode);
         gainNode.connect(audioContext.destination);
         
-        oscillator.frequency.setValueAtTime(freq, audioContext.currentTime + i * 0.15);
-        gainNode.gain.setValueAtTime(0.2, audioContext.currentTime + i * 0.15);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + i * 0.15 + 0.3);
+        oscillator.frequency.setValueAtTime(freq, audioContext.currentTime + i * tempo);
+        gainNode.gain.setValueAtTime(0.2, audioContext.currentTime + i * tempo);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + i * tempo + 0.3);
         
-        oscillator.start(audioContext.currentTime + i * 0.15);
-        oscillator.stop(audioContext.currentTime + i * 0.15 + 0.3);
+        oscillator.start(audioContext.currentTime + i * tempo);
+        oscillator.stop(audioContext.currentTime + i * tempo + 0.3);
       });
       
-      // Show celebratory toast
+      // Show celebratory toast with personality message
+      const messages = {
+        zen: '🌸 Your companion bloomed peacefully!',
+        spark: '⚡ Your companion burst into life!',
+        cosmo: '✨ Your companion shimmers into being!',
+      };
+      
       toast({
-        title: '🎉 Your companion hatched!',
+        title: messages[personality],
         description: 'A new journey begins together!',
         duration: 5000,
       });
@@ -174,7 +187,7 @@ export const VoiceOrb = ({
       }, 3000);
     }
     setPreviousStage(growth.stage);
-  }, [growth.stage, growth.isEvolving, previousStage, toast]);
+  }, [growth.stage, growth.isEvolving, previousStage, personality, toast]);
   
   // Connect cosmetics unlock checker to growth system
   useEffect(() => {
@@ -819,58 +832,153 @@ export const VoiceOrb = ({
               {/* HATCHING SEQUENCE - Special dramatic effects when egg hatches */}
               {isHatching && (
                 <div className="absolute inset-0 pointer-events-none">
-                  {/* Bright flash */}
-                  <div className="absolute inset-0 -inset-20 rounded-full bg-white animate-[hatch-flash_1s_ease-out]" />
+                  {/* ZEN PERSONALITY - Gentle Blooming */}
+                  {personality === 'zen' && (
+                    <>
+                      {/* Soft fade-in glow */}
+                      <div className="absolute -inset-20 rounded-full bg-gradient-radial from-blue-400/40 via-cyan-300/20 to-transparent animate-[zen-bloom-glow_2.5s_ease-out]" />
+                      
+                      {/* Petal-like expanding circles */}
+                      {Array.from({ length: 8 }).map((_, i) => (
+                        <div
+                          key={`petal-${i}`}
+                          className="absolute inset-0 rounded-full border-2 border-blue-400/30 animate-[zen-bloom-petal_2s_ease-out_forwards]"
+                          style={{
+                            animationDelay: `${i * 0.15}s`,
+                            transform: `rotate(${i * 45}deg)`,
+                          }}
+                        />
+                      ))}
+                      
+                      {/* Gentle floating particles */}
+                      {Array.from({ length: 12 }).map((_, i) => (
+                        <div
+                          key={`zen-particle-${i}`}
+                          className="absolute w-1.5 h-1.5 rounded-full bg-cyan-300/60 animate-[zen-bloom-float_3s_ease-out_forwards]"
+                          style={{
+                            left: '50%',
+                            top: '50%',
+                            '--zen-angle': `${(360 / 12) * i}deg`,
+                            '--zen-distance': `${60 + Math.random() * 30}px`,
+                            animationDelay: `${0.5 + i * 0.08}s`,
+                          } as React.CSSProperties}
+                        />
+                      ))}
+                    </>
+                  )}
                   
-                  {/* Explosion ripples */}
-                  <div className="absolute inset-0 rounded-full border-4 border-primary animate-[hatch-explosion_1.5s_ease-out]" />
-                  <div className="absolute inset-0 rounded-full border-4 border-success animate-[hatch-explosion_1.5s_ease-out_0.2s]" />
-                  <div className="absolute inset-0 rounded-full border-3 border-accent animate-[hatch-explosion_1.5s_ease-out_0.4s]" />
+                  {/* SPARK PERSONALITY - Energetic Burst */}
+                  {personality === 'spark' && (
+                    <>
+                      {/* Explosive flash */}
+                      <div className="absolute inset-0 -inset-24 rounded-full bg-gradient-radial from-yellow-300 via-orange-400/50 to-transparent animate-[spark-burst-flash_0.8s_ease-out]" />
+                      
+                      {/* Energetic explosion ripples */}
+                      <div className="absolute inset-0 rounded-full border-4 border-yellow-400 animate-[spark-burst-ring_1s_ease-out]" />
+                      <div className="absolute inset-0 rounded-full border-4 border-orange-500 animate-[spark-burst-ring_1s_ease-out_0.15s]" />
+                      <div className="absolute inset-0 rounded-full border-3 border-amber-400 animate-[spark-burst-ring_1s_ease-out_0.3s]" />
+                      
+                      {/* Lightning-like particle burst */}
+                      {Array.from({ length: 32 }).map((_, i) => {
+                        const angle = (360 / 32) * i;
+                        const distance = 90 + Math.random() * 50;
+                        return (
+                          <div
+                            key={`spark-${i}`}
+                            className="absolute w-2 h-2 rounded-full animate-[spark-burst-particle_0.9s_ease-out_forwards]"
+                            style={{
+                              left: '50%',
+                              top: '50%',
+                              background: `hsl(${35 + Math.random() * 25}, 100%, ${60 + Math.random() * 20}%)`,
+                              boxShadow: `0 0 8px hsl(${35 + Math.random() * 25}, 100%, ${60 + Math.random() * 20}%)`,
+                              '--spark-angle': `${angle}deg`,
+                              '--spark-distance': `${distance}px`,
+                              animationDelay: `${i * 0.02}s`,
+                            } as React.CSSProperties}
+                          />
+                        );
+                      })}
+                      
+                      {/* Energetic sparkles */}
+                      {Array.from({ length: 20 }).map((_, i) => (
+                        <Sparkles
+                          key={`spark-sparkle-${i}`}
+                          className="absolute w-5 h-5 text-yellow-400 animate-[spark-burst-sparkle_1.5s_ease-out_forwards]"
+                          style={{
+                            left: `${20 + Math.random() * 60}%`,
+                            top: `${10 + Math.random() * 50}%`,
+                            '--sparkle-x': `${-60 + Math.random() * 120}px`,
+                            '--sparkle-y': `${-80 - Math.random() * 80}px`,
+                            '--sparkle-rotate': `${Math.random() * 1080}deg`,
+                            animationDelay: `${i * 0.05}s`,
+                          } as React.CSSProperties}
+                        />
+                      ))}
+                    </>
+                  )}
                   
-                  {/* Particle burst - radiating outward */}
-                  {Array.from({ length: 24 }).map((_, i) => {
-                    const angle = (360 / 24) * i;
-                    const distance = 80 + Math.random() * 40;
-                    return (
-                      <div
-                        key={i}
-                        className="absolute w-2 h-2 rounded-full animate-[hatch-particle_1.2s_ease-out_forwards]"
+                  {/* COSMO PERSONALITY - Mystical Shimmer */}
+                  {personality === 'cosmo' && (
+                    <>
+                      {/* Mystical expanding aura */}
+                      <div className="absolute -inset-24 rounded-full bg-gradient-radial from-purple-500/30 via-indigo-500/20 to-transparent animate-[cosmo-shimmer-aura_3s_ease-out]" />
+                      
+                      {/* Spiral shimmer waves */}
+                      {Array.from({ length: 6 }).map((_, i) => (
+                        <div
+                          key={`spiral-${i}`}
+                          className="absolute inset-0 rounded-full border-2 border-purple-400/40 animate-[cosmo-shimmer-spiral_2.5s_ease-out_forwards]"
+                          style={{
+                            animationDelay: `${i * 0.2}s`,
+                            transform: `rotate(${i * 60}deg) scale(${1 + i * 0.1})`,
+                          }}
+                        />
+                      ))}
+                      
+                      {/* Stardust particles */}
+                      {Array.from({ length: 24 }).map((_, i) => {
+                        const angle = (360 / 24) * i;
+                        return (
+                          <div
+                            key={`cosmo-star-${i}`}
+                            className="absolute w-1 h-1 rounded-full bg-purple-300 animate-[cosmo-shimmer-star_2.5s_ease-out_forwards]"
+                            style={{
+                              left: '50%',
+                              top: '50%',
+                              boxShadow: '0 0 6px hsl(270, 70%, 70%)',
+                              '--cosmo-angle': `${angle}deg`,
+                              '--cosmo-orbit': `${50 + (i % 3) * 15}px`,
+                              animationDelay: `${0.4 + i * 0.06}s`,
+                            } as React.CSSProperties}
+                          />
+                        );
+                      })}
+                      
+                      {/* Mystical sparkle trails */}
+                      {Array.from({ length: 12 }).map((_, i) => (
+                        <Sparkles
+                          key={`cosmo-trail-${i}`}
+                          className="absolute w-4 h-4 text-purple-400 animate-[cosmo-shimmer-trail_2.5s_ease-out_forwards]"
+                          style={{
+                            left: `${30 + Math.random() * 40}%`,
+                            top: `${20 + Math.random() * 40}%`,
+                            '--trail-x': `${-40 + Math.random() * 80}px`,
+                            '--trail-y': `${-60 - Math.random() * 60}px`,
+                            '--trail-rotate': `${Math.random() * 360}deg`,
+                            animationDelay: `${0.6 + i * 0.12}s`,
+                          } as React.CSSProperties}
+                        />
+                      ))}
+                      
+                      {/* Cosmic shimmer overlay */}
+                      <div className="absolute -inset-16 rounded-full animate-[cosmo-shimmer-pulse_2.5s_ease-out]" 
                         style={{
-                          left: '50%',
-                          top: '50%',
-                          background: `hsl(${45 + Math.random() * 60}, 90%, ${60 + Math.random() * 20}%)`,
-                          '--particle-angle': `${angle}deg`,
-                          '--particle-distance': `${distance}px`,
-                          animationDelay: `${i * 0.03}s`,
-                        } as React.CSSProperties}
+                          background: 'radial-gradient(circle, hsl(270, 60%, 50% / 0.3), hsl(250, 70%, 60% / 0.15), transparent 70%)',
+                          filter: 'blur(20px)',
+                        }}
                       />
-                    );
-                  })}
-                  
-                  {/* Confetti sparkles */}
-                  {Array.from({ length: 16 }).map((_, i) => (
-                    <Sparkles
-                      key={`confetti-${i}`}
-                      className="absolute w-6 h-6 text-primary animate-[hatch-confetti_2s_ease-out_forwards]"
-                      style={{
-                        left: `${20 + Math.random() * 60}%`,
-                        top: `${10 + Math.random() * 40}%`,
-                        '--confetti-x': `${-50 + Math.random() * 100}px`,
-                        '--confetti-y': `${-100 - Math.random() * 100}px`,
-                        '--confetti-rotate': `${Math.random() * 720}deg`,
-                        animationDelay: `${0.3 + i * 0.08}s`,
-                      } as React.CSSProperties}
-                    />
-                  ))}
-                  
-                  {/* Celebration glow pulse */}
-                  <div 
-                    className="absolute -inset-16 rounded-full animate-[hatch-glow_2s_ease-out]"
-                    style={{
-                      background: 'radial-gradient(circle, hsl(var(--primary) / 0.4), hsl(var(--success) / 0.2), transparent 70%)',
-                      filter: 'blur(30px)',
-                    }}
-                  />
+                    </>
+                  )}
                 </div>
               )}
               
