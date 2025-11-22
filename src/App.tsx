@@ -18,6 +18,7 @@ import DailySession from "./pages/DailySession";
 import WeeklyInsights from "./pages/WeeklyInsights";
 import TinyTaskFiesta from "./pages/TinyTaskFiesta";
 import Reminders from "./pages/Reminders";
+import HatchingGallery from "./pages/HatchingGallery";
 
 const queryClient = new QueryClient();
 
@@ -33,6 +34,7 @@ const App = () => (
           <Route path="/goals" element={<Goals />} />
           <Route path="/daily-session" element={<DailySession />} />
           <Route path="/weekly-insights" element={<WeeklyInsights />} />
+          <Route path="/hatching-gallery" element={<HatchingGallery />} />
           <Route path="/tiny-task-fiesta" element={<TinyTaskFiesta />} />
           <Route path="/notifications" element={<Notifications />} />
           <Route path="/reminders" element={<Reminders />} />

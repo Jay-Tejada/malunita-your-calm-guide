@@ -199,6 +199,39 @@ export type Database = {
         }
         Relationships: []
       }
+      hatching_moments: {
+        Row: {
+          captured_at: string
+          companion_name: string | null
+          created_at: string
+          id: string
+          image_path: string
+          personality_type: string | null
+          stage_reached: number
+          user_id: string
+        }
+        Insert: {
+          captured_at?: string
+          companion_name?: string | null
+          created_at?: string
+          id?: string
+          image_path: string
+          personality_type?: string | null
+          stage_reached: number
+          user_id: string
+        }
+        Update: {
+          captured_at?: string
+          companion_name?: string | null
+          created_at?: string
+          id?: string
+          image_path?: string
+          personality_type?: string | null
+          stage_reached?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       learning_trends: {
         Row: {
           analysis_date: string
