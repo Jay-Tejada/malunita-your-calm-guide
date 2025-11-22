@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { CategoryDialog } from "./CategoryDialog";
-import { Check, Sparkles, Camera } from "lucide-react";
+import { Check, Sparkles, Camera, Info } from "lucide-react";
 import { PersonalityType } from "@/hooks/useCompanionIdentity";
 import { useCompanionMotion } from "@/hooks/useCompanionMotion";
 import { useCompanionEmotion } from "@/hooks/useCompanionEmotion";
@@ -14,6 +14,8 @@ import { CompanionHabitat } from "@/components/CompanionHabitat";
 import { LoreMoment } from "@/components/LoreMoment";
 import { useAudioSmoothing } from "@/hooks/useAudioSmoothing";
 import { useHatchingMoments } from "@/hooks/useHatchingMoments";
+import { CompanionStatsPanel } from "@/components/CompanionStatsPanel";
+import { Button } from "@/components/ui/button";
 import html2canvas from 'html2canvas';
 
 interface VoiceOrbProps {
@@ -80,6 +82,16 @@ export const VoiceOrb = ({
   // Hatching state management
   const [isHatching, setIsHatching] = useState(false);
   const [previousStage, setPreviousStage] = useState(growth.stage);
+  
+  // Companion stats panel toggle
+  const [showStats, setShowStats] = useState(() => {
+    const saved = localStorage.getItem('companion-stats-visible');
+    return saved === 'true';
+  });
+  
+  useEffect(() => {
+    localStorage.setItem('companion-stats-visible', showStats.toString());
+  }, [showStats]);
   
   // Voice reaction system
   const voiceReaction = useVoiceReactions(personality, companionName);
@@ -799,6 +811,19 @@ export const VoiceOrb = ({
             </div>
           )}
 
+          {/* Companion Stats Toggle Button */}
+          <div className="absolute top-4 right-4 z-50">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setShowStats(!showStats)}
+              className="h-8 w-8 rounded-full shadow-lg bg-card/95 backdrop-blur-sm border-border/50 hover:bg-card hover:border-primary/50 transition-all"
+              title={showStats ? "Hide companion stats" : "Show companion stats"}
+            >
+              <Info className={`h-4 w-4 transition-colors ${showStats ? 'text-primary' : 'text-muted-foreground'}`} />
+            </Button>
+          </div>
+
             {/* Voice Orb Container with Habitat */}
             <div ref={orbContainerRef} className="relative flex flex-col items-center gap-4">
             {/* Companion Habitat - Subtle ambient environment (behind everything) */}
@@ -1015,14 +1040,18 @@ export const VoiceOrb = ({
                 </div>
               )}
               
-              {/* Emotion & Stage indicators (dev only) */}
-              {process.env.NODE_ENV === 'development' && (
-                <div className="absolute -top-20 left-1/2 -translate-x-1/2 text-xs opacity-40 pointer-events-none text-center">
-                  <div>{emotion.emotion} | {voiceReaction.reactionState}</div>
-                  <div>Stage {growth.stage}: {growth.stageConfig.name}</div>
-                  <div>{growth.xp} XP ({Math.round(growth.progressToNextStage * 100)}%)</div>
-                  <div>Audio: {Math.round(voiceReaction.audioLevel * 100)}%</div>
-                </div>
+              {/* Companion Stats Panel - Toggleable */}
+              {showStats && (
+                <CompanionStatsPanel
+                  emotion={emotion.emotion}
+                  reactionState={voiceReaction.reactionState}
+                  stage={growth.stage}
+                  stageName={growth.stageConfig.name}
+                  xp={growth.xp}
+                  progressToNextStage={growth.progressToNextStage}
+                  audioLevel={voiceReaction.audioLevel}
+                  onClose={() => setShowStats(false)}
+                />
               )}
               
               {/* Name mention flash */}
