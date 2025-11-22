@@ -38,26 +38,21 @@ const CustomSidebarTrigger = ({ hasUrgentTasks }: { hasUrgentTasks: boolean }) =
   const { toast } = useToast();
   const [pressTimer, setPressTimer] = useState<NodeJS.Timeout | null>(null);
   const [isPressed, setIsPressed] = useState(false);
-  
-  const handleClick = () => {
-    // Haptic feedback for mobile devices
-    if ('vibrate' in navigator) {
-      navigator.vibrate(10); // Short 10ms vibration
-    }
-    toggleSidebar();
-  };
+  const [longPressTriggered, setLongPressTriggered] = useState(false);
 
   const handlePressStart = (e: React.MouseEvent | React.TouchEvent) => {
-    e.preventDefault();
     setIsPressed(true);
+    setLongPressTriggered(false);
+    
     const timer = setTimeout(() => {
+      // Long press completed - toggle theme
       const newTheme = theme === "dark" ? "light" : "dark";
       setTheme(newTheme);
+      setLongPressTriggered(true);
       toast({
         title: `Switched to ${newTheme} mode`,
         description: "Long press the globe again to switch back",
       });
-      setIsPressed(false);
       
       // Haptic feedback
       if ('vibrate' in navigator) {
@@ -67,16 +62,24 @@ const CustomSidebarTrigger = ({ hasUrgentTasks }: { hasUrgentTasks: boolean }) =
     setPressTimer(timer);
   };
 
-  const handlePressEnd = () => {
+  const handlePressEnd = (e: React.MouseEvent | React.TouchEvent) => {
+    setIsPressed(false);
+    
     if (pressTimer) {
       clearTimeout(pressTimer);
       setPressTimer(null);
-      // If released before timeout, open sidebar
-      if (isPressed) {
-        handleClick();
-      }
     }
-    setIsPressed(false);
+    
+    // Only trigger sidebar if long press didn't complete
+    if (!longPressTriggered) {
+      // Short press - open sidebar normally
+      if ('vibrate' in navigator) {
+        navigator.vibrate(10);
+      }
+      toggleSidebar();
+    }
+    
+    setLongPressTriggered(false);
   };
   
   return (
@@ -85,7 +88,14 @@ const CustomSidebarTrigger = ({ hasUrgentTasks }: { hasUrgentTasks: boolean }) =
       size="icon"
       onMouseDown={handlePressStart}
       onMouseUp={handlePressEnd}
-      onMouseLeave={handlePressEnd}
+      onMouseLeave={(e) => {
+        setIsPressed(false);
+        if (pressTimer) {
+          clearTimeout(pressTimer);
+          setPressTimer(null);
+        }
+        setLongPressTriggered(false);
+      }}
       onTouchStart={handlePressStart}
       onTouchEnd={handlePressEnd}
       className="hover:bg-muted/50 p-2 group transition-all duration-300 relative h-auto w-auto"
