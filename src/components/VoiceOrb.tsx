@@ -691,6 +691,7 @@ export const VoiceOrb = ({
             {/* Main Orb with 3-Layer System + Motion + Evolution + Voice Reactions */}
             <div 
               className={`relative z-10 transition-all ${
+                growth.stage === 0 && growth.progressToNextStage >= 0.9 ? 'animate-egg-shake' :
                 growth.isEvolving ? 'animate-[evolution-bloom_3s_ease-in-out]' :
                 voiceReaction.reactionState === 'listening' ? 'animate-[voice-lean-forward_0.5s_ease-out_forwards]' :
                 voiceReaction.reactionState === 'thinking' ? 'animate-[voice-thinking-wobble_4s_ease-in-out_infinite]' :
