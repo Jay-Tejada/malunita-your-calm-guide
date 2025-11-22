@@ -27,8 +27,30 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 import { WakeWordIndicator } from "@/components/WakeWordIndicator";
 
-import { SidebarProvider } from "@/components/ui/sidebar";
+import { SidebarProvider, useSidebar } from "@/components/ui/sidebar";
+import { Button } from "@/components/ui/button";
+import { Globe2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+
+const CustomSidebarTrigger = ({ hasUrgentTasks }: { hasUrgentTasks: boolean }) => {
+  const { toggleSidebar } = useSidebar();
+  
+  return (
+    <Button
+      variant="ghost"
+      size="icon"
+      onClick={toggleSidebar}
+      className="hover:bg-muted/50 p-2 group transition-all duration-300 relative h-auto w-auto"
+    >
+      <Globe2 
+        className={`w-5 h-5 text-primary animate-float-spin transition-all duration-300 group-hover:drop-shadow-[0_0_8px_hsl(var(--primary)/0.6)] group-hover:scale-110 ${hasUrgentTasks ? 'animate-alert-pulse' : ''}`} 
+      />
+      {hasUrgentTasks && (
+        <span className="absolute top-1 right-1 w-2 h-2 bg-destructive rounded-full animate-pulse" />
+      )}
+    </Button>
+  );
+};
 
 const Index = () => {
   const [user, setUser] = useState<any>(null);
@@ -319,8 +341,15 @@ const Index = () => {
           {/* Install Banner */}
           <InstallPromptBanner />
           
+          {/* Fixed Header with Sidebar Trigger */}
+          <header className="fixed top-0 left-0 right-0 z-40 bg-background/80 backdrop-blur-sm border-b border-border/50">
+            <div className="px-4 py-3 flex items-center">
+              <CustomSidebarTrigger hasUrgentTasks={hasUrgentTasks} />
+            </div>
+          </header>
+          
           {/* Floating Menu */}
-          <FloatingMenu 
+          <FloatingMenu
             onSettingsClick={() => setShowSettings(true)}
             onCategoryClick={(category) => {
               setActiveCategory(category);
@@ -333,7 +362,7 @@ const Index = () => {
           <FloatingReminder />
 
           {/* Main Content Area */}
-          <div className="flex-1 flex flex-col px-4 pt-8 pb-32 overflow-y-auto">
+          <div className="flex-1 flex flex-col px-4 pt-16 pb-32 overflow-y-auto">
             {!activeCategory && !showTodaysFocus ? (
               // Default: Voice Orb Centered + Companion
               <div className="flex flex-col items-center justify-center min-h-[70vh] w-full">
