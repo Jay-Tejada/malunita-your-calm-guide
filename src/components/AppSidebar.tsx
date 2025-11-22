@@ -150,7 +150,7 @@ export function AppSidebar({ onSettingsClick, onCategoryClick, activeCategory }:
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton 
-                  onClick={() => navigate('/daily-session')}
+                  onClick={() => onCategoryClick('daily-session')}
                   className="hover:bg-muted/50"
                 >
                   <Sun className="mr-2 h-4 w-4" />
