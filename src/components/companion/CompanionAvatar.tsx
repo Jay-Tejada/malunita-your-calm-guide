@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useCompanionIdleBehavior } from '@/lib/companion/useCompanionIdleBehavior';
 import babyHappyWebp from '@/assets/companions/baby-happy.webp';
 import babyHappyPng from '@/assets/companions/baby-happy.png';
 import babyNeutralWebp from '@/assets/companions/baby-neutral.webp';
@@ -69,6 +70,13 @@ export const CompanionAvatar = ({
   const [currentExpression, setCurrentExpression] = useState<CompanionExpression>('baby_neutral');
   const [isPlayingSpecial, setIsPlayingSpecial] = useState(false);
 
+  // Idle behavior system - only when mode is 'idle'
+  const isActive = mode !== 'idle';
+  const { currentIdleAnimation } = useCompanionIdleBehavior({
+    isActive,
+    userMood: null, // Can be passed in from props later
+  });
+
   // Update expression when mode changes
   useEffect(() => {
     const newExpression = getModeExpression(mode);
@@ -90,24 +98,67 @@ export const CompanionAvatar = ({
     }
   }, [specialAnimation, onSpecialAnimationEnd]);
 
-  // Get animation class based on special animation
-  const getAnimationClass = (): string => {
-    if (!isPlayingSpecial || !specialAnimation) return '';
-    
-    switch (specialAnimation) {
-      case 'celebrate':
-        return 'companion-special-celebrate';
-      case 'spin':
-        return 'companion-special-spin';
-      case 'peek':
-        return 'companion-special-peek';
-      default:
-        return '';
+  // Get animation classes (combining special, mode, and idle)
+  const getAnimationClasses = (): string => {
+    const classes: string[] = [];
+
+    // Special animations take priority
+    if (isPlayingSpecial && specialAnimation) {
+      switch (specialAnimation) {
+        case 'celebrate':
+          classes.push('companion-special-celebrate');
+          break;
+        case 'spin':
+          classes.push('companion-special-spin');
+          break;
+        case 'peek':
+          classes.push('companion-special-peek');
+          break;
+      }
+      return classes.join(' ');
     }
+
+    // Mode-specific animations
+    if (mode === 'listening') {
+      classes.push('companion-mode-listening');
+    } else if (mode === 'thinking') {
+      classes.push('companion-mode-thinking');
+    } else if (mode === 'sleeping') {
+      classes.push('companion-mode-sleeping');
+    }
+
+    // Idle animations (only when in idle mode and no special animations)
+    if (mode === 'idle' && !isPlayingSpecial) {
+      switch (currentIdleAnimation) {
+        case 'idle_breathe':
+          classes.push('companion-idle-breathe');
+          break;
+        case 'idle_float':
+          classes.push('companion-idle-float');
+          break;
+        case 'idle_blink':
+          classes.push('companion-idle-blink');
+          break;
+        case 'idle_tilt':
+          classes.push('companion-idle-tilt');
+          break;
+        case 'idle_look_left':
+          classes.push('companion-idle-look-left');
+          break;
+        case 'idle_look_right':
+          classes.push('companion-idle-look-right');
+          break;
+        case 'idle_sleepy':
+          classes.push('companion-idle-sleepy');
+          break;
+      }
+    }
+
+    return classes.join(' ');
   };
 
   const assets = getAssetForExpression(currentExpression);
-  const animationClass = getAnimationClass();
+  const animationClasses = getAnimationClasses();
 
   return (
     <div 
@@ -123,7 +174,7 @@ export const CompanionAvatar = ({
       <div 
         className={`
           relative w-full h-full flex items-center justify-center
-          ${animationClass}
+          ${animationClasses}
           transition-opacity duration-150
         `}
       >
