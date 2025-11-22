@@ -12,7 +12,6 @@ import { InstallPromptBanner } from "@/components/InstallPromptBanner";
 import { SmartReflectionPrompt } from "@/components/SmartReflectionPrompt";
 import { TaskStream } from "@/components/TaskStream";
 import { FloatingReminder } from "@/components/FloatingReminder";
-import { FloatingMenu } from "@/components/FloatingMenu";
 import { CompanionOnboarding } from "@/components/CompanionOnboarding";
 import { CompanionIntroSequence } from "@/components/CompanionIntroSequence";
 import { useAdmin } from "@/hooks/useAdmin";
@@ -347,16 +346,6 @@ const Index = () => {
               <CustomSidebarTrigger hasUrgentTasks={hasUrgentTasks} />
             </div>
           </header>
-          
-          {/* Floating Menu */}
-          <FloatingMenu
-            onSettingsClick={() => setShowSettings(true)}
-            onCategoryClick={(category) => {
-              setActiveCategory(category);
-              setShowTodaysFocus(false);
-            }}
-            hasUrgentTasks={hasUrgentTasks}
-          />
 
           {/* Floating Reminder */}
           <FloatingReminder />
