@@ -8,64 +8,84 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Soft Beige Minimalism - Malunita Design System */
-    --background: 36 40% 96%; /* #F9F6EE pale warm beige */
-    --foreground: 0 0% 11%; /* #1C1C1C charcoal black */
+    /* Soft Porcelain-Sky Minimalism - Malunita Design System */
+    --background: 42 23% 94%; /* #F5F3ED soft almond beige */
+    --foreground: 0 0% 17%; /* #2C2C2C deep charcoal */
 
-    --card: 36 67% 98%; /* #FFF9F2 soft cream */
-    --card-foreground: 0 0% 11%;
+    --card: 40 29% 95%; /* #F7F4EF slightly lighter card tone */
+    --card-foreground: 0 0% 17%;
 
-    --popover: 36 67% 98%;
-    --popover-foreground: 0 0% 11%;
+    --popover: 40 29% 95%;
+    --popover-foreground: 0 0% 17%;
 
-    --primary: 0 0% 11%; /* charcoal for primary actions */
-    --primary-foreground: 36 67% 98%;
+    --primary: 0 0% 17%; /* deep charcoal for primary actions */
+    --primary-foreground: 40 29% 95%;
 
-    --secondary: 33 25% 83%; /* #D9CBB5 sand taupe */
-    --secondary-foreground: 0 0% 11%;
+    --secondary: 206 34% 82%; /* #C3D4E1 soft sky accent */
+    --secondary-foreground: 0 0% 17%;
 
-    --muted: 33 25% 83%;
-    --muted-foreground: 0 0% 40%;
+    --muted: 37 21% 90%; /* #EBE6DF muted surface */
+    --muted-foreground: 0 0% 42%; /* #6B6B6B */
 
-    --accent: 18 42% 82%; /* #E7C3B6 muted blush */
-    --accent-foreground: 0 0% 11%;
+    --accent: 206 34% 82%; /* #C3D4E1 calm sky blue */
+    --accent-foreground: 0 0% 17%;
 
-    --success: 82 15% 75%; /* #C3C9B7 sage gray-green */
-    --success-foreground: 0 0% 11%;
+    --success: 206 34% 82%; /* #C3D4E1 sky accent */
+    --success-foreground: 0 0% 17%;
 
     --destructive: 0 70% 50%;
-    --destructive-foreground: 36 67% 98%;
+    --destructive-foreground: 40 29% 95%;
 
-    --border: 33 25% 83%;
-    --input: 33 25% 83%;
-    --ring: 0 0% 11%;
+    --border: 37 21% 90%; /* #EBE6DF subtle border */
+    --input: 37 21% 90%;
+    --ring: 0 0% 17%;
+    
+    /* Surface and UI Elements */
+    --surface: 40 33% 98%; /* #FBFAF7 lightest surface */
+    --border-subtle: 0 0% 0%; /* rgba(0,0,0,0.05) - use with opacity */
+    --border-subtle-opacity: 0.05;
+    
+    /* Sidebar */
+    --sidebar-bg: 42 23% 94%; /* #F5F3ED same as background */
+    --sidebar-active: 37 21% 90%; /* #EBE6DF */
 
     --radius: 1rem;
 
-    /* Companion Core - 3-Layer Orb System */
-    /* Base idle state - adapts to personality */
+    /* Companion Core - 3-Layer Orb System (New Malunita Palette) */
+    /* Base idle state - soft sky blossom gradient */
     /* Layer 1: Inner Core (solid) */
-    --orb-core-idle: 25 35% 88%; /* warm taupe-cream */
-    --orb-core-listening: 39 60% 75%; /* warm amber gold */
-    --orb-core-thinking: 250 35% 80%; /* soft indigo */
-    --orb-core-speaking: 18 45% 82%; /* muted peach */
+    --orb-core-idle: 205 32% 62%; /* #7EA1BD orb-inner-core */
+    --orb-core-listening: 206 40% 76%; /* #AAC5DB orb-base-to (listening active) */
+    --orb-core-thinking: 204 42% 88%; /* #D6E4EE orb-base-from (thinking) */
+    --orb-core-speaking: 206 40% 76%; /* #AAC5DB speaking state */
     
     /* Layer 2: Middle Glow Ring (gradient) */
-    --orb-glow-idle: 25 35% 75%; /* deeper warm taupe */
-    --orb-glow-listening: 39 70% 65%; /* rich amber */
-    --orb-glow-thinking: 250 40% 70%; /* deeper indigo */
-    --orb-glow-speaking: 18 50% 70%; /* deeper peach */
+    --orb-glow-idle: 206 40% 76%; /* #AAC5DB calm ocean mist */
+    --orb-glow-listening: 205 32% 62%; /* #7EA1BD deeper when listening */
+    --orb-glow-thinking: 206 40% 76%; /* #AAC5DB */
+    --orb-glow-speaking: 204 42% 88%; /* #D6E4EE lighter when speaking */
     
     /* Layer 3: Outer Halo (ambient diffusion) */
-    --orb-halo-idle: 25 30% 70%; /* subtle ambient */
-    --orb-halo-listening: 39 75% 60%; /* golden halo */
-    --orb-halo-thinking: 250 45% 65%; /* indigo halo */
-    --orb-halo-speaking: 18 55% 65%; /* peach halo */
+    --orb-halo-idle: 204 42% 88%; /* #D6E4EE soft sky blossom */
+    --orb-halo-listening: 206 40% 76%; /* #AAC5DB */
+    --orb-halo-thinking: 204 42% 88%; /* #D6E4EE */
+    --orb-halo-speaking: 210 29% 86%; /* lighter halo */
     
-    /* Personality: Zen (calm blues) */
-    --orb-zen-core: 200 60% 75%; /* soft blue */
-    --orb-zen-glow: 200 65% 65%; /* deeper blue */
-    --orb-zen-halo: 200 70% 60%; /* blue halo */
+    /* Personality: Zen (calm blues - adjusted to new palette) */
+    --orb-zen-core: 204 42% 88%; /* soft sky blossom */
+    --orb-zen-glow: 206 40% 76%; /* calm ocean mist */
+    --orb-zen-halo: 205 32% 62%; /* deeper blue */
+    
+    /* Orb face color */
+    --orb-face: 0 0% 17%; /* #2C2C2C deep charcoal */
+    
+    /* Companion Glow Layers */
+    --orb-glow-1: 205 20% 66%; /* rgba(151,170,185,0.25) */
+    --orb-glow-1-opacity: 0.25;
+    --orb-glow-2: 206 30% 77%; /* rgba(180,200,215,0.18) */
+    --orb-glow-2-opacity: 0.18;
+    --orb-glow-3: 210 29% 86%; /* rgba(210,220,230,0.12) */
+    --orb-glow-3-opacity: 0.12;
     
     /* Personality: Spark (energetic golds) */
     --orb-spark-core: 39 70% 75%; /* warm gold */
@@ -78,9 +98,9 @@ All colors MUST be HSL.
     --orb-cosmo-halo: 270 60% 60%; /* purple halo */
     
     /* Colorways - Unlockable visual themes */
-    --colorway-zen-default-core: 200 60% 75%;
-    --colorway-zen-default-glow: 200 65% 65%;
-    --colorway-zen-default-halo: 200 70% 60%;
+    --colorway-zen-default-core: 204 42% 88%; /* #D6E4EE soft sky blossom */
+    --colorway-zen-default-glow: 206 40% 76%; /* #AAC5DB calm ocean mist */
+    --colorway-zen-default-halo: 205 32% 62%; /* #7EA1BD deeper blue */
     
     --colorway-dawn-peach-core: 20 85% 75%;
     --colorway-dawn-peach-glow: 25 90% 70%;
@@ -112,7 +132,7 @@ All colors MUST be HSL.
     --orb-orbit: 0 0% 11%;
     
     /* Focus area accent */
-    --focus-glow: 36 67% 98%;
+    --focus-glow: 40 29% 95%; /* #F7F4EF card color */
   }
 }
 
