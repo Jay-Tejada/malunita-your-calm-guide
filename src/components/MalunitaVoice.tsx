@@ -11,6 +11,7 @@ import { TaskConfirmation } from "@/components/TaskConfirmation";
 import { ConversationalTaskFlow } from "@/components/ConversationalTaskFlow";
 import { TaskFeedbackDialog } from "@/components/TaskFeedbackDialog";
 import { VoiceOrb } from "@/components/VoiceOrb";
+import { CompanionAvatar, CompanionMode } from "@/components/companion/CompanionAvatar";
 import { contextMapper } from "@/lib/contextMapper";
 import { priorityScorer } from "@/lib/priorityScorer";
 import { agendaRouter } from "@/lib/agendaRouter";
@@ -1285,20 +1286,47 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
           </div>
         )}
 
-        {/* Voice Control - Replaced with VoiceOrb */}
-        <VoiceOrb
-          onVoiceInput={handleVoiceTaskCapture} 
-          onPlanningModeActivated={onPlanningModeActivated}
-          onReflectionModeActivated={onReflectionModeActivated}
-          onOrbReflectionTrigger={onOrbReflectionTrigger}
-          isSaving={isSaving}
-          showSuccess={showSuccess}
-          stopWordDetected={stopWordDetected}
-          personality={companion?.personalityType || 'zen'}
-          taskStreak={taskStreak}
-          companionName={companion?.name}
-          isSpeaking={isSpeaking}
-        />
+        {/* Voice Control - CompanionAvatar for stage >= 1, VoiceOrb for stage 0 (egg) */}
+        {companion?.stage === 0 || !companion ? (
+          <VoiceOrb
+            onVoiceInput={handleVoiceTaskCapture} 
+            onPlanningModeActivated={onPlanningModeActivated}
+            onReflectionModeActivated={onReflectionModeActivated}
+            onOrbReflectionTrigger={onOrbReflectionTrigger}
+            isSaving={isSaving}
+            showSuccess={showSuccess}
+            stopWordDetected={stopWordDetected}
+            personality={companion?.personalityType || 'zen'}
+            taskStreak={taskStreak}
+            companionName={companion?.name}
+            isSpeaking={isSpeaking}
+          />
+        ) : (
+          <div className="flex flex-col items-center gap-3">
+            <CompanionAvatar 
+              mode={
+                isListening ? 'listening' :
+                isSaving || isProcessing ? 'thinking' :
+                showSuccess ? 'celebrating' :
+                'idle'
+              }
+              userMood={currentMood}
+              size="xl"
+            />
+            <div className="text-center">
+              <p className="text-xs sm:text-sm font-serif text-foreground tracking-wide lowercase">
+                {companion?.name || 'malunita'}
+              </p>
+              <p className="text-[10px] sm:text-xs text-muted-foreground font-light">
+                {isListening ? 'listening...' : 
+                 isSaving ? 'saving...' :
+                 showSuccess ? 'task saved!' :
+                 isProcessing ? 'thinking...' :
+                 isSpeaking ? 'speaking...' : 'tap to speak'}
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* Action buttons - Only show on desktop */}
         {!isMobile && gptResponse && !isProcessing && !isSpeaking && !showMoodSelector && (
