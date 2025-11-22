@@ -34,11 +34,19 @@ import { useToast } from "@/hooks/use-toast";
 const CustomSidebarTrigger = ({ hasUrgentTasks }: { hasUrgentTasks: boolean }) => {
   const { toggleSidebar } = useSidebar();
   
+  const handleClick = () => {
+    // Haptic feedback for mobile devices
+    if ('vibrate' in navigator) {
+      navigator.vibrate(10); // Short 10ms vibration
+    }
+    toggleSidebar();
+  };
+  
   return (
     <Button
       variant="ghost"
       size="icon"
-      onClick={toggleSidebar}
+      onClick={handleClick}
       className="hover:bg-muted/50 p-2 group transition-all duration-300 relative h-auto w-auto"
     >
       <Globe2 
