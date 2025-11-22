@@ -8,46 +8,46 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Soft Porcelain-Sky Minimalism - Malunita Design System */
-    --background: 42 23% 94%; /* #F5F3ED soft almond beige */
-    --foreground: 0 0% 17%; /* #2C2C2C deep charcoal */
+    /* New Malunita Background System - Paper aesthetic */
+    --background: 38 27% 89%; /* #EDE7DD warm paper background */
+    --foreground: 0 0% 17%; /* #2B2B2B deep charcoal text */
+    --foreground-soft: 0 0% 35%; /* #595959 secondary text */
 
-    --card: 40 29% 95%; /* #F7F4EF slightly lighter card tone */
-    --card-foreground: 0 0% 17%;
+    --card: 38 29% 94%; /* #F6F2EC light cream paper */
+    --card-strong: 38 25% 90%; /* #EFE9DF darker cream for depth */
+    --card-foreground: 0 0% 17%; /* #2B2B2B */
 
-    --popover: 40 29% 95%;
+    --popover: 38 29% 94%; /* same as card */
     --popover-foreground: 0 0% 17%;
 
-    --primary: 0 0% 17%; /* deep charcoal for primary actions */
-    --primary-foreground: 40 29% 95%;
+    --primary: 0 0% 17%; /* #2B2B2B charcoal for primary actions */
+    --primary-foreground: 0 0% 100%; /* white text on primary */
 
-    --secondary: 206 34% 82%; /* #C3D4E1 soft sky accent */
+    --secondary: 38 25% 90%; /* card-strong for secondary */
     --secondary-foreground: 0 0% 17%;
 
-    --muted: 37 21% 90%; /* #EBE6DF muted surface */
-    --muted-foreground: 0 0% 42%; /* #6B6B6B */
+    --muted: 38 25% 90%; /* card-strong for muted */
+    --muted-foreground: 0 0% 35%; /* foreground-soft */
 
-    --accent: 206 34% 82%; /* #C3D4E1 calm sky blue */
+    --accent: 38 25% 90%; /* card-strong */
     --accent-foreground: 0 0% 17%;
 
-    --success: 206 34% 82%; /* #C3D4E1 sky accent */
-    --success-foreground: 0 0% 17%;
+    --success: 120 45% 50%; /* green for success */
+    --success-foreground: 0 0% 100%;
 
     --destructive: 0 70% 50%;
-    --destructive-foreground: 40 29% 95%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 37 21% 90%; /* #EBE6DF subtle border */
-    --input: 37 21% 90%;
+    --border: 0 0% 0% / 0.06; /* rgba(0,0,0,0.06) subtle border */
+    --input: 0 0% 0% / 0.12; /* rgba(0,0,0,0.12) for input borders */
     --ring: 0 0% 17%;
     
     /* Surface and UI Elements */
-    --surface: 40 33% 98%; /* #FBFAF7 lightest surface */
-    --border-subtle: 0 0% 0%; /* rgba(0,0,0,0.05) - use with opacity */
-    --border-subtle-opacity: 0.05;
+    --surface: 38 29% 94%; /* same as card */
     
     /* Sidebar */
-    --sidebar-bg: 42 23% 94%; /* #F5F3ED same as background */
-    --sidebar-active: 37 21% 90%; /* #EBE6DF */
+    --sidebar-bg: 38 27% 89%; /* same as background */
+    --sidebar-active: 38 25% 90%; /* card-strong */
 
     --radius: 1rem;
 
@@ -145,6 +145,45 @@ All colors MUST be HSL.
     @apply bg-background text-foreground font-light;
     font-family: 'Inter', 'Work Sans', system-ui, -apple-system, sans-serif;
     letter-spacing: 0.01em;
+    position: relative;
+  }
+
+  /* Paper texture overlay - placeholder until texture image is uploaded */
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 0;
+    /* Placeholder subtle paper texture - replace with actual image when uploaded */
+    background-image: 
+      repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0,0,0,0.01) 2px,
+        rgba(0,0,0,0.01) 4px
+      );
+    opacity: 0.06;
+    /* When texture image is uploaded, use: background-image: url('/path/to/texture.png'); */
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+  }
+
+  @media (max-width: 768px) {
+    body::before {
+      opacity: 0.08;
+    }
+  }
+
+  /* Ensure content stays above texture */
+  #root {
+    position: relative;
+    z-index: 1;
   }
 }
 
@@ -1225,5 +1264,46 @@ All colors MUST be HSL.
   /* Sidebar slide-in animation */
   [data-sidebar] {
     transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+  }
+
+  /* Malunita Card System Animations */
+  @keyframes fadeInScale {
+    from {
+      opacity: 0;
+      transform: scale(0.97);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  /* Card hover effects */
+  .malunita-card {
+    transition: all 0.2s ease-in-out;
+  }
+
+  .malunita-card:hover {
+    transform: translateY(-1px);
+  }
+
+  /* Scrollbar styling */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.03);
+    border-radius: 8px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.10);
+    border-radius: 8px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.15);
   }
 }

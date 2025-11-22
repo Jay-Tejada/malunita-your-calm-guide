@@ -18,7 +18,10 @@ export default {
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
         background: "hsl(var(--background))",
-        foreground: "hsl(var(--foreground))",
+        foreground: {
+          DEFAULT: "hsl(var(--foreground))",
+          soft: "hsl(var(--foreground-soft))",
+        },
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
@@ -49,6 +52,7 @@ export default {
         },
         card: {
           DEFAULT: "hsl(var(--card))",
+          strong: "hsl(var(--card-strong))",
           foreground: "hsl(var(--card-foreground))",
         },
         orb: {
@@ -61,6 +65,16 @@ export default {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+        card: "16px",
+        modal: "24px",
+        button: "12px",
+        dropdown: "14px",
+        pill: "50px",
+      },
+      boxShadow: {
+        'malunita-card': '0px 1px 3px rgba(0,0,0,0.05), 0px 2px 6px rgba(0,0,0,0.04)',
+        'malunita-modal': '0px 4px 12px rgba(0,0,0,0.08)',
+        'malunita-card-hover': '0px 2px 4px rgba(0,0,0,0.06), 0px 3px 8px rgba(0,0,0,0.05)',
       },
       backgroundImage: {
         'gradient-radial': 'radial-gradient(circle, var(--tw-gradient-stops))',
