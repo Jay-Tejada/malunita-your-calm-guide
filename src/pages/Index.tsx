@@ -11,7 +11,8 @@ import { RunwayReview } from "@/components/RunwayReview";
 import { InstallPromptBanner } from "@/components/InstallPromptBanner";
 import { SmartReflectionPrompt } from "@/components/SmartReflectionPrompt";
 import { TaskStream } from "@/components/TaskStream";
-import { FiestaHomeCard } from "@/components/FiestaHomeCard";
+import { FloatingReminder } from "@/components/FloatingReminder";
+import { FloatingMenu } from "@/components/FloatingMenu";
 import { CompanionOnboarding } from "@/components/CompanionOnboarding";
 import { CompanionIntroSequence } from "@/components/CompanionIntroSequence";
 import { useAdmin } from "@/hooks/useAdmin";
@@ -22,42 +23,18 @@ import { useWakeWord } from "@/hooks/useWakeWord";
 import { useWorkflowRituals } from "@/hooks/useWorkflowRituals";
 import { useCompanionIdentity, PersonalityType } from "@/hooks/useCompanionIdentity";
 import { AppSidebar } from "@/components/AppSidebar";
-import { VoiceCommandCenter } from "@/components/VoiceCommandCenter";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 import { WakeWordIndicator } from "@/components/WakeWordIndicator";
 
-import { SidebarProvider, useSidebar } from "@/components/ui/sidebar";
-import { Button } from "@/components/ui/button";
-import { Globe2, Mic, MicOff } from "lucide-react";
+import { SidebarProvider } from "@/components/ui/sidebar";
 import { useToast } from "@/hooks/use-toast";
-
-const CustomSidebarTrigger = ({ hasUrgentTasks }: { hasUrgentTasks: boolean }) => {
-  const { toggleSidebar } = useSidebar();
-  
-  return (
-    <Button
-      variant="ghost"
-      size="icon"
-      onClick={toggleSidebar}
-      className="hover:bg-muted/50 p-2 group transition-all duration-300 relative h-auto w-auto"
-    >
-      <Globe2 
-        className={`w-5 h-5 text-primary animate-float-spin transition-all duration-300 group-hover:drop-shadow-[0_0_8px_hsl(var(--primary)/0.6)] group-hover:scale-110 ${hasUrgentTasks ? 'animate-alert-pulse' : ''}`} 
-      />
-      {hasUrgentTasks && (
-        <span className="absolute top-1 right-1 w-2 h-2 bg-destructive rounded-full animate-pulse" />
-      )}
-    </Button>
-  );
-};
 
 const Index = () => {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
   const [showRunwayReview, setShowRunwayReview] = useState(false);
-  const [showVoiceCommandCenter, setShowVoiceCommandCenter] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [showTodaysFocus, setShowTodaysFocus] = useState(false);
   const [wakeWordDetected, setWakeWordDetected] = useState(0);
@@ -327,7 +304,7 @@ const Index = () => {
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-background">
-        {/* Sidebar */}
+        {/* Sidebar - Hidden by default */}
         <AppSidebar 
           onSettingsClick={() => setShowSettings(true)}
           onCategoryClick={(category) => {
@@ -338,50 +315,37 @@ const Index = () => {
         />
 
         {/* Main Content */}
-        <main className="flex-1 flex flex-col">
+        <main className="flex-1 flex flex-col relative">
           {/* Install Banner */}
           <InstallPromptBanner />
           
-          {/* Minimal Header - Just trigger */}
-          <header className="fixed top-0 left-0 right-0 z-40 bg-background/80 backdrop-blur-sm border-b border-border/50">
-            <div className="px-4 py-3 flex items-center">
-              <CustomSidebarTrigger hasUrgentTasks={hasUrgentTasks} />
-            </div>
-          </header>
+          {/* Floating Menu */}
+          <FloatingMenu 
+            onSettingsClick={() => setShowSettings(true)}
+            onCategoryClick={(category) => {
+              setActiveCategory(category);
+              setShowTodaysFocus(false);
+            }}
+            hasUrgentTasks={hasUrgentTasks}
+          />
+
+          {/* Floating Reminder */}
+          <FloatingReminder />
 
           {/* Main Content Area */}
-          <div className="flex-1 flex flex-col px-4 pt-16 pb-32 overflow-y-auto">
+          <div className="flex-1 flex flex-col px-4 pt-8 pb-32 overflow-y-auto">
             {!activeCategory && !showTodaysFocus ? (
-              // Default: Voice Orb Centered
-              <div className="flex flex-col items-center w-full group py-12 space-y-6">
-                <div className="flex justify-center w-full">
-                  <MalunitaVoice 
-                    ref={malunitaVoiceRef} 
-                    onSaveNote={handleSaveNote}
-                    onPlanningModeActivated={handlePlanningMode}
-                    onReflectionModeActivated={handleReflectionMode}
-                    onOrbReflectionTrigger={enableOrbReflectionTrigger ? () => setShowRunwayReview(true) : undefined}
-                    onTasksCreated={handleTaskCreated}
-                    taskStreak={taskStreak}
-                  />
-                </div>
-                <p className="mt-6 text-sm text-muted-foreground text-center w-full transition-all duration-300 group-hover:text-foreground group-hover:scale-105">What's on your mind?</p>
-                
-                {/* Voice Command Center Button */}
-                <Button
-                  onClick={() => setShowVoiceCommandCenter(true)}
-                  variant="outline"
-                  size="lg"
-                  className="gap-2 bg-primary/5 hover:bg-primary/10 border-primary/20"
-                >
-                  <Mic className="h-5 w-5" />
-                  Voice Command Center
-                </Button>
-                
-                {/* Fiesta Suggestion Card */}
-                <div className="w-full max-w-md px-4">
-                  <FiestaHomeCard />
-                </div>
+              // Default: Voice Orb Centered + Companion
+              <div className="flex flex-col items-center justify-center min-h-[70vh] w-full">
+                <MalunitaVoice 
+                  ref={malunitaVoiceRef} 
+                  onSaveNote={handleSaveNote}
+                  onPlanningModeActivated={handlePlanningMode}
+                  onReflectionModeActivated={handleReflectionMode}
+                  onOrbReflectionTrigger={enableOrbReflectionTrigger ? () => setShowRunwayReview(true) : undefined}
+                  onTasksCreated={handleTaskCreated}
+                  taskStreak={taskStreak}
+                />
               </div>
             ) : activeCategory ? (
               // Task Stream View
@@ -437,13 +401,6 @@ const Index = () => {
 
         {/* Runway Review Modal */}
         {showRunwayReview && <RunwayReview onClose={() => setShowRunwayReview(false)} />}
-        
-        {/* Voice Command Center Dialog */}
-        <Dialog open={showVoiceCommandCenter} onOpenChange={setShowVoiceCommandCenter}>
-          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-            <VoiceCommandCenter onClose={() => setShowVoiceCommandCenter(false)} />
-          </DialogContent>
-        </Dialog>
         
         {/* Companion Onboarding - Full Screen Intro Sequence */}
         {!isCompanionLoading && needsOnboarding && (

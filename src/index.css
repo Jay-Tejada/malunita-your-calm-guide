@@ -827,4 +827,19 @@ All colors MUST be HSL.
   .transition-calm {
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   }
+
+  @keyframes slide-in-from-right {
+    from {
+      transform: translateX(100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+
+  .animate-slide-in-from-right {
+    animation: slide-in-from-right 0.3s ease-out;
+  }
 }
