@@ -1250,8 +1250,8 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
   }));
 
   return (
-    <div className="flex flex-col items-center justify-center px-6 py-8">
-      <div className="w-full max-w-2xl flex flex-col items-center gap-8">
+    <div className="relative w-full h-[calc(100vh-80px)] flex items-center justify-center">
+      <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
         
         {/* Transcription and Response Display - Hidden on mobile for cleaner UI */}
         {!isMobile && (
