@@ -1339,8 +1339,8 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
             isSpeaking={isSpeaking}
           />
         ) : (
-          <div 
-            className="relative flex flex-col items-center mt-8 cursor-pointer select-none"
+          <div
+            className="relative flex flex-col items-center justify-center cursor-pointer select-none group"
             onClick={() => {
               resetActivityTimer();
               if (!isListening && !isProcessing && !isSpeaking) {
@@ -1348,26 +1348,37 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
               }
             }}
           >
-            <CompanionAvatar 
-              mode={
-                isSleeping && !isListening && !isProcessing && !isSaving && !showSuccess ? 'sleeping' :
-                isListening ? 'listening' :
-                isSaving || isProcessing ? 'thinking' :
-                showSuccess ? 'celebrating' :
-                'idle'
-              }
-            />
-            <p className="text-xs sm:text-sm font-serif text-foreground tracking-wide lowercase mt-3">
-              {companion?.name || 'malunita'}
-            </p>
-            <p className="text-[10px] sm:text-xs text-muted-foreground font-light -mt-1">
-              {isSleeping && !isListening && !isProcessing && !isSaving && !showSuccess ? 'sleeping...' :
-               isListening ? 'listening...' : 
-               isSaving ? 'saving...' :
-               showSuccess ? 'task saved!' :
-               isProcessing ? 'thinking...' :
-               isSpeaking ? 'speaking...' : 'tap to speak'}
-            </p>
+
+            {/* Floating Companion */}
+            <div className="relative z-20 transition-transform duration-300 ease-out group-hover:scale-[1.05]">
+              <CompanionAvatar 
+                mode={
+                  isSleeping && !isListening && !isProcessing && !isSaving && !showSuccess ? 'sleeping' :
+                  isListening ? 'listening' :
+                  isSaving || isProcessing ? 'thinking' :
+                  showSuccess ? 'celebrating' :
+                  'idle'
+                }
+              />
+            </div>
+
+            {/* Ground Shadow */}
+            <div className="absolute bottom-[-12px] left-1/2 -translate-x-1/2 w-28 h-6 bg-black/10 rounded-full blur-md"></div>
+
+            {/* Name + Status */}
+            <div className="mt-6 text-center">
+              <p className="text-xs sm:text-sm font-serif text-foreground lowercase">
+                {companion?.name || 'malunita'}
+              </p>
+              <p className="text-[10px] sm:text-xs text-muted-foreground font-light">
+                {isSleeping && !isListening && !isProcessing && !isSaving && !showSuccess ? 'sleeping...' :
+                 isListening ? 'listening...' :
+                 isSaving ? 'saving...' :
+                 showSuccess ? 'task saved!' :
+                 isProcessing ? 'thinking...' :
+                 isSpeaking ? 'speaking...' : 'tap to speak'}
+              </p>
+            </div>
           </div>
         )}
 
