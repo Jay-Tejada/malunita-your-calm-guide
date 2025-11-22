@@ -1177,6 +1177,237 @@ export const VoiceOrb = ({
                   />
                 )}
                 
+                {/* Personality-specific egg shell textures - Only show for stage 0 */}
+                {growth.stage === 0 && !isListening && !isResponding && (
+                  <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-full">
+                    {/* ZEN - Smooth natural patterns (flowing water, leaf veins) */}
+                    {personality === 'zen' && (
+                      <>
+                        {/* Flowing water-like waves */}
+                        <svg className="absolute inset-0 w-full h-full opacity-20" viewBox="0 0 80 80">
+                          <path
+                            d="M 10 25 Q 25 22, 40 25 T 70 25"
+                            stroke="currentColor"
+                            strokeWidth="0.8"
+                            fill="none"
+                            className="text-blue-300/40 animate-[zen-flow_8s_ease-in-out_infinite]"
+                          />
+                          <path
+                            d="M 10 40 Q 25 37, 40 40 T 70 40"
+                            stroke="currentColor"
+                            strokeWidth="0.8"
+                            fill="none"
+                            className="text-cyan-300/30 animate-[zen-flow_8s_ease-in-out_infinite]"
+                            style={{ animationDelay: '1s' }}
+                          />
+                          <path
+                            d="M 10 55 Q 25 52, 40 55 T 70 55"
+                            stroke="currentColor"
+                            strokeWidth="0.8"
+                            fill="none"
+                            className="text-blue-200/25 animate-[zen-flow_8s_ease-in-out_infinite]"
+                            style={{ animationDelay: '2s' }}
+                          />
+                        </svg>
+                        
+                        {/* Leaf vein patterns */}
+                        <svg className="absolute inset-0 w-full h-full opacity-15" viewBox="0 0 80 80">
+                          <path
+                            d="M 40 20 L 40 60 M 40 25 Q 48 28, 52 35 M 40 35 Q 48 38, 50 45 M 40 45 Q 45 48, 48 52"
+                            stroke="currentColor"
+                            strokeWidth="0.6"
+                            fill="none"
+                            className="text-cyan-400/30"
+                            strokeLinecap="round"
+                          />
+                          <path
+                            d="M 40 30 Q 32 33, 28 40 M 40 40 Q 32 43, 30 50 M 40 50 Q 35 53, 32 57"
+                            stroke="currentColor"
+                            strokeWidth="0.6"
+                            fill="none"
+                            className="text-blue-300/25"
+                            strokeLinecap="round"
+                          />
+                        </svg>
+                        
+                        {/* Subtle ripple circles */}
+                        {Array.from({ length: 3 }).map((_, i) => (
+                          <div
+                            key={`zen-ripple-${i}`}
+                            className="absolute inset-0 rounded-full border border-cyan-300/10 animate-[zen-ripple_6s_ease-in-out_infinite]"
+                            style={{
+                              animationDelay: `${i * 2}s`,
+                              transform: `scale(${0.5 + i * 0.15})`,
+                            }}
+                          />
+                        ))}
+                      </>
+                    )}
+                    
+                    {/* SPARK - Lightning crack patterns */}
+                    {personality === 'spark' && (
+                      <>
+                        {/* Main lightning bolt patterns */}
+                        <svg className="absolute inset-0 w-full h-full opacity-25" viewBox="0 0 80 80">
+                          <path
+                            d="M 40 15 L 38 25 L 42 25 L 38 38 L 44 38 L 40 52"
+                            stroke="currentColor"
+                            strokeWidth="1"
+                            fill="none"
+                            className="text-yellow-400/50 animate-[spark-flicker_3s_ease-in-out_infinite]"
+                            strokeLinecap="round"
+                            strokeLinejoin="bevel"
+                          />
+                          <path
+                            d="M 25 30 L 28 40 L 22 40 L 26 50"
+                            stroke="currentColor"
+                            strokeWidth="0.8"
+                            fill="none"
+                            className="text-orange-400/40 animate-[spark-flicker_3s_ease-in-out_infinite]"
+                            strokeLinecap="round"
+                            strokeLinejoin="bevel"
+                            style={{ animationDelay: '0.5s' }}
+                          />
+                          <path
+                            d="M 55 28 L 52 38 L 58 38 L 54 48"
+                            stroke="currentColor"
+                            strokeWidth="0.8"
+                            fill="none"
+                            className="text-amber-400/35 animate-[spark-flicker_3s_ease-in-out_infinite]"
+                            strokeLinecap="round"
+                            strokeLinejoin="bevel"
+                            style={{ animationDelay: '1s' }}
+                          />
+                        </svg>
+                        
+                        {/* Energy zigzag patterns */}
+                        <svg className="absolute inset-0 w-full h-full opacity-20" viewBox="0 0 80 80">
+                          <path
+                            d="M 20 50 L 25 45 L 22 40 L 27 35 L 24 30"
+                            stroke="currentColor"
+                            strokeWidth="0.6"
+                            fill="none"
+                            className="text-yellow-300/40 animate-[spark-pulse_2s_ease-in-out_infinite]"
+                          />
+                          <path
+                            d="M 60 50 L 55 45 L 58 40 L 53 35 L 56 30"
+                            stroke="currentColor"
+                            strokeWidth="0.6"
+                            fill="none"
+                            className="text-orange-300/35 animate-[spark-pulse_2s_ease-in-out_infinite]"
+                            style={{ animationDelay: '0.3s' }}
+                          />
+                        </svg>
+                        
+                        {/* Electric glow spots */}
+                        {Array.from({ length: 6 }).map((_, i) => (
+                          <div
+                            key={`spark-glow-${i}`}
+                            className="absolute w-2 h-2 rounded-full animate-[spark-glow_2.5s_ease-in-out_infinite]"
+                            style={{
+                              background: 'radial-gradient(circle, hsl(45, 100%, 60% / 0.4), transparent)',
+                              left: `${20 + (i * 10)}%`,
+                              top: `${25 + Math.sin(i) * 30}%`,
+                              animationDelay: `${i * 0.4}s`,
+                            }}
+                          />
+                        ))}
+                      </>
+                    )}
+                    
+                    {/* COSMO - Constellation dots and star patterns */}
+                    {personality === 'cosmo' && (
+                      <>
+                        {/* Constellation star dots */}
+                        {[
+                          { x: 30, y: 25, size: 1.5 },
+                          { x: 50, y: 20, size: 2 },
+                          { x: 60, y: 30, size: 1 },
+                          { x: 40, y: 35, size: 1.5 },
+                          { x: 65, y: 45, size: 1 },
+                          { x: 25, y: 40, size: 1.5 },
+                          { x: 45, y: 50, size: 2 },
+                          { x: 35, y: 60, size: 1 },
+                          { x: 55, y: 55, size: 1.5 },
+                          { x: 20, y: 55, size: 1 },
+                        ].map((star, i) => (
+                          <div
+                            key={`cosmo-star-${i}`}
+                            className="absolute rounded-full animate-[cosmo-twinkle_4s_ease-in-out_infinite]"
+                            style={{
+                              width: `${star.size}px`,
+                              height: `${star.size}px`,
+                              left: `${star.x}%`,
+                              top: `${star.y}%`,
+                              background: 'radial-gradient(circle, hsl(270, 70%, 70%), transparent)',
+                              boxShadow: '0 0 4px hsl(270, 70%, 70%)',
+                              animationDelay: `${i * 0.5}s`,
+                            }}
+                          />
+                        ))}
+                        
+                        {/* Constellation connecting lines */}
+                        <svg className="absolute inset-0 w-full h-full opacity-15" viewBox="0 0 80 80">
+                          <path
+                            d="M 30 25 L 50 20 L 60 30 L 40 35 L 65 45"
+                            stroke="currentColor"
+                            strokeWidth="0.5"
+                            fill="none"
+                            className="text-purple-300/40"
+                            strokeLinecap="round"
+                            strokeDasharray="2,3"
+                          />
+                          <path
+                            d="M 25 40 L 45 50 L 35 60"
+                            stroke="currentColor"
+                            strokeWidth="0.5"
+                            fill="none"
+                            className="text-indigo-300/35"
+                            strokeLinecap="round"
+                            strokeDasharray="2,3"
+                          />
+                        </svg>
+                        
+                        {/* Mystical orbiting dots */}
+                        {Array.from({ length: 4 }).map((_, i) => (
+                          <div
+                            key={`cosmo-orbit-${i}`}
+                            className="absolute w-1 h-1 rounded-full bg-purple-400/40 animate-[cosmo-orbit_8s_linear_infinite]"
+                            style={{
+                              left: '50%',
+                              top: '50%',
+                              '--orbit-angle': `${i * 90}deg`,
+                              '--orbit-radius': '25px',
+                              animationDelay: `${i * 2}s`,
+                            } as React.CSSProperties}
+                          />
+                        ))}
+                        
+                        {/* Nebula swirls */}
+                        <svg className="absolute inset-0 w-full h-full opacity-10" viewBox="0 0 80 80">
+                          <path
+                            d="M 25 35 Q 35 30, 45 35 T 65 40"
+                            stroke="currentColor"
+                            strokeWidth="1.5"
+                            fill="none"
+                            className="text-purple-400/30 animate-[cosmo-swirl_10s_ease-in-out_infinite]"
+                            strokeLinecap="round"
+                          />
+                          <path
+                            d="M 30 50 Q 40 45, 50 50 T 60 55"
+                            stroke="currentColor"
+                            strokeWidth="1.5"
+                            fill="none"
+                            className="text-indigo-400/25 animate-[cosmo-swirl_10s_ease-in-out_infinite]"
+                            strokeLinecap="round"
+                            style={{ animationDelay: '2s' }}
+                          />
+                        </svg>
+                      </>
+                    )}
+                  </div>
+                )}
+                
                 {/* Egg cracks - Only show for stage 0 (Seed/Egg) */}
                 {growth.stage === 0 && !isListening && !isResponding && (
                   <>
