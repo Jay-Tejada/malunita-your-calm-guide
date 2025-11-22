@@ -78,13 +78,13 @@ export const CompanionHabitat = ({ personality, emotion, stage }: CompanionHabit
       {/* Stage 2+: Drifting glow waves */}
       {stage >= 2 && (
         <>
-          <div className="absolute inset-0 opacity-20">
+          <div className="absolute inset-0 opacity-15">
             <div 
-              className="absolute w-[200%] h-[200%] -left-1/2 -top-1/2 bg-gradient-radial from-primary/10 via-transparent to-transparent animate-[drift-wave_20s_ease-in-out_infinite]"
+              className="absolute w-[150%] h-[150%] -left-1/4 -top-1/4 bg-gradient-radial from-primary/8 via-transparent to-transparent animate-[drift-wave_20s_ease-in-out_infinite]"
               style={{ animationDelay: '0s' }}
             />
             <div 
-              className="absolute w-[200%] h-[200%] -left-1/2 -top-1/2 bg-gradient-radial from-primary/5 via-transparent to-transparent animate-[drift-wave_25s_ease-in-out_infinite]"
+              className="absolute w-[150%] h-[150%] -left-1/4 -top-1/4 bg-gradient-radial from-primary/4 via-transparent to-transparent animate-[drift-wave_25s_ease-in-out_infinite]"
               style={{ animationDelay: '5s' }}
             />
           </div>
@@ -93,12 +93,12 @@ export const CompanionHabitat = ({ personality, emotion, stage }: CompanionHabit
 
       {/* Stage 3+: Soft light trails */}
       {stage >= 3 && (
-        <div className="absolute inset-0 opacity-10">
+        <div className="absolute inset-0 opacity-8">
           <div 
-            className="absolute top-1/4 left-1/4 w-96 h-96 bg-gradient-radial from-primary/20 to-transparent blur-3xl animate-[light-trail_30s_ease-in-out_infinite]"
+            className="absolute top-1/4 left-1/4 w-64 h-64 bg-gradient-radial from-primary/15 to-transparent blur-2xl animate-[light-trail_30s_ease-in-out_infinite]"
           />
           <div 
-            className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-gradient-radial from-secondary/15 to-transparent blur-3xl animate-[light-trail_35s_ease-in-out_infinite_reverse]"
+            className="absolute bottom-1/4 right-1/4 w-56 h-56 bg-gradient-radial from-secondary/12 to-transparent blur-2xl animate-[light-trail_35s_ease-in-out_infinite_reverse]"
           />
         </div>
       )}
