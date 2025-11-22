@@ -918,4 +918,132 @@ All colors MUST be HSL.
       transform: scale(2);
     }
   }
+
+  /* ZEN HATCHING ANIMATIONS */
+  @keyframes zen-bloom-glow {
+    0% { opacity: 0; transform: scale(0.5); }
+    40% { opacity: 0.6; transform: scale(1.2); }
+    100% { opacity: 0; transform: scale(2.5); }
+  }
+
+  @keyframes zen-bloom-petal {
+    0% { 
+      transform: scale(0.5) rotate(0deg);
+      opacity: 0.8;
+    }
+    100% { 
+      transform: scale(2.5) rotate(90deg);
+      opacity: 0;
+    }
+  }
+
+  @keyframes zen-bloom-float {
+    0% {
+      transform: translate(-50%, -50%) rotate(var(--zen-angle)) translateY(0);
+      opacity: 1;
+    }
+    100% {
+      transform: translate(-50%, -50%) rotate(var(--zen-angle)) translateY(calc(var(--zen-distance) * -1));
+      opacity: 0;
+    }
+  }
+
+  /* SPARK HATCHING ANIMATIONS */
+  @keyframes spark-burst-flash {
+    0% { opacity: 0; transform: scale(0.5); }
+    15% { opacity: 1; transform: scale(1.3); }
+    40% { opacity: 0.6; transform: scale(2); }
+    100% { opacity: 0; transform: scale(3.5); }
+  }
+
+  @keyframes spark-burst-ring {
+    0% { 
+      transform: scale(0.8); 
+      opacity: 1;
+    }
+    100% { 
+      transform: scale(5); 
+      opacity: 0;
+    }
+  }
+
+  @keyframes spark-burst-particle {
+    0% {
+      transform: translate(-50%, -50%) rotate(var(--spark-angle)) translateY(0) scale(1);
+      opacity: 1;
+    }
+    100% {
+      transform: translate(-50%, -50%) rotate(var(--spark-angle)) translateY(calc(var(--spark-distance) * -1)) scale(0);
+      opacity: 0;
+    }
+  }
+
+  @keyframes spark-burst-sparkle {
+    0% {
+      transform: translate(0, 0) rotate(0deg) scale(1);
+      opacity: 1;
+    }
+    100% {
+      transform: translate(var(--sparkle-x), var(--sparkle-y)) rotate(var(--sparkle-rotate)) scale(0.3);
+      opacity: 0;
+    }
+  }
+
+  /* COSMO HATCHING ANIMATIONS */
+  @keyframes cosmo-shimmer-aura {
+    0% { opacity: 0; transform: scale(0.3); }
+    30% { opacity: 0.8; transform: scale(1); }
+    100% { opacity: 0; transform: scale(3); }
+  }
+
+  @keyframes cosmo-shimmer-spiral {
+    0% { 
+      transform: rotate(0deg) scale(0.5);
+      opacity: 0.7;
+    }
+    100% { 
+      transform: rotate(360deg) scale(3);
+      opacity: 0;
+    }
+  }
+
+  @keyframes cosmo-shimmer-star {
+    0% {
+      transform: translate(-50%, -50%) rotate(var(--cosmo-angle)) translateX(0) scale(0);
+      opacity: 0;
+    }
+    30% {
+      opacity: 1;
+    }
+    100% {
+      transform: translate(-50%, -50%) rotate(var(--cosmo-angle)) translateX(var(--cosmo-orbit)) scale(1);
+      opacity: 0;
+    }
+  }
+
+  @keyframes cosmo-shimmer-trail {
+    0% {
+      transform: translate(0, 0) rotate(0deg) scale(1);
+      opacity: 1;
+    }
+    100% {
+      transform: translate(var(--trail-x), var(--trail-y)) rotate(var(--trail-rotate)) scale(0.5);
+      opacity: 0;
+    }
+  }
+
+  @keyframes cosmo-shimmer-pulse {
+    0% {
+      opacity: 0;
+      transform: scale(0.5);
+    }
+    40% {
+      opacity: 0.8;
+      transform: scale(1.3);
+    }
+    100% {
+      opacity: 0;
+      transform: scale(2.5);
+    }
+  }
 }
