@@ -921,6 +921,88 @@ export const VoiceOrb = ({
                   />
                 )}
                 
+                {/* Egg cracks - Only show for stage 0 (Seed/Egg) */}
+                {growth.stage === 0 && !isListening && !isResponding && (
+                  <>
+                    {/* First crack - appears at 20% progress (10 XP) */}
+                    {growth.progressToNextStage >= 0.2 && (
+                      <div className="absolute inset-0 pointer-events-none animate-in fade-in duration-500">
+                        <svg className="w-full h-full" viewBox="0 0 80 80">
+                          <path
+                            d="M 40 15 Q 42 25, 40 35"
+                            stroke="currentColor"
+                            strokeWidth="1.5"
+                            fill="none"
+                            className="text-foreground/30"
+                            strokeLinecap="round"
+                          />
+                        </svg>
+                      </div>
+                    )}
+                    
+                    {/* Second crack - appears at 40% progress (20 XP) */}
+                    {growth.progressToNextStage >= 0.4 && (
+                      <div className="absolute inset-0 pointer-events-none animate-in fade-in duration-500">
+                        <svg className="w-full h-full" viewBox="0 0 80 80">
+                          <path
+                            d="M 25 30 Q 30 38, 35 45"
+                            stroke="currentColor"
+                            strokeWidth="1.5"
+                            fill="none"
+                            className="text-foreground/35"
+                            strokeLinecap="round"
+                          />
+                        </svg>
+                      </div>
+                    )}
+                    
+                    {/* Third crack - appears at 60% progress (30 XP) */}
+                    {growth.progressToNextStage >= 0.6 && (
+                      <div className="absolute inset-0 pointer-events-none animate-in fade-in duration-500">
+                        <svg className="w-full h-full" viewBox="0 0 80 80">
+                          <path
+                            d="M 55 25 Q 52 35, 50 45"
+                            stroke="currentColor"
+                            strokeWidth="1.5"
+                            fill="none"
+                            className="text-foreground/40"
+                            strokeLinecap="round"
+                          />
+                        </svg>
+                      </div>
+                    )}
+                    
+                    {/* Fourth crack - appears at 80% progress (40 XP) */}
+                    {growth.progressToNextStage >= 0.8 && (
+                      <div className="absolute inset-0 pointer-events-none animate-in fade-in duration-500">
+                        <svg className="w-full h-full" viewBox="0 0 80 80">
+                          <path
+                            d="M 35 50 Q 40 55, 42 62"
+                            stroke="currentColor"
+                            strokeWidth="1.5"
+                            fill="none"
+                            className="text-foreground/45"
+                            strokeLinecap="round"
+                          />
+                        </svg>
+                      </div>
+                    )}
+                    
+                    {/* Glow effect inside cracks at high progress (90%+) */}
+                    {growth.progressToNextStage >= 0.9 && (
+                      <div className="absolute inset-0 pointer-events-none animate-pulse">
+                        <div 
+                          className="absolute inset-0 rounded-full"
+                          style={{
+                            background: `radial-gradient(circle, hsl(${colors.glow} / 0.15), transparent 70%)`,
+                            animation: 'pulse 2s ease-in-out infinite'
+                          }}
+                        />
+                      </div>
+                    )}
+                  </>
+                )}
+                
                 {/* Center indicator */}
                 {isListening && !stopWordDetected && (
                   <div className="absolute inset-0 flex items-center justify-center">
@@ -1007,7 +1089,10 @@ export const VoiceOrb = ({
                     />
                   </div>
                   <p className="text-[9px] text-muted-foreground mt-0.5">
-                    {growth.stageConfig.name} • {growth.xp}/{growth.stageConfig.maxXp} XP
+                    {growth.stage === 0 
+                      ? `Egg • ${growth.xp}/50 XP to hatch 🥚`
+                      : `${growth.stageConfig.name} • ${growth.xp}/${growth.stageConfig.maxXp} XP`
+                    }
                   </p>
                 </div>
               )}
