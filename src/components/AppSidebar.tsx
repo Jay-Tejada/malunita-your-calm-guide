@@ -56,13 +56,10 @@ const defaultCategories = [
 ];
 
 export function AppSidebar({ onSettingsClick, onCategoryClick, activeCategory }: AppSidebarProps) {
-  const { state } = useSidebar();
   const navigate = useNavigate();
   const { isAdmin } = useAdmin();
   const { categories: customCategories } = useCustomCategories();
   const { toast } = useToast();
-  
-  const collapsed = state === "collapsed";
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -74,14 +71,14 @@ export function AppSidebar({ onSettingsClick, onCategoryClick, activeCategory }:
 
   return (
     <Sidebar
-      className={collapsed ? "w-14" : "w-64"}
-      collapsible="icon"
+      className="w-64"
+      collapsible="offcanvas"
     >
       <SidebarContent className="bg-card">
         {/* Logo */}
         <div className="p-4">
           <h1 className="text-xl font-light tracking-tight text-foreground">
-            {!collapsed && "malunita"}
+            malunita
           </h1>
         </div>
 
@@ -89,7 +86,7 @@ export function AppSidebar({ onSettingsClick, onCategoryClick, activeCategory }:
 
         {/* Default Categories */}
         <SidebarGroup>
-          <SidebarGroupLabel className={collapsed ? "sr-only" : ""}>
+          <SidebarGroupLabel>
             Categories
           </SidebarGroupLabel>
           <SidebarGroupContent>
@@ -101,7 +98,7 @@ export function AppSidebar({ onSettingsClick, onCategoryClick, activeCategory }:
                     className={activeCategory === (category.path.replace('/', '') || 'inbox') ? 'bg-muted text-primary font-medium' : 'hover:bg-muted/50'}
                   >
                     <category.icon className="mr-2 h-4 w-4" />
-                    {!collapsed && <span>{category.label}</span>}
+                    <span>{category.label}</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
@@ -114,7 +111,7 @@ export function AppSidebar({ onSettingsClick, onCategoryClick, activeCategory }:
           <>
             <Separator />
             <SidebarGroup>
-              <SidebarGroupLabel className={collapsed ? "sr-only" : ""}>
+              <SidebarGroupLabel>
                 Custom
               </SidebarGroupLabel>
               <SidebarGroupContent>
@@ -135,7 +132,7 @@ export function AppSidebar({ onSettingsClick, onCategoryClick, activeCategory }:
                             style: { color: category.color }
                           })
                         )}
-                        {!collapsed && <span>{category.name}</span>}
+                        <span>{category.name}</span>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                   ))}
@@ -157,7 +154,7 @@ export function AppSidebar({ onSettingsClick, onCategoryClick, activeCategory }:
                   className="hover:bg-muted/50"
                 >
                   <Sun className="mr-2 h-4 w-4" />
-                  {!collapsed && <span>Daily Session</span>}
+                  <span>Daily Session</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
 
@@ -167,7 +164,7 @@ export function AppSidebar({ onSettingsClick, onCategoryClick, activeCategory }:
                   className="hover:bg-muted/50"
                 >
                   <TrendingUp className="mr-2 h-4 w-4" />
-                  {!collapsed && <span>Weekly Insights</span>}
+                  <span>Weekly Insights</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
 
@@ -177,7 +174,7 @@ export function AppSidebar({ onSettingsClick, onCategoryClick, activeCategory }:
                   className="hover:bg-muted/50"
                 >
                   <Camera className="mr-2 h-4 w-4" />
-                  {!collapsed && <span>Hatching Memories</span>}
+                  <span>Hatching Memories</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
 
@@ -187,7 +184,7 @@ export function AppSidebar({ onSettingsClick, onCategoryClick, activeCategory }:
                   className="hover:bg-muted/50"
                 >
                   <Sparkles className="mr-2 h-4 w-4" />
-                  {!collapsed && <span>Tiny Task Fiesta</span>}
+                  <span>Tiny Task Fiesta</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
 
@@ -197,7 +194,7 @@ export function AppSidebar({ onSettingsClick, onCategoryClick, activeCategory }:
                   className="hover:bg-muted/50"
                 >
                   <Target className="mr-2 h-4 w-4" />
-                  {!collapsed && <span>Goals</span>}
+                  <span>Goals</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
 
@@ -207,7 +204,7 @@ export function AppSidebar({ onSettingsClick, onCategoryClick, activeCategory }:
                   className="hover:bg-muted/50"
                 >
                   <Bell className="mr-2 h-4 w-4" />
-                  {!collapsed && <span>Reminders</span>}
+                  <span>Reminders</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
 
@@ -217,7 +214,7 @@ export function AppSidebar({ onSettingsClick, onCategoryClick, activeCategory }:
                   className={activeCategory === 'all' ? 'bg-muted text-primary font-medium' : 'hover:bg-muted/50'}
                 >
                   <CheckSquare className="mr-2 h-4 w-4" />
-                  {!collapsed && <span>All Tasks</span>}
+                  <span>All Tasks</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
               
@@ -225,7 +222,7 @@ export function AppSidebar({ onSettingsClick, onCategoryClick, activeCategory }:
                 <SidebarMenuItem>
                   <SidebarMenuButton onClick={() => navigate('/admin')}>
                     <Shield className="mr-2 h-4 w-4" />
-                    {!collapsed && <span>Admin</span>}
+                    <span>Admin</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               )}
@@ -233,14 +230,14 @@ export function AppSidebar({ onSettingsClick, onCategoryClick, activeCategory }:
               <SidebarMenuItem>
                 <SidebarMenuButton onClick={onSettingsClick}>
                   <Settings className="mr-2 h-4 w-4" />
-                  {!collapsed && <span>Settings</span>}
+                  <span>Settings</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
               
               <SidebarMenuItem>
                 <SidebarMenuButton onClick={handleSignOut}>
                   <LogOut className="mr-2 h-4 w-4" />
-                  {!collapsed && <span>Sign Out</span>}
+                  <span>Sign Out</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>
