@@ -1340,7 +1340,7 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
           />
         ) : (
           <div 
-            className="flex flex-col items-center gap-3 cursor-pointer group"
+            className="relative flex flex-col items-center mt-8 cursor-pointer select-none"
             onClick={() => {
               resetActivityTimer();
               if (!isListening && !isProcessing && !isSpeaking) {
@@ -1357,19 +1357,17 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
                 'idle'
               }
             />
-            <div className="text-center">
-              <p className="text-xs sm:text-sm font-serif text-foreground tracking-wide lowercase group-hover:text-primary transition-colors">
-                {companion?.name || 'malunita'}
-              </p>
-              <p className="text-[10px] sm:text-xs text-muted-foreground font-light">
-                {isSleeping && !isListening && !isProcessing && !isSaving && !showSuccess ? 'sleeping...' :
-                 isListening ? 'listening...' : 
-                 isSaving ? 'saving...' :
-                 showSuccess ? 'task saved!' :
-                 isProcessing ? 'thinking...' :
-                 isSpeaking ? 'speaking...' : 'tap to speak'}
-              </p>
-            </div>
+            <p className="text-xs sm:text-sm font-serif text-foreground tracking-wide lowercase mt-3">
+              {companion?.name || 'malunita'}
+            </p>
+            <p className="text-[10px] sm:text-xs text-muted-foreground font-light -mt-1">
+              {isSleeping && !isListening && !isProcessing && !isSaving && !showSuccess ? 'sleeping...' :
+               isListening ? 'listening...' : 
+               isSaving ? 'saving...' :
+               showSuccess ? 'task saved!' :
+               isProcessing ? 'thinking...' :
+               isSpeaking ? 'speaking...' : 'tap to speak'}
+            </p>
           </div>
         )}
 
