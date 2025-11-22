@@ -90,26 +90,51 @@ export const VoiceOrb = ({
   });
   
   // Track stat changes for icon animation
-  const [statsChanged, setStatsChanged] = useState(false);
+  const [statChangeType, setStatChangeType] = useState<'emotion' | 'xp' | 'levelup' | null>(null);
   const previousXp = useRef(growth.xp);
   const previousEmotion = useRef(emotion.emotion);
+  const previousStageForStats = useRef(growth.stage);
   
   useEffect(() => {
     localStorage.setItem('companion-stats-visible', showStats.toString());
   }, [showStats]);
   
-  // Animate icon when stats change
+  // Animate icon when stats change (prioritize levelup > xp > emotion)
   useEffect(() => {
-    if (growth.xp !== previousXp.current || emotion.emotion !== previousEmotion.current) {
-      setStatsChanged(true);
-      previousXp.current = growth.xp;
-      previousEmotion.current = emotion.emotion;
+    if (!showStats) {
+      let changeType: 'emotion' | 'xp' | 'levelup' | null = null;
+      let duration = 1500;
       
-      // Clear animation after 2 seconds
-      const timer = setTimeout(() => setStatsChanged(false), 2000);
-      return () => clearTimeout(timer);
+      // Check for level up (highest priority)
+      if (growth.stage !== previousStageForStats.current) {
+        changeType = 'levelup';
+        duration = 3000;
+      }
+      // Check for XP gain (medium priority)
+      else if (growth.xp !== previousXp.current) {
+        changeType = 'xp';
+        duration = 2000;
+      }
+      // Check for emotion change (lowest priority)
+      else if (emotion.emotion !== previousEmotion.current) {
+        changeType = 'emotion';
+        duration = 1500;
+      }
+      
+      if (changeType) {
+        setStatChangeType(changeType);
+        
+        // Clear animation after duration
+        const timer = setTimeout(() => setStatChangeType(null), duration);
+        return () => clearTimeout(timer);
+      }
     }
-  }, [growth.xp, emotion.emotion]);
+    
+    // Update refs
+    previousXp.current = growth.xp;
+    previousEmotion.current = emotion.emotion;
+    previousStageForStats.current = growth.stage;
+  }, [growth.xp, growth.stage, emotion.emotion, showStats]);
   
   // Voice reaction system
   const voiceReaction = useVoiceReactions(personality, companionName);
@@ -1767,11 +1792,19 @@ export const VoiceOrb = ({
                     <button
                       onClick={() => setShowStats(!showStats)}
                       className={`inline-flex items-center justify-center h-3 w-3 hover:bg-primary/10 rounded-full transition-colors ${
-                        statsChanged && !showStats ? 'animate-stats-change' : ''
+                        statChangeType && !showStats 
+                          ? statChangeType === 'emotion' ? 'animate-emotion-change' 
+                          : statChangeType === 'xp' ? 'animate-xp-change'
+                          : 'animate-levelup-change'
+                          : ''
                       }`}
                       title={showStats ? "Hide stats" : "Show stats"}
                     >
-                      <Info className={`h-2.5 w-2.5 transition-colors ${showStats ? 'text-primary' : 'text-muted-foreground/60'}`} />
+                      {statChangeType === 'levelup' && !showStats ? (
+                        <Sparkles className="h-2.5 w-2.5 text-primary" />
+                      ) : (
+                        <Info className={`h-2.5 w-2.5 transition-colors ${showStats ? 'text-primary' : 'text-muted-foreground/60'}`} />
+                      )}
                     </button>
                   </div>
                 </div>
@@ -1786,11 +1819,19 @@ export const VoiceOrb = ({
                   <button
                     onClick={() => setShowStats(!showStats)}
                     className={`inline-flex items-center justify-center h-3 w-3 hover:bg-primary/10 rounded-full transition-colors ${
-                      statsChanged && !showStats ? 'animate-stats-change' : ''
+                      statChangeType && !showStats 
+                        ? statChangeType === 'emotion' ? 'animate-emotion-change' 
+                        : statChangeType === 'xp' ? 'animate-xp-change'
+                        : 'animate-levelup-change'
+                        : ''
                     }`}
                     title={showStats ? "Hide stats" : "Show stats"}
                   >
-                    <Info className={`h-2.5 w-2.5 transition-colors ${showStats ? 'text-primary' : 'text-muted-foreground/60'}`} />
+                    {statChangeType === 'levelup' && !showStats ? (
+                      <Sparkles className="h-2.5 w-2.5 text-primary" />
+                    ) : (
+                      <Info className={`h-2.5 w-2.5 transition-colors ${showStats ? 'text-primary' : 'text-muted-foreground/60'}`} />
+                    )}
                   </button>
                 </div>
               )}
