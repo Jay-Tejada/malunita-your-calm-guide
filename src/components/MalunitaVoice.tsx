@@ -1348,17 +1348,15 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
               }
             }}
           >
-            <div className="w-[180px] sm:w-[220px] md:w-[260px]">
-              <CompanionAvatar 
-                mode={
-                  isSleeping && !isListening && !isProcessing && !isSaving && !showSuccess ? 'sleeping' :
-                  isListening ? 'listening' :
-                  isSaving || isProcessing ? 'thinking' :
-                  showSuccess ? 'celebrating' :
-                  'idle'
-                }
-              />
-            </div>
+            <CompanionAvatar 
+              mode={
+                isSleeping && !isListening && !isProcessing && !isSaving && !showSuccess ? 'sleeping' :
+                isListening ? 'listening' :
+                isSaving || isProcessing ? 'thinking' :
+                showSuccess ? 'celebrating' :
+                'idle'
+              }
+            />
             <div className="text-center">
               <p className="text-xs sm:text-sm font-serif text-foreground tracking-wide lowercase group-hover:text-primary transition-colors">
                 {companion?.name || 'malunita'}
