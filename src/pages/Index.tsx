@@ -14,6 +14,7 @@ import { TaskStream } from "@/components/TaskStream";
 import { FloatingReminder } from "@/components/FloatingReminder";
 import { CompanionOnboarding } from "@/components/CompanionOnboarding";
 import { CompanionIntroSequence } from "@/components/CompanionIntroSequence";
+import { DailySessionView } from "@/components/DailySessionView";
 import { useAdmin } from "@/hooks/useAdmin";
 import { useTasks } from "@/hooks/useTasks";
 import { useProfile } from "@/hooks/useProfile";
@@ -140,6 +141,7 @@ const Index = () => {
   const [showRunwayReview, setShowRunwayReview] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [showTodaysFocus, setShowTodaysFocus] = useState(false);
+  const [showDailySession, setShowDailySession] = useState(false);
   const [wakeWordDetected, setWakeWordDetected] = useState(0);
   const [taskStreak, setTaskStreak] = useState(0);
   const [lastTaskAddedTime, setLastTaskAddedTime] = useState<number | null>(null);
@@ -411,8 +413,15 @@ const Index = () => {
         <AppSidebar 
           onSettingsClick={() => setShowSettings(true)}
           onCategoryClick={(category) => {
-            setActiveCategory(category);
-            setShowTodaysFocus(false);
+            if (category === 'daily-session') {
+              setShowDailySession(true);
+              setActiveCategory(null);
+              setShowTodaysFocus(false);
+            } else {
+              setActiveCategory(category);
+              setShowTodaysFocus(false);
+              setShowDailySession(false);
+            }
           }}
           activeCategory={activeCategory}
         />
@@ -434,7 +443,7 @@ const Index = () => {
 
           {/* Main Content Area */}
           <div className="flex-1 flex flex-col px-4 pt-16 pb-32 overflow-y-auto">
-            {!activeCategory && !showTodaysFocus ? (
+            {!activeCategory && !showTodaysFocus && !showDailySession ? (
               // Default: Voice Orb Centered + Companion
               <div className="flex flex-col items-center justify-center min-h-[70vh] w-full">
                 <MalunitaVoice 
@@ -446,6 +455,11 @@ const Index = () => {
                   onTasksCreated={handleTaskCreated}
                   taskStreak={taskStreak}
                 />
+              </div>
+            ) : showDailySession ? (
+              // Daily Session View
+              <div className="py-8 pb-48">
+                <DailySessionView onClose={() => setShowDailySession(false)} />
               </div>
             ) : activeCategory ? (
               // Task Stream View
@@ -469,7 +483,7 @@ const Index = () => {
             ) : null}
             
             {/* Always show voice orb when viewing tasks or focus */}
-            {(activeCategory || showTodaysFocus) && (
+            {(activeCategory || showTodaysFocus || showDailySession) && (
               <div className="fixed bottom-0 left-0 right-0 flex justify-center pb-8 pointer-events-none" style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 2rem)' }}>
                 <div className="pointer-events-auto">
                   <MalunitaVoice 
