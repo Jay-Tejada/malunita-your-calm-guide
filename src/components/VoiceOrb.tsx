@@ -1241,6 +1241,38 @@ export const VoiceOrb = ({
                             }}
                           />
                         ))}
+                        
+                        {/* Zen flowing particles - intensify near hatching */}
+                        {growth.progressToNextStage >= 0.3 && Array.from({ 
+                          length: Math.floor(growth.progressToNextStage * 12) 
+                        }).map((_, i) => (
+                          <div
+                            key={`zen-flow-particle-${i}`}
+                            className="absolute w-1.5 h-1.5 rounded-full bg-cyan-300/40 animate-[zen-particle-float_4s_ease-in-out_infinite]"
+                            style={{
+                              left: `${15 + (i * 6)}%`,
+                              top: `${20 + Math.sin(i) * 40}%`,
+                              animationDelay: `${i * 0.6}s`,
+                              opacity: growth.progressToNextStage * 0.6,
+                            }}
+                          />
+                        ))}
+                        
+                        {/* Zen water droplets at high progress */}
+                        {growth.progressToNextStage >= 0.7 && Array.from({ 
+                          length: Math.floor((growth.progressToNextStage - 0.7) * 15) 
+                        }).map((_, i) => (
+                          <div
+                            key={`zen-droplet-${i}`}
+                            className="absolute w-1 h-1 rounded-full bg-blue-200/50 animate-[zen-droplet-fall_3s_ease-in_infinite]"
+                            style={{
+                              left: `${10 + (i * 8)}%`,
+                              top: '15%',
+                              animationDelay: `${i * 0.4}s`,
+                              filter: 'blur(0.5px)',
+                            }}
+                          />
+                        ))}
                       </>
                     )}
                     
@@ -1309,6 +1341,40 @@ export const VoiceOrb = ({
                               left: `${20 + (i * 10)}%`,
                               top: `${25 + Math.sin(i) * 30}%`,
                               animationDelay: `${i * 0.4}s`,
+                            }}
+                          />
+                        ))}
+                        
+                        {/* Spark electric sparkles - intensify near hatching */}
+                        {growth.progressToNextStage >= 0.3 && Array.from({ 
+                          length: Math.floor(growth.progressToNextStage * 20) 
+                        }).map((_, i) => (
+                          <Sparkles
+                            key={`spark-electric-${i}`}
+                            className="absolute w-3 h-3 text-yellow-400/60 animate-[spark-electric-particle_2s_ease-in-out_infinite]"
+                            style={{
+                              left: `${10 + (i * 5)}%`,
+                              top: `${15 + Math.cos(i) * 50}%`,
+                              animationDelay: `${i * 0.15}s`,
+                              opacity: growth.progressToNextStage * 0.8,
+                            }}
+                          />
+                        ))}
+                        
+                        {/* Spark lightning bolts at high progress */}
+                        {growth.progressToNextStage >= 0.7 && Array.from({ 
+                          length: Math.floor((growth.progressToNextStage - 0.7) * 10) 
+                        }).map((_, i) => (
+                          <div
+                            key={`spark-bolt-${i}`}
+                            className="absolute w-0.5 h-3 bg-gradient-to-b from-yellow-300 to-orange-400 animate-[spark-bolt-flash_1.5s_ease-in-out_infinite]"
+                            style={{
+                              left: `${20 + (i * 8)}%`,
+                              top: `${10 + (i % 3) * 20}%`,
+                              animationDelay: `${i * 0.3}s`,
+                              transform: `rotate(${-15 + Math.random() * 30}deg)`,
+                              filter: 'blur(0.5px)',
+                              boxShadow: '0 0 4px hsl(45, 100%, 60%)',
                             }}
                           />
                         ))}
@@ -1403,6 +1469,55 @@ export const VoiceOrb = ({
                             style={{ animationDelay: '2s' }}
                           />
                         </svg>
+                        
+                        {/* Cosmo stardust particles - intensify near hatching */}
+                        {growth.progressToNextStage >= 0.3 && Array.from({ 
+                          length: Math.floor(growth.progressToNextStage * 18) 
+                        }).map((_, i) => (
+                          <div
+                            key={`cosmo-stardust-${i}`}
+                            className="absolute w-1 h-1 rounded-full bg-purple-300/50 animate-[cosmo-stardust-drift_5s_ease-in-out_infinite]"
+                            style={{
+                              left: `${10 + (i * 5)}%`,
+                              top: `${15 + Math.sin(i * 0.5) * 50}%`,
+                              animationDelay: `${i * 0.4}s`,
+                              opacity: growth.progressToNextStage * 0.7,
+                              boxShadow: '0 0 3px hsl(270, 70%, 70%)',
+                            }}
+                          />
+                        ))}
+                        
+                        {/* Cosmo mystical sparkles at high progress */}
+                        {growth.progressToNextStage >= 0.7 && Array.from({ 
+                          length: Math.floor((growth.progressToNextStage - 0.7) * 15) 
+                        }).map((_, i) => (
+                          <Sparkles
+                            key={`cosmo-mystical-${i}`}
+                            className="absolute w-2.5 h-2.5 text-purple-400/70 animate-[cosmo-sparkle-pulse_3s_ease-in-out_infinite]"
+                            style={{
+                              left: `${15 + (i * 6)}%`,
+                              top: `${20 + Math.cos(i * 0.8) * 45}%`,
+                              animationDelay: `${i * 0.25}s`,
+                              filter: 'drop-shadow(0 0 2px hsl(270, 70%, 70%))',
+                            }}
+                          />
+                        ))}
+                        
+                        {/* Cosmo cosmic trails at very high progress */}
+                        {growth.progressToNextStage >= 0.85 && Array.from({ 
+                          length: Math.floor((growth.progressToNextStage - 0.85) * 20) 
+                        }).map((_, i) => (
+                          <div
+                            key={`cosmo-trail-${i}`}
+                            className="absolute w-8 h-0.5 rounded-full bg-gradient-to-r from-purple-400/60 via-indigo-400/40 to-transparent animate-[cosmo-trail-streak_2.5s_ease-out_infinite]"
+                            style={{
+                              left: `${5 + (i * 4)}%`,
+                              top: `${10 + (i % 5) * 15}%`,
+                              animationDelay: `${i * 0.2}s`,
+                              transform: `rotate(${-30 + Math.random() * 60}deg)`,
+                            }}
+                          />
+                        ))}
                       </>
                     )}
                   </div>
