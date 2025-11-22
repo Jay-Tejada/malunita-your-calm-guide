@@ -811,19 +811,6 @@ export const VoiceOrb = ({
             </div>
           )}
 
-          {/* Companion Stats Toggle Button */}
-          <div className="absolute top-4 right-4 z-50">
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => setShowStats(!showStats)}
-              className="h-8 w-8 rounded-full shadow-lg bg-card/95 backdrop-blur-sm border-border/50 hover:bg-card hover:border-primary/50 transition-all"
-              title={showStats ? "Hide companion stats" : "Show companion stats"}
-            >
-              <Info className={`h-4 w-4 transition-colors ${showStats ? 'text-primary' : 'text-muted-foreground'}`} />
-            </Button>
-          </div>
-
             {/* Voice Orb Container with Habitat */}
             <div ref={orbContainerRef} className="relative flex flex-col items-center gap-4">
             {/* Companion Habitat - Subtle ambient environment (behind everything) */}
@@ -1752,20 +1739,38 @@ export const VoiceOrb = ({
                       style={{ width: `${growth.progressToNextStage * 100}%` }}
                     />
                   </div>
-                  <p className="text-[9px] text-muted-foreground mt-0.5">
-                    {growth.stage === 0 
-                      ? `Egg • ${growth.xp}/50 XP to hatch 🥚`
-                      : `${growth.stageConfig.name} • ${growth.xp}/${growth.stageConfig.maxXp} XP`
-                    }
-                  </p>
+                  <div className="flex items-center justify-center gap-1 mt-0.5">
+                    <p className="text-[9px] text-muted-foreground">
+                      {growth.stage === 0 
+                        ? `Egg • ${growth.xp}/50 XP to hatch 🥚`
+                        : `${growth.stageConfig.name} • ${growth.xp}/${growth.stageConfig.maxXp} XP`
+                      }
+                    </p>
+                    <button
+                      onClick={() => setShowStats(!showStats)}
+                      className="inline-flex items-center justify-center h-3 w-3 hover:bg-primary/10 rounded-full transition-colors"
+                      title={showStats ? "Hide stats" : "Show stats"}
+                    >
+                      <Info className={`h-2.5 w-2.5 ${showStats ? 'text-primary' : 'text-muted-foreground/60'}`} />
+                    </button>
+                  </div>
                 </div>
               )}
               
               {/* Max stage indicator */}
               {growth.stage === 4 && (
-                <p className="text-[9px] text-primary mt-1">
-                  ✨ {growth.stageConfig.name} • {growth.xp} XP
-                </p>
+                <div className="flex items-center justify-center gap-1 mt-1">
+                  <p className="text-[9px] text-primary">
+                    ✨ {growth.stageConfig.name} • {growth.xp} XP
+                  </p>
+                  <button
+                    onClick={() => setShowStats(!showStats)}
+                    className="inline-flex items-center justify-center h-3 w-3 hover:bg-primary/10 rounded-full transition-colors"
+                    title={showStats ? "Hide stats" : "Show stats"}
+                  >
+                    <Info className={`h-2.5 w-2.5 ${showStats ? 'text-primary' : 'text-muted-foreground/60'}`} />
+                  </button>
+                </div>
               )}
             </div>
           </div>
