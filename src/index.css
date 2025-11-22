@@ -1221,4 +1221,9 @@ All colors MUST be HSL.
       transform: scale(2.5);
     }
   }
+
+  /* Sidebar slide-in animation */
+  [data-sidebar] {
+    transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+  }
 }
