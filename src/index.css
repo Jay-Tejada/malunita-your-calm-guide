@@ -842,4 +842,21 @@ All colors MUST be HSL.
   .animate-slide-in-from-right {
     animation: slide-in-from-right 0.3s ease-out;
   }
+
+  @keyframes egg-shake {
+    0%, 100% { transform: translateX(0) rotate(0deg); }
+    10% { transform: translateX(-2px) rotate(-1deg); }
+    20% { transform: translateX(2px) rotate(1deg); }
+    30% { transform: translateX(-2px) rotate(-1deg); }
+    40% { transform: translateX(2px) rotate(1deg); }
+    50% { transform: translateX(-1px) rotate(-0.5deg); }
+    60% { transform: translateX(1px) rotate(0.5deg); }
+    70% { transform: translateX(-1px) rotate(-0.5deg); }
+    80% { transform: translateX(1px) rotate(0.5deg); }
+    90% { transform: translateX(0) rotate(0deg); }
+  }
+
+  .animate-egg-shake {
+    animation: egg-shake 0.8s ease-in-out infinite;
+  }
 }
