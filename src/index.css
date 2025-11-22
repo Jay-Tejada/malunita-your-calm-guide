@@ -955,20 +955,64 @@ All colors MUST be HSL.
     100% { transform: translateX(40px) translateY(-20px) rotate(var(--tw-rotate)); opacity: 0; }
   }
 
-  /* Stats change notification animation */
-  @keyframes stats-change {
+  /* Emotion change animation - subtle pulse */
+  @keyframes emotion-change {
+    0%, 100% { 
+      transform: scale(1);
+      box-shadow: 0 0 0 0 hsl(var(--primary) / 0.2);
+    }
+    50% { 
+      transform: scale(1.1);
+      box-shadow: 0 0 0 2px hsl(var(--primary) / 0.15);
+    }
+  }
+
+  .animate-emotion-change {
+    animation: emotion-change 0.5s ease-out;
+  }
+
+  /* XP gain animation - brighter glow */
+  @keyframes xp-change {
     0%, 100% { 
       transform: scale(1);
       box-shadow: 0 0 0 0 hsl(var(--primary) / 0.4);
     }
     50% { 
       transform: scale(1.15);
-      box-shadow: 0 0 0 3px hsl(var(--primary) / 0.2);
+      box-shadow: 0 0 0 4px hsl(var(--primary) / 0.3);
     }
   }
 
-  .animate-stats-change {
-    animation: stats-change 0.6s ease-out;
+  .animate-xp-change {
+    animation: xp-change 0.6s ease-out;
+  }
+
+  /* Level up animation - sparkle with rotation */
+  @keyframes levelup-change {
+    0% { 
+      transform: scale(1) rotate(0deg);
+      box-shadow: 0 0 0 0 hsl(var(--primary) / 0.6);
+    }
+    25% { 
+      transform: scale(1.3) rotate(90deg);
+      box-shadow: 0 0 0 6px hsl(var(--primary) / 0.4);
+    }
+    50% { 
+      transform: scale(1.2) rotate(180deg);
+      box-shadow: 0 0 0 8px hsl(var(--primary) / 0.3);
+    }
+    75% { 
+      transform: scale(1.3) rotate(270deg);
+      box-shadow: 0 0 0 6px hsl(var(--primary) / 0.4);
+    }
+    100% { 
+      transform: scale(1) rotate(360deg);
+      box-shadow: 0 0 0 0 hsl(var(--primary) / 0.6);
+    }
+  }
+
+  .animate-levelup-change {
+    animation: levelup-change 1s ease-in-out;
   }
 
   @keyframes hatch-flash {
