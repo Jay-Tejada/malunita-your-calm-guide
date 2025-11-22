@@ -148,7 +148,7 @@ All colors MUST be HSL.
     position: relative;
   }
 
-  /* Paper texture overlay - placeholder until texture image is uploaded */
+  /* Paper texture overlay */
   body::before {
     content: '';
     position: fixed;
@@ -158,20 +158,11 @@ All colors MUST be HSL.
     height: 100%;
     pointer-events: none;
     z-index: 0;
-    /* Placeholder subtle paper texture - replace with actual image when uploaded */
-    background-image: 
-      repeating-linear-gradient(
-        0deg,
-        transparent,
-        transparent 2px,
-        rgba(0,0,0,0.01) 2px,
-        rgba(0,0,0,0.01) 4px
-      );
-    opacity: 0.06;
-    /* When texture image is uploaded, use: background-image: url('/path/to/texture.png'); */
+    background-image: url('/images/texture.png');
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
+    opacity: 0.06;
   }
 
   @media (max-width: 768px) {
