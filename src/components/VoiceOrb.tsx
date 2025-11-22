@@ -667,7 +667,7 @@ export const VoiceOrb = ({
           {/* Voice Orb Container with Habitat */}
           <div className="relative flex flex-col items-center gap-4">
             {/* Companion Habitat - Subtle ambient environment (behind everything) */}
-            <div className="absolute -inset-48 sm:-inset-64 pointer-events-none z-0 overflow-hidden rounded-full">
+            <div className="absolute -inset-20 sm:-inset-24 pointer-events-none z-0 overflow-hidden rounded-full opacity-60">
               <CompanionHabitat
                 personality={personality}
                 emotion={emotion.emotion}
@@ -758,12 +758,12 @@ export const VoiceOrb = ({
                 <div 
                   className="absolute inset-0 rounded-full pointer-events-none transition-all duration-200 ease-out"
                   style={{
-                    width: `${28 + (smoothedAmplitude * 12)}rem`,
-                    height: `${28 + (smoothedAmplitude * 12)}rem`,
-                    left: `${-7 - (smoothedAmplitude * 3)}rem`,
-                    top: `${-7 - (smoothedAmplitude * 3)}rem`,
-                    background: `radial-gradient(circle, hsl(${colors.halo} / ${0.15 + (smoothedAmplitude * 0.15)}) 0%, hsl(${colors.halo} / ${0.08 + (smoothedAmplitude * 0.08)}) 50%, transparent 70%)`,
-                    filter: 'blur(32px)',
+                    width: `${18 + (smoothedAmplitude * 8)}rem`,
+                    height: `${18 + (smoothedAmplitude * 8)}rem`,
+                    left: `${-5 - (smoothedAmplitude * 2)}rem`,
+                    top: `${-5 - (smoothedAmplitude * 2)}rem`,
+                    background: `radial-gradient(circle, hsl(${colors.halo} / ${0.12 + (smoothedAmplitude * 0.12)}) 0%, hsl(${colors.halo} / ${0.06 + (smoothedAmplitude * 0.06)}) 50%, transparent 70%)`,
+                    filter: 'blur(24px)',
                     animation: smoothedAmplitude > 0.2 ? 'pulse-halo-listener 2s ease-in-out infinite' : 'pulse-halo-baseline 3s ease-in-out infinite',
                   } as React.CSSProperties}
                 />
@@ -771,23 +771,23 @@ export const VoiceOrb = ({
               
               {/* Layer 3: Outer Halo (ambient diffusion) - Stable background glow */}
               <div 
-                className={`absolute inset-0 rounded-full blur-2xl transition-all duration-1000 ${
+                className={`absolute inset-0 rounded-full blur-xl transition-all duration-1000 ${
                   voiceReaction.reactionState === 'speaking' ? 'animate-[voice-halo-pulse_var(--voice-pulse-speed)_ease-in-out_infinite]' :
                   motion.motionState === 'calm' ? 'animate-companion-calm-glow' :
                   (isResponding || isSaving) ? 'animate-thinking-shimmer' : 
                   'animate-companion-breath'
                 }`}
                 style={{
-                  width: `${32 * growth.stageConfig.haloRadius}rem`,
-                  height: `${32 * growth.stageConfig.haloRadius}rem`,
-                  left: `${-6 * growth.stageConfig.haloRadius}rem`,
-                  top: `${-6 * growth.stageConfig.haloRadius}rem`,
+                  width: `${20 * growth.stageConfig.haloRadius}rem`,
+                  height: `${20 * growth.stageConfig.haloRadius}rem`,
+                  left: `${-4 * growth.stageConfig.haloRadius}rem`,
+                  top: `${-4 * growth.stageConfig.haloRadius}rem`,
                   '--voice-pulse-speed': `${voiceReaction.config.pulseSpeed}ms`,
                   background: (isResponding || isSaving)
-                    ? `radial-gradient(circle, hsl(var(--orb-halo-thinking) / 0.35) 0%, hsl(var(--orb-halo-speaking) / 0.2) 40%, transparent 70%)`
-                    : `radial-gradient(circle, hsl(${colors.halo} / 0.3) 0%, hsl(${colors.halo} / 0.1) 50%, transparent 70%)`,
-                  filter: 'blur(24px)',
-                  opacity: isListening ? 0.4 : `calc(0.6 + ${emotion.config.glowIntensity * growth.stageConfig.glowIntensity} * 0.3)`,
+                    ? `radial-gradient(circle, hsl(var(--orb-halo-thinking) / 0.25) 0%, hsl(var(--orb-halo-speaking) / 0.15) 40%, transparent 70%)`
+                    : `radial-gradient(circle, hsl(${colors.halo} / 0.22) 0%, hsl(${colors.halo} / 0.08) 50%, transparent 70%)`,
+                  filter: 'blur(20px)',
+                  opacity: isListening ? 0.35 : `calc(0.5 + ${emotion.config.glowIntensity * growth.stageConfig.glowIntensity} * 0.25)`,
                 } as React.CSSProperties}
               />
               
