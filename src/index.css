@@ -601,6 +601,11 @@ All colors MUST be HSL.
     75% { transform: rotate(1deg); }
   }
 
+  @keyframes progress-ring {
+    0% { stroke-dashoffset: 113; }
+    100% { stroke-dashoffset: 0; }
+  }
+
   @keyframes voice-speaking-heartbeat {
     0%, 100% { 
       transform: scale(1);
