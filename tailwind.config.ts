@@ -116,12 +116,56 @@ export default {
             opacity: "0",
           },
         },
+        "float-idle": {
+          "0%, 100%": {
+            transform: "translateY(0px)",
+          },
+          "50%": {
+            transform: "translateY(-6px)",
+          },
+        },
+        "bounce-excited": {
+          "0%, 100%": {
+            transform: "translateY(0px) scale(1) rotate(0deg)",
+          },
+          "25%": {
+            transform: "translateY(-12px) scale(1.05) rotate(-5deg)",
+          },
+          "75%": {
+            transform: "translateY(-6px) scale(1.02) rotate(5deg)",
+          },
+        },
+        "sway-curious": {
+          "0%, 100%": {
+            transform: "translateY(0px) rotate(-3deg)",
+          },
+          "33%": {
+            transform: "translateY(-4px) rotate(3deg)",
+          },
+          "66%": {
+            transform: "translateY(0px) rotate(-3deg)",
+          },
+        },
+        "float-sleepy": {
+          "0%, 100%": {
+            transform: "translateY(0px)",
+            opacity: "1",
+          },
+          "50%": {
+            transform: "translateY(2px)",
+            opacity: "0.95",
+          },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         "slide-in-left": "slide-in-left 0.3s ease-out",
         "slide-out-left": "slide-out-left 0.3s ease-out",
+        "float-idle": "float-idle 2.5s ease-in-out infinite",
+        "bounce-excited": "bounce-excited 0.8s ease-in-out infinite",
+        "sway-curious": "sway-curious 2s ease-in-out infinite",
+        "float-sleepy": "float-sleepy 3s ease-in-out infinite",
       },
       transitionDuration: {
         '2000': '2000ms',
