@@ -80,6 +80,9 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
     suggestedCategory?: string;
     actualCategory?: string;
   } | null>(null);
+  const [isSleeping, setIsSleeping] = useState(false);
+  const lastActivityRef = useRef<number>(Date.now());
+  const sleepTimerRef = useRef<NodeJS.Timeout | null>(null);
   
   const { profile } = useProfile();
   const { tasks, updateTask, createTasks } = useTasks();
@@ -1199,10 +1202,44 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
     setShowMoodSelector(false);
   };
 
+  // Reset activity timer whenever there's user interaction
+  const resetActivityTimer = () => {
+    lastActivityRef.current = Date.now();
+    setIsSleeping(false);
+    
+    // Clear existing timer
+    if (sleepTimerRef.current) {
+      clearTimeout(sleepTimerRef.current);
+    }
+    
+    // Set new timer for 2 minutes (120000ms)
+    sleepTimerRef.current = setTimeout(() => {
+      setIsSleeping(true);
+    }, 120000);
+  };
+
+  // Track activity when states change
+  useEffect(() => {
+    if (isListening || isProcessing || isSpeaking || isSaving || showSuccess) {
+      resetActivityTimer();
+    }
+  }, [isListening, isProcessing, isSpeaking, isSaving, showSuccess]);
+
+  // Initialize activity timer
+  useEffect(() => {
+    resetActivityTimer();
+    return () => {
+      if (sleepTimerRef.current) {
+        clearTimeout(sleepTimerRef.current);
+      }
+    };
+  }, []);
+
   // Expose startRecording method via ref
   useImperativeHandle(ref, () => ({
     startRecording: () => {
       console.log('🎯 startRecording called! State:', { isListening, isProcessing, isSpeaking });
+      resetActivityTimer(); // Reset sleep timer on interaction
       if (!isListening && !isProcessing && !isSpeaking) {
         console.log('✅ Conditions met, calling handleVoiceLoop');
         handleVoiceLoop();
@@ -1302,21 +1339,33 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
             isSpeaking={isSpeaking}
           />
         ) : (
-          <div className="flex flex-col items-center gap-3">
-            <CompanionAvatar 
-              mode={
-                isListening ? 'listening' :
-                isSaving || isProcessing ? 'thinking' :
-                showSuccess ? 'celebrating' :
-                'idle'
+          <div 
+            className="flex flex-col items-center gap-3 cursor-pointer group"
+            onClick={() => {
+              resetActivityTimer();
+              if (!isListening && !isProcessing && !isSpeaking) {
+                handleVoiceLoop();
               }
-            />
+            }}
+          >
+            <div className="w-[180px] sm:w-[220px] md:w-[260px]">
+              <CompanionAvatar 
+                mode={
+                  isSleeping && !isListening && !isProcessing && !isSaving && !showSuccess ? 'sleeping' :
+                  isListening ? 'listening' :
+                  isSaving || isProcessing ? 'thinking' :
+                  showSuccess ? 'celebrating' :
+                  'idle'
+                }
+              />
+            </div>
             <div className="text-center">
-              <p className="text-xs sm:text-sm font-serif text-foreground tracking-wide lowercase">
+              <p className="text-xs sm:text-sm font-serif text-foreground tracking-wide lowercase group-hover:text-primary transition-colors">
                 {companion?.name || 'malunita'}
               </p>
               <p className="text-[10px] sm:text-xs text-muted-foreground font-light">
-                {isListening ? 'listening...' : 
+                {isSleeping && !isListening && !isProcessing && !isSaving && !showSuccess ? 'sleeping...' :
+                 isListening ? 'listening...' : 
                  isSaving ? 'saving...' :
                  showSuccess ? 'task saved!' :
                  isProcessing ? 'thinking...' :
