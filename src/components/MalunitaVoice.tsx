@@ -1310,8 +1310,6 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
                 showSuccess ? 'celebrating' :
                 'idle'
               }
-              userMood={currentMood}
-              size="xl"
             />
             <div className="text-center">
               <p className="text-xs sm:text-sm font-serif text-foreground tracking-wide lowercase">
