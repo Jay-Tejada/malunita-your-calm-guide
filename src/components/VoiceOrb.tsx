@@ -75,6 +75,10 @@ export const VoiceOrb = ({
   // Companion growth & evolution
   const growth = useCompanionGrowth();
   
+  // Hatching state management
+  const [isHatching, setIsHatching] = useState(false);
+  const [previousStage, setPreviousStage] = useState(growth.stage);
+  
   // Voice reaction system
   const voiceReaction = useVoiceReactions(personality, companionName);
   
@@ -86,6 +90,91 @@ export const VoiceOrb = ({
   
   // Audio smoothing for stable animations
   const audioSmoothing = useAudioSmoothing();
+  
+  // Detect hatching (evolution from stage 0 to 1)
+  useEffect(() => {
+    if (previousStage === 0 && growth.stage === 1 && growth.isEvolving) {
+      setIsHatching(true);
+      
+      // Import and trigger confetti
+      import('canvas-confetti').then((confetti) => {
+        const count = 200;
+        const defaults = {
+          origin: { y: 0.7 },
+          zIndex: 9999,
+        };
+
+        function fire(particleRatio: number, opts: any) {
+          confetti.default({
+            ...defaults,
+            ...opts,
+            particleCount: Math.floor(count * particleRatio),
+          });
+        }
+
+        // Burst of confetti
+        fire(0.25, {
+          spread: 26,
+          startVelocity: 55,
+        });
+
+        fire(0.2, {
+          spread: 60,
+        });
+
+        fire(0.35, {
+          spread: 100,
+          decay: 0.91,
+          scalar: 0.8,
+        });
+
+        fire(0.1, {
+          spread: 120,
+          startVelocity: 25,
+          decay: 0.92,
+          scalar: 1.2,
+        });
+
+        fire(0.1, {
+          spread: 120,
+          startVelocity: 45,
+        });
+      });
+      
+      // Play celebratory sound
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      
+      // Bright cheerful melody
+      const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+      notes.forEach((freq, i) => {
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        oscillator.frequency.setValueAtTime(freq, audioContext.currentTime + i * 0.15);
+        gainNode.gain.setValueAtTime(0.2, audioContext.currentTime + i * 0.15);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + i * 0.15 + 0.3);
+        
+        oscillator.start(audioContext.currentTime + i * 0.15);
+        oscillator.stop(audioContext.currentTime + i * 0.15 + 0.3);
+      });
+      
+      // Show celebratory toast
+      toast({
+        title: '🎉 Your companion hatched!',
+        description: 'A new journey begins together!',
+        duration: 5000,
+      });
+      
+      // Reset after animation
+      setTimeout(() => {
+        setIsHatching(false);
+      }, 3000);
+    }
+    setPreviousStage(growth.stage);
+  }, [growth.stage, growth.isEvolving, previousStage, toast]);
   
   // Connect cosmetics unlock checker to growth system
   useEffect(() => {
@@ -724,6 +813,64 @@ export const VoiceOrb = ({
                   <div className="absolute inset-0 rounded-full border-2 border-primary/50 animate-[evolution-ripple_2s_ease-out]" />
                   <div className="absolute inset-0 rounded-full border-2 border-primary/30 animate-[evolution-ripple_2s_ease-out_0.5s]" />
                   <div className="absolute inset-0 rounded-full border-2 border-primary/20 animate-[evolution-ripple_2s_ease-out_1s]" />
+                </div>
+              )}
+              
+              {/* HATCHING SEQUENCE - Special dramatic effects when egg hatches */}
+              {isHatching && (
+                <div className="absolute inset-0 pointer-events-none">
+                  {/* Bright flash */}
+                  <div className="absolute inset-0 -inset-20 rounded-full bg-white animate-[hatch-flash_1s_ease-out]" />
+                  
+                  {/* Explosion ripples */}
+                  <div className="absolute inset-0 rounded-full border-4 border-primary animate-[hatch-explosion_1.5s_ease-out]" />
+                  <div className="absolute inset-0 rounded-full border-4 border-success animate-[hatch-explosion_1.5s_ease-out_0.2s]" />
+                  <div className="absolute inset-0 rounded-full border-3 border-accent animate-[hatch-explosion_1.5s_ease-out_0.4s]" />
+                  
+                  {/* Particle burst - radiating outward */}
+                  {Array.from({ length: 24 }).map((_, i) => {
+                    const angle = (360 / 24) * i;
+                    const distance = 80 + Math.random() * 40;
+                    return (
+                      <div
+                        key={i}
+                        className="absolute w-2 h-2 rounded-full animate-[hatch-particle_1.2s_ease-out_forwards]"
+                        style={{
+                          left: '50%',
+                          top: '50%',
+                          background: `hsl(${45 + Math.random() * 60}, 90%, ${60 + Math.random() * 20}%)`,
+                          '--particle-angle': `${angle}deg`,
+                          '--particle-distance': `${distance}px`,
+                          animationDelay: `${i * 0.03}s`,
+                        } as React.CSSProperties}
+                      />
+                    );
+                  })}
+                  
+                  {/* Confetti sparkles */}
+                  {Array.from({ length: 16 }).map((_, i) => (
+                    <Sparkles
+                      key={`confetti-${i}`}
+                      className="absolute w-6 h-6 text-primary animate-[hatch-confetti_2s_ease-out_forwards]"
+                      style={{
+                        left: `${20 + Math.random() * 60}%`,
+                        top: `${10 + Math.random() * 40}%`,
+                        '--confetti-x': `${-50 + Math.random() * 100}px`,
+                        '--confetti-y': `${-100 - Math.random() * 100}px`,
+                        '--confetti-rotate': `${Math.random() * 720}deg`,
+                        animationDelay: `${0.3 + i * 0.08}s`,
+                      } as React.CSSProperties}
+                    />
+                  ))}
+                  
+                  {/* Celebration glow pulse */}
+                  <div 
+                    className="absolute -inset-16 rounded-full animate-[hatch-glow_2s_ease-out]"
+                    style={{
+                      background: 'radial-gradient(circle, hsl(var(--primary) / 0.4), hsl(var(--success) / 0.2), transparent 70%)',
+                      filter: 'blur(30px)',
+                    }}
+                  />
                 </div>
               )}
               

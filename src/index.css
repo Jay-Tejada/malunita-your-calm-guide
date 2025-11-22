@@ -859,4 +859,63 @@ All colors MUST be HSL.
   .animate-egg-shake {
     animation: egg-shake 0.8s ease-in-out infinite;
   }
+
+  @keyframes hatch-flash {
+    0% { opacity: 0; transform: scale(0.8); }
+    10% { opacity: 1; transform: scale(1.5); }
+    30% { opacity: 0.8; transform: scale(2); }
+    100% { opacity: 0; transform: scale(3); }
+  }
+
+  @keyframes hatch-explosion {
+    0% { 
+      transform: scale(1); 
+      opacity: 1;
+    }
+    100% { 
+      transform: scale(4); 
+      opacity: 0;
+    }
+  }
+
+  @keyframes hatch-particle {
+    0% {
+      transform: translate(-50%, -50%) rotate(var(--particle-angle)) translateY(0) scale(1);
+      opacity: 1;
+    }
+    100% {
+      transform: translate(-50%, -50%) rotate(var(--particle-angle)) translateY(calc(var(--particle-distance) * -1)) scale(0);
+      opacity: 0;
+    }
+  }
+
+  @keyframes hatch-confetti {
+    0% {
+      transform: translate(0, 0) rotate(0deg) scale(1);
+      opacity: 1;
+    }
+    100% {
+      transform: translate(var(--confetti-x), var(--confetti-y)) rotate(var(--confetti-rotate)) scale(0.5);
+      opacity: 0;
+    }
+  }
+
+  @keyframes hatch-glow {
+    0% {
+      opacity: 0;
+      transform: scale(0.5);
+    }
+    20% {
+      opacity: 1;
+      transform: scale(1.2);
+    }
+    50% {
+      opacity: 0.8;
+      transform: scale(1.5);
+    }
+    100% {
+      opacity: 0;
+      transform: scale(2);
+    }
+  }
 }
