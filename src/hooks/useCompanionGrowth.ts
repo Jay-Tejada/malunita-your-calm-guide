@@ -19,7 +19,7 @@ const STAGE_CONFIGS: Record<CompanionStage, StageConfig> = {
   0: {
     name: 'Seed',
     minXp: 0,
-    maxXp: 20,
+    maxXp: 50,
     orbSize: 0.7,
     glowIntensity: 0.3,
     motionComplexity: 0.2,
@@ -28,8 +28,8 @@ const STAGE_CONFIGS: Record<CompanionStage, StageConfig> = {
   },
   1: {
     name: 'Sprout',
-    minXp: 20,
-    maxXp: 60,
+    minXp: 50,
+    maxXp: 100,
     orbSize: 0.85,
     glowIntensity: 0.5,
     motionComplexity: 0.4,
@@ -38,8 +38,8 @@ const STAGE_CONFIGS: Record<CompanionStage, StageConfig> = {
   },
   2: {
     name: 'Companion',
-    minXp: 60,
-    maxXp: 150,
+    minXp: 100,
+    maxXp: 200,
     orbSize: 1.0,
     glowIntensity: 0.7,
     motionComplexity: 0.6,
@@ -48,8 +48,8 @@ const STAGE_CONFIGS: Record<CompanionStage, StageConfig> = {
   },
   3: {
     name: 'Lumina',
-    minXp: 150,
-    maxXp: 350,
+    minXp: 200,
+    maxXp: 400,
     orbSize: 1.15,
     glowIntensity: 0.85,
     motionComplexity: 0.8,
@@ -58,7 +58,7 @@ const STAGE_CONFIGS: Record<CompanionStage, StageConfig> = {
   },
   4: {
     name: 'Cosmic',
-    minXp: 350,
+    minXp: 400,
     maxXp: Infinity,
     orbSize: 1.3,
     glowIntensity: 1.0,
@@ -96,10 +96,10 @@ export const useCompanionGrowth = (): CompanionGrowthHook => {
 
   // Determine stage from XP
   const getStageFromXp = useCallback((currentXp: number): CompanionStage => {
-    if (currentXp < 20) return 0;
-    if (currentXp < 60) return 1;
-    if (currentXp < 150) return 2;
-    if (currentXp < 350) return 3;
+    if (currentXp < 50) return 0;
+    if (currentXp < 100) return 1;
+    if (currentXp < 200) return 2;
+    if (currentXp < 400) return 3;
     return 4;
   }, []);
 
