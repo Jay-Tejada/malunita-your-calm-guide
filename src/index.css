@@ -1375,4 +1375,167 @@ All colors MUST be HSL.
   ::-webkit-scrollbar-thumb:hover {
     background: rgba(0, 0, 0, 0.15);
   }
+
+  /* ============================================= */
+  /* COMPANION AVATAR ANIMATIONS                   */
+  /* ============================================= */
+
+  /* Idle Animations */
+  @keyframes companion-breathe {
+    0%, 100% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.03);
+    }
+  }
+
+  .companion-idle-breathe {
+    animation: companion-breathe 3.5s ease-in-out infinite;
+  }
+
+  @keyframes companion-float {
+    0%, 100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-6px);
+    }
+  }
+
+  .companion-idle-float {
+    animation: companion-float 4s ease-in-out infinite;
+  }
+
+  @keyframes companion-tilt-left {
+    0%, 100% {
+      transform: rotate(0deg);
+    }
+    50% {
+      transform: rotate(-5deg);
+    }
+  }
+
+  .companion-idle-tilt-left {
+    animation: companion-tilt-left 2s ease-in-out;
+  }
+
+  @keyframes companion-tilt-right {
+    0%, 100% {
+      transform: rotate(0deg);
+    }
+    50% {
+      transform: rotate(5deg);
+    }
+  }
+
+  .companion-idle-tilt-right {
+    animation: companion-tilt-right 2s ease-in-out;
+  }
+
+  @keyframes companion-look-left {
+    0%, 100% {
+      transform: translateX(0);
+    }
+    50% {
+      transform: translateX(-8px);
+    }
+  }
+
+  .companion-idle-look-left {
+    animation: companion-look-left 1.5s ease-in-out;
+  }
+
+  @keyframes companion-look-right {
+    0%, 100% {
+      transform: translateX(0);
+    }
+    50% {
+      transform: translateX(8px);
+    }
+  }
+
+  .companion-idle-look-right {
+    animation: companion-look-right 1.5s ease-in-out;
+  }
+
+  /* Blink state */
+  .companion-blinking {
+    animation: companion-blink 0.15s ease-in-out;
+  }
+
+  @keyframes companion-blink {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.85;
+    }
+  }
+
+  /* Mode Animations */
+  @keyframes companion-listening-pulse {
+    0%, 100% {
+      box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
+    }
+    50% {
+      box-shadow: 0 0 30px rgba(255, 255, 255, 0.4);
+    }
+  }
+
+  .companion-mode-listening {
+    animation: companion-listening-pulse 2s ease-in-out infinite;
+    filter: brightness(1.1);
+  }
+
+  @keyframes companion-thinking-bob {
+    0%, 100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-3px);
+    }
+  }
+
+  .companion-mode-thinking {
+    animation: companion-thinking-bob 2.5s ease-in-out infinite;
+  }
+
+  .companion-mode-sleeping {
+    filter: brightness(0.85);
+    animation: companion-breathe 5s ease-in-out infinite;
+  }
+
+  /* Special Animations */
+  @keyframes companion-celebrate {
+    0% {
+      transform: translateY(0) scale(1);
+    }
+    30% {
+      transform: translateY(-12px) scale(1.06);
+    }
+    60% {
+      transform: translateY(-6px) scale(1.03);
+    }
+    100% {
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  .companion-special-celebrate {
+    animation: companion-celebrate 0.6s ease-out;
+  }
+
+  @keyframes companion-spin {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  .companion-special-spin {
+    animation: companion-spin 0.6s ease-out;
+  }
 }
