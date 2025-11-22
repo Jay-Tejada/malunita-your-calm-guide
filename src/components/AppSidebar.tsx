@@ -15,7 +15,8 @@ import {
   Sun,
   TrendingUp,
   Sparkles,
-  Bell
+  Bell,
+  Camera
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAdmin } from "@/hooks/useAdmin";
@@ -167,6 +168,16 @@ export function AppSidebar({ onSettingsClick, onCategoryClick, activeCategory }:
                 >
                   <TrendingUp className="mr-2 h-4 w-4" />
                   {!collapsed && <span>Weekly Insights</span>}
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              <SidebarMenuItem>
+                <SidebarMenuButton 
+                  onClick={() => navigate('/hatching-gallery')}
+                  className="hover:bg-muted/50"
+                >
+                  <Camera className="mr-2 h-4 w-4" />
+                  {!collapsed && <span>Hatching Memories</span>}
                 </SidebarMenuButton>
               </SidebarMenuItem>
 

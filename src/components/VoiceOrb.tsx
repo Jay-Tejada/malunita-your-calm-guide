@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { CategoryDialog } from "./CategoryDialog";
-import { Check, Sparkles } from "lucide-react";
+import { Check, Sparkles, Camera } from "lucide-react";
 import { PersonalityType } from "@/hooks/useCompanionIdentity";
 import { useCompanionMotion } from "@/hooks/useCompanionMotion";
 import { useCompanionEmotion } from "@/hooks/useCompanionEmotion";
@@ -13,6 +13,8 @@ import { useCompanionCosmetics } from "@/hooks/useCompanionCosmetics";
 import { CompanionHabitat } from "@/components/CompanionHabitat";
 import { LoreMoment } from "@/components/LoreMoment";
 import { useAudioSmoothing } from "@/hooks/useAudioSmoothing";
+import { useHatchingMoments } from "@/hooks/useHatchingMoments";
+import html2canvas from 'html2canvas';
 
 interface VoiceOrbProps {
   onVoiceInput?: (text: string, category?: 'inbox' | 'home' | 'work' | 'gym' | 'projects') => void;
@@ -90,6 +92,10 @@ export const VoiceOrb = ({
   
   // Audio smoothing for stable animations
   const audioSmoothing = useAudioSmoothing();
+  
+  // Hatching moments photo capture
+  const { captureHatchingMoment } = useHatchingMoments();
+  const orbContainerRef = useRef<HTMLDivElement>(null);
   
   // Detect hatching (evolution from stage 0 to 1)
   useEffect(() => {
@@ -181,13 +187,40 @@ export const VoiceOrb = ({
         duration: 5000,
       });
       
+      // Capture screenshot of hatching moment after 800ms (when effects are most beautiful)
+      setTimeout(async () => {
+        if (orbContainerRef.current) {
+          try {
+            const canvas = await html2canvas(orbContainerRef.current, {
+              backgroundColor: 'transparent',
+              scale: 2, // Higher quality
+              logging: false,
+              useCORS: true,
+            });
+            
+            canvas.toBlob(async (blob) => {
+              if (blob) {
+                await captureHatchingMoment(
+                  blob,
+                  growth.stage,
+                  personality,
+                  companionName || null
+                );
+              }
+            }, 'image/png');
+          } catch (error) {
+            console.error('Error capturing hatching moment:', error);
+          }
+        }
+      }, 800);
+      
       // Reset after animation
       setTimeout(() => {
         setIsHatching(false);
       }, 3000);
     }
     setPreviousStage(growth.stage);
-  }, [growth.stage, growth.isEvolving, previousStage, personality, toast]);
+  }, [growth.stage, growth.isEvolving, previousStage, personality, toast, companionName, captureHatchingMoment]);
   
   // Connect cosmetics unlock checker to growth system
   useEffect(() => {
@@ -766,8 +799,8 @@ export const VoiceOrb = ({
             </div>
           )}
 
-          {/* Voice Orb Container with Habitat */}
-          <div className="relative flex flex-col items-center gap-4">
+            {/* Voice Orb Container with Habitat */}
+            <div ref={orbContainerRef} className="relative flex flex-col items-center gap-4">
             {/* Companion Habitat - Subtle ambient environment (behind everything) */}
             <div className="absolute -inset-20 sm:-inset-24 pointer-events-none z-0 overflow-hidden rounded-full opacity-60">
               <CompanionHabitat
