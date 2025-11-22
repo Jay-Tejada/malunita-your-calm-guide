@@ -159,10 +159,11 @@ All colors MUST be HSL.
     pointer-events: none;
     z-index: 0;
     background-image: url('/images/texture.png');
-    background-size: cover;
+    background-size: 105%; /* Slightly larger to allow for shifting */
     background-position: center;
     background-repeat: no-repeat;
     opacity: 0.06;
+    animation: paper-texture-shift 60s ease-in-out infinite;
   }
 
   @media (max-width: 768px) {
@@ -230,6 +231,25 @@ All colors MUST be HSL.
   @keyframes breathing {
     0%, 100% { opacity: 0.85; transform: scale(1); }
     50% { opacity: 1; transform: scale(1.03); }
+  }
+  
+  @keyframes paper-texture-shift {
+    0%, 100% { 
+      background-position: 50% 50%;
+      transform: scale(1);
+    }
+    25% { 
+      background-position: 51% 49%;
+      transform: scale(1.005);
+    }
+    50% { 
+      background-position: 49% 51%;
+      transform: scale(1.01);
+    }
+    75% { 
+      background-position: 50.5% 50.5%;
+      transform: scale(1.005);
+    }
   }
   
   @keyframes companion-breath {
