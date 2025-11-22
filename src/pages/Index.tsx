@@ -246,8 +246,9 @@ const Index = () => {
   // Workflow Rituals - Morning, Midday, Evening, Weekly
   useWorkflowRituals();
 
-  // Build complete category list for navigation
-  const allCategories = [
+  // Build complete navigation list including Daily Session
+  const allViews = [
+    'daily-session',
     'inbox',
     'projects', 
     'work',
@@ -257,15 +258,27 @@ const Index = () => {
     'all'
   ];
 
-  const currentCategoryIndex = activeCategory ? allCategories.indexOf(activeCategory) : -1;
-  const hasPrevCategory = currentCategoryIndex > 0;
-  const hasNextCategory = currentCategoryIndex >= 0 && currentCategoryIndex < allCategories.length - 1;
+  const getCurrentView = () => {
+    if (showDailySession) return 'daily-session';
+    return activeCategory;
+  };
 
-  const handleCategoryNavigate = (direction: 'prev' | 'next') => {
-    if (direction === 'prev' && hasPrevCategory) {
-      setActiveCategory(allCategories[currentCategoryIndex - 1]);
-    } else if (direction === 'next' && hasNextCategory) {
-      setActiveCategory(allCategories[currentCategoryIndex + 1]);
+  const currentViewIndex = getCurrentView() ? allViews.indexOf(getCurrentView()!) : -1;
+  const hasPrevView = currentViewIndex > 0;
+  const hasNextView = currentViewIndex >= 0 && currentViewIndex < allViews.length - 1;
+
+  const handleViewNavigate = (direction: 'prev' | 'next') => {
+    const newIndex = direction === 'prev' ? currentViewIndex - 1 : currentViewIndex + 1;
+    const newView = allViews[newIndex];
+    
+    if (newView === 'daily-session') {
+      setShowDailySession(true);
+      setActiveCategory(null);
+      setShowTodaysFocus(false);
+    } else {
+      setShowDailySession(false);
+      setActiveCategory(newView);
+      setShowTodaysFocus(false);
     }
   };
 
@@ -459,7 +472,12 @@ const Index = () => {
             ) : showDailySession ? (
               // Daily Session View
               <div className="py-8 pb-48">
-                <DailySessionView onClose={() => setShowDailySession(false)} />
+                <DailySessionView 
+                  onClose={() => setShowDailySession(false)}
+                  onNavigate={handleViewNavigate}
+                  hasPrev={hasPrevView}
+                  hasNext={hasNextView}
+                />
               </div>
             ) : activeCategory ? (
               // Task Stream View
@@ -467,9 +485,9 @@ const Index = () => {
                 <TaskStream 
                   category={activeCategory} 
                   onClose={() => setActiveCategory(null)}
-                  onNavigate={handleCategoryNavigate}
-                  hasPrev={hasPrevCategory}
-                  hasNext={hasNextCategory}
+                  onNavigate={handleViewNavigate}
+                  hasPrev={hasPrevView}
+                  hasNext={hasNextView}
                 />
               </div>
             ) : showTodaysFocus ? (
