@@ -33,6 +33,8 @@ import { useWakeWord } from "@/hooks/useWakeWord";
 import { useWorkflowRituals } from "@/hooks/useWorkflowRituals";
 import { useCompanionIdentity, PersonalityType } from "@/hooks/useCompanionIdentity";
 import { AppSidebar } from "@/components/AppSidebar";
+import { CompanionHub } from "@/components/CompanionHub";
+import { TodayView } from "@/components/TodayView";
 import { DailyIntelligence } from "@/components/DailyIntelligence";
 import { CompanionAvatar } from "@/components/companion/CompanionAvatar";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -166,6 +168,7 @@ const Index = () => {
   const [showWorldMap, setShowWorldMap] = useState(false);
   const [showShareMalunita, setShowShareMalunita] = useState(false);
   const [showDreamMode, setShowDreamMode] = useState(false);
+  const [showCompanionHub, setShowCompanionHub] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [showTodaysFocus, setShowTodaysFocus] = useState(false);
   const [showDailySession, setShowDailySession] = useState(false);
@@ -565,10 +568,7 @@ const Index = () => {
         {/* Sidebar - Hidden by default */}
         <AppSidebar 
           onSettingsClick={() => setShowSettings(true)}
-          onFocusModeClick={handleFocusMode}
-          onWorldMapClick={handleWorldMap}
-          onShareMalunitaClick={() => setShowShareMalunita(true)}
-          onDreamModeClick={handleDreamMode}
+          onCompanionHubClick={() => setShowCompanionHub(true)}
           onCategoryClick={(category) => {
             if (category === 'daily-session') {
               setShowDailySession(true);
@@ -599,10 +599,9 @@ const Index = () => {
           <FloatingReminder />
 
           {/* Main Content Area */}
-          <div className="flex-1 flex flex-col px-4 pt-16 pb-32 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto">
             {showDailySession ? (
-              // Daily Session View
-              <div className="py-8 pb-48">
+              <div className="py-8">
                 <DailySessionView 
                   onClose={() => setShowDailySession(false)}
                   onNavigate={handleViewNavigate}
@@ -610,9 +609,8 @@ const Index = () => {
                   hasNext={hasNextView}
                 />
               </div>
-            ) : activeCategory ? (
-              // Task Stream View
-              <div className="py-8 pb-48">
+            ) : activeCategory && activeCategory !== 'today' ? (
+              <div className="py-8">
                 <TaskStream 
                   category={activeCategory} 
                   onClose={() => setActiveCategory(null)}
@@ -621,72 +619,16 @@ const Index = () => {
                   hasNext={hasNextView}
                 />
               </div>
-            ) : !activeCategory && !showTodaysFocus && !showDailySession ? (
-              // TODAY PAGE (DEFAULT HOME)
-              <div className="max-w-5xl mx-auto py-8 space-y-6">
-                {/* Daily Intelligence Panel */}
-                <DailyIntelligence 
-                  topPriorities={tasks.filter(t => t.is_focus && !t.completed).slice(0, 3)}
-                  followUps={[]}
-                  quickWins={tasks.filter(t => !t.completed).slice(0, 3)}
-                />
-
-                {/* Today Tasks Section */}
-                <div className="space-y-3">
-                  <h2 className="text-xl font-medium font-mono">Today</h2>
-                  <TaskList category="today" />
-                </div>
-
-                {/* Quick Add Input */}
-                <div className="sticky bottom-20 bg-background/95 backdrop-blur-sm border-t border-border pt-4 pb-6">
-                  <div className="bg-card border border-input rounded-[10px] px-4 py-3 flex items-center gap-3 shadow-sm hover:shadow-md transition-shadow">
-                    <span className="text-muted-foreground text-lg">+</span>
-                    <input 
-                      type="text" 
-                      placeholder="Type a task or talk to Malunita…"
-                      className="flex-1 bg-transparent border-none outline-none text-sm"
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' && e.currentTarget.value.trim()) {
-                          // Handle task creation
-                          e.currentTarget.value = '';
-                        }
-                      }}
-                    />
-                  </div>
-                </div>
-
-                {/* Category Filter Chips */}
-                <div className="flex gap-2 flex-wrap pb-6">
-                  {['All', 'Work', 'Home', 'Gym'].map((cat) => (
-                    <button 
-                      key={cat}
-                      className="px-3 py-1.5 rounded-full text-xs border border-border hover:bg-muted transition-colors"
-                      onClick={() => {
-                        if (cat === 'All') setActiveCategory(null);
-                        else setActiveCategory(cat.toLowerCase());
-                      }}
-                    >
-                      {cat}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            ) : showTodaysFocus ? (
-              // Today's Focus View
-              <div className="py-8 pb-48">
-                <div className="w-full max-w-2xl mx-auto animate-fade-in space-y-4">
-                  <DailySummaryCard />
-                  <TodaysFocus onReflectClick={enableReflectButton ? () => setShowRunwayReview(true) : undefined} />
-                </div>
-              </div>
-            ) : null}
+            ) : (
+              <TodayView />
+            )}
           </div>
 
           {/* Mini Companion - Bottom Right Corner */}
           <div className="fixed bottom-8 right-8 z-30">
             <div 
               className="cursor-pointer transition-transform hover:scale-105"
-              onClick={() => setShowSettings(true)}
+              onClick={() => setShowCompanionHub(true)}
               style={{ width: '80px', height: '80px' }}
             >
               <CompanionAvatar mode="idle" />
@@ -739,13 +681,29 @@ const Index = () => {
           onClose={() => setShowShareMalunita(false)}
         />
         
-        {/* Dream Mode */}
-        {showDreamMode && (
-          <DreamMode 
-            onClose={handleDreamModeClose}
-            onMorningRitual={handleMorningRitual}
-          />
-        )}
+          {/* Mini Companion - Bottom Right Corner */}
+          <div className="fixed bottom-8 right-8 z-40">
+            <div 
+              className="cursor-pointer transition-transform hover:scale-110 active:scale-95"
+              onClick={() => setShowCompanionHub(true)}
+              style={{ width: '80px', height: '80px' }}
+            >
+              <CompanionAvatar mode="idle" />
+            </div>
+          </div>
+        </main>
+      </div>
+
+      {/* Modals */}
+      {showSettings && <ProfileSettings onClose={() => setShowSettings(false)} />}
+      {showRunwayReview && <RunwayReview onClose={() => setShowRunwayReview(false)} />}
+      {showFocusMode && <FocusMode onClose={() => setShowFocusMode(false)} />}
+      
+      {/* Companion Hub */}
+      <CompanionHub 
+        open={showCompanionHub}
+        onClose={() => setShowCompanionHub(false)}
+      />
 
         {/* Cutscenes */}
         {activeCutscene?.type === 'evolution' && (
