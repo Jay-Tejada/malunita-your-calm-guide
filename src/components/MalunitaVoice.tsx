@@ -17,6 +17,7 @@ import { priorityScorer } from "@/lib/priorityScorer";
 import { agendaRouter } from "@/lib/agendaRouter";
 import { clarificationPrompter } from "@/lib/clarificationPrompter";
 import { summaryComposer } from "@/lib/summaryComposer";
+import { useMoodStore, detectMoodFromMessage } from "@/state/moodMachine";
 
 interface Message {
   role: 'user' | 'assistant';
@@ -813,6 +814,30 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
               });
             }
 
+            // Step 10.5: Detect and update mood from user message
+            console.log('🎭 STEP 10.5: Detecting mood from user message...');
+            const detectedMood = detectMoodFromMessage(transcribed);
+            console.log('Detected mood:', detectedMood);
+            
+            // Update mood state
+            useMoodStore.getState().updateMood(detectedMood);
+            
+            // Adjust energy based on sentiment
+            const positiveWords = ['great', 'good', 'happy', 'excited', 'love', 'awesome', 'amazing', 'wonderful'];
+            const negativeWords = ['bad', 'sad', 'stressed', 'worried', 'anxious', 'overwhelmed', 'tired', 'exhausted'];
+            const msgLower = transcribed.toLowerCase();
+            
+            if (positiveWords.some(word => msgLower.includes(word))) {
+              useMoodStore.getState().increaseEnergy(5);
+              console.log('Energy increased (positive sentiment)');
+            } else if (negativeWords.some(word => msgLower.includes(word))) {
+              useMoodStore.getState().decreaseEnergy(5);
+              console.log('Energy decreased (negative sentiment)');
+            }
+            
+            // Record interaction to prevent idle state
+            useMoodStore.getState().recordInteraction();
+            
             // Step 11: Send to chat-completion with FULL STRUCTURED CONTEXT
             console.log('🤖 STEP 11: Chat completion with structured context...');
             
@@ -820,6 +845,9 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
               ...conversationHistory,
               { role: 'user', content: transcribed }
             ];
+            
+            // Get current mood for AI context
+            const { mood: currentMood } = useMoodStore.getState();
 
             // Send full structured analysis to chat-completion
             const fullAnalysis = {
@@ -850,7 +878,7 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
               body: { 
                 messages,
                 userProfile: userProfileData,
-                currentMood,
+                currentMood: currentMood,
                 analysis: fullAnalysis
               }
             });

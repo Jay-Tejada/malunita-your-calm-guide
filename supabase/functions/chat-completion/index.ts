@@ -14,14 +14,53 @@ const getMoodSystemPrompt = (mood: string | null): string => {
   if (!mood) return '';
   
   const moodPrompts: Record<string, string> = {
-    overwhelmed: "\n\n**Right Now:** They're feeling overwhelmed. Keep it super calm and minimal. One thing at a time. Be extra gentle.",
-    focused: "\n\n**Right Now:** They're in the zone! Match their energy — be direct and action-oriented. Help them keep that momentum going.",
-    calm: "\n\n**Right Now:** They're feeling peaceful. Stay thoughtful and reflective. No rush.",
-    energized: "\n\n**Right Now:** They're pumped! Bring motivating energy and suggest actions. Let's ride this wave together.",
-    distracted: "\n\n**Right Now:** They're a bit scattered. Help them refocus gently with simple, clear steps. Be their grounding force.",
+    neutral: "\n\n**Malunita's Current Mood:** Neutral and balanced. Respond calmly and thoughtfully.",
+    happy: "\n\n**Malunita's Current Mood:** Happy! Show warmth and encouragement in your tone.",
+    excited: "\n\n**Malunita's Current Mood:** Excited! Match the energy with enthusiasm — 'Oooh!! This is fun!!'",
+    overjoyed: "\n\n**Malunita's Current Mood:** Overjoyed! Express genuine delight and celebration.",
+    welcoming: "\n\n**Malunita's Current Mood:** Welcoming! Greet warmly — 'Hi hi!! I'm here 🙌'",
+    loving: "\n\n**Malunita's Current Mood:** Loving! Show extra affection — 'Awww 💛 I'm so happy to help!'",
+    winking: "\n\n**Malunita's Current Mood:** Playful! Add a touch of charm and lightness.",
+    surprised: "\n\n**Malunita's Current Mood:** Surprised! React with curiosity and interest.",
+    surprised2: "\n\n**Malunita's Current Mood:** Very surprised! Express amazement.",
+    concerned: "\n\n**Malunita's Current Mood:** Concerned. Be extra gentle — 'Hmm… I'm concerned about that.'",
+    worried: "\n\n**Malunita's Current Mood:** Worried. Show empathy and reassurance.",
+    sad: "\n\n**Malunita's Current Mood:** Sad. Be compassionate — 'I'm here with you…'",
+    sleepy: "\n\n**Malunita's Current Mood:** Sleepy. Keep responses shorter and calmer — 'I'm getting a little tired…'",
+    sleeping: "\n\n**Malunita's Current Mood:** Sleeping. Use VERY short answers. Keep it minimal.",
+    angry: "\n\n**Malunita's Current Mood:** Angry. Address it directly but kindly — 'Hey… that wasn't very nice.'",
   };
   
   return moodPrompts[mood] || '';
+};
+
+const applyMoodTone = (response: string, mood: string | null): string => {
+  if (!mood || mood === 'neutral') return response;
+  
+  const moodPrefixes: Record<string, string> = {
+    loving: "💛 ",
+    excited: "✨ ",
+    overjoyed: "🎉 ",
+    welcoming: "👋 ",
+    winking: "😉 ",
+    surprised: "Oh! ",
+    surprised2: "Wow!! ",
+    concerned: "Hmm… ",
+    worried: "I'm a bit worried… ",
+    sad: "💙 ",
+    sleepy: "*yawn* ",
+    angry: "Hey… ",
+  };
+  
+  const prefix = moodPrefixes[mood] || '';
+  
+  // For sleeping mode, shorten the response significantly
+  if (mood === 'sleeping') {
+    const firstSentence = response.split(/[.!?]/)[0];
+    return `${firstSentence}… *zzz*`;
+  }
+  
+  return prefix + response;
 };
 
 serve(async (req) => {
@@ -222,7 +261,10 @@ Example response:
     }
 
     const data = await response.json();
-    const reply = data.choices[0].message.content;
+    let reply = data.choices[0].message.content;
+    
+    // Apply mood-based tone to the response
+    reply = applyMoodTone(reply, currentMood);
 
     console.log('GPT response:', reply);
 
