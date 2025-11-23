@@ -259,6 +259,16 @@ export function AppSidebar({ onSettingsClick, onCategoryClick, onFocusModeClick,
 
               <SidebarMenuItem>
                 <SidebarMenuButton 
+                  onClick={() => navigate('/monthly-insights')}
+                  className="hover:bg-muted/50"
+                >
+                  <TrendingUp className="mr-2 h-4 w-4" />
+                  <span>Monthly Insights</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              <SidebarMenuItem>
+                <SidebarMenuButton 
                   onClick={() => navigate('/customization')}
                   className="hover:bg-muted/50"
                 >
