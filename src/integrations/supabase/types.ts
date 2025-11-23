@@ -199,6 +199,53 @@ export type Database = {
         }
         Relationships: []
       }
+      habit_logs: {
+        Row: {
+          completed_at: string
+          created_at: string
+          day_of_week: number
+          id: string
+          task_category: string
+          task_duration_minutes: number | null
+          task_id: string | null
+          task_title: string
+          time_of_day: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string
+          created_at?: string
+          day_of_week: number
+          id?: string
+          task_category: string
+          task_duration_minutes?: number | null
+          task_id?: string | null
+          task_title: string
+          time_of_day: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string
+          created_at?: string
+          day_of_week?: number
+          id?: string
+          task_category?: string
+          task_duration_minutes?: number | null
+          task_id?: string | null
+          task_title?: string
+          time_of_day?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "habit_logs_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       hatching_moments: {
         Row: {
           captured_at: string
@@ -752,6 +799,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      cleanup_old_habit_logs: { Args: never; Returns: undefined }
       cleanup_old_rate_limits: { Args: never; Returns: undefined }
       clear_old_focus_items: { Args: never; Returns: undefined }
       has_role: {
