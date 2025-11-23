@@ -22,7 +22,7 @@ import TestCore from "./pages/TestCore";
 import TestAll from "./pages/TestAll";
 import Inbox from "./pages/Inbox";
 import Notifications from "./pages/Notifications";
-import Goals from "./pages/Goals";
+import Calendar from "./pages/Calendar";
 import DailySession from "./pages/DailySession";
 import WeeklyInsights from "./pages/WeeklyInsights";
 import TinyTaskFiesta from "./pages/TinyTaskFiesta";
@@ -96,7 +96,7 @@ const App = () => {
               <Route element={<Layout />}>
                 <Route path="/" element={<Index />} />
                 <Route path="/inbox" element={<Inbox />} />
-                <Route path="/goals" element={<Goals />} />
+                <Route path="/calendar" element={<Calendar />} />
                 <Route path="/daily-session" element={<DailySession />} />
                 <Route path="/weekly-insights" element={<WeeklyInsights />} />
                 <Route path="/hatching-gallery" element={<HatchingGallery />} />

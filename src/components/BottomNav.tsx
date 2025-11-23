@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Home, Inbox, Mic, Target } from "lucide-react";
+import { Home, Inbox, Mic, Calendar } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { MalunitaVoice } from "./MalunitaVoice";
@@ -13,7 +13,7 @@ export const BottomNav = () => {
   const navItems = [
     { icon: Home, label: "Home", path: "/" },
     { icon: Inbox, label: "Inbox", path: "/inbox" },
-    { icon: Target, label: "Goals", path: "/goals" },
+    { icon: Calendar, label: "Calendar", path: "/calendar" },
     { icon: Mic, label: "Voice", action: () => setIsVoiceModalOpen(true) },
   ];
 
