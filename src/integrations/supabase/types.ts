@@ -279,6 +279,7 @@ export type Database = {
           current_goal: string | null
           custom_stop_commands: string[] | null
           custom_wake_word: string | null
+          emotional_memory: Json | null
           fiesta_completion_count: number | null
           goal_timeframe: string | null
           goal_updated_at: string | null
@@ -325,6 +326,7 @@ export type Database = {
           current_goal?: string | null
           custom_stop_commands?: string[] | null
           custom_wake_word?: string | null
+          emotional_memory?: Json | null
           fiesta_completion_count?: number | null
           goal_timeframe?: string | null
           goal_updated_at?: string | null
@@ -371,6 +373,7 @@ export type Database = {
           current_goal?: string | null
           custom_stop_commands?: string[] | null
           custom_wake_word?: string | null
+          emotional_memory?: Json | null
           fiesta_completion_count?: number | null
           goal_timeframe?: string | null
           goal_updated_at?: string | null
