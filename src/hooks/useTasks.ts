@@ -33,6 +33,7 @@ export interface Task {
   recurrence_pattern?: 'none' | 'daily' | 'weekly' | 'monthly';
   recurrence_day?: number;
   recurrence_end_date?: string;
+  display_order?: number;
 }
 
 export const useTasks = () => {

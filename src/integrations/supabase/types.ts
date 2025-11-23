@@ -732,6 +732,7 @@ export type Database = {
           created_at: string
           custom_category_id: string | null
           daily_session_id: string | null
+          display_order: number | null
           focus_date: string | null
           goal_aligned: boolean | null
           has_person_name: boolean | null
@@ -758,6 +759,7 @@ export type Database = {
           created_at?: string
           custom_category_id?: string | null
           daily_session_id?: string | null
+          display_order?: number | null
           focus_date?: string | null
           goal_aligned?: boolean | null
           has_person_name?: boolean | null
@@ -784,6 +786,7 @@ export type Database = {
           created_at?: string
           custom_category_id?: string | null
           daily_session_id?: string | null
+          display_order?: number | null
           focus_date?: string | null
           goal_aligned?: boolean | null
           has_person_name?: boolean | null
