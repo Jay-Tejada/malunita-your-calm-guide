@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { CreatureSprite } from '@/components/CreatureSprite';
 import { useMoodStore } from '@/state/moodMachine';
 import { detectMoodFromMessage } from '@/state/moodMachine';
-import { Heart, Mic, MicOff } from 'lucide-react';
+import { Heart, Mic, MicOff, Gamepad2 } from 'lucide-react';
 import { startVoiceInput, stopVoiceInput, isVoiceInputSupported } from '@/utils/voiceInput';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -16,6 +16,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { greetUser } from '@/utils/greetings';
 import { useEmotionalMemory } from '@/state/emotionalMemory';
 import { getPredictedHabit, updateHabitMemoryScore } from '@/ai/habitPredictor';
+import { MiniGamesModal } from '@/features/minigames/MiniGamesModal';
 
 interface AssistantBubbleProps {
   onOpenChat?: () => void;
@@ -32,6 +33,7 @@ const AssistantBubble = ({ onOpenChat, className = '', typing = false }: Assista
   const [listening, setListening] = useState(false);
   const [helperMessage, setHelperMessage] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
+  const [showMiniGames, setShowMiniGames] = useState(false);
   const { toast } = useToast();
   const messageQueueRef = useRef(createMessageQueue(setHelperMessage));
   const prevMoodRef = useRef<Mood>(mood);
@@ -340,6 +342,19 @@ const AssistantBubble = ({ onOpenChat, className = '', typing = false }: Assista
           )}
         </div>
 
+        {/* Play button */}
+        <motion.button
+          onClick={(e) => {
+            e.stopPropagation();
+            setShowMiniGames(true);
+          }}
+          className="absolute -top-2 -right-2 rounded-full p-2 shadow-lg bg-background border-2 border-primary/30"
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+        >
+          <Gamepad2 className="w-4 h-4 text-primary" />
+        </motion.button>
+
         {/* Mic button */}
         <motion.button
           onClick={toggleVoiceMode}
@@ -392,6 +407,9 @@ const AssistantBubble = ({ onOpenChat, className = '', typing = false }: Assista
         {/* Status indicator dot */}
         <div className="absolute bottom-1 right-1 w-3 h-3 rounded-full bg-primary animate-pulse shadow-lg shadow-primary/50" />
       </div>
+
+      {/* Mini-games modal */}
+      <MiniGamesModal open={showMiniGames} onOpenChange={setShowMiniGames} />
     </motion.div>
   );
 };
