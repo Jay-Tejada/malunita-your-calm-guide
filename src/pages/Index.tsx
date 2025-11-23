@@ -32,9 +32,9 @@ import { useCustomCategories } from "@/hooks/useCustomCategories";
 import { useWakeWord } from "@/hooks/useWakeWord";
 import { useWorkflowRituals } from "@/hooks/useWorkflowRituals";
 import { useCompanionIdentity, PersonalityType } from "@/hooks/useCompanionIdentity";
-import { AppSidebar } from "@/components/AppSidebar";
 import { DailyIntelligence } from "@/components/DailyIntelligence";
 import { CompanionAvatar } from "@/components/companion/CompanionAvatar";
+import { GlobeMenu } from "@/components/GlobeMenu";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { startAutoIdleCheck } from "@/state/moodMachine";
 import { startCognitiveLoadMonitoring, useCognitiveLoad } from "@/state/cognitiveLoad";
@@ -50,112 +50,8 @@ import { AmbientWorld } from "@/features/ambientWorlds/AmbientWorld";
 import { SeasonalEventsManager } from "@/features/seasons/SeasonalEventsManager";
 import { useAmbientWorld } from "@/hooks/useAmbientWorld";
 
-import { SidebarProvider, useSidebar } from "@/components/ui/sidebar";
-import { Button } from "@/components/ui/button";
-import { Globe2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useTheme } from "next-themes";
 
-const CustomSidebarTrigger = ({ hasUrgentTasks }: { hasUrgentTasks: boolean }) => {
-  const { open, setOpen } = useSidebar();
-  const { theme, setTheme } = useTheme();
-  const { toast } = useToast();
-  const [pressTimer, setPressTimer] = useState<NodeJS.Timeout | null>(null);
-  const [isPressed, setIsPressed] = useState(false);
-  const [longPressTriggered, setLongPressTriggered] = useState(false);
-
-  const handlePressStart = (e: React.MouseEvent | React.TouchEvent) => {
-    setIsPressed(true);
-    setLongPressTriggered(false);
-    
-    const timer = setTimeout(() => {
-      // Long press completed - toggle theme
-      const newTheme = theme === "dark" ? "light" : "dark";
-      setTheme(newTheme);
-      setLongPressTriggered(true);
-      toast({
-        title: `Switched to ${newTheme} mode`,
-        description: "Long press the globe again to switch back",
-      });
-      
-      // Haptic feedback
-      if ('vibrate' in navigator) {
-        navigator.vibrate([50, 30, 50]);
-      }
-    }, 800);
-    setPressTimer(timer);
-  };
-
-  const handlePressEnd = (e: React.MouseEvent | React.TouchEvent) => {
-    setIsPressed(false);
-    
-    if (pressTimer) {
-      clearTimeout(pressTimer);
-      setPressTimer(null);
-    }
-    
-    // Only trigger sidebar if long press didn't complete
-    if (!longPressTriggered) {
-      // Short press - open sidebar normally
-      if ('vibrate' in navigator) {
-        navigator.vibrate(10);
-      }
-      setOpen(!open);
-    }
-    
-    setLongPressTriggered(false);
-  };
-  
-  return (
-    <Button
-      variant="ghost"
-      size="icon"
-      onMouseDown={handlePressStart}
-      onMouseUp={handlePressEnd}
-      onMouseLeave={(e) => {
-        setIsPressed(false);
-        if (pressTimer) {
-          clearTimeout(pressTimer);
-          setPressTimer(null);
-        }
-        setLongPressTriggered(false);
-      }}
-      onTouchStart={handlePressStart}
-      onTouchEnd={handlePressEnd}
-      className="hover:bg-muted/50 p-2 group transition-all duration-300 relative h-auto w-auto"
-    >
-      {/* Progress ring */}
-      <svg
-        className="absolute inset-0 w-full h-full -rotate-90 pointer-events-none"
-        style={{ 
-          opacity: isPressed ? 1 : 0,
-          transition: 'opacity 0.2s ease'
-        }}
-      >
-        <circle
-          cx="18"
-          cy="18"
-          r="16"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeDasharray="100"
-          strokeDashoffset="100"
-          className="text-primary"
-          style={{
-            animation: isPressed ? 'progress-ring 800ms linear forwards' : 'none'
-          }}
-        />
-      </svg>
-      <Globe2 
-        className={`w-5 h-5 text-primary animate-float-spin transition-all duration-300 group-hover:drop-shadow-[0_0_8px_hsl(var(--primary)/0.6)] group-hover:scale-110 ${hasUrgentTasks ? 'animate-alert-pulse' : ''} relative z-10`} 
-      />
-      {hasUrgentTasks && (
-        <span className="absolute top-1 right-1 w-2 h-2 bg-destructive rounded-full animate-pulse" />
-      )}
-    </Button>
-  );
-};
 
 const Index = () => {
   const [user, setUser] = useState<any>(null);
@@ -555,51 +451,73 @@ const Index = () => {
     );
   }
 
+  // Globe menu items
+  const mainNavItems = [
+    { id: 'inbox', label: 'Inbox', icon: '📥', onClick: () => setActiveCategory('inbox') },
+    { id: 'today', label: 'Today', icon: '📅', onClick: () => setActiveCategory(null) },
+    { id: 'upcoming', label: 'Upcoming', icon: '📆', onClick: () => navigate('/reminders') },
+  ];
+
+  const spaceItems = [
+    { id: 'work', label: 'Work', icon: '💼', onClick: () => setActiveCategory('work') },
+    { id: 'home', label: 'Home', icon: '🏠', onClick: () => setActiveCategory('home') },
+    { id: 'gym', label: 'Gym', icon: '💪', onClick: () => setActiveCategory('gym') },
+    { id: 'projects', label: 'Projects', icon: '📁', onClick: () => setActiveCategory('projects') },
+  ];
+
+  const projectItems = [
+    { id: 'goals', label: 'Goals', icon: '🎯', onClick: () => navigate('/goals') },
+    { id: 'insights', label: 'Insights', icon: '📊', onClick: () => navigate('/weekly-insights') },
+    { id: 'clusters', label: 'Clusters', icon: '🧩', onClick: () => navigate('/clusters') },
+    { id: 'journal', label: 'Journal', icon: '📖', onClick: () => navigate('/journal') },
+  ];
+
+  const companionItems = [
+    { id: 'customize', label: 'Customize', icon: '🎨', onClick: () => navigate('/customization') },
+    { id: 'animations', label: 'Animations', icon: '✨', onClick: () => setShowFocusMode(true) },
+    { id: 'worlds', label: 'Worlds', icon: '🌍', onClick: () => navigate('/ambient-worlds') },
+    { id: 'settings', label: 'Settings', icon: '⚙️', onClick: () => setShowSettings(true) },
+  ];
+
   return (
-    <SidebarProvider>
+    <>
       <QuestProgressNotification />
       <SeasonalEventsManager>
         <div className="min-h-screen flex w-full relative">
           <AmbientWorld worldId={currentWorld} />
           <MoodWeatherLayer />
-        {/* Sidebar - Hidden by default */}
-        <AppSidebar 
-          onSettingsClick={() => setShowSettings(true)}
-          onFocusModeClick={handleFocusMode}
-          onWorldMapClick={handleWorldMap}
-          onShareMalunitaClick={() => setShowShareMalunita(true)}
-          onDreamModeClick={handleDreamMode}
-          onCategoryClick={(category) => {
-            if (category === 'daily-session') {
-              setShowDailySession(true);
-              setActiveCategory(null);
-              setShowTodaysFocus(false);
-            } else {
-              setActiveCategory(category);
-              setShowTodaysFocus(false);
-              setShowDailySession(false);
-            }
-          }}
-          activeCategory={activeCategory}
-        />
 
         {/* Main Content */}
         <main className="flex-1 flex flex-col relative z-10">
           {/* Install Banner */}
           <InstallPromptBanner />
-          
-          {/* Fixed Header with Sidebar Trigger */}
-          <header className="fixed top-0 left-0 right-0 z-40 bg-background/80 backdrop-blur-sm border-b border-border/50">
-            <div className="px-4 py-3 flex items-center">
-              <CustomSidebarTrigger hasUrgentTasks={hasUrgentTasks} />
-            </div>
-          </header>
 
           {/* Floating Reminder */}
           <FloatingReminder />
 
+          {/* Globe Navigation Menus */}
+          <GlobeMenu 
+            position="top-left" 
+            items={mainNavItems} 
+            activeItem={activeCategory || 'today'}
+            hasNotification={hasUrgentTasks}
+          />
+          <GlobeMenu 
+            position="top-right" 
+            items={spaceItems} 
+            activeItem={activeCategory}
+          />
+          <GlobeMenu 
+            position="bottom-left" 
+            items={projectItems}
+          />
+          <GlobeMenu 
+            position="bottom-right" 
+            items={companionItems}
+          />
+
           {/* Main Content Area */}
-          <div className="flex-1 flex flex-col px-4 pt-16 pb-32 overflow-y-auto">
+          <div className="flex-1 flex flex-col px-4 pt-8 pb-32 overflow-y-auto">
             {showDailySession ? (
               // Daily Session View
               <div className="py-8 pb-48">
@@ -682,11 +600,11 @@ const Index = () => {
             ) : null}
           </div>
 
-          {/* Mini Companion - Bottom Right Corner */}
-          <div className="fixed bottom-8 right-8 z-30">
+          {/* Mini Companion - Center */}
+          <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-30">
             <div 
               className="cursor-pointer transition-transform hover:scale-105"
-              onClick={() => setShowSettings(true)}
+              onClick={() => setShowFocusMode(true)}
               style={{ width: '80px', height: '80px' }}
             >
               <CompanionAvatar mode="idle" />
@@ -777,7 +695,7 @@ const Index = () => {
         )}
       </div>
       </SeasonalEventsManager>
-    </SidebarProvider>
+    </>
   );
 };
 
