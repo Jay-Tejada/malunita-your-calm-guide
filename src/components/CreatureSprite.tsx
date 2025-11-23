@@ -1,27 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
-import { getExpressionAsset } from '@/utils/getExpressionAsset';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLevelSystem } from '@/state/levelSystem';
 import { useEmotionalMemory } from '@/state/emotionalMemory';
 import { Sparkles } from 'lucide-react';
-
-// Import all expression assets
-import baseExpression from '@/assets/companions/base_expression.png';
-import baseHappyExpression from '@/assets/companions/base_happy_expression.png';
-import excitedExpression from '@/assets/companions/excited_expression.png';
-import overjoyedExpression from '@/assets/companions/overjoyed_expression.png';
-import happy2Expression from '@/assets/companions/happy_2_expression.png';
-import happyToSeeYouExpression from '@/assets/companions/happy_to_see_you_expression.png';
-import loveExpression from '@/assets/companions/love_expression.png';
-import winkingExpression from '@/assets/companions/winking_expression.png';
-import surprisedExpression from '@/assets/companions/surprised_expression.png';
-import surprised2Expression from '@/assets/companions/surprised_2_expression.png';
-import concernedExpression from '@/assets/companions/concerned_expression.png';
-import whyExpression from '@/assets/companions/why_expression.png';
-import lowEnergyExpression from '@/assets/companions/low_energy_expression.png';
-import sleepingExpression from '@/assets/companions/sleeping_expression.png';
-import angryExpression from '@/assets/companions/angry_expression.png';
+import { getCreatureAsset, getStageBoosts } from '@/lib/evolutionAssets';
+import { useMoodStore } from '@/state/moodMachine';
 
 type AnimationMode = 
   | 'floating_idle' 
@@ -32,6 +16,7 @@ type AnimationMode =
   | 'waking_up' 
   | 'excited_bounce'
   | 'sleeping_loop'
+  | 'evolution_flash'
   | 'none';
 
 interface CreatureSpriteProps {
@@ -44,24 +29,7 @@ interface CreatureSpriteProps {
   onWakeUp?: () => void;       // callback when creature wakes up
 }
 
-// Map filenames to imported assets
-const assetMap: Record<string, string> = {
-  'base_expression.png': baseExpression,
-  'base_happy_expression.png': baseHappyExpression,
-  'excited_expression.png': excitedExpression,
-  'overjoyed_expression.png': overjoyedExpression,
-  'happy_2_expression.png': happy2Expression,
-  'happy_to_see_you_expression.png': happyToSeeYouExpression,
-  'love_expression.png': loveExpression,
-  'winking_expression.png': winkingExpression,
-  'surprised_expression.png': surprisedExpression,
-  'surprised_2_expression.png': surprised2Expression,
-  'concerned_expression.png': concernedExpression,
-  'why_expression.png': whyExpression,
-  'low_energy_expression.png': lowEnergyExpression,
-  'sleeping_expression.png': sleepingExpression,
-  'angry_expression.png': angryExpression,
-};
+// This mapping is now handled by evolutionAssets.ts
 
 export const CreatureSprite = ({ 
   emotion, 
@@ -75,15 +43,35 @@ export const CreatureSprite = ({
   const [microEmotion, setMicroEmotion] = useState<string | null>(null);
   const [animationMode, setAnimationMode] = useState<AnimationMode>('floating_idle');
   const [showSparkles, setShowSparkles] = useState(false);
-  const { level } = useLevelSystem();
+  const { level, evolutionStage } = useLevelSystem();
   const { joy } = useEmotionalMemory();
+  const { updateMood } = useMoodStore();
   const prevEmotionRef = useRef(emotion);
+  const prevStageRef = useRef(evolutionStage);
   
-  // Calculate visual enhancements based on level
+  // Get stage-specific boosts
+  const stageBoosts = getStageBoosts(evolutionStage);
+  
+  // Calculate visual enhancements based on level and stage
   const brightness = 1 + (level - 1) * 0.02; // 1.0 to 1.38 at level 20
-  const glowIntensity = level >= 10 ? 0.3 + (level - 10) * 0.03 : 0;
+  const glowIntensity = (level >= 10 ? 0.3 + (level - 10) * 0.03 : 0) * stageBoosts.glowMultiplier;
   const hasParticles = level >= 10;
+  const particleCount = stageBoosts.particleCount;
   const isHappy = joy >= 70;
+
+  // Evolution animation
+  useEffect(() => {
+    if (evolutionStage > prevStageRef.current) {
+      // Trigger evolution animation
+      setAnimationMode('evolution_flash');
+      updateMood('overjoyed');
+      
+      setTimeout(() => {
+        setAnimationMode('floating_idle');
+      }, 2000);
+    }
+    prevStageRef.current = evolutionStage;
+  }, [evolutionStage, updateMood]);
 
   // Sleeping state transitions
   useEffect(() => {
@@ -114,7 +102,7 @@ export const CreatureSprite = ({
     }
   }, [emotion]);
 
-  // Random idle animation events (20-45 seconds)
+  // Random idle animation events (adjusted by stage)
   useEffect(() => {
     // Skip idle animations for strong emotions, when listening, or when typing
     if (listening || typing || ['angry', 'sleeping', 'sad'].includes(emotion)) {
@@ -122,7 +110,9 @@ export const CreatureSprite = ({
     }
 
     const scheduleIdle = () => {
-      const delay = 20000 + Math.random() * 25000; // 20-45 seconds
+      // Frequency increases with evolution stage
+      const baseDelay = 20000;
+      const delay = baseDelay + Math.random() * 25000 / stageBoosts.microEmotionFrequency;
       return setTimeout(() => {
         const idleActions: AnimationMode[] = ['turning_left', 'turning_right', 'walking'];
         const randomAction = idleActions[Math.floor(Math.random() * idleActions.length)];
@@ -145,7 +135,7 @@ export const CreatureSprite = ({
 
     const timer = scheduleIdle();
     return () => clearTimeout(timer);
-  }, [emotion, listening, typing]);
+  }, [emotion, listening, typing, stageBoosts]);
 
   // Sparkles for high happiness
   useEffect(() => {
@@ -175,8 +165,7 @@ export const CreatureSprite = ({
   };
   
   const finalEmotion = getDisplayEmotion();
-  const filename = getExpressionAsset(finalEmotion);
-  const imageSrc = assetMap[filename] || baseExpression;
+  const imageSrc = getCreatureAsset(evolutionStage, finalEmotion);
 
   // Animation variants for framer-motion
   const getAnimationVariants = () => {
@@ -187,7 +176,22 @@ export const CreatureSprite = ({
             y: [0, -6, 0],
             rotate: [-1, 1, -1],
           },
-          transition: { duration: 3, repeat: Infinity }
+          transition: { duration: stageBoosts.idleCycleDuration / 1000, repeat: Infinity }
+        };
+      case 'evolution_flash':
+        return {
+          animate: {
+            opacity: [1, 0, 1, 0.5, 1],
+            scale: [1, 1.3, 1.4, 1.2, 1],
+            filter: [
+              'brightness(1)',
+              'brightness(3)',
+              'brightness(2)',
+              'brightness(1.5)',
+              'brightness(1)',
+            ],
+          },
+          transition: { duration: 2 }
         };
       case 'walking':
         return {
@@ -282,10 +286,10 @@ export const CreatureSprite = ({
         />
       )}
 
-      {/* Particle effects for level 10+ */}
-      {hasParticles && (
+      {/* Particle effects for level 10+ (count varies by stage) */}
+      {hasParticles && particleCount > 0 && (
         <AnimatePresence>
-          {[...Array(3)].map((_, i) => (
+          {[...Array(particleCount)].map((_, i) => (
             <motion.div
               key={`particle-${i}`}
               initial={{ opacity: 0, scale: 0, y: 0 }}
@@ -335,9 +339,35 @@ export const CreatureSprite = ({
         </AnimatePresence>
       )}
 
+      {/* Evolution sparkle burst */}
+      {animationMode === 'evolution_flash' && (
+        <AnimatePresence>
+          {[...Array(12)].map((_, i) => (
+            <motion.div
+              key={`evo-sparkle-${i}`}
+              initial={{ opacity: 0, scale: 0 }}
+              animate={{ 
+                opacity: [0, 1, 0],
+                scale: [0, 2, 0],
+                x: [0, Math.cos((i / 12) * Math.PI * 2) * 80],
+                y: [0, Math.sin((i / 12) * Math.PI * 2) * 80]
+              }}
+              transition={{
+                duration: 1.5,
+                delay: i * 0.05,
+                ease: "easeOut"
+              }}
+              className="absolute top-1/2 left-1/2"
+            >
+              <Sparkles className="w-4 h-4 text-primary fill-primary" />
+            </motion.div>
+          ))}
+        </AnimatePresence>
+      )}
+
       <AnimatePresence mode="wait">
         <motion.div
-          key={filename}
+          key={`${evolutionStage}-${imageSrc}`}
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.95 }}
@@ -346,7 +376,7 @@ export const CreatureSprite = ({
         >
           <img
             src={imageSrc}
-            alt={`Creature ${emotion} expression`}
+            alt={`Creature ${emotion} expression (Stage ${evolutionStage})`}
             className="w-full h-full object-contain"
             style={{ 
               imageRendering: 'crisp-edges',

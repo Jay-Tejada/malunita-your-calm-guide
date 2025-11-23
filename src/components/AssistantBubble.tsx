@@ -247,9 +247,17 @@ const AssistantBubble = ({ onOpenChat, className = '', typing = false }: Assista
     playSfx('tap', soundEnabled);
     
     // Grant tap XP
-    const leveledUp = await grantXp(XP_REWARDS.TAP_INTERACTION, userId || undefined);
+    const { leveledUp, evolved } = await grantXp(XP_REWARDS.TAP_INTERACTION, userId || undefined);
     
-    if (leveledUp) {
+    if (evolved) {
+      updateMood('overjoyed');
+      playSfx('sparkle', soundEnabled);
+      toast({
+        title: "Evolution! ✨",
+        description: `Malunita evolved to a new form!`,
+        duration: 5000,
+      });
+    } else if (leveledUp) {
       updateMood('overjoyed');
       playSfx('sparkle', soundEnabled);
       toast({

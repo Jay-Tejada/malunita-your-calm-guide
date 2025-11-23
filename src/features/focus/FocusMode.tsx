@@ -159,7 +159,20 @@ export const FocusMode = ({ onClose }: FocusModeProps) => {
     adjustStress(-10);
     
     if (userId) {
-      await grantXp(20, userId);
+      const { evolved, leveledUp } = await grantXp(20, userId);
+      
+      if (evolved) {
+        toast({
+          title: "Evolution! ✨",
+          description: "Malunita evolved during your focus session!",
+          duration: 5000,
+        });
+      } else if (leveledUp) {
+        toast({
+          title: "Level Up! ✨",
+          description: "Great work! You leveled up during focus!",
+        });
+      }
     }
     
     messageQueueRef.current.enqueue("I'm proud of you! You stayed focused!");
