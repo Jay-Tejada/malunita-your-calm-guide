@@ -17,7 +17,8 @@ import {
   Sparkles,
   Bell,
   Camera,
-  Focus
+  Focus,
+  Globe
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAdmin } from "@/hooks/useAdmin";
@@ -42,6 +43,7 @@ interface AppSidebarProps {
   onSettingsClick: () => void;
   onCategoryClick: (category: string) => void;
   onFocusModeClick?: () => void;
+  onWorldMapClick?: () => void;
   activeCategory: string | null;
 }
 
@@ -57,7 +59,7 @@ const defaultCategories = [
   { label: "Gym", icon: Dumbbell, path: "/gym" },
 ];
 
-export function AppSidebar({ onSettingsClick, onCategoryClick, onFocusModeClick, activeCategory }: AppSidebarProps) {
+export function AppSidebar({ onSettingsClick, onCategoryClick, onFocusModeClick, onWorldMapClick, activeCategory }: AppSidebarProps) {
   const navigate = useNavigate();
   const { isAdmin } = useAdmin();
   const { categories: customCategories } = useCustomCategories();
@@ -168,6 +170,18 @@ export function AppSidebar({ onSettingsClick, onCategoryClick, onFocusModeClick,
                   >
                     <Focus className="mr-2 h-4 w-4" />
                     <span>Focus Mode</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
+
+              {onWorldMapClick && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton 
+                    onClick={onWorldMapClick}
+                    className="hover:bg-muted/50"
+                  >
+                    <Globe className="mr-2 h-4 w-4" />
+                    <span>Task Universe</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               )}

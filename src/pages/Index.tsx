@@ -16,6 +16,7 @@ import { CompanionOnboarding } from "@/components/CompanionOnboarding";
 import { CompanionIntroSequence } from "@/components/CompanionIntroSequence";
 import { DailySessionView } from "@/components/DailySessionView";
 import { FocusMode } from "@/features/focus/FocusMode";
+import { TaskWorldMap } from "@/features/worldmap/TaskWorldMap";
 import { useAdmin } from "@/hooks/useAdmin";
 import { useTasks } from "@/hooks/useTasks";
 import { useProfile } from "@/hooks/useProfile";
@@ -142,6 +143,7 @@ const Index = () => {
   const [showSettings, setShowSettings] = useState(false);
   const [showRunwayReview, setShowRunwayReview] = useState(false);
   const [showFocusMode, setShowFocusMode] = useState(false);
+  const [showWorldMap, setShowWorldMap] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [showTodaysFocus, setShowTodaysFocus] = useState(false);
   const [showDailySession, setShowDailySession] = useState(false);
@@ -412,6 +414,17 @@ const Index = () => {
     setShowFocusMode(true);
   };
 
+  const handleWorldMap = () => {
+    setShowWorldMap(true);
+  };
+
+  const handleWorldMapPlanetClick = (category: string) => {
+    setShowWorldMap(false);
+    setActiveCategory(category);
+    setShowTodaysFocus(false);
+    setShowDailySession(false);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -439,6 +452,7 @@ const Index = () => {
         <AppSidebar 
           onSettingsClick={() => setShowSettings(true)}
           onFocusModeClick={handleFocusMode}
+          onWorldMapClick={handleWorldMap}
           onCategoryClick={(category) => {
             if (category === 'daily-session') {
               setShowDailySession(true);
@@ -550,6 +564,15 @@ const Index = () => {
         
         {/* Focus Mode */}
         {showFocusMode && <FocusMode onClose={() => setShowFocusMode(false)} />}
+        
+        {/* World Map */}
+        {showWorldMap && (
+          <TaskWorldMap
+            onClose={() => setShowWorldMap(false)}
+            onPlanetClick={handleWorldMapPlanetClick}
+            currentCategory={activeCategory}
+          />
+        )}
         
         {/* Companion Onboarding - Full Screen Intro Sequence */}
         {!isCompanionLoading && needsOnboarding && (
