@@ -9,7 +9,7 @@ export const HomeOrb = ({ onCapture }: HomeOrbProps) => {
   const [isHovered, setIsHovered] = useState(false);
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen">
+    <div className="fixed bottom-24 left-0 right-0 flex flex-col items-center">
       {/* Main Orb */}
       <motion.button
         onClick={onCapture}
