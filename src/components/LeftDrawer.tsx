@@ -504,34 +504,36 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
                             No upcoming events
                           </p>
                         ) : (
-                          <div className="space-y-6">
+                          <div className="space-y-8">
                             {Object.entries(groupedEvents).map(([dateKey, dayEvents]) => {
                               const date = new Date(dateKey);
                               const dayOfWeek = format(date, 'EEEE');
                               const monthDay = format(date, 'MMM d');
                               
                               return (
-                                <div key={dateKey} className="space-y-3 pt-6 first:pt-0">
+                                <div key={dateKey} className="space-y-4">
                                   {/* Day Header */}
-                                  <div className="space-y-1 pb-2">
-                                    <div className="font-mono font-semibold text-[18px]" style={{ color: '#111' }}>
+                                  <div className="space-y-1">
+                                    <div className="font-mono font-medium text-[15px]" style={{ color: '#111' }}>
                                       {dayOfWeek}
                                     </div>
-                                    <div className="font-mono text-[16px]" style={{ color: '#555' }}>
+                                    <div className="font-mono text-[14px]" style={{ color: '#999' }}>
                                       {monthDay}
                                     </div>
                                   </div>
                                   
                                   {/* Divider */}
                                   <div 
-                                    className="h-px mb-3" 
+                                    className="h-px" 
                                     style={{ backgroundColor: 'rgba(0,0,0,0.06)' }}
                                   />
                                   
                                   {/* Events List */}
-                                  <div className="space-y-3">
+                                  <div className="space-y-4">
                                     {dayEvents.map((task) => {
                                       const eventTime = new Date(task.reminder_time!);
+                                      const dayAbbrev = format(eventTime, 'EEE');
+                                      const timeStr = format(eventTime, 'h:mm a');
                                       
                                       return (
                                         <button
@@ -546,22 +548,22 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
                                             e.currentTarget.style.backgroundColor = 'transparent';
                                           }}
                                         >
-                                          <div className="flex-shrink-0 mt-1">
-                                            <span className="font-mono text-[14px]" style={{ color: '#111' }}>•</span>
+                                          <div className="flex-shrink-0 mt-0.5">
+                                            <span className="font-mono text-[14px]" style={{ color: '#888' }}>•</span>
                                           </div>
                                           
-                                          <div className="flex-1 min-w-0 space-y-0.5">
+                                          <div className="flex-1 min-w-0 space-y-1">
                                             <div 
-                                              className="font-mono text-[15px] leading-tight"
+                                              className="font-mono text-[14px] leading-snug"
                                               style={{ color: '#111' }}
                                             >
                                               {task.title}
                                             </div>
                                             <div 
-                                              className="font-mono text-[14px]"
-                                              style={{ color: '#888' }}
+                                              className="font-mono text-[13px]"
+                                              style={{ color: '#999' }}
                                             >
-                                              {format(eventTime, 'h:mm a')}
+                                              {dayAbbrev} at {timeStr}
                                             </div>
                                           </div>
                                         </button>
