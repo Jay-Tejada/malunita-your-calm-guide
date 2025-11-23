@@ -31,6 +31,9 @@ export interface UserProfile {
   unlocked_colorways?: string[];
   unlocked_auras?: string[];
   unlocked_trails?: string[];
+  selected_accessory?: string;
+  unlocked_accessories?: string[];
+  unlocked_expressions?: string[];
 }
 
 export const useProfile = () => {

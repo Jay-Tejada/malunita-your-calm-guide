@@ -375,13 +375,16 @@ export type Database = {
           preferred_input_style: string | null
           reflection_streak: number | null
           ritual_preferences: Json | null
+          selected_accessory: string | null
           selected_aura: string | null
           selected_colorway: string | null
           selected_trail: string | null
           task_completion_streak: number | null
           total_tasks_logged: number | null
+          unlocked_accessories: string[] | null
           unlocked_auras: string[] | null
           unlocked_colorways: string[] | null
+          unlocked_expressions: string[] | null
           unlocked_trails: string[] | null
           updated_at: string
           uses_names: boolean | null
@@ -422,13 +425,16 @@ export type Database = {
           preferred_input_style?: string | null
           reflection_streak?: number | null
           ritual_preferences?: Json | null
+          selected_accessory?: string | null
           selected_aura?: string | null
           selected_colorway?: string | null
           selected_trail?: string | null
           task_completion_streak?: number | null
           total_tasks_logged?: number | null
+          unlocked_accessories?: string[] | null
           unlocked_auras?: string[] | null
           unlocked_colorways?: string[] | null
+          unlocked_expressions?: string[] | null
           unlocked_trails?: string[] | null
           updated_at?: string
           uses_names?: boolean | null
@@ -469,13 +475,16 @@ export type Database = {
           preferred_input_style?: string | null
           reflection_streak?: number | null
           ritual_preferences?: Json | null
+          selected_accessory?: string | null
           selected_aura?: string | null
           selected_colorway?: string | null
           selected_trail?: string | null
           task_completion_streak?: number | null
           total_tasks_logged?: number | null
+          unlocked_accessories?: string[] | null
           unlocked_auras?: string[] | null
           unlocked_colorways?: string[] | null
+          unlocked_expressions?: string[] | null
           unlocked_trails?: string[] | null
           updated_at?: string
           uses_names?: boolean | null

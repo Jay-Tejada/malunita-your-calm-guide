@@ -22,6 +22,7 @@ import {
   Share2,
   Moon,
   HardDrive,
+  Palette,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAdmin } from "@/hooks/useAdmin";
@@ -242,6 +243,16 @@ export function AppSidebar({ onSettingsClick, onCategoryClick, onFocusModeClick,
                 >
                   <Sparkles className="mr-2 h-4 w-4" />
                   <span>Tiny Task Fiesta</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              <SidebarMenuItem>
+                <SidebarMenuButton 
+                  onClick={() => navigate('/customization')}
+                  className="hover:bg-muted/50"
+                >
+                  <Palette className="mr-2 h-4 w-4" />
+                  <span>Customization Shop</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
 

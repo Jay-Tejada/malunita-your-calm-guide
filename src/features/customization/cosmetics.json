@@ -1,0 +1,217 @@
+{
+  "colorways": [
+    {
+      "id": "zen-default",
+      "name": "Zen Default",
+      "description": "The original peaceful companion",
+      "primaryColor": "#B4A7D6",
+      "secondaryColor": "#9B8AC4",
+      "unlockLevel": 1,
+      "cost": 0,
+      "category": "colorway"
+    },
+    {
+      "id": "sunset-glow",
+      "name": "Sunset Glow",
+      "description": "Warm orange and pink hues",
+      "primaryColor": "#FF9A8B",
+      "secondaryColor": "#FF6A88",
+      "unlockLevel": 3,
+      "cost": 100,
+      "category": "colorway"
+    },
+    {
+      "id": "ocean-breeze",
+      "name": "Ocean Breeze",
+      "description": "Cool blue and turquoise tones",
+      "primaryColor": "#89CFF0",
+      "secondaryColor": "#4ECDC4",
+      "unlockLevel": 6,
+      "cost": 200,
+      "category": "colorway"
+    },
+    {
+      "id": "forest-spirit",
+      "name": "Forest Spirit",
+      "description": "Deep greens and earthy browns",
+      "primaryColor": "#A8D5BA",
+      "secondaryColor": "#6B9080",
+      "unlockLevel": 10,
+      "cost": 300,
+      "category": "colorway"
+    },
+    {
+      "id": "starlight-dream",
+      "name": "Starlight Dream",
+      "description": "Mystical purples and silvers",
+      "primaryColor": "#D4C5F9",
+      "secondaryColor": "#A594F9",
+      "unlockLevel": 14,
+      "cost": 500,
+      "category": "colorway"
+    },
+    {
+      "id": "golden-hour",
+      "name": "Golden Hour",
+      "description": "Radiant gold and amber",
+      "primaryColor": "#FFD93D",
+      "secondaryColor": "#F4A261",
+      "unlockLevel": 18,
+      "cost": 800,
+      "category": "colorway"
+    }
+  ],
+  "accessories": [
+    {
+      "id": "tiny-hat",
+      "name": "Tiny Hat",
+      "description": "A cute little top hat",
+      "emoji": "🎩",
+      "unlockLevel": 3,
+      "cost": 150,
+      "category": "accessory",
+      "position": "head"
+    },
+    {
+      "id": "bow-tie",
+      "name": "Bow Tie",
+      "description": "Fancy and formal",
+      "emoji": "🎀",
+      "unlockLevel": 5,
+      "cost": 100,
+      "category": "accessory",
+      "position": "neck"
+    },
+    {
+      "id": "flower-crown",
+      "name": "Flower Crown",
+      "description": "Natural and beautiful",
+      "emoji": "🌸",
+      "unlockLevel": 7,
+      "cost": 200,
+      "category": "accessory",
+      "position": "head"
+    },
+    {
+      "id": "tiny-scarf",
+      "name": "Tiny Scarf",
+      "description": "Cozy and warm",
+      "emoji": "🧣",
+      "unlockLevel": 10,
+      "cost": 250,
+      "category": "accessory",
+      "position": "neck"
+    },
+    {
+      "id": "tiny-backpack",
+      "name": "Tiny Backpack",
+      "description": "Ready for adventures",
+      "emoji": "🎒",
+      "unlockLevel": 12,
+      "cost": 350,
+      "category": "accessory",
+      "position": "back"
+    },
+    {
+      "id": "crown",
+      "name": "Crown",
+      "description": "Royalty status",
+      "emoji": "👑",
+      "unlockLevel": 15,
+      "cost": 500,
+      "category": "accessory",
+      "position": "head"
+    },
+    {
+      "id": "sunglasses",
+      "name": "Sunglasses",
+      "description": "Too cool for school",
+      "emoji": "😎",
+      "unlockLevel": 18,
+      "cost": 600,
+      "category": "accessory",
+      "position": "face"
+    }
+  ],
+  "particles": [
+    {
+      "id": "calm-bloom",
+      "name": "Calm Bloom",
+      "description": "Gentle floating petals",
+      "effect": "petals",
+      "color": "#FFB6C1",
+      "unlockLevel": 1,
+      "cost": 0,
+      "category": "particle"
+    },
+    {
+      "id": "star-trail",
+      "name": "Star Trail",
+      "description": "Twinkling stars follow you",
+      "effect": "stars",
+      "color": "#FFD700",
+      "unlockLevel": 6,
+      "cost": 200,
+      "category": "particle"
+    },
+    {
+      "id": "bubble-float",
+      "name": "Bubble Float",
+      "description": "Playful bubbles drift by",
+      "effect": "bubbles",
+      "color": "#87CEEB",
+      "unlockLevel": 10,
+      "cost": 300,
+      "category": "particle"
+    },
+    {
+      "id": "sparkle-burst",
+      "name": "Sparkle Burst",
+      "description": "Magical sparkles appear",
+      "effect": "sparkles",
+      "color": "#E0BBE4",
+      "unlockLevel": 14,
+      "cost": 400,
+      "category": "particle"
+    },
+    {
+      "id": "firefly-glow",
+      "name": "Firefly Glow",
+      "description": "Gentle glowing lights",
+      "effect": "fireflies",
+      "color": "#FFEAA7",
+      "unlockLevel": 18,
+      "cost": 600,
+      "category": "particle"
+    }
+  ],
+  "expressions": [
+    {
+      "id": "basic-pack",
+      "name": "Basic Expressions",
+      "description": "Essential emotions",
+      "expressions": ["happy", "neutral", "sleepy", "excited"],
+      "unlockLevel": 1,
+      "cost": 0,
+      "category": "expression"
+    },
+    {
+      "id": "advanced-pack",
+      "name": "Advanced Expressions",
+      "description": "More nuanced emotions",
+      "expressions": ["concerned", "loving", "surprised", "curious"],
+      "unlockLevel": 8,
+      "cost": 250,
+      "category": "expression"
+    },
+    {
+      "id": "premium-pack",
+      "name": "Premium Expressions",
+      "description": "Rare and special",
+      "expressions": ["overjoyed", "winking", "angry", "why"],
+      "unlockLevel": 15,
+      "cost": 500,
+      "category": "expression"
+    }
+  ]
+}
