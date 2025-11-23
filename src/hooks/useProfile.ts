@@ -23,6 +23,14 @@ export interface UserProfile {
   custom_wake_word?: string;
   notification_preferences?: any;
   ritual_preferences?: any;
+  companion_name?: string;
+  companion_personality_type?: string;
+  companion_colorway?: string;
+  selected_aura?: string;
+  selected_trail?: string;
+  unlocked_colorways?: string[];
+  unlocked_auras?: string[];
+  unlocked_trails?: string[];
 }
 
 export const useProfile = () => {
