@@ -277,10 +277,10 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
                             hapticLight();
                             setIsNewEventDialogOpen(true);
                           }}
-                          className="flex items-center gap-2 px-3 py-1.5 bg-primary text-primary-foreground hover:bg-primary/90 rounded-md font-mono text-[13px] transition-colors"
+                          className="p-1.5 hover:bg-muted/30 rounded-md transition-colors"
+                          aria-label="Add new event"
                         >
-                          <Plus className="w-4 h-4" />
-                          New
+                          <Plus className="w-4 h-4 text-foreground/60" />
                         </button>
                       )}
                     </div>
