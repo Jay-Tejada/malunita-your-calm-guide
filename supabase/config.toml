@@ -88,5 +88,8 @@ verify_jwt = true
 [functions.habit-predictor]
 verify_jwt = true
 
+[functions.process-ritual]
+verify_jwt = true
+
 [functions.thought-engine-trainer]
 verify_jwt = false

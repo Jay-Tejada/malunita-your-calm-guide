@@ -13,21 +13,21 @@ export const RitualPreferences = () => {
   const ritualPrefs = profile.ritual_preferences || {
     morning_ritual: {
       enabled: true,
-      start_hour: 6,
-      end_hour: 10,
+      start_hour: 5,
+      end_hour: 11,
       action_button: "Start Planning"
+    },
+    evening_ritual: {
+      enabled: true,
+      start_hour: 19,
+      end_hour: 1,
+      action_button: "Start Reflection"
     },
     midday_checkin: {
       enabled: true,
       start_hour: 12,
       end_hour: 15,
       action_button: "View Tasks"
-    },
-    evening_shutdown: {
-      enabled: true,
-      start_hour: 18,
-      end_hour: 22,
-      action_button: "Review Day"
     },
     weekly_reset: {
       enabled: true,
@@ -53,7 +53,14 @@ export const RitualPreferences = () => {
       key: 'morning_ritual',
       icon: Sunrise,
       name: 'Morning Ritual',
-      description: 'Daily planning and focus',
+      description: 'Guided planning session (5am-11am)',
+      hasTimeWindow: true
+    },
+    {
+      key: 'evening_ritual',
+      icon: Moon,
+      name: 'Evening Ritual',
+      description: 'Guided reflection session (7pm-1am)',
       hasTimeWindow: true
     },
     {
@@ -61,13 +68,6 @@ export const RitualPreferences = () => {
       icon: Sun,
       name: 'Midday Check-in',
       description: 'Progress review',
-      hasTimeWindow: true
-    },
-    {
-      key: 'evening_shutdown',
-      icon: Moon,
-      name: 'Evening Shutdown',
-      description: 'Day summary and rollover',
       hasTimeWindow: true
     },
     {
