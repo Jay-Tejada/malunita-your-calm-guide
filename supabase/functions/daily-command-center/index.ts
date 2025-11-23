@@ -104,7 +104,8 @@ serve(async (req) => {
 
     // Step 1: Extract tasks from the text using Thought Engine 2.0
     const { data: extractData, error: extractError } = await supabase.functions.invoke('extract-tasks', {
-      body: { text, userId: user.id }
+      body: { text, userId: user.id },
+      headers: { Authorization: authHeader }
     });
 
     if (extractError) {
