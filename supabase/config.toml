@@ -99,3 +99,6 @@ verify_jwt = false
 
 [functions.generate-monthly-insights]
 verify_jwt = true
+
+[functions.generate-weekly-quests]
+verify_jwt = true

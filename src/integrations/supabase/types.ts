@@ -866,6 +866,63 @@ export type Database = {
         }
         Relationships: []
       }
+      weekly_quests: {
+        Row: {
+          claimed: boolean
+          completed: boolean
+          created_at: string
+          current_value: number
+          description: string
+          id: string
+          quest_type: string
+          reward_affection: number
+          reward_cosmetic_id: string | null
+          reward_cosmetic_type: string | null
+          reward_xp: number
+          target_value: number
+          title: string
+          updated_at: string
+          user_id: string
+          week_start: string
+        }
+        Insert: {
+          claimed?: boolean
+          completed?: boolean
+          created_at?: string
+          current_value?: number
+          description: string
+          id?: string
+          quest_type: string
+          reward_affection?: number
+          reward_cosmetic_id?: string | null
+          reward_cosmetic_type?: string | null
+          reward_xp?: number
+          target_value?: number
+          title: string
+          updated_at?: string
+          user_id: string
+          week_start: string
+        }
+        Update: {
+          claimed?: boolean
+          completed?: boolean
+          created_at?: string
+          current_value?: number
+          description?: string
+          id?: string
+          quest_type?: string
+          reward_affection?: number
+          reward_cosmetic_id?: string | null
+          reward_cosmetic_type?: string | null
+          reward_xp?: number
+          target_value?: number
+          title?: string
+          updated_at?: string
+          user_id?: string
+          week_start?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

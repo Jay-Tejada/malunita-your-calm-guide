@@ -35,6 +35,7 @@ interface CustomizationState {
   equipAccessory: (id: string | null) => Promise<void>;
   equipParticle: (id: string) => Promise<void>;
   purchaseCosmetic: (cosmetic: Cosmetic, currentXp: number, currentLevel: number) => Promise<boolean>;
+  unlockCosmetic: (category: 'colorway' | 'accessory' | 'particle' | 'expression', cosmeticId: string) => Promise<void>;
   loadFromProfile: (profile: any) => void;
   getAvailableCosmetics: (currentLevel: number) => {
     colorways: Cosmetic[];
@@ -183,6 +184,54 @@ export const useCustomizationStore = create<CustomizationState>((set, get) => ({
     } catch (error) {
       console.error('Failed to purchase cosmetic:', error);
       return false;
+    }
+  },
+
+  unlockCosmetic: async (category: 'colorway' | 'accessory' | 'particle' | 'expression', cosmeticId: string) => {
+    const state = get();
+    
+    // Get the correct unlocked array key
+    const unlockedKey = `unlocked${category.charAt(0).toUpperCase() + category.slice(1)}s` as keyof CustomizationState;
+    const unlocked = state[unlockedKey] as string[];
+    
+    // Check if already unlocked
+    if (unlocked.includes(cosmeticId)) {
+      return;
+    }
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const newUnlocked = [...unlocked, cosmeticId];
+      
+      let updateData: any = {};
+      
+      switch (category) {
+        case 'colorway':
+          updateData.unlocked_colorways = newUnlocked;
+          set({ unlockedColorways: newUnlocked });
+          break;
+        case 'accessory':
+          updateData.unlocked_accessories = newUnlocked;
+          set({ unlockedAccessories: newUnlocked });
+          break;
+        case 'particle':
+          updateData.unlocked_auras = newUnlocked;
+          set({ unlockedParticles: newUnlocked });
+          break;
+        case 'expression':
+          updateData.unlocked_expressions = newUnlocked;
+          set({ unlockedExpressions: newUnlocked });
+          break;
+      }
+
+      await supabase
+        .from('profiles')
+        .update(updateData)
+        .eq('id', user.id);
+    } catch (error) {
+      console.error('Failed to unlock cosmetic:', error);
     }
   },
 
