@@ -769,6 +769,9 @@ export type Database = {
           is_focus: boolean | null
           is_time_based: boolean | null
           keywords: string[] | null
+          location_address: string | null
+          location_lat: number | null
+          location_lng: number | null
           recurrence_day: number | null
           recurrence_end_date: string | null
           recurrence_pattern: string | null
@@ -796,6 +799,9 @@ export type Database = {
           is_focus?: boolean | null
           is_time_based?: boolean | null
           keywords?: string[] | null
+          location_address?: string | null
+          location_lat?: number | null
+          location_lng?: number | null
           recurrence_day?: number | null
           recurrence_end_date?: string | null
           recurrence_pattern?: string | null
@@ -823,6 +829,9 @@ export type Database = {
           is_focus?: boolean | null
           is_time_based?: boolean | null
           keywords?: string[] | null
+          location_address?: string | null
+          location_lat?: number | null
+          location_lng?: number | null
           recurrence_day?: number | null
           recurrence_end_date?: string | null
           recurrence_pattern?: string | null

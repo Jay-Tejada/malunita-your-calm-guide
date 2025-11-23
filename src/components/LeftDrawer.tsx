@@ -15,6 +15,9 @@ import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { EventTitleAutocomplete } from "@/components/EventTitleAutocomplete";
 import { useRecentEventTitles } from "@/hooks/useRecentEventTitles";
+import { MapboxAutocomplete } from "@/components/MapboxAutocomplete";
+import { MapPreview } from "@/components/MapPreview";
+import { useMapboxToken } from "@/hooks/useMapboxToken";
 
 type DrawerMode = "root" | "inbox" | "projects" | "work" | "home" | "gym" | "calendar";
 
@@ -38,12 +41,16 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
   const { tasks, updateTask, createTasks, deleteTask } = useTasks();
   const { toast } = useToast();
   const { recordEventTitle } = useRecentEventTitles();
+  const { token: mapboxToken } = useMapboxToken();
   const [completingTaskIds, setCompletingTaskIds] = useState<Set<string>>(new Set());
   const [isNewEventDialogOpen, setIsNewEventDialogOpen] = useState(false);
   const [newEventTitle, setNewEventTitle] = useState("");
   const [newEventDate, setNewEventDate] = useState("");
   const [newEventTime, setNewEventTime] = useState("");
   const [newEventDescription, setNewEventDescription] = useState("");
+  const [newEventLocation, setNewEventLocation] = useState("");
+  const [newEventLocationLat, setNewEventLocationLat] = useState<number | undefined>();
+  const [newEventLocationLng, setNewEventLocationLng] = useState<number | undefined>();
   const [recurrencePattern, setRecurrencePattern] = useState<'none' | 'daily' | 'weekly' | 'monthly'>('none');
   const [recurrenceDay, setRecurrenceDay] = useState<number>(0);
   const [recurrenceEndDate, setRecurrenceEndDate] = useState("");
@@ -165,6 +172,9 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
     setNewEventDate(format(eventDateTime, 'yyyy-MM-dd'));
     setNewEventTime(format(eventDateTime, 'HH:mm'));
     setNewEventDescription(selectedEvent.context || "");
+    setNewEventLocation(selectedEvent.location_address || "");
+    setNewEventLocationLat(selectedEvent.location_lat);
+    setNewEventLocationLng(selectedEvent.location_lng);
     setRecurrencePattern(selectedEvent.recurrence_pattern || 'none');
     setRecurrenceDay(selectedEvent.recurrence_day || 0);
     setRecurrenceEndDate(selectedEvent.recurrence_end_date ? format(new Date(selectedEvent.recurrence_end_date), 'yyyy-MM-dd') : "");
@@ -192,11 +202,14 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
           title: newEventTitle,
           reminder_time: reminderDateTime.toISOString(),
           context: newEventDescription || undefined,
+          location_address: newEventLocation || undefined,
+          location_lat: newEventLocationLat,
+          location_lng: newEventLocationLng,
           has_reminder: true,
           recurrence_pattern: recurrencePattern,
           recurrence_day: recurrencePattern === 'weekly' ? recurrenceDay : undefined,
           recurrence_end_date: recurrenceEndDate ? new Date(recurrenceEndDate).toISOString() : undefined,
-        }
+        } as any
       });
 
       // Record event title for autocomplete
@@ -215,6 +228,9 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
       setNewEventDate("");
       setNewEventTime("");
       setNewEventDescription("");
+      setNewEventLocation("");
+      setNewEventLocationLat(undefined);
+      setNewEventLocationLng(undefined);
       setRecurrencePattern('none');
       setRecurrenceDay(0);
       setRecurrenceEndDate("");
@@ -252,11 +268,14 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
           title: newEventTitle,
           reminder_time: reminderDateTime.toISOString(),
           context: newEventDescription || undefined,
+          location_address: newEventLocation || undefined,
+          location_lat: newEventLocationLat,
+          location_lng: newEventLocationLng,
           has_reminder: true,
           recurrence_pattern: recurrencePattern,
           recurrence_day: recurrencePattern === 'weekly' ? recurrenceDay : undefined,
           recurrence_end_date: recurrenceEndDate ? new Date(recurrenceEndDate).toISOString() : undefined,
-        }]);
+        } as any]);
 
         // Record event title for autocomplete
         await recordEventTitle(newEventTitle);
@@ -274,6 +293,9 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
         setNewEventDate("");
         setNewEventTime("");
         setNewEventDescription("");
+        setNewEventLocation("");
+        setNewEventLocationLat(undefined);
+        setNewEventLocationLng(undefined);
         setRecurrencePattern('none');
         setRecurrenceDay(0);
         setRecurrenceEndDate("");
@@ -637,6 +659,21 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
                     <div className="font-mono text-[14px] mt-1" style={{ color: '#555' }}>{selectedEvent.context}</div>
                   </div>
                 )}
+
+                {selectedEvent.location_address && (
+                  <div className="space-y-2">
+                    <div className="font-mono text-[13px]" style={{ color: '#888' }}>Location</div>
+                    <div className="font-mono text-[14px] mt-1" style={{ color: '#555' }}>{selectedEvent.location_address}</div>
+                    {selectedEvent.location_lat && selectedEvent.location_lng && (
+                      <MapPreview 
+                        lat={selectedEvent.location_lat}
+                        lng={selectedEvent.location_lng}
+                        address={selectedEvent.location_address}
+                        accessToken={mapboxToken}
+                      />
+                    )}
+                  </div>
+                )}
               </div>
 
               <div className="flex flex-col gap-2 pt-2">
@@ -712,13 +749,36 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
               <Label htmlFor="drawer-description" className="font-mono text-[13px]">Description (optional)</Label>
               <Textarea
                 id="drawer-description"
-                placeholder="Add notes or location..."
+                placeholder="Add notes..."
                 value={newEventDescription}
                 onChange={(e) => setNewEventDescription(e.target.value)}
                 rows={3}
                 className="font-mono text-[14px]"
               />
             </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="drawer-location" className="font-mono text-[13px]">Location (optional)</Label>
+              <MapboxAutocomplete
+                value={newEventLocation}
+                onChange={(address, lat, lng) => {
+                  setNewEventLocation(address);
+                  setNewEventLocationLat(lat);
+                  setNewEventLocationLng(lng);
+                }}
+                placeholder="Search for a location"
+                accessToken={mapboxToken}
+              />
+            </div>
+
+            {newEventLocationLat && newEventLocationLng && (
+              <MapPreview
+                lat={newEventLocationLat}
+                lng={newEventLocationLng}
+                address={newEventLocation}
+                accessToken={mapboxToken}
+              />
+            )}
 
             <div className="space-y-2">
               <Label htmlFor="drawer-recurrence" className="font-mono text-[13px]">Repeat</Label>
