@@ -313,8 +313,8 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
                               className={cn(
                                 "flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center mt-0.5 transition-all duration-300 ease-out",
                                 task.completed
-                                  ? "bg-foreground/90 border-2 border-foreground/90 scale-100"
-                                  : "border-2 border-foreground/20 hover:border-foreground/40 hover:scale-110"
+                                  ? "bg-foreground/90 border-2 border-foreground/90 scale-100 shadow-[0_0_12px_rgba(0,0,0,0.3)]"
+                                  : "border-2 border-foreground/20 hover:border-foreground/40 hover:scale-110 hover:shadow-[0_0_8px_rgba(0,0,0,0.15)]"
                               )}
                             >
                               {task.completed ? (
@@ -350,8 +350,8 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
                               className={cn(
                                 "flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center mt-0.5 transition-all duration-300 ease-out",
                                 task.completed
-                                  ? "bg-foreground/90 border-2 border-foreground/90 scale-100"
-                                  : "border-2 border-foreground/20 hover:border-foreground/40 hover:scale-110"
+                                  ? "bg-foreground/90 border-2 border-foreground/90 scale-100 shadow-[0_0_12px_rgba(0,0,0,0.3)]"
+                                  : "border-2 border-foreground/20 hover:border-foreground/40 hover:scale-110 hover:shadow-[0_0_8px_rgba(0,0,0,0.15)]"
                               )}
                             >
                               {task.completed ? (
