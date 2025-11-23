@@ -1,17 +1,17 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   Inbox, 
-  Calendar, 
-  CalendarDays, 
+  FolderKanban,
   Briefcase, 
   Home, 
   Dumbbell, 
-  Target, 
-  TrendingUp, 
-  Network, 
-  BookOpen,
-  Sparkles,
-  Settings
+  Calendar,
+  TrendingUp,
+  Image,
+  Zap,
+  Target,
+  Bell,
+  CheckSquare
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -19,67 +19,31 @@ interface DrawerItem {
   id: string;
   label: string;
   icon: React.ComponentType<{ className?: string }>;
-  section?: string;
+  path: string;
 }
 
 interface LeftDrawerProps {
   isOpen: boolean;
-  activeView: string;
-  onSelectView: (view: string) => void;
+  onClose: () => void;
+  onNavigate: (path: string) => void;
 }
 
-const navigationItems: DrawerItem[] = [
-  { id: "inbox", label: "Inbox", icon: Inbox },
-  { id: "today", label: "Today", icon: Calendar },
-  { id: "upcoming", label: "Upcoming", icon: CalendarDays },
+const drawerItems: DrawerItem[] = [
+  { id: "inbox", label: "Inbox", icon: Inbox, path: "/inbox" },
+  { id: "projects", label: "Projects", icon: FolderKanban, path: "/" },
+  { id: "work", label: "Work", icon: Briefcase, path: "/" },
+  { id: "home", label: "Home", icon: Home, path: "/" },
+  { id: "gym", label: "Gym", icon: Dumbbell, path: "/" },
+  { id: "daily-session", label: "Daily Session", icon: Calendar, path: "/daily-session" },
+  { id: "weekly-insights", label: "Weekly Insights", icon: TrendingUp, path: "/weekly-insights" },
+  { id: "hatching-memories", label: "Hatching Memories", icon: Image, path: "/hatching-gallery" },
+  { id: "tiny-task-fiesta", label: "Tiny Task Fiesta", icon: Zap, path: "/tiny-task-fiesta" },
+  { id: "goals", label: "Goals", icon: Target, path: "/goals" },
+  { id: "reminders", label: "Reminders", icon: Bell, path: "/reminders" },
+  { id: "all-tasks", label: "All Tasks", icon: CheckSquare, path: "/" },
 ];
 
-const spaceItems: DrawerItem[] = [
-  { id: "work", label: "Work", icon: Briefcase, section: "Spaces" },
-  { id: "home", label: "Home", icon: Home, section: "Spaces" },
-  { id: "gym", label: "Gym", icon: Dumbbell, section: "Spaces" },
-];
-
-const projectItems: DrawerItem[] = [
-  { id: "goals", label: "Goals", icon: Target, section: "Projects" },
-  { id: "insights", label: "Insights", icon: TrendingUp, section: "Projects" },
-  { id: "clusters", label: "Clusters", icon: Network, section: "Projects" },
-  { id: "journal", label: "Journal", icon: BookOpen, section: "Projects" },
-];
-
-const bottomItems: DrawerItem[] = [
-  { id: "companion", label: "Companion", icon: Sparkles },
-  { id: "settings", label: "Settings", icon: Settings },
-];
-
-export const LeftDrawer = ({ isOpen, activeView, onSelectView }: LeftDrawerProps) => {
-  const renderSection = (items: DrawerItem[], showHeader?: string) => (
-    <div className="space-y-1">
-      {showHeader && (
-        <div className="px-4 py-2 text-xs font-mono text-foreground/40 uppercase tracking-wider">
-          {showHeader}
-        </div>
-      )}
-      {items.map((item) => {
-        const Icon = item.icon;
-        return (
-          <button
-            key={item.id}
-            onClick={() => onSelectView(item.id)}
-            className={cn(
-              "w-full flex items-center gap-3 px-4 py-2.5 text-sm font-mono transition-colors",
-              "hover:bg-foreground/5",
-              activeView === item.id && "bg-foreground/8 text-primary font-medium"
-            )}
-          >
-            <Icon className="w-4 h-4" />
-            <span>{item.label}</span>
-          </button>
-        );
-      })}
-    </div>
-  );
-
+export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => {
   return (
     <AnimatePresence>
       {isOpen && (
@@ -91,7 +55,7 @@ export const LeftDrawer = ({ isOpen, activeView, onSelectView }: LeftDrawerProps
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
             className="fixed inset-0 bg-black/10 backdrop-blur-sm z-40"
-            onClick={() => onSelectView(activeView)}
+            onClick={onClose}
           />
 
           {/* Drawer */}
@@ -103,16 +67,26 @@ export const LeftDrawer = ({ isOpen, activeView, onSelectView }: LeftDrawerProps
             className="fixed left-0 top-0 bottom-0 w-72 bg-background/95 backdrop-blur-md border-r border-border/50 shadow-2xl z-50"
           >
             <div className="h-full flex flex-col py-8">
-              {/* Main Navigation */}
-              <div className="flex-1 overflow-y-auto space-y-6">
-                {renderSection(navigationItems)}
-                {renderSection(spaceItems, "Spaces")}
-                {renderSection(projectItems, "Projects")}
-              </div>
-
-              {/* Bottom Items */}
-              <div className="border-t border-border/30 pt-4">
-                {renderSection(bottomItems)}
+              <div className="flex-1 overflow-y-auto">
+                {drawerItems.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => {
+                        onNavigate(item.path);
+                        onClose();
+                      }}
+                      className={cn(
+                        "w-full flex items-center gap-3 px-6 py-3 text-sm font-mono transition-colors",
+                        "hover:bg-foreground/5"
+                      )}
+                    >
+                      <Icon className="w-4 h-4" />
+                      <span>{item.label}</span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </motion.div>

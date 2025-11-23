@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Globe2, Home } from "lucide-react";
+import { Globe2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface GlobeButtonProps {
@@ -20,8 +20,6 @@ export const GlobeButton = ({
     "top-right": "fixed top-6 right-6",
   };
 
-  const Icon = variant === "home" ? Home : Globe2;
-
   return (
     <motion.button
       onClick={onClick}
@@ -33,20 +31,21 @@ export const GlobeButton = ({
         "flex items-center justify-center group",
         "shadow-lg hover:shadow-xl"
       )}
-      whileHover={{ scale: 1.05 }}
+      whileHover={{ scale: 1.05, rotate: 180 }}
       whileTap={{ scale: 0.95 }}
+      transition={{ duration: 0.3 }}
     >
-      <Icon 
+      <Globe2 
         className={cn(
           "w-5 h-5 transition-all duration-300",
           isActive ? "text-primary" : "text-foreground/60",
-          "group-hover:text-primary group-hover:scale-110"
+          "group-hover:text-primary"
         )}
       />
       
       {isActive && (
         <motion.div
-          layoutId="active-glow"
+          layoutId={`active-glow-${position}`}
           className="absolute inset-0 rounded-full bg-primary/10"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
