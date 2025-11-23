@@ -1,10 +1,12 @@
 import { useProfile } from "@/hooks/useProfile";
+import { usePersonality } from "@/hooks/usePersonality";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Loader2, TrendingUp, Clock, MessageSquare, Mic, Sparkles } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Loader2, TrendingUp, Clock, MessageSquare, Mic, Sparkles, Heart } from "lucide-react";
 import { NotificationPermission } from "@/components/NotificationPermission";
 import { GoalSetting } from "@/components/GoalSetting";
 import { CustomCategoryManager } from "@/components/CustomCategoryManager";
@@ -13,6 +15,7 @@ import { PersonalizationInsights } from "@/components/PersonalizationInsights";
 import { WakeWordTraining } from "@/components/WakeWordTraining";
 import { RitualPreferences } from "@/components/RitualPreferences";
 import { CompanionCustomization } from "@/components/CompanionCustomization";
+import { ARCHETYPE_CONFIG, PersonalityArchetype } from "@/state/personality";
 import { useState } from "react";
 
 
@@ -22,6 +25,7 @@ interface ProfileSettingsProps {
 
 export const ProfileSettings = ({ onClose }: ProfileSettingsProps) => {
   const { profile, isLoading, updateProfile } = useProfile();
+  const { personalityState, updatePersonality } = usePersonality();
   const [customWakeWord, setCustomWakeWord] = useState(profile?.custom_wake_word || 'hey malunita');
   const [showCustomization, setShowCustomization] = useState(false);
 
@@ -49,6 +53,68 @@ export const ProfileSettings = ({ onClose }: ProfileSettingsProps) => {
           <div className="p-6 space-y-8">
             {/* Personalization Insights */}
             <PersonalizationInsights />
+
+            {/* Personality Archetype */}
+            <div>
+              <h3 className="text-lg font-medium mb-4 flex items-center gap-2">
+                <Heart className="w-5 h-5" />
+                Personality Archetype
+              </h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                Shape how Malunita communicates and behaves
+              </p>
+              
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="personality-archetype" className="mb-2 block">
+                    Choose Personality
+                  </Label>
+                  <Select
+                    value={personalityState?.selectedArchetype || 'zen-guide'}
+                    onValueChange={(value) =>
+                      updatePersonality({
+                        selectedArchetype: value as PersonalityArchetype,
+                      })
+                    }
+                  >
+                    <SelectTrigger id="personality-archetype">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Object.entries(ARCHETYPE_CONFIG).map(([key, config]) => (
+                        <SelectItem key={key} value={key}>
+                          <div className="flex items-center gap-2">
+                            <span className="text-lg">{config.icon}</span>
+                            <div>
+                              <div className="font-medium">{config.label}</div>
+                              <div className="text-xs text-muted-foreground">{config.description}</div>
+                            </div>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="flex items-center justify-between bg-background rounded-xl p-4 border border-secondary">
+                  <div>
+                    <Label htmlFor="auto-adapt">Auto-Adapt Over Time</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Let Malunita adjust personality based on your interactions
+                    </p>
+                  </div>
+                  <Switch
+                    id="auto-adapt"
+                    checked={personalityState?.autoAdapt ?? true}
+                    onCheckedChange={(checked) =>
+                      updatePersonality({
+                        autoAdapt: checked,
+                      })
+                    }
+                  />
+                </div>
+              </div>
+            </div>
 
             {/* Analytics Section */}
             <div>
