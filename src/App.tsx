@@ -29,6 +29,7 @@ import HatchingGallery from "./pages/HatchingGallery";
 import Backup from "./pages/Backup";
 import Customization from "./pages/Customization";
 import Journal from "./pages/Journal";
+import MonthlyInsights from "./pages/MonthlyInsights";
 import { useCutsceneManager } from "./features/cutscenes/useCutsceneManager";
 import { JOURNAL_EVENTS } from "./features/journal/journalEvents";
 
@@ -87,6 +88,7 @@ const App = () => {
               <Route path="/backup" element={<Backup />} />
               <Route path="/customization" element={<Customization />} />
               <Route path="/journal" element={<Journal />} />
+              <Route path="/monthly-insights" element={<MonthlyInsights />} />
               <Route path="/install" element={<Install />} />
               <Route path="/admin" element={<Admin />} />
               <Route path="/trends" element={<Trends />} />
