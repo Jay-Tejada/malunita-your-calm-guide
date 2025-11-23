@@ -7,6 +7,8 @@ import { Sparkles } from 'lucide-react';
 import { getCreatureAsset, getStageBoosts } from '@/lib/evolutionAssets';
 import { useMoodStore } from '@/state/moodMachine';
 import { useBondingMeter } from '@/hooks/useBondingMeter';
+import { useArtStyleStore } from '@/features/artstyles/useArtStyleStore';
+import { ART_STYLES } from '@/features/artstyles/artStyleConfig';
 
 type AnimationMode = 
   | 'floating_idle' 
@@ -48,11 +50,16 @@ export const CreatureSprite = ({
   const { joy } = useEmotionalMemory();
   const { updateMood } = useMoodStore();
   const { bonding, trackMalunitaTap } = useBondingMeter();
+  const { currentStyle, isTransitioning } = useArtStyleStore();
   const prevEmotionRef = useRef(emotion);
   const prevStageRef = useRef(evolutionStage);
+  const prevStyleRef = useRef(currentStyle);
   
   // Soul-Bond special effect
   const isSoulBond = bonding.tier.name === "Soul-Bond";
+  
+  // Get current art style config
+  const artStyleConfig = ART_STYLES[currentStyle];
   
   // Get stage-specific boosts
   const stageBoosts = getStageBoosts(evolutionStage);
@@ -64,6 +71,19 @@ export const CreatureSprite = ({
   const particleCount = stageBoosts.particleCount;
   const isHappy = joy >= 70;
 
+  // Art style change animation
+  useEffect(() => {
+    if (currentStyle !== prevStyleRef.current) {
+      // Trigger spin & blink animation when style changes
+      setAnimationMode('evolution_flash');
+      
+      setTimeout(() => {
+        setAnimationMode('floating_idle');
+      }, 600);
+    }
+    prevStyleRef.current = currentStyle;
+  }, [currentStyle]);
+  
   // Evolution animation
   useEffect(() => {
     if (evolutionStage > prevStageRef.current) {
@@ -401,11 +421,11 @@ export const CreatureSprite = ({
 
       <AnimatePresence mode="wait">
         <motion.div
-          key={`${evolutionStage}-${imageSrc}`}
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.95 }}
-          transition={{ duration: 0.25, ease: "easeOut" }}
+          key={`${evolutionStage}-${imageSrc}-${currentStyle}`}
+          initial={{ opacity: 0, scale: 0.95, rotate: isTransitioning ? -10 : 0 }}
+          animate={{ opacity: 1, scale: 1, rotate: 0 }}
+          exit={{ opacity: 0, scale: 0.95, rotate: isTransitioning ? 10 : 0 }}
+          transition={{ duration: isTransitioning ? 0.3 : 0.25, ease: "easeOut" }}
           className="w-full h-full flex items-center justify-center relative z-10"
         >
           <img
@@ -414,7 +434,7 @@ export const CreatureSprite = ({
             className="w-full h-full object-contain"
             style={{ 
               imageRendering: 'crisp-edges',
-              filter: `brightness(${brightness})`
+              filter: `brightness(${brightness}) ${artStyleConfig.cssFilter || ''}`,
             }}
           />
         </motion.div>
