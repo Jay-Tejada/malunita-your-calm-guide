@@ -1,5 +1,6 @@
 import { getExpressionAsset } from '@/utils/getExpressionAsset';
 import { cn } from '@/lib/utils';
+import { motion, AnimatePresence } from 'framer-motion';
 
 // Import all expression assets
 import baseExpression from '@/assets/companions/base_expression.png';
@@ -62,12 +63,23 @@ export const CreatureSprite = ({
       )}
       style={{ width: size, height: size }}
     >
-      <img
-        src={imageSrc}
-        alt={`Creature ${emotion} expression`}
-        className="w-full h-full object-contain"
-        style={{ imageRendering: 'crisp-edges' }}
-      />
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={filename}
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.95 }}
+          transition={{ duration: 0.25, ease: "easeOut" }}
+          className="w-full h-full flex items-center justify-center"
+        >
+          <img
+            src={imageSrc}
+            alt={`Creature ${emotion} expression`}
+            className="w-full h-full object-contain"
+            style={{ imageRendering: 'crisp-edges' }}
+          />
+        </motion.div>
+      </AnimatePresence>
     </div>
   );
 };
