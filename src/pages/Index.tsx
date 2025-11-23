@@ -40,6 +40,8 @@ import { RitualCompleteCutscene } from "@/features/cutscenes/RitualCompleteCutsc
 
 import { WakeWordIndicator } from "@/components/WakeWordIndicator";
 import { MoodWeatherLayer } from "@/features/moodWeather/MoodWeatherLayer";
+import { AmbientWorld } from "@/features/ambientWorlds/AmbientWorld";
+import { useAmbientWorld } from "@/hooks/useAmbientWorld";
 
 import { SidebarProvider, useSidebar } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
@@ -164,6 +166,7 @@ const Index = () => {
   const [taskStreak, setTaskStreak] = useState(0);
   const [lastTaskAddedTime, setLastTaskAddedTime] = useState<number | null>(null);
   const malunitaVoiceRef = useRef<MalunitaVoiceRef>(null);
+  const { currentWorld } = useAmbientWorld();
   
   // Runway Review trigger settings (can be managed via settings in future)
   const enableOrbReflectionTrigger = true;
@@ -548,6 +551,7 @@ const Index = () => {
     <SidebarProvider>
       <QuestProgressNotification />
       <div className="min-h-screen flex w-full relative">
+        <AmbientWorld worldId={currentWorld} />
         <MoodWeatherLayer />
         {/* Sidebar - Hidden by default */}
         <AppSidebar 

@@ -25,6 +25,7 @@ import {
   HardDrive,
   Palette,
   BookHeart,
+  MapIcon,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAdmin } from "@/hooks/useAdmin";
@@ -188,7 +189,7 @@ export function AppSidebar({ onSettingsClick, onCategoryClick, onFocusModeClick,
                     onClick={onWorldMapClick}
                     className="hover:bg-muted/50"
                   >
-                    <Globe className="mr-2 h-4 w-4" />
+                    <MapIcon className="mr-2 h-4 w-4" />
                     <span>Task Universe</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -285,6 +286,16 @@ export function AppSidebar({ onSettingsClick, onCategoryClick, onFocusModeClick,
                 >
                   <Palette className="mr-2 h-4 w-4" />
                   <span>Customization Shop</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              <SidebarMenuItem>
+                <SidebarMenuButton 
+                  onClick={() => navigate('/ambient-worlds')}
+                  className="hover:bg-muted/50"
+                >
+                  <Globe className="mr-2 h-4 w-4" />
+                  <span>Ambient Worlds</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
 
