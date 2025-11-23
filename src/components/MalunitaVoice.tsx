@@ -208,7 +208,7 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
     
     // Detect silence (threshold: 5 out of 128)
     const SILENCE_THRESHOLD = 5;
-    const SILENCE_DURATION = 5000; // 5 seconds
+    const SILENCE_DURATION = 2000; // 2 seconds
     
     if (averageVolume > SILENCE_THRESHOLD) {
       lastSoundTimeRef.current = Date.now();
