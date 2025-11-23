@@ -600,6 +600,33 @@ export type Database = {
         }
         Relationships: []
       }
+      recent_event_titles: {
+        Row: {
+          created_at: string
+          id: string
+          last_used_at: string
+          title: string
+          usage_count: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last_used_at?: string
+          title: string
+          usage_count?: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_used_at?: string
+          title?: string
+          usage_count?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       smart_notifications: {
         Row: {
           created_at: string | null
