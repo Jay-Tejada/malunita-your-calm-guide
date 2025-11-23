@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Globe2, Sparkles, Calendar, Target, Settings, Bell } from "lucide-react";
+import { Globe2, Sparkles, Calendar as CalendarIconLucide, Target, Settings, Bell } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
@@ -22,15 +22,15 @@ export const FloatingMenu = ({ onSettingsClick, onCategoryClick, hasUrgentTasks 
       color: "text-primary"
     },
     { 
-      icon: Calendar, 
+      icon: CalendarIconLucide, 
       label: "Daily Session", 
       action: () => navigate('/daily-session'),
       color: "text-blue-500"
     },
     { 
       icon: Target, 
-      label: "Goals", 
-      action: () => navigate('/goals'),
+      label: "Calendar", 
+      action: () => navigate('/calendar'),
       color: "text-green-500"
     },
     { 
