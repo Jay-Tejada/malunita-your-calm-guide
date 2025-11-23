@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { getExpressionAsset } from '@/utils/getExpressionAsset';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -51,7 +52,34 @@ export const CreatureSprite = ({
   animate = false, 
   className 
 }: CreatureSpriteProps) => {
-  const filename = getExpressionAsset(emotion);
+  const [microEmotion, setMicroEmotion] = useState<string | null>(null);
+
+  // Idle cycle timer - random micro-expressions
+  useEffect(() => {
+    // Skip idle animations for strong emotions
+    if (['angry', 'sleeping', 'sad', 'worried', 'concerned', 'sleepy'].includes(emotion)) {
+      return;
+    }
+
+    const interval = setInterval(() => {
+      const options = ['winking', 'laughing', 'welcoming', null];
+      const pick = options[Math.floor(Math.random() * options.length)];
+      setMicroEmotion(pick);
+    }, 4000 + Math.random() * 4000); // 4-8 seconds
+
+    return () => clearInterval(interval);
+  }, [emotion]);
+
+  // Auto-clear micro-expression after 1200ms
+  useEffect(() => {
+    if (!microEmotion) return;
+    const timer = setTimeout(() => setMicroEmotion(null), 1200);
+    return () => clearTimeout(timer);
+  }, [microEmotion]);
+
+  // Use micro-expression if available, otherwise use main emotion
+  const finalEmotion = microEmotion ?? emotion;
+  const filename = getExpressionAsset(finalEmotion);
   const imageSrc = assetMap[filename] || baseExpression;
 
   return (
