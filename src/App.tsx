@@ -37,6 +37,7 @@ import Clusters from "./pages/Clusters";
 import TimeTravel from "./pages/TimeTravel";
 import { useCutsceneManager } from "./features/cutscenes/useCutsceneManager";
 import { JOURNAL_EVENTS } from "./features/journal/journalEvents";
+import { bondingMeter, BONDING_INCREMENTS } from "./state/bondingMeter";
 
 const queryClient = new QueryClient();
 
@@ -53,6 +54,12 @@ const App = () => {
     
     // Track quest progress for ritual streak
     questTracker.trackRitualStreak();
+    
+    // Increment bonding for ritual completion
+    bondingMeter.incrementBonding(
+      BONDING_INCREMENTS.RITUAL_COMPLETED,
+      "Ritual completed! Malunita feels closer"
+    );
   };
 
   // Initialize emotional memory monitoring on app start

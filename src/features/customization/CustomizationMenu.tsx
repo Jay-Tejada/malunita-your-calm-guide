@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { Lock, Check, ShoppingBag, Sparkles, Palette, Star, Smile } from 'lucide-react';
 import { CreatureSprite } from '@/components/CreatureSprite';
+import { bondingMeter, BONDING_INCREMENTS } from '@/state/bondingMeter';
 
 export const CustomizationMenu = () => {
   const { toast } = useToast();
@@ -42,6 +43,12 @@ export const CustomizationMenu = () => {
       // Emotional impact
       emotionalMemory.adjustAffection(3);
       moodStore.updateMood('happy');
+      
+      // Bonding increment for customization
+      bondingMeter.incrementBonding(
+        BONDING_INCREMENTS.CUSTOMIZATION_CHANGED,
+        "Malunita loves her new look!"
+      );
     } else {
       toast({
         title: 'Cannot unlock',

@@ -9,6 +9,7 @@ import { DailySessionSteps } from "@/components/DailySessionSteps";
 import { DailySessionSummary } from "@/components/DailySessionSummary";
 import { DailySessionHistory } from "@/components/DailySessionHistory";
 import { useToast } from "@/hooks/use-toast";
+import { bondingMeter, BONDING_INCREMENTS } from "@/state/bondingMeter";
 
 type ViewMode = 'start' | 'morning' | 'evening' | 'summary' | 'history';
 
@@ -74,6 +75,12 @@ const DailySession = () => {
       title: "Session complete",
       description: "Your daily session has been saved",
     });
+    
+    // Increment bonding for daily session completion
+    bondingMeter.incrementBonding(
+      BONDING_INCREMENTS.DAILY_SESSION_COMPLETED,
+      "Daily session completed together"
+    );
   };
 
   const handleViewSession = (session: any) => {

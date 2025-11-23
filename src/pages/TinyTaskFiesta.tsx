@@ -9,6 +9,7 @@ import { TinyTaskFiestaTaskList } from "@/components/TinyTaskFiestaTaskList";
 import { TinyTaskFiestaSummary } from "@/components/TinyTaskFiestaSummary";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Pause, Play } from "lucide-react";
+import { bondingMeter, BONDING_INCREMENTS } from "@/state/bondingMeter";
 
 const TinyTaskFiesta = () => {
   const navigate = useNavigate();
@@ -54,6 +55,11 @@ const TinyTaskFiesta = () => {
     await endSession(activeSession.id);
     // Award XP for completing a fiesta session
     await growth.addXp(2, 'Tiny Task Fiesta completed');
+    // Increment bonding for fiesta completion
+    bondingMeter.incrementBonding(
+      BONDING_INCREMENTS.FIESTA_COMPLETED,
+      "Fiesta fun! Malunita had a blast"
+    );
   };
 
   const handleEndEarly = async () => {

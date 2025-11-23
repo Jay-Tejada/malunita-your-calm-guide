@@ -15,6 +15,7 @@ import { Label } from '@/components/ui/label';
 import { Download, Share2, X, Lock, Unlock, MessageCircle, Mail } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { bondingMeter, BONDING_INCREMENTS } from '@/state/bondingMeter';
 
 interface ShareMalunitaProps {
   open: boolean;
@@ -126,6 +127,12 @@ export const ShareMalunita = ({ open, onClose }: ShareMalunitaProps) => {
       title: "Downloaded!",
       description: "Share card saved to your device.",
     });
+    
+    // Increment bonding for sharing Malunita
+    bondingMeter.incrementBonding(
+      BONDING_INCREMENTS.SNAPSHOT_SHARED,
+      "Sharing Malunita makes her happy!"
+    );
   };
 
   const shareViaWhatsApp = () => {
