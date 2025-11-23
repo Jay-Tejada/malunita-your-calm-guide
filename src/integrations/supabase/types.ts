@@ -312,6 +312,36 @@ export type Database = {
         }
         Relationships: []
       }
+      malunita_backups: {
+        Row: {
+          backup_data: Json
+          backup_name: string | null
+          created_at: string
+          id: string
+          is_auto_save: boolean
+          user_id: string
+          version: number
+        }
+        Insert: {
+          backup_data: Json
+          backup_name?: string | null
+          created_at?: string
+          id?: string
+          is_auto_save?: boolean
+          user_id: string
+          version?: number
+        }
+        Update: {
+          backup_data?: Json
+          backup_name?: string | null
+          created_at?: string
+          id?: string
+          is_auto_save?: boolean
+          user_id?: string
+          version?: number
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           autocategorize_enabled: boolean | null

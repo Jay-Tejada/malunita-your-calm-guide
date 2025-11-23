@@ -26,6 +26,7 @@ import WeeklyInsights from "./pages/WeeklyInsights";
 import TinyTaskFiesta from "./pages/TinyTaskFiesta";
 import Reminders from "./pages/Reminders";
 import HatchingGallery from "./pages/HatchingGallery";
+import Backup from "./pages/Backup";
 
 const queryClient = new QueryClient();
 
@@ -71,6 +72,7 @@ const App = () => {
               <Route path="/tiny-task-fiesta" element={<TinyTaskFiesta />} />
               <Route path="/notifications" element={<Notifications />} />
               <Route path="/reminders" element={<Reminders />} />
+              <Route path="/backup" element={<Backup />} />
               <Route path="/install" element={<Install />} />
               <Route path="/admin" element={<Admin />} />
               <Route path="/trends" element={<Trends />} />

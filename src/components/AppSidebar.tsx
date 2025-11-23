@@ -20,7 +20,8 @@ import {
   Focus,
   Globe,
   Share2,
-  Moon
+  Moon,
+  HardDrive,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAdmin } from "@/hooks/useAdmin";
@@ -241,6 +242,16 @@ export function AppSidebar({ onSettingsClick, onCategoryClick, onFocusModeClick,
                 >
                   <Sparkles className="mr-2 h-4 w-4" />
                   <span>Tiny Task Fiesta</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              <SidebarMenuItem>
+                <SidebarMenuButton 
+                  onClick={() => navigate('/backup')}
+                  className="hover:bg-muted/50"
+                >
+                  <HardDrive className="mr-2 h-4 w-4" />
+                  <span>Backup & Restore</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
 
