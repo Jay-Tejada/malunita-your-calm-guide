@@ -4,10 +4,11 @@ import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Calendar as CalendarIcon, ArrowLeft, Plus, Clock, MapPin, CheckCircle } from "lucide-react";
+import { Calendar as CalendarIcon, ArrowLeft, Plus, Clock, MapPin, CheckCircle, Trash2 } from "lucide-react";
 import { hapticLight, hapticSuccess } from "@/utils/haptics";
 import { format, addDays, startOfWeek, isSameDay, parseISO } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -31,12 +32,13 @@ const Calendar = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [isNewEventDialogOpen, setIsNewEventDialogOpen] = useState(false);
   const [isEditEventDialogOpen, setIsEditEventDialogOpen] = useState(false);
+  const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
   const [newEventTitle, setNewEventTitle] = useState("");
   const [newEventDate, setNewEventDate] = useState("");
   const [newEventTime, setNewEventTime] = useState("");
   const [newEventDescription, setNewEventDescription] = useState("");
-  const { tasks, isLoading, updateTask, createTasks } = useTasks();
+  const { tasks, isLoading, updateTask, createTasks, deleteTask } = useTasks();
   
   // Convert tasks with reminder times to calendar events
   const events = useMemo(() => {
@@ -171,6 +173,36 @@ const Calendar = () => {
       toast({
         title: "Error",
         description: "Failed to update event. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteEvent = async () => {
+    if (!editingEvent) return;
+
+    try {
+      await deleteTask(editingEvent.taskId);
+
+      hapticSuccess();
+      toast({
+        title: "Event deleted",
+        description: "Your calendar event has been removed.",
+      });
+
+      // Reset form
+      setNewEventTitle("");
+      setNewEventDate("");
+      setNewEventTime("");
+      setNewEventDescription("");
+      setEditingEvent(null);
+      setIsEditEventDialogOpen(false);
+      setIsDeleteAlertOpen(false);
+    } catch (error) {
+      console.error('Error deleting event:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete event. Please try again.",
         variant: "destructive",
       });
     }
@@ -487,8 +519,18 @@ const Calendar = () => {
 
             <div className="flex gap-2 pt-2">
               <Button
+                variant="destructive"
+                onClick={() => {
+                  hapticLight();
+                  setIsDeleteAlertOpen(true);
+                }}
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                Delete
+              </Button>
+              <div className="flex-1" />
+              <Button
                 variant="outline"
-                className="flex-1"
                 onClick={() => {
                   hapticLight();
                   setIsEditEventDialogOpen(false);
@@ -498,7 +540,6 @@ const Calendar = () => {
                 Cancel
               </Button>
               <Button
-                className="flex-1"
                 onClick={handleUpdateEvent}
               >
                 Save Changes
@@ -507,6 +548,27 @@ const Calendar = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={isDeleteAlertOpen} onOpenChange={setIsDeleteAlertOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Event</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this event? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => hapticLight()}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteEvent}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
