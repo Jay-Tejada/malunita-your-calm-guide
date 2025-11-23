@@ -102,3 +102,6 @@ verify_jwt = true
 
 [functions.generate-weekly-quests]
 verify_jwt = true
+
+[functions.cluster-tasks]
+verify_jwt = true

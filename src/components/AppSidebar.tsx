@@ -26,6 +26,7 @@ import {
   Palette,
   BookHeart,
   MapIcon,
+  Network,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAdmin } from "@/hooks/useAdmin";
@@ -296,6 +297,16 @@ export function AppSidebar({ onSettingsClick, onCategoryClick, onFocusModeClick,
                 >
                   <Globe className="mr-2 h-4 w-4" />
                   <span>Ambient Worlds</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              <SidebarMenuItem>
+                <SidebarMenuButton 
+                  onClick={() => navigate('/clusters')}
+                  className="hover:bg-muted/50"
+                >
+                  <Network className="mr-2 h-4 w-4" />
+                  <span>Knowledge Clusters</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
 

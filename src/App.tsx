@@ -33,6 +33,7 @@ import Journal from "./pages/Journal";
 import MonthlyInsights from "./pages/MonthlyInsights";
 import Quests from "./pages/Quests";
 import AmbientWorlds from "./pages/AmbientWorlds";
+import Clusters from "./pages/Clusters";
 import { useCutsceneManager } from "./features/cutscenes/useCutsceneManager";
 import { JOURNAL_EVENTS } from "./features/journal/journalEvents";
 
@@ -97,6 +98,7 @@ const App = () => {
               <Route path="/monthly-insights" element={<MonthlyInsights />} />
               <Route path="/quests" element={<Quests />} />
               <Route path="/ambient-worlds" element={<AmbientWorlds />} />
+              <Route path="/clusters" element={<Clusters />} />
               <Route path="/install" element={<Install />} />
               <Route path="/admin" element={<Admin />} />
               <Route path="/trends" element={<Trends />} />
