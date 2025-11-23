@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { logHabitCompletion } from "@/ai/habitPredictor";
+import { useCognitiveLoad } from "@/state/cognitiveLoad";
 
 export interface Task {
   id: string;
@@ -32,6 +33,7 @@ export interface Task {
 export const useTasks = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { recordTaskAdded, recordTaskCompleted, updateOverdueTasks } = useCognitiveLoad();
 
   const { data: tasks, isLoading } = useQuery({
     queryKey: ['tasks'],
@@ -71,6 +73,10 @@ export const useTasks = () => {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
       queryClient.invalidateQueries({ queryKey: ['profile'] });
+      
+      // Record task additions for cognitive load tracking
+      data.forEach(() => recordTaskAdded());
+      
       toast({
         title: "Tasks saved",
         description: `${data.length} task${data.length > 1 ? 's' : ''} created successfully.`,
@@ -102,6 +108,8 @@ export const useTasks = () => {
       
       // Log habit completion when task is marked as completed
       if (data.completed && !data.completed_at) {
+        recordTaskCompleted();
+        
         const category = data.category || data.custom_category_id || 'uncategorized';
         logHabitCompletion(
           data.id,

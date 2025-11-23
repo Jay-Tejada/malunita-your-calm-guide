@@ -18,6 +18,7 @@ import { agendaRouter } from "@/lib/agendaRouter";
 import { clarificationPrompter } from "@/lib/clarificationPrompter";
 import { summaryComposer } from "@/lib/summaryComposer";
 import { useMoodStore, detectMoodFromMessage } from "@/state/moodMachine";
+import { useCognitiveLoad } from "@/state/cognitiveLoad";
 
 interface Message {
   role: 'user' | 'assistant';
@@ -88,6 +89,7 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
   const { profile } = useProfile();
   const { tasks, updateTask, createTasks } = useTasks();
   const { companion } = useCompanionIdentity();
+  const { recordStressedLanguage } = useCognitiveLoad();
   const audioEnabled = profile?.wants_voice_playback ?? true;
   const isMobile = useIsMobile();
 
@@ -694,6 +696,9 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
             
             setTranscribedText(transcribed);
             console.log('📝 Transcribed text:', transcribed);
+
+            // Detect stressed language for cognitive load tracking
+            recordStressedLanguage(transcribed);
 
             // ===========================================================
             // THOUGHT ENGINE 2.0 PIPELINE

@@ -18,6 +18,7 @@ import { DailySessionView } from "@/components/DailySessionView";
 import { FocusMode } from "@/features/focus/FocusMode";
 import { TaskWorldMap } from "@/features/worldmap/TaskWorldMap";
 import { ShareMalunita } from "@/features/social/ShareMalunita";
+import { CognitiveLoadIndicator } from "@/components/CognitiveLoadIndicator";
 import { useAdmin } from "@/hooks/useAdmin";
 import { useTasks } from "@/hooks/useTasks";
 import { useProfile } from "@/hooks/useProfile";
@@ -28,6 +29,7 @@ import { useCompanionIdentity, PersonalityType } from "@/hooks/useCompanionIdent
 import { AppSidebar } from "@/components/AppSidebar";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { startAutoIdleCheck } from "@/state/moodMachine";
+import { startCognitiveLoadMonitoring, useCognitiveLoad } from "@/state/cognitiveLoad";
 
 import { WakeWordIndicator } from "@/components/WakeWordIndicator";
 
@@ -258,6 +260,35 @@ const Index = () => {
     const cleanup = startAutoIdleCheck();
     return cleanup;
   }, []);
+
+  // Start cognitive load monitoring
+  useEffect(() => {
+    const cleanup = startCognitiveLoadMonitoring();
+    return cleanup;
+  }, []);
+
+  // Track overdue tasks for cognitive load
+  const { updateOverdueTasks, recordCategorySwitch } = useCognitiveLoad();
+  useEffect(() => {
+    if (tasks) {
+      const now = new Date();
+      const overdue = tasks.filter(task => 
+        !task.completed && 
+        task.reminder_time && 
+        new Date(task.reminder_time) < now
+      ).length;
+      updateOverdueTasks(overdue);
+    }
+  }, [tasks, updateOverdueTasks]);
+
+  // Track category switches for cognitive load
+  const prevCategoryRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (activeCategory && prevCategoryRef.current && activeCategory !== prevCategoryRef.current) {
+      recordCategorySwitch();
+    }
+    prevCategoryRef.current = activeCategory;
+  }, [activeCategory, recordCategorySwitch]);
 
   // Build complete navigation list including Daily Session
   const allViews = [
@@ -560,6 +591,11 @@ const Index = () => {
             wakeWord={profile?.custom_wake_word}
             detectionTrigger={wakeWordDetected}
           />
+          
+          {/* Cognitive Load Indicator */}
+          {user && !showSettings && !showRunwayReview && !showFocusMode && (
+            <CognitiveLoadIndicator />
+          )}
         </main>
 
         {/* Runway Review Modal */}
