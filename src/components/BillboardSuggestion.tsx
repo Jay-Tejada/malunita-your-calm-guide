@@ -27,12 +27,24 @@ export function BillboardSuggestion({
   const [isVisible, setIsVisible] = useState(true);
   const [isMinimized, setIsMinimized] = useState(false);
 
+  // Auto-hide after 12 seconds
+  useEffect(() => {
+    if (!isVisible || isMinimized || suggestions.length === 0) return;
+
+    const hideTimer = setTimeout(() => {
+      setIsMinimized(true);
+    }, 12000);
+
+    return () => clearTimeout(hideTimer);
+  }, [isVisible, isMinimized, suggestions.length, currentIndex]);
+
+  // Rotate suggestions every 45 seconds if still visible
   useEffect(() => {
     if (!isVisible || isMinimized || suggestions.length === 0) return;
 
     const interval = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % suggestions.length);
-    }, 45000); // Rotate every 45 seconds
+    }, 45000);
 
     return () => clearInterval(interval);
   }, [isVisible, isMinimized, suggestions.length]);
@@ -59,14 +71,14 @@ export function BillboardSuggestion({
     <AnimatePresence mode="wait">
       <motion.div
         key={currentIndex}
-        initial={{ opacity: 0, y: -20 }}
+        initial={{ opacity: 0, y: -30 }}
         animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: 20 }}
-        transition={{ duration: 0.4 }}
-        className="fixed top-4 left-1/2 -translate-x-1/2 z-40 w-full max-w-md px-4"
+        exit={{ opacity: 0, y: -30 }}
+        transition={{ duration: 0.5, ease: "easeOut" }}
+        className="fixed top-20 left-1/2 -translate-x-1/2 z-40 w-full max-w-lg px-4"
       >
-        <div className="bg-card/95 backdrop-blur-sm border border-border rounded-[10px] shadow-lg overflow-hidden">
-          <div className="p-4 space-y-3">
+        <div className="bg-card/95 backdrop-blur-md border border-primary/20 rounded-2xl shadow-xl overflow-hidden">
+          <div className="p-5 space-y-4">
             <div className="flex items-start gap-3">
               <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
                 <Sparkles className="w-4 h-4 text-primary" />

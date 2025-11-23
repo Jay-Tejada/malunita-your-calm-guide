@@ -1,255 +1,137 @@
 import { useState } from "react";
-import { motion } from "framer-motion";
-import { Button } from "@/components/ui/button";
-import { ChevronRight, Sparkles } from "lucide-react";
 import { useTasks } from "@/hooks/useTasks";
-import { TaskCard } from "@/components/TaskCard";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
-
-type CanvasMode = "morning" | "working" | "overloaded";
+import { Sparkles, Mic } from "lucide-react";
 
 interface CleanCanvasProps {
   onVoiceInput?: () => void;
+  onShowBillboard?: () => void;
 }
 
-export function CleanCanvas({ onVoiceInput }: CleanCanvasProps) {
-  const { tasks, updateTask, createTasks } = useTasks();
+export function CleanCanvas({ onVoiceInput, onShowBillboard }: CleanCanvasProps) {
+  const { tasks, createTasks, updateTask } = useTasks();
   const { toast } = useToast();
   const navigate = useNavigate();
   const [taskInput, setTaskInput] = useState("");
 
-  // Determine canvas mode
-  const incompleteTasks = tasks?.filter(t => !t.completed) || [];
-  const taskCount = incompleteTasks.length;
-  
-  let canvasMode: CanvasMode = "working";
-  const hour = new Date().getHours();
-  
-  if (hour >= 5 && hour < 11 && taskCount === 0) {
-    canvasMode = "morning";
-  } else if (taskCount > 30) {
-    canvasMode = "overloaded";
-  }
-
-  // Curated task slices
-  const topPriorities = incompleteTasks.filter(t => t.is_focus).slice(0, 2);
-  const quickWins = incompleteTasks
-    .filter(t => !t.is_focus && !t.has_reminder)
-    .slice(0, 2);
-  const followUps = incompleteTasks
-    .filter(t => !t.is_focus && t.has_reminder)
-    .slice(0, 1);
+  // Get today's tasks (up to 5)
+  const todayTasks = (tasks || [])
+    .filter(t => !t.completed)
+    .slice(0, 5);
 
   const handleAddTask = async () => {
     if (!taskInput.trim()) return;
-
-    await createTasks([{
-      title: taskInput.trim(),
-      category: "inbox",
-      input_method: "text",
-    }]);
-
-    setTaskInput("");
-    toast({
-      title: "Task added",
-      description: taskInput.trim(),
-    });
+    
+    try {
+      await createTasks([{
+        title: taskInput,
+        category: "inbox",
+      }]);
+      setTaskInput("");
+      toast({
+        title: "Task added",
+        description: "Your task has been captured",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to add task",
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleTaskComplete = (id: string) => {
+  const handleTaskComplete = async (id: string) => {
     const task = tasks?.find(t => t.id === id);
-    if (!task) return;
-
-    updateTask({
-      id,
-      updates: {
-        completed: !task.completed,
-        completed_at: !task.completed ? new Date().toISOString() : null,
-      },
-    });
+    if (task) {
+      await updateTask({
+        id,
+        updates: {
+          completed: !task.completed,
+          completed_at: !task.completed ? new Date().toISOString() : null,
+        },
+      });
+    }
   };
 
   return (
-    <div className="max-w-3xl mx-auto px-6 py-12 space-y-8">
-      {/* Morning State */}
-      {canvasMode === "morning" && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center space-y-6 py-12"
-        >
-          <div className="space-y-3">
-            <h2 className="text-3xl font-medium font-mono text-foreground">
-              Good morning ☀️
-            </h2>
-            <p className="text-lg text-muted-foreground max-w-md mx-auto">
-              What's on your mind today?
-            </p>
-          </div>
-          <Button
-            onClick={() => navigate("/daily-session")}
-            variant="outline"
-            className="group"
-          >
-            <Sparkles className="w-4 h-4 mr-2 group-hover:text-primary transition-colors" />
-            Want help choosing 3 priorities?
-          </Button>
-        </motion.div>
-      )}
-
-      {/* Overloaded State */}
-      {canvasMode === "overloaded" && (
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-amber-500/10 border border-amber-500/30 rounded-[10px] p-4 flex items-center justify-between"
-        >
-          <div className="space-y-1">
-            <p className="text-sm font-medium text-foreground">
-              Feeling overloaded?
-            </p>
-            <p className="text-xs text-muted-foreground">
-              You have {taskCount} tasks. Want to focus on just 5?
-            </p>
-          </div>
-          <Button
-            onClick={() => navigate("/focus")}
-            size="sm"
-            variant="default"
-          >
-            Focus Mode
-          </Button>
-        </motion.div>
-      )}
-
-      {/* Working State - Curated Tasks */}
-      {canvasMode === "working" && (
-        <div className="space-y-6">
-          {/* Top Priorities */}
-          {topPriorities.length > 0 && (
-            <section className="space-y-3">
-              <div className="flex items-center justify-between">
-                <h3 className="text-xs uppercase tracking-wide text-muted-foreground font-medium">
-                  Top Priorities
-                </h3>
-                <button
-                  onClick={() => navigate("/top-priorities")}
-                  className="text-xs text-primary hover:underline flex items-center gap-1"
-                >
-                  View all <ChevronRight className="w-3 h-3" />
-                </button>
-              </div>
-              <div className="space-y-1">
-                {topPriorities.map((task) => (
-                  <TaskCard
-                    key={task.id}
-                    id={task.id}
-                    title={task.title}
-                    context={task.context || undefined}
-                    completed={task.completed || false}
-                    onToggle={() => handleTaskComplete(task.id)}
-                    goalAligned={task.goal_aligned}
-                    alignmentReason={task.alignment_reason}
-                  />
-                ))}
-              </div>
-            </section>
-          )}
-
-          {/* Quick Wins */}
-          {quickWins.length > 0 && (
-            <section className="space-y-3">
-              <div className="flex items-center justify-between">
-                <h3 className="text-xs uppercase tracking-wide text-muted-foreground font-medium">
-                  Quick Wins
-                </h3>
-                <button
-                  onClick={() => navigate("/quick-wins")}
-                  className="text-xs text-primary hover:underline flex items-center gap-1"
-                >
-                  View all <ChevronRight className="w-3 h-3" />
-                </button>
-              </div>
-              <div className="space-y-1">
-                {quickWins.map((task) => (
-                  <TaskCard
-                    key={task.id}
-                    id={task.id}
-                    title={task.title}
-                    context={task.context || undefined}
-                    completed={task.completed || false}
-                    onToggle={() => handleTaskComplete(task.id)}
-                    goalAligned={task.goal_aligned}
-                    alignmentReason={task.alignment_reason}
-                  />
-                ))}
-              </div>
-            </section>
-          )}
-
-          {/* Follow Ups */}
-          {followUps.length > 0 && (
-            <section className="space-y-3">
-              <div className="flex items-center justify-between">
-                <h3 className="text-xs uppercase tracking-wide text-muted-foreground font-medium">
-                  Follow Ups
-                </h3>
-                <button
-                  onClick={() => navigate("/follow-ups")}
-                  className="text-xs text-primary hover:underline flex items-center gap-1"
-                >
-                  View all <ChevronRight className="w-3 h-3" />
-                </button>
-              </div>
-              <div className="space-y-1">
-                {followUps.map((task) => (
-                  <TaskCard
-                    key={task.id}
-                    id={task.id}
-                    title={task.title}
-                    context={task.context || undefined}
-                    completed={task.completed || false}
-                    onToggle={() => handleTaskComplete(task.id)}
-                    goalAligned={task.goal_aligned}
-                    alignmentReason={task.alignment_reason}
-                  />
-                ))}
-              </div>
-            </section>
-          )}
-        </div>
-      )}
-
-      {/* Central Input Box */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.2 }}
-        className="max-w-2xl mx-auto"
-      >
-        <div className="bg-card border border-input rounded-[10px] px-5 py-4 flex items-center gap-4 shadow-sm hover:shadow-md transition-all focus-within:border-primary focus-within:shadow-md">
-          <span className="text-muted-foreground text-xl">+</span>
-          <input
-            type="text"
-            placeholder="Type a task or talk to Malunita…"
+    <div className="max-w-4xl mx-auto px-4 py-12 space-y-12">
+      
+      {/* Central Input */}
+      <div className="flex items-center gap-2 max-w-2xl mx-auto">
+        <div className="relative flex-1">
+          <Input
             value={taskInput}
             onChange={(e) => setTaskInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") handleAddTask();
-            }}
-            className="flex-1 bg-transparent border-none outline-none text-base placeholder:text-muted-foreground"
+            onKeyDown={(e) => e.key === "Enter" && handleAddTask()}
+            placeholder="Type a thought or task, or talk to Malunita…"
+            className="h-14 text-base pr-12 rounded-xl border-border/50 focus:border-primary/50"
           />
           <Button
-            size="sm"
+            onClick={onShowBillboard}
+            size="icon"
             variant="ghost"
-            onClick={onVoiceInput}
-            className="shrink-0"
+            className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8"
           >
-            <Sparkles className="w-4 h-4" />
+            <Sparkles className="w-4 h-4 text-primary" />
           </Button>
         </div>
-      </motion.div>
+        {onVoiceInput && (
+          <Button
+            onClick={onVoiceInput}
+            size="lg"
+            variant="outline"
+            className="h-14 px-4 rounded-xl"
+          >
+            <Mic className="w-5 h-5" />
+          </Button>
+        )}
+      </div>
+
+      {/* Today's Tasks Preview */}
+      <div className="max-w-2xl mx-auto space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-medium text-foreground">Today</h2>
+          {todayTasks.length > 0 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate("/inbox")}
+              className="text-sm text-muted-foreground hover:text-foreground"
+            >
+              View all
+            </Button>
+          )}
+        </div>
+
+        {todayTasks.length === 0 ? (
+          <p className="text-sm text-muted-foreground text-center py-8">
+            No tasks for today yet. Capture the first one above.
+          </p>
+        ) : (
+          <div className="space-y-2">
+            {todayTasks.map((task) => (
+              <div
+                key={task.id}
+                className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted/50 transition-colors group"
+              >
+                <input
+                  type="checkbox"
+                  checked={task.completed || false}
+                  onChange={() => handleTaskComplete(task.id)}
+                  className="w-4 h-4 rounded border-border"
+                />
+                <span className={`flex-1 text-sm ${task.completed ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
+                  {task.title}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

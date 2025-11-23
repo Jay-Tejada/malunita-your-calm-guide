@@ -145,6 +145,7 @@ const Index = () => {
   const [loading, setLoading] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
   const [showCompanionHub, setShowCompanionHub] = useState(false);
+  const [showBillboardSuggestions, setShowBillboardSuggestions] = useState(false);
   const [wakeWordDetected, setWakeWordDetected] = useState(0);
   const malunitaVoiceRef = useRef<MalunitaVoiceRef>(null);
   const { currentWorld } = useAmbientWorld();
@@ -390,52 +391,36 @@ const Index = () => {
             {/* Floating Reminder */}
             <FloatingReminder />
 
-            {/* Billboard Suggestions */}
-            {billboardSuggestions.length > 0 && (
-              <BillboardSuggestion
-                suggestions={billboardSuggestions}
-                onAddToToday={(taskId) => {
-                  if (taskId) {
-                    updateTask({
-                      id: taskId,
-                      updates: { is_focus: true },
-                    });
-                    toast({
-                      title: "Added to priorities",
-                      description: "Task marked as top priority",
-                    });
-                  }
-                }}
-                onMarkDone={(taskId) => {
-                  if (taskId) {
-                    updateTask({
-                      id: taskId,
-                      updates: { 
-                        completed: true,
-                        completed_at: new Date().toISOString(),
-                      },
-                    });
-                    toast({
-                      title: "Task completed",
-                      description: "Great work!",
-                    });
-                  }
-                }}
-                onLater={() => {
-                  toast({
-                    title: "Suggestion dismissed",
-                    description: "We'll remind you later",
-                  });
-                }}
-              />
-            )}
-
             {/* Main Clean Canvas */}
             <div className="flex-1 overflow-y-auto pt-16">
               <CleanCanvas 
                 onVoiceInput={() => malunitaVoiceRef.current?.startRecording()}
+                onShowBillboard={() => setShowBillboardSuggestions(true)}
               />
             </div>
+
+            {/* Billboard Suggestions */}
+            {showBillboardSuggestions && billboardSuggestions.length > 0 && (
+              <BillboardSuggestion
+                suggestions={billboardSuggestions}
+                onAddToToday={(taskId) => {
+                  if (taskId) {
+                    const task = tasks.find(t => t.id === taskId);
+                    if (task) {
+                      updateTask({ id: taskId, updates: { is_focus: true, focus_date: new Date().toISOString().split('T')[0] } });
+                    }
+                  }
+                  setShowBillboardSuggestions(false);
+                }}
+                onMarkDone={(taskId) => {
+                  if (taskId) {
+                    updateTask({ id: taskId, updates: { completed: true, completed_at: new Date().toISOString() } });
+                  }
+                  setShowBillboardSuggestions(false);
+                }}
+                onLater={() => setShowBillboardSuggestions(false)}
+              />
+            )}
 
             {/* Companion Widget - Bottom Right */}
             <CompanionWidget 
