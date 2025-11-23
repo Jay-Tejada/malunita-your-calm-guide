@@ -6,6 +6,7 @@ import { useLevelSystem } from '@/state/levelSystem';
 import { useMoodStore } from '@/state/moodMachine';
 import { CreatureSprite } from '@/components/CreatureSprite';
 import { useToast } from '@/hooks/use-toast';
+import { questTracker } from '@/lib/questTracker';
 
 interface BounceGameProps {
   onComplete: () => void;
@@ -21,6 +22,11 @@ export const BounceGame = ({ onComplete }: BounceGameProps) => {
   const mood = useMoodStore((state) => state.mood);
   const { toast } = useToast();
   const animationFrameRef = useRef<number>();
+  
+  // Track quest on mount
+  useEffect(() => {
+    questTracker.trackMiniGame();
+  }, []);
 
   // Mood affects bounce speed
   const bounceSpeed = mood === 'excited' ? 0.08 : mood === 'sleepy' ? 0.03 : 0.05;

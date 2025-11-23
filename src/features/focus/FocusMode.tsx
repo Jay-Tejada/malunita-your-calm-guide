@@ -12,6 +12,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Play, Pause, X, Volume2, VolumeX } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { playSfx } from '@/utils/sound';
+import { questTracker } from '@/lib/questTracker';
 
 interface FocusModeProps {
   onClose: () => void;
@@ -117,6 +118,9 @@ export const FocusMode = ({ onClose }: FocusModeProps) => {
     updateMood('neutral');
     messageQueueRef.current.enqueue("Let's focus together!");
     playSfx('happy', true);
+    
+    // Track quest progress for focus session
+    questTracker.trackFocusSession();
   };
 
   const resumeSession = () => {

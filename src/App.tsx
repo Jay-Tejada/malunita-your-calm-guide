@@ -10,6 +10,7 @@ import { AnimatePresence } from "framer-motion";
 import { useRitualTrigger } from "@/hooks/useRitualTrigger";
 import { MorningRitual } from "@/features/rituals/MorningRitual";
 import { EveningRitual } from "@/features/rituals/EveningRitual";
+import { questTracker } from "@/lib/questTracker";
 import Index from "./pages/Index";
 import Install from "./pages/Install";
 import NotFound from "./pages/NotFound";
@@ -46,6 +47,9 @@ const App = () => {
     
     // Create journal entry for ritual completion
     JOURNAL_EVENTS.RITUAL_COMPLETE(type);
+    
+    // Track quest progress for ritual streak
+    questTracker.trackRitualStreak();
   };
 
   // Initialize emotional memory monitoring on app start
