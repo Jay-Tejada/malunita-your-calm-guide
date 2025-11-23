@@ -33,6 +33,8 @@ import { useWakeWord } from "@/hooks/useWakeWord";
 import { useWorkflowRituals } from "@/hooks/useWorkflowRituals";
 import { useCompanionIdentity, PersonalityType } from "@/hooks/useCompanionIdentity";
 import { AppSidebar } from "@/components/AppSidebar";
+import { DailyIntelligence } from "@/components/DailyIntelligence";
+import { CompanionAvatar } from "@/components/companion/CompanionAvatar";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { startAutoIdleCheck } from "@/state/moodMachine";
 import { startCognitiveLoadMonitoring, useCognitiveLoad } from "@/state/cognitiveLoad";
@@ -55,7 +57,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useTheme } from "next-themes";
 
 const CustomSidebarTrigger = ({ hasUrgentTasks }: { hasUrgentTasks: boolean }) => {
-  const { toggleSidebar } = useSidebar();
+  const { open, setOpen } = useSidebar();
   const { theme, setTheme } = useTheme();
   const { toast } = useToast();
   const [pressTimer, setPressTimer] = useState<NodeJS.Timeout | null>(null);
@@ -98,7 +100,7 @@ const CustomSidebarTrigger = ({ hasUrgentTasks }: { hasUrgentTasks: boolean }) =
       if ('vibrate' in navigator) {
         navigator.vibrate(10);
       }
-      toggleSidebar();
+      setOpen(!open);
     }
     
     setLongPressTriggered(false);
@@ -598,20 +600,7 @@ const Index = () => {
 
           {/* Main Content Area */}
           <div className="flex-1 flex flex-col px-4 pt-16 pb-32 overflow-y-auto">
-            {!activeCategory && !showTodaysFocus && !showDailySession ? (
-              // Default: Voice Orb Centered + Companion
-              <div className="flex flex-col items-center justify-center min-h-[70vh] w-full">
-                <MalunitaVoice 
-                  ref={malunitaVoiceRef} 
-                  onSaveNote={handleSaveNote}
-                  onPlanningModeActivated={handlePlanningMode}
-                  onReflectionModeActivated={handleReflectionMode}
-                  onOrbReflectionTrigger={enableOrbReflectionTrigger ? () => setShowRunwayReview(true) : undefined}
-                  onTasksCreated={handleTaskCreated}
-                  taskStreak={taskStreak}
-                />
-              </div>
-            ) : showDailySession ? (
+            {showDailySession ? (
               // Daily Session View
               <div className="py-8 pb-48">
                 <DailySessionView 
@@ -632,6 +621,56 @@ const Index = () => {
                   hasNext={hasNextView}
                 />
               </div>
+            ) : !activeCategory && !showTodaysFocus && !showDailySession ? (
+              // TODAY PAGE (DEFAULT HOME)
+              <div className="max-w-5xl mx-auto py-8 space-y-6">
+                {/* Daily Intelligence Panel */}
+                <DailyIntelligence 
+                  topPriorities={tasks.filter(t => t.is_focus && !t.completed).slice(0, 3)}
+                  followUps={[]}
+                  quickWins={tasks.filter(t => !t.completed).slice(0, 3)}
+                />
+
+                {/* Today Tasks Section */}
+                <div className="space-y-3">
+                  <h2 className="text-xl font-medium font-mono">Today</h2>
+                  <TaskList category="today" />
+                </div>
+
+                {/* Quick Add Input */}
+                <div className="sticky bottom-20 bg-background/95 backdrop-blur-sm border-t border-border pt-4 pb-6">
+                  <div className="bg-card border border-input rounded-[10px] px-4 py-3 flex items-center gap-3 shadow-sm hover:shadow-md transition-shadow">
+                    <span className="text-muted-foreground text-lg">+</span>
+                    <input 
+                      type="text" 
+                      placeholder="Type a task or talk to Malunita…"
+                      className="flex-1 bg-transparent border-none outline-none text-sm"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && e.currentTarget.value.trim()) {
+                          // Handle task creation
+                          e.currentTarget.value = '';
+                        }
+                      }}
+                    />
+                  </div>
+                </div>
+
+                {/* Category Filter Chips */}
+                <div className="flex gap-2 flex-wrap pb-6">
+                  {['All', 'Work', 'Home', 'Gym'].map((cat) => (
+                    <button 
+                      key={cat}
+                      className="px-3 py-1.5 rounded-full text-xs border border-border hover:bg-muted transition-colors"
+                      onClick={() => {
+                        if (cat === 'All') setActiveCategory(null);
+                        else setActiveCategory(cat.toLowerCase());
+                      }}
+                    >
+                      {cat}
+                    </button>
+                  ))}
+                </div>
+              </div>
             ) : showTodaysFocus ? (
               // Today's Focus View
               <div className="py-8 pb-48">
@@ -641,23 +680,17 @@ const Index = () => {
                 </div>
               </div>
             ) : null}
-            
-            {/* Always show voice orb when viewing tasks or focus */}
-            {(activeCategory || showTodaysFocus || showDailySession) && (
-              <div className="fixed bottom-0 left-0 right-0 flex justify-center pb-8 pointer-events-none" style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 2rem)' }}>
-                <div className="pointer-events-auto">
-                  <MalunitaVoice 
-                    ref={malunitaVoiceRef} 
-                    onSaveNote={handleSaveNote}
-                    onPlanningModeActivated={handlePlanningMode}
-                    onReflectionModeActivated={handleReflectionMode}
-                    onOrbReflectionTrigger={enableOrbReflectionTrigger ? () => setShowRunwayReview(true) : undefined}
-                    onTasksCreated={handleTaskCreated}
-                    taskStreak={taskStreak}
-                  />
-                </div>
-              </div>
-            )}
+          </div>
+
+          {/* Mini Companion - Bottom Right Corner */}
+          <div className="fixed bottom-8 right-8 z-30">
+            <div 
+              className="cursor-pointer transition-transform hover:scale-105"
+              onClick={() => setShowSettings(true)}
+              style={{ width: '80px', height: '80px' }}
+            >
+              <CompanionAvatar mode="idle" />
+            </div>
           </div>
 
           {/* Smart Reflection Prompt */}

@@ -1,33 +1,25 @@
 import React from "react";
 import { 
   Home, 
-  Briefcase, 
-  Dumbbell, 
-  FolderKanban, 
   Inbox, 
-  Tag, 
+  Calendar, 
+  FolderKanban,
+  Briefcase, 
+  Dumbbell,
   Settings, 
   Shield, 
-  ListTodo, 
   LogOut,
-  CheckSquare,
-  Target,
-  Sun,
-  TrendingUp,
   Sparkles,
-  Bell,
-  Trophy,
-  Camera,
-  Focus,
-  Globe,
-  Share2,
-  Moon,
-  HardDrive,
   Palette,
-  BookHeart,
-  MapIcon,
+  Globe,
+  Wand2,
+  TrendingUp,
+  BarChart3,
   Network,
-  Clock,
+  Heart,
+  Moon,
+  Focus,
+  ChevronRight,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAdmin } from "@/hooks/useAdmin";
@@ -46,6 +38,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Separator } from "@/components/ui/separator";
 
 interface AppSidebarProps {
@@ -59,22 +52,24 @@ interface AppSidebarProps {
 }
 
 const ICON_MAP: Record<string, React.ComponentType<any>> = {
-  Tag, Home, Briefcase, Dumbbell, FolderKanban, Inbox
+  Home, Briefcase, Dumbbell, FolderKanban, Inbox
 };
 
-const defaultCategories = [
-  { label: "Inbox", icon: Inbox, path: "/inbox" },
-  { label: "Projects", icon: FolderKanban, path: "/projects" },
-  { label: "Work", icon: Briefcase, path: "/work" },
-  { label: "Home", icon: Home, path: "/home" },
-  { label: "Gym", icon: Dumbbell, path: "/gym" },
-];
-
-export function AppSidebar({ onSettingsClick, onCategoryClick, onFocusModeClick, onWorldMapClick, onShareMalunitaClick, onDreamModeClick, activeCategory }: AppSidebarProps) {
+export function AppSidebar({ 
+  onSettingsClick, 
+  onCategoryClick, 
+  onFocusModeClick, 
+  onWorldMapClick, 
+  onDreamModeClick,
+  activeCategory 
+}: AppSidebarProps) {
   const navigate = useNavigate();
   const { isAdmin } = useAdmin();
   const { categories: customCategories } = useCustomCategories();
   const { toast } = useToast();
+  const [companionHubOpen, setCompanionHubOpen] = React.useState(false);
+  const [insightsHubOpen, setInsightsHubOpen] = React.useState(false);
+  const [feelingsHubOpen, setFeelingsHubOpen] = React.useState(false);
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -84,287 +79,249 @@ export function AppSidebar({ onSettingsClick, onCategoryClick, onFocusModeClick,
     });
   };
 
+  const isActive = (category: string) => activeCategory === category;
+
   return (
     <Sidebar
-      className="w-64 animate-slide-in-left"
+      className="w-64"
       collapsible="offcanvas"
     >
-      <SidebarContent className="bg-card">
+      <SidebarContent className="bg-sidebar-bg">
         {/* Logo */}
-        <div className="p-4">
-          <h1 className="text-xl font-light tracking-tight text-foreground">
+        <div className="p-5">
+          <h1 className="text-xl font-medium tracking-tight text-foreground font-mono">
             malunita
           </h1>
         </div>
 
-        <Separator />
+        <Separator className="opacity-50" />
 
-        {/* Default Categories */}
+        {/* Main Navigation */}
         <SidebarGroup>
-          <SidebarGroupLabel>
-            Categories
-          </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {defaultCategories.map((category) => (
-                <SidebarMenuItem key={category.path}>
-                  <SidebarMenuButton 
-                    onClick={() => onCategoryClick(category.path.replace('/', '') || 'inbox')}
-                    className={activeCategory === (category.path.replace('/', '') || 'inbox') ? 'bg-muted text-primary font-medium' : 'hover:bg-muted/50'}
-                  >
-                    <category.icon className="mr-2 h-4 w-4" />
-                    <span>{category.label}</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+              <SidebarMenuItem>
+                <SidebarMenuButton 
+                  onClick={() => onCategoryClick('inbox')}
+                  className={isActive('inbox') ? 'bg-sidebar-active text-primary font-medium' : 'hover:bg-sidebar-active/50'}
+                >
+                  <Inbox className="w-4 h-4" />
+                  <span>Inbox</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              <SidebarMenuItem>
+                <SidebarMenuButton 
+                  onClick={() => onCategoryClick('today')}
+                  className={isActive('today') ? 'bg-sidebar-active text-primary font-medium' : 'hover:bg-sidebar-active/50'}
+                >
+                  <Home className="w-4 h-4" />
+                  <span>Today</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              <SidebarMenuItem>
+                <SidebarMenuButton 
+                  onClick={() => onCategoryClick('upcoming')}
+                  className={isActive('upcoming') ? 'bg-sidebar-active text-primary font-medium' : 'hover:bg-sidebar-active/50'}
+                >
+                  <Calendar className="w-4 h-4" />
+                  <span>Upcoming</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              <SidebarMenuItem>
+                <SidebarMenuButton 
+                  onClick={() => onCategoryClick('projects')}
+                  className={isActive('projects') ? 'bg-sidebar-active text-primary font-medium' : 'hover:bg-sidebar-active/50'}
+                >
+                  <FolderKanban className="w-4 h-4" />
+                  <span>Projects</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Custom Categories */}
-        {customCategories && customCategories.length > 0 && (
-          <>
-            <Separator />
-            <SidebarGroup>
-              <SidebarGroupLabel>
-                Custom
-              </SidebarGroupLabel>
+        {/* Spaces (Dynamic Categories) */}
+        <Separator className="opacity-50" />
+        <SidebarGroup>
+          <SidebarGroupLabel className="text-xs uppercase tracking-wide text-muted-foreground px-3">
+            Spaces
+          </SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton 
+                      onClick={() => onCategoryClick('work')}
+                      className={isActive('work') ? 'bg-sidebar-active text-primary font-medium' : 'hover:bg-sidebar-active/50'}
+                    >
+                      <Briefcase className="w-4 h-4" />
+                      <span>Work</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+
+                  <SidebarMenuItem>
+                    <SidebarMenuButton 
+                      onClick={() => onCategoryClick('home')}
+                      className={isActive('home') ? 'bg-sidebar-active text-primary font-medium' : 'hover:bg-sidebar-active/50'}
+                    >
+                      <Home className="w-4 h-4" />
+                      <span>Home</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+
+                  <SidebarMenuItem>
+                    <SidebarMenuButton 
+                      onClick={() => onCategoryClick('gym')}
+                      className={isActive('gym') ? 'bg-sidebar-active text-primary font-medium' : 'hover:bg-sidebar-active/50'}
+                    >
+                      <Dumbbell className="w-4 h-4" />
+                      <span>Gym</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+
                   {customCategories?.map((category) => (
                     <SidebarMenuItem key={category.id}>
                       <SidebarMenuButton
                         onClick={() => onCategoryClick(`custom-${category.id}`)}
-                        className={activeCategory === `custom-${category.id}` ? 'bg-muted text-primary font-medium' : 'hover:bg-muted/50'}
+                        className={isActive(`custom-${category.id}`) ? 'bg-sidebar-active text-primary font-medium' : 'hover:bg-sidebar-active/50'}
                       >
                         <div 
-                          className="w-2 h-2 rounded-full mr-3"
+                          className="w-2 h-2 rounded-full"
                           style={{ backgroundColor: category.color }}
                         />
-                        {category.icon && ICON_MAP[category.icon] && (
-                          React.createElement(ICON_MAP[category.icon], { 
-                            className: "mr-2 h-4 w-4",
-                            style: { color: category.color }
-                          })
-                        )}
                         <span>{category.name}</span>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                   ))}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
-          </>
-        )}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
 
-        <Separator />
+        <Separator className="opacity-50" />
 
-        {/* Actions */}
+        {/* Collapsible Groups */}
+            {/* Companion Hub */}
+            <Collapsible open={companionHubOpen} onOpenChange={setCompanionHubOpen}>
+              <SidebarGroup>
+                <CollapsibleTrigger className="flex items-center justify-between w-full px-3 py-2 text-xs uppercase tracking-wide text-muted-foreground hover:bg-sidebar-active/30 rounded-md transition-colors">
+                  <span>Companion Hub</span>
+                  <ChevronRight className={`w-4 h-4 transition-transform ${companionHubOpen ? 'rotate-90' : ''}`} />
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <SidebarGroupContent>
+                    <SidebarMenu>
+                      <SidebarMenuItem>
+                        <SidebarMenuButton onClick={() => navigate('/customization')} className="hover:bg-sidebar-active/50">
+                          <Palette className="w-4 h-4" />
+                          <span>Customize Companion</span>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                      <SidebarMenuItem>
+                        <SidebarMenuButton onClick={() => navigate('/hatching-gallery')} className="hover:bg-sidebar-active/50">
+                          <Sparkles className="w-4 h-4" />
+                          <span>Animations</span>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                      <SidebarMenuItem>
+                        <SidebarMenuButton onClick={() => navigate('/ambient-worlds')} className="hover:bg-sidebar-active/50">
+                          <Globe className="w-4 h-4" />
+                          <span>Ambient Worlds</span>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                      <SidebarMenuItem>
+                        <SidebarMenuButton onClick={() => navigate('/timetravel')} className="hover:bg-sidebar-active/50">
+                          <Wand2 className="w-4 h-4" />
+                          <span>Future Evolutions</span>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    </SidebarMenu>
+                  </SidebarGroupContent>
+                </CollapsibleContent>
+              </SidebarGroup>
+            </Collapsible>
+
+            {/* Insights Hub */}
+            <Collapsible open={insightsHubOpen} onOpenChange={setInsightsHubOpen}>
+              <SidebarGroup>
+                <CollapsibleTrigger className="flex items-center justify-between w-full px-3 py-2 text-xs uppercase tracking-wide text-muted-foreground hover:bg-sidebar-active/30 rounded-md transition-colors">
+                  <span>Insights Hub</span>
+                  <ChevronRight className={`w-4 h-4 transition-transform ${insightsHubOpen ? 'rotate-90' : ''}`} />
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <SidebarGroupContent>
+                    <SidebarMenu>
+                      <SidebarMenuItem>
+                        <SidebarMenuButton onClick={() => navigate('/weekly-insights')} className="hover:bg-sidebar-active/50">
+                          <TrendingUp className="w-4 h-4" />
+                          <span>Weekly Insights</span>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                      <SidebarMenuItem>
+                        <SidebarMenuButton onClick={() => navigate('/monthly-insights')} className="hover:bg-sidebar-active/50">
+                          <BarChart3 className="w-4 h-4" />
+                          <span>Monthly Insights</span>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                      <SidebarMenuItem>
+                        <SidebarMenuButton onClick={() => navigate('/clusters')} className="hover:bg-sidebar-active/50">
+                          <Network className="w-4 h-4" />
+                          <span>Knowledge Clusters</span>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    </SidebarMenu>
+                  </SidebarGroupContent>
+                </CollapsibleContent>
+              </SidebarGroup>
+            </Collapsible>
+
+            {/* Feelings Hub */}
+            <Collapsible open={feelingsHubOpen} onOpenChange={setFeelingsHubOpen}>
+              <SidebarGroup>
+                <CollapsibleTrigger className="flex items-center justify-between w-full px-3 py-2 text-xs uppercase tracking-wide text-muted-foreground hover:bg-sidebar-active/30 rounded-md transition-colors">
+                  <span>Feelings Hub</span>
+                  <ChevronRight className={`w-4 h-4 transition-transform ${feelingsHubOpen ? 'rotate-90' : ''}`} />
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <SidebarGroupContent>
+                    <SidebarMenu>
+                      <SidebarMenuItem>
+                        <SidebarMenuButton onClick={() => navigate('/journal')} className="hover:bg-sidebar-active/50">
+                          <Heart className="w-4 h-4" />
+                          <span>Mood Tracker</span>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                      <SidebarMenuItem>
+                        <SidebarMenuButton onClick={() => navigate('/daily-session')} className="hover:bg-sidebar-active/50">
+                          <Focus className="w-4 h-4" />
+                          <span>Reflection Mode</span>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                      {onDreamModeClick && (
+                        <SidebarMenuItem>
+                          <SidebarMenuButton onClick={onDreamModeClick} className="hover:bg-sidebar-active/50">
+                            <Moon className="w-4 h-4" />
+                            <span>Dream Mode</span>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      )}
+                    </SidebarMenu>
+                  </SidebarGroupContent>
+                </CollapsibleContent>
+              </SidebarGroup>
+            </Collapsible>
+
+        <Separator className="opacity-50 mt-auto" />
+
+        {/* Settings & Sign Out */}
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton 
-                  onClick={() => onCategoryClick('daily-session')}
-                  className="hover:bg-muted/50"
-                >
-                  <Sun className="mr-2 h-4 w-4" />
-                  <span>Daily Session</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-
-              {onFocusModeClick && (
-                <SidebarMenuItem>
-                  <SidebarMenuButton 
-                    onClick={onFocusModeClick}
-                    className="hover:bg-muted/50"
-                  >
-                    <Focus className="mr-2 h-4 w-4" />
-                    <span>Focus Mode</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              )}
-
-              {onWorldMapClick && (
-                <SidebarMenuItem>
-                  <SidebarMenuButton 
-                    onClick={onWorldMapClick}
-                    className="hover:bg-muted/50"
-                  >
-                    <MapIcon className="mr-2 h-4 w-4" />
-                    <span>Task Universe</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              )}
-
-              {onShareMalunitaClick && (
-                <SidebarMenuItem>
-                  <SidebarMenuButton 
-                    onClick={onShareMalunitaClick}
-                    className="hover:bg-muted/50"
-                  >
-                    <Share2 className="mr-2 h-4 w-4" />
-                    <span>Share Malunita</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              )}
-
-              {onDreamModeClick && (
-                <SidebarMenuItem>
-                  <SidebarMenuButton 
-                    onClick={onDreamModeClick}
-                    className="hover:bg-muted/50"
-                  >
-                    <Moon className="mr-2 h-4 w-4" />
-                    <span>Dream Mode</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              )}
-
-              <SidebarMenuItem>
-                <SidebarMenuButton 
-                  onClick={() => navigate('/weekly-insights')}
-                  className="hover:bg-muted/50"
-                >
-                  <TrendingUp className="mr-2 h-4 w-4" />
-                  <span>Weekly Insights</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-
-              <SidebarMenuItem>
-                <SidebarMenuButton 
-                  onClick={() => navigate('/hatching-gallery')}
-                  className="hover:bg-muted/50"
-                >
-                  <Camera className="mr-2 h-4 w-4" />
-                  <span>Hatching Memories</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-
-              <SidebarMenuItem>
-                <SidebarMenuButton 
-                  onClick={() => navigate('/tiny-task-fiesta')}
-                  className="hover:bg-muted/50"
-                >
-                  <Sparkles className="mr-2 h-4 w-4" />
-                  <span>Tiny Task Fiesta</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-
-              <SidebarMenuItem>
-                <SidebarMenuButton 
-                  onClick={() => navigate('/quests')}
-                  className="hover:bg-muted/50"
-                >
-                  <Trophy className="mr-2 h-4 w-4" />
-                  <span>Weekly Quests</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-
-              <SidebarMenuItem>
-                <SidebarMenuButton 
-                  onClick={() => navigate('/journal')}
-                  className="hover:bg-muted/50"
-                >
-                  <BookHeart className="mr-2 h-4 w-4" />
-                  <span>Memory Journal</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-
-              <SidebarMenuItem>
-                <SidebarMenuButton 
-                  onClick={() => navigate('/monthly-insights')}
-                  className="hover:bg-muted/50"
-                >
-                  <TrendingUp className="mr-2 h-4 w-4" />
-                  <span>Monthly Insights</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-
-              <SidebarMenuItem>
-                <SidebarMenuButton 
-                  onClick={() => navigate('/customization')}
-                  className="hover:bg-muted/50"
-                >
-                  <Palette className="mr-2 h-4 w-4" />
-                  <span>Customization Shop</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-
-              <SidebarMenuItem>
-                <SidebarMenuButton 
-                  onClick={() => navigate('/ambient-worlds')}
-                  className="hover:bg-muted/50"
-                >
-                  <Globe className="mr-2 h-4 w-4" />
-                  <span>Ambient Worlds</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-
-              <SidebarMenuItem>
-                <SidebarMenuButton 
-                  onClick={() => navigate('/clusters')}
-                  className="hover:bg-muted/50"
-                >
-                  <Network className="mr-2 h-4 w-4" />
-                  <span>Knowledge Clusters</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-
-              <SidebarMenuItem>
-                <SidebarMenuButton 
-                  onClick={() => navigate('/timetravel')}
-                  className="hover:bg-muted/50"
-                >
-                  <Clock className="mr-2 h-4 w-4" />
-                  <span>Time Travel</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-
-              <SidebarMenuItem>
-                <SidebarMenuButton 
-                  onClick={() => navigate('/backup')}
-                  className="hover:bg-muted/50"
-                >
-                  <HardDrive className="mr-2 h-4 w-4" />
-                  <span>Backup & Restore</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-
-              <SidebarMenuItem>
-                <SidebarMenuButton 
-                  onClick={() => navigate('/goals')}
-                  className="hover:bg-muted/50"
-                >
-                  <Target className="mr-2 h-4 w-4" />
-                  <span>Goals</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-
-              <SidebarMenuItem>
-                <SidebarMenuButton 
-                  onClick={() => navigate('/reminders')}
-                  className="hover:bg-muted/50"
-                >
-                  <Bell className="mr-2 h-4 w-4" />
-                  <span>Reminders</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-
-              <SidebarMenuItem>
-                <SidebarMenuButton 
-                  onClick={() => onCategoryClick('all')}
-                  className={activeCategory === 'all' ? 'bg-muted text-primary font-medium' : 'hover:bg-muted/50'}
-                >
-                  <CheckSquare className="mr-2 h-4 w-4" />
-                  <span>All Tasks</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              
               {isAdmin && (
                 <SidebarMenuItem>
                   <SidebarMenuButton onClick={() => navigate('/admin')}>
-                    <Shield className="mr-2 h-4 w-4" />
+                    <Shield className="w-4 h-4" />
                     <span>Admin</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -372,14 +329,14 @@ export function AppSidebar({ onSettingsClick, onCategoryClick, onFocusModeClick,
               
               <SidebarMenuItem>
                 <SidebarMenuButton onClick={onSettingsClick}>
-                  <Settings className="mr-2 h-4 w-4" />
+                  <Settings className="w-4 h-4" />
                   <span>Settings</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
               
               <SidebarMenuItem>
                 <SidebarMenuButton onClick={handleSignOut}>
-                  <LogOut className="mr-2 h-4 w-4" />
+                  <LogOut className="w-4 h-4" />
                   <span>Sign Out</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
