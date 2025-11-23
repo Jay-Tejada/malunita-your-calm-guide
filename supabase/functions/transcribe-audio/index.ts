@@ -111,10 +111,12 @@ serve(async (req) => {
 
     const binaryAudio = processBase64Chunks(audio)
     
+    // Create FormData with proper audio format for Whisper API
     const formData = new FormData()
     const blob = new Blob([binaryAudio], { type: 'audio/webm' })
-    formData.append('file', blob, 'audio.webm')
+    formData.append('file', blob, 'recording.webm')
     formData.append('model', 'whisper-1')
+    formData.append('response_format', 'json')
 
     console.log('Calling OpenAI API...');
     const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {

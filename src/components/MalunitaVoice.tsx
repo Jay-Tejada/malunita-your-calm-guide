@@ -317,7 +317,13 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
       console.log('📱 Requesting microphone access...');
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       console.log('✅ Microphone access granted');
-      const mediaRecorder = new MediaRecorder(stream);
+      
+      // Use a compatible audio format for transcription
+      const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus') 
+        ? 'audio/webm;codecs=opus' 
+        : 'audio/webm';
+      
+      const mediaRecorder = new MediaRecorder(stream, { mimeType });
       mediaRecorderRef.current = mediaRecorder;
       audioChunksRef.current = [];
       
@@ -345,7 +351,7 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
           // Check for stop commands starting from the first chunk
           if (!isStopCommandDetected && audioChunksRef.current.length >= 1) {
             const recentChunks = audioChunksRef.current.slice(-3); // Check last 3 seconds
-            const recentBlob = new Blob(recentChunks, { type: 'audio/webm' });
+            const recentBlob = new Blob(recentChunks, { type: mediaRecorder.mimeType });
             
             console.log('Checking for stop command, blob size:', recentBlob.size);
             
@@ -449,7 +455,7 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
           navigator.vibrate([50, 50, 50]); // Double pulse
         }
 
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        const audioBlob = new Blob(audioChunksRef.current, { type: mediaRecorder.mimeType || 'audio/webm' });
         
         // Convert blob to base64
         const reader = new FileReader();
