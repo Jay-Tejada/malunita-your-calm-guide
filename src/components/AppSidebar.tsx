@@ -18,7 +18,8 @@ import {
   Bell,
   Camera,
   Focus,
-  Globe
+  Globe,
+  Share2
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAdmin } from "@/hooks/useAdmin";
@@ -44,6 +45,7 @@ interface AppSidebarProps {
   onCategoryClick: (category: string) => void;
   onFocusModeClick?: () => void;
   onWorldMapClick?: () => void;
+  onShareMalunitaClick?: () => void;
   activeCategory: string | null;
 }
 
@@ -59,7 +61,7 @@ const defaultCategories = [
   { label: "Gym", icon: Dumbbell, path: "/gym" },
 ];
 
-export function AppSidebar({ onSettingsClick, onCategoryClick, onFocusModeClick, onWorldMapClick, activeCategory }: AppSidebarProps) {
+export function AppSidebar({ onSettingsClick, onCategoryClick, onFocusModeClick, onWorldMapClick, onShareMalunitaClick, activeCategory }: AppSidebarProps) {
   const navigate = useNavigate();
   const { isAdmin } = useAdmin();
   const { categories: customCategories } = useCustomCategories();
@@ -182,6 +184,18 @@ export function AppSidebar({ onSettingsClick, onCategoryClick, onFocusModeClick,
                   >
                     <Globe className="mr-2 h-4 w-4" />
                     <span>Task Universe</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
+
+              {onShareMalunitaClick && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton 
+                    onClick={onShareMalunitaClick}
+                    className="hover:bg-muted/50"
+                  >
+                    <Share2 className="mr-2 h-4 w-4" />
+                    <span>Share Malunita</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               )}
