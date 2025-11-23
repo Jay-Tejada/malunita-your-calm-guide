@@ -6,6 +6,10 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { useEffect } from "react";
 import { startEmotionalMemoryMonitoring } from "@/state/emotionalMemory";
+import { AnimatePresence } from "framer-motion";
+import { useRitualTrigger } from "@/hooks/useRitualTrigger";
+import { MorningRitual } from "@/features/rituals/MorningRitual";
+import { EveningRitual } from "@/features/rituals/EveningRitual";
 import Index from "./pages/Index";
 import Install from "./pages/Install";
 import NotFound from "./pages/NotFound";
@@ -26,6 +30,8 @@ import HatchingGallery from "./pages/HatchingGallery";
 const queryClient = new QueryClient();
 
 const App = () => {
+  const { shouldShowRitual, dismissRitual } = useRitualTrigger();
+
   // Initialize emotional memory monitoring on app start
   useEffect(() => {
     startEmotionalMemoryMonitoring();
@@ -37,6 +43,23 @@ const App = () => {
         <TooltipProvider>
           <Toaster />
           <Sonner />
+          
+          {/* Ritual overlays */}
+          <AnimatePresence>
+            {shouldShowRitual === "morning" && (
+              <MorningRitual
+                onComplete={dismissRitual}
+                onSkip={dismissRitual}
+              />
+            )}
+            {shouldShowRitual === "evening" && (
+              <EveningRitual
+                onComplete={dismissRitual}
+                onSkip={dismissRitual}
+              />
+            )}
+          </AnimatePresence>
+
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<Index />} />
