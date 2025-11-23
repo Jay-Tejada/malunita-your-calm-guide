@@ -25,33 +25,27 @@ export const GlobeButton = ({
       onClick={onClick}
       className={cn(
         positionClasses[position],
-        "z-50 h-12 w-12 rounded-full",
-        "bg-background/80 backdrop-blur-sm border border-border/50",
-        "hover:bg-background transition-all duration-300",
-        "flex items-center justify-center group",
-        "shadow-lg hover:shadow-xl"
+        "z-50 flex items-center justify-center group"
       )}
-      whileHover={{ scale: 1.05, rotate: 180 }}
-      whileTap={{ scale: 0.95 }}
-      transition={{ duration: 0.3 }}
+      whileHover={{ scale: 1.1 }}
+      whileTap={{ scale: 0.9 }}
     >
-      <Globe2 
-        className={cn(
-          "w-5 h-5 transition-all duration-300",
-          isActive ? "text-primary" : "text-foreground/60",
-          "group-hover:text-primary"
-        )}
-      />
-      
-      {isActive && (
-        <motion.div
-          layoutId={`active-glow-${position}`}
-          className="absolute inset-0 rounded-full bg-primary/10"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
+      <motion.div
+        animate={{ rotate: 360 }}
+        transition={{
+          duration: 20,
+          repeat: Infinity,
+          ease: "linear"
+        }}
+      >
+        <Globe2 
+          className={cn(
+            "w-8 h-8 transition-colors duration-300",
+            isActive ? "text-primary" : "text-foreground/60",
+            "group-hover:text-primary"
+          )}
         />
-      )}
+      </motion.div>
     </motion.button>
   );
 };
