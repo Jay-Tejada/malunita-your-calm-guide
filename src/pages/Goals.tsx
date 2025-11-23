@@ -14,6 +14,7 @@ import { useTasks } from "@/hooks/useTasks";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { CustomCategoryManager } from "@/components/CustomCategoryManager";
+import { hapticLight } from "@/utils/haptics";
 
 import { TaskGoalTagging } from "@/components/TaskGoalTagging";
 import { GoalSuggestions } from "@/components/GoalSuggestions";
@@ -99,21 +100,24 @@ const Goals = () => {
       <Header />
       
       <main className="container mx-auto px-4 py-6 max-w-4xl pb-20 md:pb-6">
-        <div className="flex items-center gap-4 mb-6">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => navigate("/")}
-            className="md:hidden"
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <div>
-            <h1 className="text-3xl font-bold">🎯 Goals & Focus</h1>
-            <p className="text-muted-foreground mt-1">
-              Manage your goals and track task alignment
-            </p>
-          </div>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => {
+            hapticLight();
+            navigate("/");
+          }}
+          className="mb-4"
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back to Home
+        </Button>
+        
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold">🎯 Goals & Focus</h1>
+          <p className="text-muted-foreground mt-1">
+            Manage your goals and track task alignment
+          </p>
         </div>
 
         <Tabs defaultValue="goal" className="space-y-6">

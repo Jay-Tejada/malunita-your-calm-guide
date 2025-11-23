@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { AmbientWorld } from "@/features/ambientWorlds/AmbientWorld";
 import { useAmbientWorld } from "@/hooks/useAmbientWorld";
+import { hapticLight } from "@/utils/haptics";
 
 const Clusters = () => {
   const [user, setUser] = useState<any>(null);
@@ -61,7 +62,10 @@ const Clusters = () => {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => navigate('/')}
+                onClick={() => {
+                  hapticLight();
+                  navigate('/');
+                }}
                 className="gap-2"
               >
                 <ArrowLeft className="w-4 h-4" />
