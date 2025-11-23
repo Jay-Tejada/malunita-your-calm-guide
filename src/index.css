@@ -56,43 +56,42 @@ All colors MUST be HSL.
 
   /* Dark Mode - Warm Charcoal with Cream accents */
   .dark {
-    --background: 0 0% 17%; /* #2B2B2B warm charcoal */
-    --foreground: 38 29% 94%; /* #F6F2EC cream text */
-    --foreground-soft: 38 25% 80%; /* lighter cream for secondary text */
+    --background: 0 0% 11%; /* #1C1C1C deeper charcoal */
+    --foreground: 40 17% 95%; /* #F7F5F1 warm beige text */
+    --foreground-soft: 0 0% 60%; /* lighter for secondary text */
 
-    --card: 0 0% 20%; /* #333333 slightly lighter charcoal */
-    --card-strong: 0 0% 23%; /* #3A3A3A even lighter for depth */
-    --card-foreground: 38 29% 94%;
+    --card: 0 0% 15%; /* #262626 slightly lighter */
+    --card-strong: 0 0% 18%; /* #2E2E2E for depth */
+    --card-foreground: 40 17% 95%;
 
-    --popover: 0 0% 20%;
-    --popover-foreground: 38 29% 94%;
+    --popover: 0 0% 15%;
+    --popover-foreground: 40 17% 95%;
 
-    --primary: 38 29% 94%; /* cream for primary actions */
-    --primary-foreground: 0 0% 17%; /* charcoal text on primary */
+    --primary: 40 17% 95%; /* cream for primary actions */
+    --primary-foreground: 0 0% 11%; /* dark text on primary */
 
-    --secondary: 0 0% 23%; /* card-strong for secondary */
-    --secondary-foreground: 38 29% 94%;
+    --secondary: 0 0% 18%; /* card-strong */
+    --secondary-foreground: 40 17% 95%;
 
-    --muted: 0 0% 23%;
-    --muted-foreground: 38 25% 80%;
+    --muted: 0 0% 18%;
+    --muted-foreground: 0 0% 60%;
 
-    --accent: 0 0% 23%;
-    --accent-foreground: 38 29% 94%;
+    --accent: 0 0% 18%;
+    --accent-foreground: 40 17% 95%;
 
-    --success: 120 45% 45%; /* slightly darker green for dark mode */
-    --success-foreground: 38 29% 94%;
+    --success: 142 71% 45%;
+    --success-foreground: 40 17% 95%;
 
-    --destructive: 0 70% 45%;
-    --destructive-foreground: 38 29% 94%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 40 17% 95%;
 
-    --border: 255 255% 100% / 0.08; /* lighter border for dark mode */
-    --input: 255 255% 100% / 0.15;
-    --ring: 38 29% 94%;
+    --border: 255 255% 100% / 0.08;
+    --input: 255 255% 100% / 0.12;
+    --ring: 40 17% 95%;
     
-    --surface: 0 0% 20%;
-    --sidebar-bg: 0 0% 17%;
-    --sidebar-active: 0 0% 23%;
-    --focus-glow: 0 0% 22%;
+    --surface: 0 0% 15%;
+    --sidebar-bg: 0 0% 11%;
+    --sidebar-active: 0 0% 18%;
   }
 
   :root {
