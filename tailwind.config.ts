@@ -59,6 +59,7 @@ export default {
           listening: "hsl(var(--orb-listening))",
           responding: "hsl(var(--orb-responding))",
           waveform: "hsl(var(--orb-waveform))",
+          amber: "hsl(var(--orb-amber))",
         },
       },
       borderRadius: {
@@ -156,6 +157,16 @@ export default {
             opacity: "0.95",
           },
         },
+        "orb-pulse": {
+          "0%, 100%": {
+            transform: "scale(1)",
+            opacity: "0.9",
+          },
+          "50%": {
+            transform: "scale(1.05)",
+            opacity: "1",
+          },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -166,6 +177,7 @@ export default {
         "bounce-excited": "bounce-excited 0.8s ease-in-out infinite",
         "sway-curious": "sway-curious 2s ease-in-out infinite",
         "float-sleepy": "float-sleepy 3s ease-in-out infinite",
+        "orb-pulse": "orb-pulse 6s ease-in-out infinite",
       },
       transitionDuration: {
         '2000': '2000ms',
