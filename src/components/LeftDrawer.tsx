@@ -35,6 +35,7 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
   const [drawerMode, setDrawerMode] = useState<DrawerMode>("root");
   const { tasks, updateTask, createTasks } = useTasks();
   const { toast } = useToast();
+  const [completingTaskIds, setCompletingTaskIds] = useState<Set<string>>(new Set());
   const [isNewEventDialogOpen, setIsNewEventDialogOpen] = useState(false);
   const [newEventTitle, setNewEventTitle] = useState("");
   const [newEventDate, setNewEventDate] = useState("");
@@ -56,22 +57,43 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
 
   const handleTaskToggle = async (taskId: string, completed: boolean) => {
     try {
-      // Haptic feedback on toggle
+      // If completing, add to animating set
       if (!completed) {
-        hapticSuccess(); // Success pattern when completing
+        setCompletingTaskIds(prev => new Set(prev).add(taskId));
+        hapticSuccess();
+        
+        // Wait for animation before actually updating
+        setTimeout(async () => {
+          await updateTask({
+            id: taskId,
+            updates: {
+              completed: true,
+              completed_at: new Date().toISOString(),
+            }
+          });
+          setCompletingTaskIds(prev => {
+            const next = new Set(prev);
+            next.delete(taskId);
+            return next;
+          });
+        }, 400); // Match animation duration
       } else {
-        hapticLight(); // Light tap when uncompleting
+        hapticLight();
+        await updateTask({
+          id: taskId,
+          updates: {
+            completed: false,
+            completed_at: null,
+          }
+        });
       }
-      
-      await updateTask({
-        id: taskId,
-        updates: {
-          completed: !completed,
-          completed_at: !completed ? new Date().toISOString() : null,
-        }
-      });
     } catch (error) {
       console.error("Failed to toggle task:", error);
+      setCompletingTaskIds(prev => {
+        const next = new Set(prev);
+        next.delete(taskId);
+        return next;
+      });
     }
   };
 
@@ -303,26 +325,39 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
                             ? format(eventDate, 'EEEE')
                             : format(eventDate, 'M/d');
                           
+                          const isCompleting = completingTaskIds.has(task.id);
+                          
                           return (
-                            <div
+                            <motion.div
                               key={task.id}
-                              className="flex items-start gap-3 py-2.5 px-3 hover:bg-muted/20 rounded-md transition-colors group"
+                              initial={{ opacity: 1, x: 0 }}
+                              animate={isCompleting ? { 
+                                opacity: 0, 
+                                x: -20,
+                                height: 0,
+                                marginBottom: 0
+                              } : { 
+                                opacity: 1, 
+                                x: 0 
+                              }}
+                              transition={{ duration: 0.4, ease: "easeOut" }}
+                              className="flex items-start gap-3 py-2.5 px-3 hover:bg-muted/20 rounded-md transition-colors group overflow-hidden"
                             >
-                            <button
-                              onClick={() => handleTaskToggle(task.id, task.completed || false)}
-                              className={cn(
-                                "flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center mt-0.5 transition-all duration-300 ease-out",
-                                task.completed
-                                  ? "bg-foreground/90 border-2 border-foreground/90 scale-100 shadow-[0_0_12px_rgba(0,0,0,0.3)]"
-                                  : "border-2 border-foreground/20 hover:border-foreground/40 hover:scale-110 hover:shadow-[0_0_8px_rgba(0,0,0,0.15)]"
-                              )}
-                            >
-                              {task.completed ? (
-                                <Check className="w-3 h-3 text-background animate-in fade-in zoom-in duration-200" />
-                              ) : (
-                                <Circle className="w-2 h-2 text-foreground/20 transition-all duration-200" />
-                              )}
-                            </button>
+                              <button
+                                onClick={() => handleTaskToggle(task.id, task.completed || false)}
+                                className={cn(
+                                  "flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center mt-0.5 transition-all duration-300 ease-out",
+                                  task.completed
+                                    ? "bg-foreground/90 border-2 border-foreground/90 scale-100 shadow-[0_0_12px_rgba(0,0,0,0.3)]"
+                                    : "border-2 border-foreground/20 hover:border-foreground/40 hover:scale-110 hover:shadow-[0_0_8px_rgba(0,0,0,0.15)]"
+                                )}
+                              >
+                                {task.completed ? (
+                                  <Check className="w-3 h-3 text-background animate-in fade-in zoom-in duration-200" />
+                                ) : (
+                                  <Circle className="w-2 h-2 text-foreground/20 transition-all duration-200" />
+                                )}
+                              </button>
                               <div className={cn(
                                 "flex-1 font-mono text-[13px] leading-snug",
                                 task.completed && "opacity-60"
@@ -336,38 +371,53 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
                                   {dateDisplay} at {format(eventDate, 'h:mm a')}
                                 </div>
                               </div>
-                            </div>
+                            </motion.div>
                           );
                         })
                       ) : (
-                        categoryTasks.map((task) => (
-                          <div
-                            key={task.id}
-                            className="flex items-start gap-3 py-2.5 px-3 hover:bg-muted/20 rounded-md transition-colors group"
-                          >
-                            <button
-                              onClick={() => handleTaskToggle(task.id, task.completed || false)}
-                              className={cn(
-                                "flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center mt-0.5 transition-all duration-300 ease-out",
-                                task.completed
-                                  ? "bg-foreground/90 border-2 border-foreground/90 scale-100 shadow-[0_0_12px_rgba(0,0,0,0.3)]"
-                                  : "border-2 border-foreground/20 hover:border-foreground/40 hover:scale-110 hover:shadow-[0_0_8px_rgba(0,0,0,0.15)]"
-                              )}
+                        categoryTasks.map((task) => {
+                          const isCompleting = completingTaskIds.has(task.id);
+                          
+                          return (
+                            <motion.div
+                              key={task.id}
+                              initial={{ opacity: 1, x: 0 }}
+                              animate={isCompleting ? { 
+                                opacity: 0, 
+                                x: -20,
+                                height: 0,
+                                marginBottom: 0
+                              } : { 
+                                opacity: 1, 
+                                x: 0 
+                              }}
+                              transition={{ duration: 0.4, ease: "easeOut" }}
+                              className="flex items-start gap-3 py-2.5 px-3 hover:bg-muted/20 rounded-md transition-colors group overflow-hidden"
                             >
-                              {task.completed ? (
-                                <Check className="w-3 h-3 text-background animate-in fade-in zoom-in duration-200" />
-                              ) : (
-                                <Circle className="w-2 h-2 text-foreground/20 transition-all duration-200" />
-                              )}
-                            </button>
-                            <span className={cn(
-                              "flex-1 font-mono text-[14px] leading-snug",
-                              task.completed ? "text-foreground/40 line-through" : "text-foreground/90"
-                            )}>
-                              {task.title}
-                            </span>
-                          </div>
-                        ))
+                              <button
+                                onClick={() => handleTaskToggle(task.id, task.completed || false)}
+                                className={cn(
+                                  "flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center mt-0.5 transition-all duration-300 ease-out",
+                                  task.completed
+                                    ? "bg-foreground/90 border-2 border-foreground/90 scale-100 shadow-[0_0_12px_rgba(0,0,0,0.3)]"
+                                    : "border-2 border-foreground/20 hover:border-foreground/40 hover:scale-110 hover:shadow-[0_0_8px_rgba(0,0,0,0.15)]"
+                                )}
+                              >
+                                {task.completed ? (
+                                  <Check className="w-3 h-3 text-background animate-in fade-in zoom-in duration-200" />
+                                ) : (
+                                  <Circle className="w-2 h-2 text-foreground/20 transition-all duration-200" />
+                                )}
+                              </button>
+                              <span className={cn(
+                                "flex-1 font-mono text-[14px] leading-snug",
+                                task.completed ? "text-foreground/40 line-through" : "text-foreground/90"
+                              )}>
+                                {task.title}
+                              </span>
+                            </motion.div>
+                          );
+                        })
                       )}
                     </div>
                   </motion.div>
