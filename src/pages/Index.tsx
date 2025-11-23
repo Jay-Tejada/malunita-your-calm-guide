@@ -20,6 +20,7 @@ import { TaskWorldMap } from "@/features/worldmap/TaskWorldMap";
 import { ShareMalunita } from "@/features/social/ShareMalunita";
 import { DreamMode } from "@/features/dreams/DreamMode";
 import { CognitiveLoadIndicator } from "@/components/CognitiveLoadIndicator";
+import { QuestProgressNotification } from "@/features/quests/QuestProgressNotification";
 import { useAdmin } from "@/hooks/useAdmin";
 import { useTasks } from "@/hooks/useTasks";
 import { useProfile } from "@/hooks/useProfile";
@@ -544,6 +545,7 @@ const Index = () => {
 
   return (
     <SidebarProvider>
+      <QuestProgressNotification />
       <div className="min-h-screen flex w-full bg-background">
         {/* Sidebar - Hidden by default */}
         <AppSidebar 

@@ -4,6 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import { logHabitCompletion } from "@/ai/habitPredictor";
 import { useCognitiveLoad } from "@/state/cognitiveLoad";
 import { JOURNAL_EVENTS } from "@/features/journal/journalEvents";
+import { questTracker } from "@/lib/questTracker";
 
 export interface Task {
   id: string;
@@ -118,6 +119,12 @@ export const useTasks = () => {
           data.title,
           undefined // We don't track duration yet
         );
+        
+        // Track quest progress for task completion
+        questTracker.trackTaskCompletion();
+        
+        // Check project completion quest
+        questTracker.checkProjectCompletion();
         
         // Check for task milestone and create journal entry
         const completedCount = tasks?.filter(t => t.completed).length || 0;

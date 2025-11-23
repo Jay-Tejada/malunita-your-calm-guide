@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { useEmotionalMemory } from '@/state/emotionalMemory';
 import { useMoodStore } from '@/state/moodMachine';
 import { CreatureSprite } from '@/components/CreatureSprite';
+import { questTracker } from '@/lib/questTracker';
 
 interface PeekABooProps {
   onComplete: () => void;
@@ -17,6 +18,11 @@ export const PeekABoo = ({ onComplete }: PeekABooProps) => {
   const [isFound, setIsFound] = useState(false);
   const { adjustAffection } = useEmotionalMemory();
   const mood = useMoodStore((state) => state.mood);
+  
+  // Track quest on mount
+  useEffect(() => {
+    questTracker.trackMiniGame();
+  }, []);
 
   // Mood affects hiding speed
   const hideSpeed = mood === 'excited' ? 1500 : mood === 'sleepy' ? 3000 : 2000;

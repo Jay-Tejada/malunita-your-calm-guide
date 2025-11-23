@@ -4,12 +4,16 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { useWeeklyQuests } from '@/hooks/useWeeklyQuests';
+import { useQuestTracking } from '@/hooks/useQuestTracking';
 import { CreatureSprite } from '@/components/CreatureSprite';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, Trophy, Gift, CheckCircle2 } from 'lucide-react';
 
 export const QuestSystem = () => {
   const { quests, isLoading, generateQuests, isGenerating, claimReward, isClaiming, allQuestsCompleted, allRewardsClaimed } = useWeeklyQuests();
+  
+  // Initialize quest tracking
+  useQuestTracking();
 
   // Auto-generate quests if none exist for current week
   useEffect(() => {

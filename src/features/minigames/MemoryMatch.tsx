@@ -7,6 +7,7 @@ import { useLevelSystem } from '@/state/levelSystem';
 import { useMoodStore } from '@/state/moodMachine';
 import { CreatureSprite } from '@/components/CreatureSprite';
 import { useToast } from '@/hooks/use-toast';
+import { questTracker } from '@/lib/questTracker';
 
 interface MemoryMatchProps {
   onComplete: () => void;
@@ -30,6 +31,11 @@ export const MemoryMatch = ({ onComplete }: MemoryMatchProps) => {
   const { grantXp } = useLevelSystem();
   const currentMood = useMoodStore((state) => state.mood);
   const { toast } = useToast();
+  
+  // Track quest on mount
+  useEffect(() => {
+    questTracker.trackMiniGame();
+  }, []);
 
   // Mood affects flip speed
   const flipDuration = currentMood === 'excited' ? 0.2 : currentMood === 'sleepy' ? 0.5 : 0.3;
