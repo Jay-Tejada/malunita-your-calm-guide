@@ -214,9 +214,10 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
       lastSoundTimeRef.current = Date.now();
     } else {
       const silenceDuration = Date.now() - lastSoundTimeRef.current;
+      console.log('Silence check — avgVolume:', averageVolume.toFixed(2), 'duration(ms):', silenceDuration);
       
       if (silenceDuration >= SILENCE_DURATION && isListening) {
-        console.log('Silence detected for 5 seconds, stopping recording...');
+        console.log('Silence detected for 2 seconds, stopping recording...');
         // Stop recording due to silence
         if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
           mediaRecorderRef.current.stop();
