@@ -15,9 +15,10 @@ import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { EventTitleAutocomplete } from "@/components/EventTitleAutocomplete";
 import { useRecentEventTitles } from "@/hooks/useRecentEventTitles";
-import { MapboxAutocomplete } from "@/components/MapboxAutocomplete";
-import { MapPreview } from "@/components/MapPreview";
+import { MapboxLocationPicker } from "@/components/MapboxLocationPicker";
+import { MapFullScreen } from "@/components/MapFullScreen";
 import { useMapboxToken } from "@/hooks/useMapboxToken";
+import { MapPin } from "lucide-react";
 
 type DrawerMode = "root" | "inbox" | "projects" | "work" | "home" | "gym" | "calendar";
 
@@ -56,6 +57,8 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
   const [recurrenceEndDate, setRecurrenceEndDate] = useState("");
   const [isEventDetailsOpen, setIsEventDetailsOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
+  const [isLocationPickerOpen, setIsLocationPickerOpen] = useState(false);
+  const [isMapFullScreenOpen, setIsMapFullScreenOpen] = useState(false);
 
   const handleCategoryClick = (categoryId: DrawerMode) => {
     hapticLight();
@@ -664,13 +667,22 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
                   <div className="space-y-2">
                     <div className="font-mono text-[13px]" style={{ color: '#888' }}>Location</div>
                     <div className="font-mono text-[14px] mt-1" style={{ color: '#555' }}>{selectedEvent.location_address}</div>
-                    {selectedEvent.location_lat && selectedEvent.location_lng && (
-                      <MapPreview 
-                        lat={selectedEvent.location_lat}
-                        lng={selectedEvent.location_lng}
-                        address={selectedEvent.location_address}
-                        accessToken={mapboxToken}
-                      />
+                    {selectedEvent.location_lat && selectedEvent.location_lng && mapboxToken && (
+                      <button
+                        onClick={() => setIsMapFullScreenOpen(true)}
+                        className="w-full h-[120px] rounded-lg overflow-hidden border border-border hover:border-primary transition-colors relative group"
+                      >
+                        <img
+                          src={`https://api.mapbox.com/styles/v1/mapbox/light-v11/static/pin-s+3b82f6(${selectedEvent.location_lng},${selectedEvent.location_lat})/${selectedEvent.location_lng},${selectedEvent.location_lat},13,0/600x240@2x?access_token=${mapboxToken}`}
+                          alt="Location map"
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
+                          <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-background/90 backdrop-blur-sm rounded-full p-2">
+                            <MapPin className="w-4 h-4" />
+                          </div>
+                        </div>
+                      </button>
                     )}
                   </div>
                 )}
@@ -759,25 +771,42 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
 
             <div className="space-y-2">
               <Label htmlFor="drawer-location" className="font-mono text-[13px]">Location (optional)</Label>
-              <MapboxAutocomplete
-                value={newEventLocation}
-                onChange={(address, lat, lng) => {
-                  setNewEventLocation(address);
-                  setNewEventLocationLat(lat);
-                  setNewEventLocationLng(lng);
-                }}
-                placeholder="Search for a location"
-                accessToken={mapboxToken}
-              />
+              <div className="flex gap-2">
+                <Input
+                  id="drawer-location"
+                  placeholder="Add location"
+                  value={newEventLocation}
+                  onChange={(e) => setNewEventLocation(e.target.value)}
+                  className="font-mono text-[14px] flex-1"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setIsLocationPickerOpen(true)}
+                  className="flex-shrink-0"
+                >
+                  <MapPin className="w-4 h-4" />
+                </Button>
+              </div>
             </div>
 
-            {newEventLocationLat && newEventLocationLng && (
-              <MapPreview
-                lat={newEventLocationLat}
-                lng={newEventLocationLng}
-                address={newEventLocation}
-                accessToken={mapboxToken}
-              />
+            {newEventLocationLat && newEventLocationLng && mapboxToken && (
+              <button
+                onClick={() => setIsMapFullScreenOpen(true)}
+                className="w-full h-[120px] rounded-lg overflow-hidden border border-border hover:border-primary transition-colors relative group"
+              >
+                <img
+                  src={`https://api.mapbox.com/styles/v1/mapbox/light-v11/static/pin-s+3b82f6(${newEventLocationLng},${newEventLocationLat})/${newEventLocationLng},${newEventLocationLat},13,0/600x240@2x?access_token=${mapboxToken}`}
+                  alt="Location preview"
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
+                  <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-background/90 backdrop-blur-sm rounded-full p-2">
+                    <MapPin className="w-4 h-4" />
+                  </div>
+                </div>
+              </button>
             )}
 
             <div className="space-y-2">
@@ -857,6 +886,42 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Mapbox Location Picker */}
+      <MapboxLocationPicker
+        open={isLocationPickerOpen}
+        onOpenChange={setIsLocationPickerOpen}
+        onConfirm={(location) => {
+          setNewEventLocation(location.address);
+          setNewEventLocationLat(location.lat);
+          setNewEventLocationLng(location.lng);
+        }}
+        accessToken={mapboxToken}
+      />
+
+      {/* Full Screen Map */}
+      {selectedEvent?.location_lat && selectedEvent?.location_lng && (
+        <MapFullScreen
+          open={isMapFullScreenOpen}
+          onOpenChange={setIsMapFullScreenOpen}
+          lat={selectedEvent.location_lat}
+          lng={selectedEvent.location_lng}
+          address={selectedEvent.location_address}
+          accessToken={mapboxToken}
+        />
+      )}
+
+      {/* Full Screen Map for new event preview */}
+      {newEventLocationLat && newEventLocationLng && (
+        <MapFullScreen
+          open={isMapFullScreenOpen && !selectedEvent}
+          onOpenChange={setIsMapFullScreenOpen}
+          lat={newEventLocationLat}
+          lng={newEventLocationLng}
+          address={newEventLocation}
+          accessToken={mapboxToken}
+        />
+      )}
     </>
   );
 };
