@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { getExpressionAsset } from '@/utils/getExpressionAsset';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useLevelSystem } from '@/state/levelSystem';
 
 // Import all expression assets
 import baseExpression from '@/assets/companions/base_expression.png';
@@ -57,6 +58,12 @@ export const CreatureSprite = ({
   typing = false
 }: CreatureSpriteProps) => {
   const [microEmotion, setMicroEmotion] = useState<string | null>(null);
+  const { level } = useLevelSystem();
+  
+  // Calculate visual enhancements based on level
+  const brightness = 1 + (level - 1) * 0.02; // 1.0 to 1.38 at level 20
+  const glowIntensity = level >= 10 ? 0.3 + (level - 10) * 0.03 : 0;
+  const hasParticles = level >= 10;
 
   // Idle cycle timer - random micro-expressions
   useEffect(() => {
@@ -106,7 +113,7 @@ export const CreatureSprite = ({
   return (
     <div 
       className={cn(
-        "flex items-center justify-center",
+        "flex items-center justify-center relative",
         animate && "animate-[float_3s_ease-in-out_infinite]",
         listening && "animate-[pulse_2s_ease-in-out_infinite] shadow-lg shadow-white/40",
         typing && "animate-[sway_1.5s_ease-in-out_infinite]",
@@ -114,6 +121,41 @@ export const CreatureSprite = ({
       )}
       style={{ width: size, height: size }}
     >
+      {/* Level-based glow effect */}
+      {glowIntensity > 0 && (
+        <div 
+          className="absolute inset-0 rounded-full blur-xl animate-pulse pointer-events-none"
+          style={{ 
+            background: `radial-gradient(circle, hsl(var(--primary) / ${glowIntensity}) 0%, transparent 70%)` 
+          }}
+        />
+      )}
+
+      {/* Particle effects for level 10+ */}
+      {hasParticles && (
+        <AnimatePresence>
+          {[...Array(3)].map((_, i) => (
+            <motion.div
+              key={`particle-${i}`}
+              initial={{ opacity: 0, scale: 0, y: 0 }}
+              animate={{ 
+                opacity: [0, 0.6, 0],
+                scale: [0, 1, 0],
+                y: [-20, -40, -60],
+                x: [(Math.random() - 0.5) * 30, (Math.random() - 0.5) * 50]
+              }}
+              transition={{
+                duration: 2,
+                repeat: Infinity,
+                delay: i * 0.7,
+                ease: "easeOut"
+              }}
+              className="absolute top-1/2 left-1/2 w-1 h-1 rounded-full bg-primary/60"
+            />
+          ))}
+        </AnimatePresence>
+      )}
+
       <AnimatePresence mode="wait">
         <motion.div
           key={filename}
@@ -121,13 +163,16 @@ export const CreatureSprite = ({
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.95 }}
           transition={{ duration: 0.25, ease: "easeOut" }}
-          className="w-full h-full flex items-center justify-center"
+          className="w-full h-full flex items-center justify-center relative z-10"
         >
           <img
             src={imageSrc}
             alt={`Creature ${emotion} expression`}
             className="w-full h-full object-contain"
-            style={{ imageRendering: 'crisp-edges' }}
+            style={{ 
+              imageRendering: 'crisp-edges',
+              filter: `brightness(${brightness})`
+            }}
           />
         </motion.div>
       </AnimatePresence>
