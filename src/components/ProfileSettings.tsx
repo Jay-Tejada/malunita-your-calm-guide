@@ -166,6 +166,27 @@ export const ProfileSettings = ({ onClose }: ProfileSettingsProps) => {
                     }
                   />
                 </div>
+
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label htmlFor="seasonal-visuals">Seasonal Events</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Show seasonal overlays and effects (Winter, Spring, Summer, Starfall)
+                    </p>
+                  </div>
+                  <Switch
+                    id="seasonal-visuals"
+                    checked={profile.ritual_preferences?.seasonal_visuals !== false}
+                    onCheckedChange={(checked) =>
+                      updateProfile({
+                        ritual_preferences: {
+                          ...profile.ritual_preferences,
+                          seasonal_visuals: checked,
+                        },
+                      })
+                    }
+                  />
+                </div>
               </div>
             </div>
 

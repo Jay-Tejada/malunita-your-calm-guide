@@ -13,6 +13,7 @@ import { Play, Pause, X, Volume2, VolumeX } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { playSfx } from '@/utils/sound';
 import { questTracker } from '@/lib/questTracker';
+import { useSeasonalEvent } from '@/hooks/useSeasonalEvent';
 
 interface FocusModeProps {
   onClose: () => void;
@@ -44,6 +45,7 @@ export const FocusMode = ({ onClose }: FocusModeProps) => {
   const { updateMood } = useMoodStore();
   const { toast } = useToast();
   const [userId, setUserId] = useState<string | null>(null);
+  const { getSeasonalMultiplier, currentSeason } = useSeasonalEvent();
 
   // Get user ID
   useEffect(() => {
@@ -157,13 +159,18 @@ export const FocusMode = ({ onClose }: FocusModeProps) => {
     setIsActive(false);
     localStorage.removeItem('focus_session');
     
-    // Rewards
+    // Rewards with seasonal bonus
+    const xpMultiplier = getSeasonalMultiplier('xp');
+    const joyMultiplier = getSeasonalMultiplier('joy');
+    const baseXp = 20;
+    const finalXp = Math.round(baseXp * xpMultiplier);
+    
     updateMood('loving');
-    adjustJoy(15);
+    adjustJoy(Math.round(15 * joyMultiplier));
     adjustStress(-10);
     
     if (userId) {
-      const { evolved, leveledUp } = await grantXp(20, userId);
+      const { evolved, leveledUp } = await grantXp(finalXp, userId);
       
       if (evolved) {
         toast({
@@ -182,9 +189,10 @@ export const FocusMode = ({ onClose }: FocusModeProps) => {
     messageQueueRef.current.enqueue("I'm proud of you! You stayed focused!");
     playSfx('sparkle', true);
     
+    const bonusText = xpMultiplier > 1 ? ` (${currentSeason?.name} bonus!)` : '';
     toast({
       title: "Focus Complete!",
-      description: "Great work! +20 XP",
+      description: `Great work! +${finalXp} XP${bonusText}`,
     });
     
     setTimeout(() => {

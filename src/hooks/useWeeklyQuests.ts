@@ -6,6 +6,7 @@ import { useEmotionalMemory } from '@/state/emotionalMemory';
 import { useCustomizationStore } from '@/features/customization/useCustomizationStore';
 import { startOfWeek, format } from 'date-fns';
 import { bondingMeter, BONDING_INCREMENTS } from '@/state/bondingMeter';
+import { useSeasonalEvent } from './useSeasonalEvent';
 
 export interface WeeklyQuest {
   id: string;
@@ -32,6 +33,7 @@ export const useWeeklyQuests = () => {
   const levelSystem = useLevelSystem();
   const emotionalMemory = useEmotionalMemory();
   const { unlockCosmetic } = useCustomizationStore();
+  const { isStarfallNight } = useSeasonalEvent();
 
   const weekStart = format(startOfWeek(new Date(), { weekStartsOn: 1 }), 'yyyy-MM-dd');
 

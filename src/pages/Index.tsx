@@ -21,6 +21,9 @@ import { ShareMalunita } from "@/features/social/ShareMalunita";
 import { DreamMode } from "@/features/dreams/DreamMode";
 import { CognitiveLoadIndicator } from "@/components/CognitiveLoadIndicator";
 import { BondingMeter } from "@/components/BondingMeter";
+import { SeasonalHelperBubble } from "@/components/SeasonalHelperBubble";
+import { SeasonalBoostIndicator } from "@/components/SeasonalBoostIndicator";
+import { useSeasonalEvent } from "@/hooks/useSeasonalEvent";
 import { QuestProgressNotification } from "@/features/quests/QuestProgressNotification";
 import { useAdmin } from "@/hooks/useAdmin";
 import { useTasks } from "@/hooks/useTasks";
@@ -42,6 +45,7 @@ import { RitualCompleteCutscene } from "@/features/cutscenes/RitualCompleteCutsc
 import { WakeWordIndicator } from "@/components/WakeWordIndicator";
 import { MoodWeatherLayer } from "@/features/moodWeather/MoodWeatherLayer";
 import { AmbientWorld } from "@/features/ambientWorlds/AmbientWorld";
+import { SeasonalEventsManager } from "@/features/seasons/SeasonalEventsManager";
 import { useAmbientWorld } from "@/hooks/useAmbientWorld";
 
 import { SidebarProvider, useSidebar } from "@/components/ui/sidebar";
@@ -181,6 +185,7 @@ const Index = () => {
   const { companion, isLoading: isCompanionLoading, updateCompanion, needsOnboarding } = useCompanionIdentity();
   const levelSystem = useLevelSystem();
   const { activeCutscene, showLevelUpCutscene, showEvolutionCutscene, dismissCutscene } = useCutsceneManager();
+  const { getSeasonalMultiplier } = useSeasonalEvent();
   
   const { toast } = useToast();
 
@@ -551,9 +556,10 @@ const Index = () => {
   return (
     <SidebarProvider>
       <QuestProgressNotification />
-      <div className="min-h-screen flex w-full relative">
-        <AmbientWorld worldId={currentWorld} />
-        <MoodWeatherLayer />
+      <SeasonalEventsManager>
+        <div className="min-h-screen flex w-full relative">
+          <AmbientWorld worldId={currentWorld} />
+          <MoodWeatherLayer />
         {/* Sidebar - Hidden by default */}
         <AppSidebar 
           onSettingsClick={() => setShowSettings(true)}
@@ -673,6 +679,8 @@ const Index = () => {
               <div className="fixed top-20 right-4 z-30">
                 <BondingMeter />
               </div>
+              <SeasonalHelperBubble />
+              <SeasonalBoostIndicator />
             </>
           )}
         </main>
@@ -735,6 +743,7 @@ const Index = () => {
           />
         )}
       </div>
+      </SeasonalEventsManager>
     </SidebarProvider>
   );
 };
