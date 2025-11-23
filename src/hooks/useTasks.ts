@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { logHabitCompletion } from "@/ai/habitPredictor";
 
 export interface Task {
   id: string;
@@ -96,8 +97,19 @@ export const useTasks = () => {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      
+      // Log habit completion when task is marked as completed
+      if (data.completed && !data.completed_at) {
+        const category = data.category || data.custom_category_id || 'uncategorized';
+        logHabitCompletion(
+          data.id,
+          category,
+          data.title,
+          undefined // We don't track duration yet
+        );
+      }
     },
     onError: (error: any) => {
       toast({

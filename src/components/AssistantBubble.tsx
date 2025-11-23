@@ -15,6 +15,7 @@ import { useLevelSystem, XP_REWARDS } from '@/state/levelSystem';
 import { supabase } from '@/integrations/supabase/client';
 import { greetUser } from '@/utils/greetings';
 import { useEmotionalMemory } from '@/state/emotionalMemory';
+import { getPredictedHabit, updateHabitMemoryScore } from '@/ai/habitPredictor';
 
 interface AssistantBubbleProps {
   onOpenChat?: () => void;
@@ -73,6 +74,23 @@ const AssistantBubble = ({ onOpenChat, className = '', typing = false }: Assista
           setTimeout(() => {
             messageQueueRef.current.enqueue(greeting);
           }, 1000);
+          
+          // Check for habit prediction after greeting
+          setTimeout(async () => {
+            try {
+              const prediction = await getPredictedHabit();
+              if (prediction && prediction.confidence >= 0.65) {
+                messageQueueRef.current.enqueue(prediction.suggestion);
+                
+                // Update emotional memory based on consistency
+                if (prediction.consistencyScore) {
+                  updateHabitMemoryScore(prediction.consistencyScore);
+                }
+              }
+            } catch (error) {
+              console.error('Error getting habit prediction:', error);
+            }
+          }, 3000);
         }
       }
     };
