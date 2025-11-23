@@ -44,6 +44,7 @@ interface MalunitaVoiceProps {
   onOrbReflectionTrigger?: () => void;
   onTasksCreated?: () => void;
   taskStreak?: number;
+  onRecordingStateChange?: (isRecording: boolean) => void;
 }
 
 export interface MalunitaVoiceRef {
@@ -57,6 +58,7 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
   onOrbReflectionTrigger, 
   onTasksCreated,
   taskStreak = 0,
+  onRecordingStateChange,
 }, ref) => {
   const [isListening, setIsListening] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -92,6 +94,11 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
   const { recordStressedLanguage } = useCognitiveLoad();
   const audioEnabled = profile?.wants_voice_playback ?? true;
   const isMobile = useIsMobile();
+
+  // Notify parent of recording state changes
+  useEffect(() => {
+    onRecordingStateChange?.(isListening || isProcessing);
+  }, [isListening, isProcessing, onRecordingStateChange]);
 
   // ============================================================
   // THOUGHT ENGINE 2.0: All helper functions imported from src/lib/
