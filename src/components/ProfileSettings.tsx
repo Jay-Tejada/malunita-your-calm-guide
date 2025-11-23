@@ -15,6 +15,7 @@ import { PersonalizationInsights } from "@/components/PersonalizationInsights";
 import { WakeWordTraining } from "@/components/WakeWordTraining";
 import { RitualPreferences } from "@/components/RitualPreferences";
 import { CompanionCustomization } from "@/components/CompanionCustomization";
+import { ArtStyleSwitcher } from "@/features/artstyles/ArtStyleSwitcher";
 import { ARCHETYPE_CONFIG, PersonalityArchetype } from "@/state/personality";
 import { useState } from "react";
 
@@ -168,6 +169,9 @@ export const ProfileSettings = ({ onClose }: ProfileSettingsProps) => {
                 Customize Companion
               </Button>
             </div>
+
+            {/* Art Style Themes */}
+            <ArtStyleSwitcher />
 
             {/* Voice Commands */}
             <VoiceCommandsManager />
