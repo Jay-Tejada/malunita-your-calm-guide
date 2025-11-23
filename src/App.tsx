@@ -11,6 +11,7 @@ import { useRitualTrigger } from "@/hooks/useRitualTrigger";
 import { MorningRitual } from "@/features/rituals/MorningRitual";
 import { EveningRitual } from "@/features/rituals/EveningRitual";
 import { questTracker } from "@/lib/questTracker";
+import { Layout } from "@/components/Layout";
 import Index from "./pages/Index";
 import Install from "./pages/Install";
 import NotFound from "./pages/NotFound";
@@ -92,30 +93,35 @@ const App = () => {
 
           <BrowserRouter>
             <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/inbox" element={<Inbox />} />
-              <Route path="/goals" element={<Goals />} />
-              <Route path="/daily-session" element={<DailySession />} />
-              <Route path="/weekly-insights" element={<WeeklyInsights />} />
-              <Route path="/hatching-gallery" element={<HatchingGallery />} />
-              <Route path="/tiny-task-fiesta" element={<TinyTaskFiesta />} />
-              <Route path="/notifications" element={<Notifications />} />
-              <Route path="/backup" element={<Backup />} />
-              <Route path="/customization" element={<Customization />} />
-              <Route path="/journal" element={<Journal />} />
-              <Route path="/monthly-insights" element={<MonthlyInsights />} />
-              <Route path="/quests" element={<Quests />} />
-              <Route path="/ambient-worlds" element={<AmbientWorlds />} />
-              <Route path="/clusters" element={<Clusters />} />
-              <Route path="/timetravel" element={<TimeTravel />} />
+              <Route element={<Layout />}>
+                <Route path="/" element={<Index />} />
+                <Route path="/inbox" element={<Inbox />} />
+                <Route path="/goals" element={<Goals />} />
+                <Route path="/daily-session" element={<DailySession />} />
+                <Route path="/weekly-insights" element={<WeeklyInsights />} />
+                <Route path="/hatching-gallery" element={<HatchingGallery />} />
+                <Route path="/tiny-task-fiesta" element={<TinyTaskFiesta />} />
+                <Route path="/notifications" element={<Notifications />} />
+                <Route path="/backup" element={<Backup />} />
+                <Route path="/customization" element={<Customization />} />
+                <Route path="/journal" element={<Journal />} />
+                <Route path="/monthly-insights" element={<MonthlyInsights />} />
+                <Route path="/quests" element={<Quests />} />
+                <Route path="/ambient-worlds" element={<AmbientWorlds />} />
+                <Route path="/clusters" element={<Clusters />} />
+                <Route path="/timetravel" element={<TimeTravel />} />
+                <Route path="/reminders" element={<Reminders />} />
+                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                <Route path="*" element={<NotFound />} />
+              </Route>
+              
+              {/* Routes without planet navigation */}
               <Route path="/install" element={<Install />} />
               <Route path="/admin" element={<Admin />} />
               <Route path="/trends" element={<Trends />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/test-core" element={<TestCore />} />
               <Route path="/test-all" element={<TestAll />} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
         </TooltipProvider>

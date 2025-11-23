@@ -1,10 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useNavigate } from "react-router-dom";
 import { Auth } from "@/components/Auth";
-import { GlobeButton } from "@/components/GlobeButton";
-import { LeftDrawer } from "@/components/LeftDrawer";
-import { RightDrawer } from "@/components/RightDrawer";
 import { HomeOrb } from "@/components/HomeOrb";
 import { CompanionOnboarding } from "@/components/CompanionOnboarding";
 import { useProfile } from "@/hooks/useProfile";
@@ -14,9 +10,6 @@ import { useToast } from "@/hooks/use-toast";
 const Index = () => {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [leftDrawerOpen, setLeftDrawerOpen] = useState(false);
-  const [rightDrawerOpen, setRightDrawerOpen] = useState(false);
-  const navigate = useNavigate();
   const { profile } = useProfile();
   const { companion, needsOnboarding, updateCompanion } = useCompanionIdentity();
   const { toast } = useToast();
@@ -73,36 +66,6 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Top-Left Planet - Tasks Drawer */}
-      <GlobeButton
-        position="top-left"
-        variant="menu"
-        onClick={() => setLeftDrawerOpen(!leftDrawerOpen)}
-        isActive={leftDrawerOpen}
-      />
-
-      {/* Top-Right Planet - Companion Drawer */}
-      <GlobeButton
-        position="top-right"
-        variant="home"
-        onClick={() => setRightDrawerOpen(!rightDrawerOpen)}
-        isActive={rightDrawerOpen}
-      />
-
-      {/* Left Tasks Drawer */}
-      <LeftDrawer
-        isOpen={leftDrawerOpen}
-        onClose={() => setLeftDrawerOpen(false)}
-        onNavigate={(path) => navigate(path)}
-      />
-
-      {/* Right Companion Drawer */}
-      <RightDrawer
-        isOpen={rightDrawerOpen}
-        onClose={() => setRightDrawerOpen(false)}
-      />
-
-      {/* Main Content - Always Show Orb */}
       <HomeOrb />
     </div>
   );
