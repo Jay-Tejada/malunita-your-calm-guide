@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import { useTasks } from "@/hooks/useTasks";
 import { hapticLight, hapticMedium, hapticSuccess, hapticSwipe } from "@/utils/haptics";
 
-type DrawerMode = "root" | "inbox" | "projects" | "work" | "home" | "gym" | "goals";
+type DrawerMode = "root" | "inbox" | "projects" | "work" | "home" | "gym" | "calendar";
 
 interface LeftDrawerProps {
   isOpen: boolean;
@@ -20,7 +20,7 @@ const categories = [
   { id: "work", label: "Work", filter: (task: any) => task.category === "work" },
   { id: "home", label: "Home", filter: (task: any) => task.category === "home" },
   { id: "gym", label: "Gym", filter: (task: any) => task.category === "gym" },
-  { id: "goals", label: "Goals", filter: (task: any) => task.goal_aligned === true },
+  { id: "calendar", label: "Calendar", filter: (task: any) => task.reminder_time !== null },
 ];
 
 export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => {
