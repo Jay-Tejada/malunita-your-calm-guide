@@ -1288,13 +1288,9 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
     startRecording: () => {
       console.log('🎯 startRecording called! State:', { isListening, isProcessing, isSpeaking });
       resetActivityTimer(); // Reset sleep timer on interaction
-      // Allow stopping when listening, or starting when not busy
-      if (isListening || (!isProcessing && !isSpeaking)) {
-        console.log('✅ Calling handleVoiceLoop');
-        handleVoiceLoop();
-      } else {
-        console.log('❌ Blocked by state:', { isListening, isProcessing, isSpeaking });
-      }
+      // Always delegate to handleVoiceLoop; it decides whether to start or stop
+      console.log('✅ Delegating to handleVoiceLoop');
+      handleVoiceLoop();
     }
   }));
 
