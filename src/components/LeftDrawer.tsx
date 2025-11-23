@@ -29,10 +29,10 @@ interface LeftDrawerProps {
 }
 
 const drawerItems: DrawerItem[] = [
+  { id: "home", label: "Home", icon: Home, path: "/" },
   { id: "inbox", label: "Inbox", icon: Inbox, path: "/inbox" },
   { id: "projects", label: "Projects", icon: FolderKanban, path: "/" },
   { id: "work", label: "Work", icon: Briefcase, path: "/" },
-  { id: "home", label: "Home", icon: Home, path: "/" },
   { id: "gym", label: "Gym", icon: Dumbbell, path: "/" },
   { id: "daily-session", label: "Daily Session", icon: Calendar, path: "/daily-session" },
   { id: "weekly-insights", label: "Weekly Insights", icon: TrendingUp, path: "/weekly-insights" },
