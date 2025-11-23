@@ -388,6 +388,8 @@ export type Database = {
         Row: {
           autocategorize_enabled: boolean | null
           average_tasks_per_day: number | null
+          bonding_score: number | null
+          bonding_tier: string | null
           common_prefixes: string[] | null
           companion_colorway: string | null
           companion_name: string | null
@@ -404,6 +406,7 @@ export type Database = {
           goal_updated_at: string | null
           id: string
           insights: Json | null
+          last_interaction_at: string | null
           last_lore_shown_at: string | null
           last_personalization_run: string | null
           likes_routine_nudges: boolean | null
@@ -439,6 +442,8 @@ export type Database = {
         Insert: {
           autocategorize_enabled?: boolean | null
           average_tasks_per_day?: number | null
+          bonding_score?: number | null
+          bonding_tier?: string | null
           common_prefixes?: string[] | null
           companion_colorway?: string | null
           companion_name?: string | null
@@ -455,6 +460,7 @@ export type Database = {
           goal_updated_at?: string | null
           id: string
           insights?: Json | null
+          last_interaction_at?: string | null
           last_lore_shown_at?: string | null
           last_personalization_run?: string | null
           likes_routine_nudges?: boolean | null
@@ -490,6 +496,8 @@ export type Database = {
         Update: {
           autocategorize_enabled?: boolean | null
           average_tasks_per_day?: number | null
+          bonding_score?: number | null
+          bonding_tier?: string | null
           common_prefixes?: string[] | null
           companion_colorway?: string | null
           companion_name?: string | null
@@ -506,6 +514,7 @@ export type Database = {
           goal_updated_at?: string | null
           id?: string
           insights?: Json | null
+          last_interaction_at?: string | null
           last_lore_shown_at?: string | null
           last_personalization_run?: string | null
           likes_routine_nudges?: boolean | null

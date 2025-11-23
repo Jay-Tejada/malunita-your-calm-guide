@@ -6,6 +6,7 @@ import { useEmotionalMemory } from '@/state/emotionalMemory';
 import { Sparkles } from 'lucide-react';
 import { getCreatureAsset, getStageBoosts } from '@/lib/evolutionAssets';
 import { useMoodStore } from '@/state/moodMachine';
+import { useBondingMeter } from '@/hooks/useBondingMeter';
 
 type AnimationMode = 
   | 'floating_idle' 
@@ -46,8 +47,12 @@ export const CreatureSprite = ({
   const { level, evolutionStage } = useLevelSystem();
   const { joy } = useEmotionalMemory();
   const { updateMood } = useMoodStore();
+  const { bonding, trackMalunitaTap } = useBondingMeter();
   const prevEmotionRef = useRef(emotion);
   const prevStageRef = useRef(evolutionStage);
+  
+  // Soul-Bond special effect
+  const isSoulBond = bonding.tier.name === "Soul-Bond";
   
   // Get stage-specific boosts
   const stageBoosts = getStageBoosts(evolutionStage);
@@ -268,13 +273,14 @@ export const CreatureSprite = ({
   return (
     <motion.div 
       className={cn(
-        "flex items-center justify-center relative",
+        "flex items-center justify-center relative cursor-pointer",
         listening && "shadow-lg shadow-white/40",
         className
       )}
       style={{ width: size, height: size }}
       animate={animationConfig.animate}
       transition={animationConfig.transition}
+      onClick={trackMalunitaTap}
     >
       {/* Level-based glow effect */}
       {glowIntensity > 0 && (
@@ -334,6 +340,34 @@ export const CreatureSprite = ({
               className="absolute top-1/2 left-1/2"
             >
               <Sparkles className="w-3 h-3 text-yellow-400 fill-yellow-400" />
+            </motion.div>
+          ))}
+        </AnimatePresence>
+      )}
+
+      {/* Soul-Bond golden sparkles */}
+      {isSoulBond && (
+        <AnimatePresence>
+          {[...Array(8)].map((_, i) => (
+            <motion.div
+              key={`soul-sparkle-${i}`}
+              initial={{ opacity: 0, scale: 0, rotate: 0 }}
+              animate={{ 
+                opacity: [0, 0.8, 0],
+                scale: [0, 1.2, 0],
+                rotate: [0, 360],
+                x: [0, (Math.random() - 0.5) * 80],
+                y: [0, (Math.random() - 0.5) * 80]
+              }}
+              transition={{
+                duration: 2.5,
+                repeat: Infinity,
+                delay: i * 0.3,
+                ease: "easeOut"
+              }}
+              className="absolute top-1/2 left-1/2"
+            >
+              <Sparkles className="w-4 h-4 text-amber-400 fill-amber-400" />
             </motion.div>
           ))}
         </AnimatePresence>

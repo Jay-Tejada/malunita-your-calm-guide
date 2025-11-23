@@ -20,6 +20,7 @@ import { TaskWorldMap } from "@/features/worldmap/TaskWorldMap";
 import { ShareMalunita } from "@/features/social/ShareMalunita";
 import { DreamMode } from "@/features/dreams/DreamMode";
 import { CognitiveLoadIndicator } from "@/components/CognitiveLoadIndicator";
+import { BondingMeter } from "@/components/BondingMeter";
 import { QuestProgressNotification } from "@/features/quests/QuestProgressNotification";
 import { useAdmin } from "@/hooks/useAdmin";
 import { useTasks } from "@/hooks/useTasks";
@@ -667,7 +668,12 @@ const Index = () => {
           
           {/* Cognitive Load Indicator */}
           {user && !showSettings && !showRunwayReview && !showFocusMode && (
-            <CognitiveLoadIndicator />
+            <>
+              <CognitiveLoadIndicator />
+              <div className="fixed top-20 right-4 z-30">
+                <BondingMeter />
+              </div>
+            </>
           )}
         </main>
 

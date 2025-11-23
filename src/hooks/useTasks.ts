@@ -5,6 +5,7 @@ import { logHabitCompletion } from "@/ai/habitPredictor";
 import { useCognitiveLoad } from "@/state/cognitiveLoad";
 import { JOURNAL_EVENTS } from "@/features/journal/journalEvents";
 import { questTracker } from "@/lib/questTracker";
+import { bondingMeter, BONDING_INCREMENTS } from "@/state/bondingMeter";
 
 export interface Task {
   id: string;
@@ -125,6 +126,12 @@ export const useTasks = () => {
         
         // Check project completion quest
         questTracker.checkProjectCompletion();
+        
+        // Increment bonding for task completion
+        bondingMeter.incrementBonding(
+          BONDING_INCREMENTS.TASK_COMPLETED,
+          "Task completed! Malunita is proud"
+        );
         
         // Check for task milestone and create journal entry
         const completedCount = tasks?.filter(t => t.completed).length || 0;

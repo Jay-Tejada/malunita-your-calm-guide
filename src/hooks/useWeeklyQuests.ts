@@ -5,6 +5,7 @@ import { useLevelSystem } from '@/state/levelSystem';
 import { useEmotionalMemory } from '@/state/emotionalMemory';
 import { useCustomizationStore } from '@/features/customization/useCustomizationStore';
 import { startOfWeek, format } from 'date-fns';
+import { bondingMeter, BONDING_INCREMENTS } from '@/state/bondingMeter';
 
 export interface WeeklyQuest {
   id: string;
@@ -136,6 +137,12 @@ export const useWeeklyQuests = () => {
       if (quest.reward_cosmetic_type && quest.reward_cosmetic_id) {
         unlockCosmetic(quest.reward_cosmetic_type as any, quest.reward_cosmetic_id);
       }
+
+      // Increment bonding for quest completion
+      bondingMeter.incrementBonding(
+        BONDING_INCREMENTS.QUEST_COMPLETED,
+        "Quest completed! Amazing teamwork"
+      );
 
       queryClient.invalidateQueries({ queryKey: ['weekly-quests'] });
 
