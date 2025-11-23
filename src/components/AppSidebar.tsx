@@ -14,6 +14,12 @@ import {
   Sparkles,
   TrendingUp,
   Heart,
+  Focus,
+  Map,
+  Zap,
+  Trophy,
+  Shirt,
+  Brain,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useCustomCategories } from "@/hooks/useCustomCategories";
@@ -188,6 +194,48 @@ export function AppSidebar({
                     <SidebarMenuButton onClick={() => navigate('/journal')} className="hover:bg-muted/50">
                       <Heart className="w-4 h-4" />
                       <span>Feelings Hub</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+
+                  <SidebarMenuItem>
+                    <SidebarMenuButton onClick={() => navigate('/focus')} className="hover:bg-muted/50">
+                      <Focus className="w-4 h-4" />
+                      <span>Focus Mode</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+
+                  <SidebarMenuItem>
+                    <SidebarMenuButton onClick={() => navigate('/task-universe')} className="hover:bg-muted/50">
+                      <Map className="w-4 h-4" />
+                      <span>Task Universe</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+
+                  <SidebarMenuItem>
+                    <SidebarMenuButton onClick={() => navigate('/tiny-task-fiesta')} className="hover:bg-muted/50">
+                      <Zap className="w-4 h-4" />
+                      <span>Tiny Task Fiesta</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+
+                  <SidebarMenuItem>
+                    <SidebarMenuButton onClick={() => navigate('/quests')} className="hover:bg-muted/50">
+                      <Trophy className="w-4 h-4" />
+                      <span>Weekly Quests</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+
+                  <SidebarMenuItem>
+                    <SidebarMenuButton onClick={() => navigate('/customization')} className="hover:bg-muted/50">
+                      <Shirt className="w-4 h-4" />
+                      <span>Customization</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+
+                  <SidebarMenuItem>
+                    <SidebarMenuButton onClick={() => navigate('/clusters')} className="hover:bg-muted/50">
+                      <Brain className="w-4 h-4" />
+                      <span>Knowledge Clusters</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 </SidebarMenu>
