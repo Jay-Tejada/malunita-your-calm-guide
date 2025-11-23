@@ -8,7 +8,8 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Calendar as CalendarIcon, ArrowLeft, Plus, Clock, MapPin, CheckCircle, Trash2 } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Calendar as CalendarIcon, ArrowLeft, Plus, Clock, MapPin, CheckCircle, Trash2, Repeat } from "lucide-react";
 import { hapticLight, hapticSuccess } from "@/utils/haptics";
 import { format, addDays, startOfWeek, isSameDay, parseISO } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -24,6 +25,7 @@ interface CalendarEvent {
   description?: string;
   completed: boolean;
   taskId: string;
+  recurrencePattern?: 'none' | 'daily' | 'weekly' | 'monthly';
 }
 
 const Calendar = () => {
@@ -38,6 +40,9 @@ const Calendar = () => {
   const [newEventDate, setNewEventDate] = useState("");
   const [newEventTime, setNewEventTime] = useState("");
   const [newEventDescription, setNewEventDescription] = useState("");
+  const [recurrencePattern, setRecurrencePattern] = useState<'none' | 'daily' | 'weekly' | 'monthly'>('none');
+  const [recurrenceDay, setRecurrenceDay] = useState<number>(0);
+  const [recurrenceEndDate, setRecurrenceEndDate] = useState("");
   const { tasks, isLoading, updateTask, createTasks, deleteTask } = useTasks();
   
   // Convert tasks with reminder times to calendar events
@@ -55,6 +60,7 @@ const Calendar = () => {
         description: task.context,
         completed: task.completed,
         taskId: task.id,
+        recurrencePattern: task.recurrence_pattern || 'none',
       }));
   }, [tasks]);
 
@@ -99,12 +105,17 @@ const Calendar = () => {
         reminder_time: reminderDateTime.toISOString(),
         context: newEventDescription || undefined,
         has_reminder: true,
+        recurrence_pattern: recurrencePattern,
+        recurrence_day: recurrencePattern === 'weekly' ? recurrenceDay : undefined,
+        recurrence_end_date: recurrenceEndDate ? new Date(recurrenceEndDate).toISOString() : undefined,
       }]);
 
       hapticSuccess();
       toast({
         title: "Event created",
-        description: "Your calendar event has been added.",
+        description: recurrencePattern !== 'none' 
+          ? "Your recurring event has been added."
+          : "Your calendar event has been added.",
       });
 
       // Reset form
@@ -112,6 +123,9 @@ const Calendar = () => {
       setNewEventDate("");
       setNewEventTime("");
       setNewEventDescription("");
+      setRecurrencePattern('none');
+      setRecurrenceDay(0);
+      setRecurrenceEndDate("");
       setIsNewEventDialogOpen(false);
     } catch (error) {
       console.error('Error creating event:', error);
@@ -125,11 +139,15 @@ const Calendar = () => {
 
   const handleEventClick = (event: CalendarEvent) => {
     hapticLight();
+    const task = tasks?.find(t => t.id === event.taskId);
     setEditingEvent(event);
     setNewEventTitle(event.title);
     setNewEventDate(format(event.date, "yyyy-MM-dd"));
     setNewEventTime(format(event.date, "HH:mm"));
     setNewEventDescription(event.description || "");
+    setRecurrencePattern(task?.recurrence_pattern || 'none');
+    setRecurrenceDay(task?.recurrence_day || 0);
+    setRecurrenceEndDate(task?.recurrence_end_date ? format(new Date(task.recurrence_end_date), "yyyy-MM-dd") : "");
     setIsEditEventDialogOpen(true);
   };
 
@@ -152,6 +170,9 @@ const Calendar = () => {
           title: newEventTitle,
           reminder_time: reminderDateTime.toISOString(),
           context: newEventDescription || undefined,
+          recurrence_pattern: recurrencePattern,
+          recurrence_day: recurrencePattern === 'weekly' ? recurrenceDay : undefined,
+          recurrence_end_date: recurrenceEndDate ? new Date(recurrenceEndDate).toISOString() : undefined,
         }
       });
 
@@ -166,6 +187,9 @@ const Calendar = () => {
       setNewEventDate("");
       setNewEventTime("");
       setNewEventDescription("");
+      setRecurrencePattern('none');
+      setRecurrenceDay(0);
+      setRecurrenceEndDate("");
       setEditingEvent(null);
       setIsEditEventDialogOpen(false);
     } catch (error) {
@@ -195,6 +219,9 @@ const Calendar = () => {
       setNewEventDate("");
       setNewEventTime("");
       setNewEventDescription("");
+      setRecurrencePattern('none');
+      setRecurrenceDay(0);
+      setRecurrenceEndDate("");
       setEditingEvent(null);
       setIsEditEventDialogOpen(false);
       setIsDeleteAlertOpen(false);
@@ -347,12 +374,20 @@ const Calendar = () => {
                       
                       <div className="flex-1">
                         <div className="flex items-start justify-between gap-2">
-                          <h3 className={cn(
-                            "font-semibold text-foreground mb-1",
-                            event.completed && "line-through"
-                          )}>
-                            {event.title}
-                          </h3>
+                          <div className="flex-1">
+                            <h3 className={cn(
+                              "font-semibold text-foreground mb-1",
+                              event.completed && "line-through"
+                            )}>
+                              {event.title}
+                            </h3>
+                            {event.recurrencePattern && event.recurrencePattern !== 'none' && (
+                              <div className="flex items-center gap-1 text-xs text-muted-foreground mb-1">
+                                <Repeat className="w-3 h-3" />
+                                <span className="capitalize">{event.recurrencePattern}</span>
+                              </div>
+                            )}
+                          </div>
                           <Button
                             variant="ghost"
                             size="sm"
@@ -445,6 +480,53 @@ const Calendar = () => {
               />
             </div>
 
+            <div className="space-y-2">
+              <Label htmlFor="recurrence">Repeat</Label>
+              <Select value={recurrencePattern} onValueChange={(value: any) => setRecurrencePattern(value)}>
+                <SelectTrigger id="recurrence">
+                  <SelectValue placeholder="Does not repeat" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Does not repeat</SelectItem>
+                  <SelectItem value="daily">Daily</SelectItem>
+                  <SelectItem value="weekly">Weekly</SelectItem>
+                  <SelectItem value="monthly">Monthly</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {recurrencePattern === 'weekly' && (
+              <div className="space-y-2">
+                <Label htmlFor="recurrence-day">Day of Week</Label>
+                <Select value={recurrenceDay.toString()} onValueChange={(value) => setRecurrenceDay(parseInt(value))}>
+                  <SelectTrigger id="recurrence-day">
+                    <SelectValue placeholder="Select day" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="0">Sunday</SelectItem>
+                    <SelectItem value="1">Monday</SelectItem>
+                    <SelectItem value="2">Tuesday</SelectItem>
+                    <SelectItem value="3">Wednesday</SelectItem>
+                    <SelectItem value="4">Thursday</SelectItem>
+                    <SelectItem value="5">Friday</SelectItem>
+                    <SelectItem value="6">Saturday</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {recurrencePattern !== 'none' && (
+              <div className="space-y-2">
+                <Label htmlFor="recurrence-end">End Date (optional)</Label>
+                <Input
+                  id="recurrence-end"
+                  type="date"
+                  value={recurrenceEndDate}
+                  onChange={(e) => setRecurrenceEndDate(e.target.value)}
+                />
+              </div>
+            )}
+
             <div className="flex gap-2 pt-2">
               <Button
                 variant="outline"
@@ -516,6 +598,53 @@ const Calendar = () => {
                 rows={3}
               />
             </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="edit-recurrence">Repeat</Label>
+              <Select value={recurrencePattern} onValueChange={(value: any) => setRecurrencePattern(value)}>
+                <SelectTrigger id="edit-recurrence">
+                  <SelectValue placeholder="Does not repeat" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Does not repeat</SelectItem>
+                  <SelectItem value="daily">Daily</SelectItem>
+                  <SelectItem value="weekly">Weekly</SelectItem>
+                  <SelectItem value="monthly">Monthly</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {recurrencePattern === 'weekly' && (
+              <div className="space-y-2">
+                <Label htmlFor="edit-recurrence-day">Day of Week</Label>
+                <Select value={recurrenceDay.toString()} onValueChange={(value) => setRecurrenceDay(parseInt(value))}>
+                  <SelectTrigger id="edit-recurrence-day">
+                    <SelectValue placeholder="Select day" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="0">Sunday</SelectItem>
+                    <SelectItem value="1">Monday</SelectItem>
+                    <SelectItem value="2">Tuesday</SelectItem>
+                    <SelectItem value="3">Wednesday</SelectItem>
+                    <SelectItem value="4">Thursday</SelectItem>
+                    <SelectItem value="5">Friday</SelectItem>
+                    <SelectItem value="6">Saturday</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {recurrencePattern !== 'none' && (
+              <div className="space-y-2">
+                <Label htmlFor="edit-recurrence-end">End Date (optional)</Label>
+                <Input
+                  id="edit-recurrence-end"
+                  type="date"
+                  value={recurrenceEndDate}
+                  onChange={(e) => setRecurrenceEndDate(e.target.value)}
+                />
+              </div>
+            )}
 
             <div className="flex gap-2 pt-2">
               <Button
