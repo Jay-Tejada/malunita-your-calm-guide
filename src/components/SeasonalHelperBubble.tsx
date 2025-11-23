@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSeasonalEvent } from '@/hooks/useSeasonalEvent';
-import { X, Sparkles } from 'lucide-react';
+import { X } from 'lucide-react';
 
 export const SeasonalHelperBubble = () => {
   const { currentSeason } = useSeasonalEvent();
@@ -9,45 +9,15 @@ export const SeasonalHelperBubble = () => {
   const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
-    if (!currentSeason?.effects.helperMessage || dismissed) {
-      return;
-    }
-
-    // Check if we've already shown this message today
-    const storageKey = `seasonal-message-${currentSeason.type}`;
-    const lastShown = localStorage.getItem(storageKey);
-    const today = new Date().toDateString();
-
-    // Only show once per day with a random chance (30%)
-    if (lastShown === today) {
-      return;
-    }
-
-    // Random chance to show (30% chance)
-    const shouldShow = Math.random() < 0.3;
-    if (!shouldShow) {
-      return;
-    }
-
-    // Show message after a delay
-    const timer = setTimeout(() => {
-      setShowMessage(true);
-      localStorage.setItem(storageKey, today);
-    }, 5000);
-
-    return () => clearTimeout(timer);
-  }, [currentSeason, dismissed]);
-
-  // Auto-dismiss after 10 seconds
-  useEffect(() => {
-    if (showMessage && !dismissed) {
+    if (currentSeason?.effects.helperMessage && !dismissed) {
+      // Show message after a short delay
       const timer = setTimeout(() => {
-        setDismissed(true);
-      }, 10000);
+        setShowMessage(true);
+      }, 3000);
 
       return () => clearTimeout(timer);
     }
-  }, [showMessage, dismissed]);
+  }, [currentSeason, dismissed]);
 
   if (!currentSeason?.effects.helperMessage || !showMessage || dismissed) {
     return null;
@@ -56,30 +26,29 @@ export const SeasonalHelperBubble = () => {
   return (
     <AnimatePresence>
       <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -20 }}
+        initial={{ opacity: 0, y: 20, scale: 0.9 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: -20, scale: 0.9 }}
         transition={{ duration: 0.3 }}
-        className="fixed top-20 left-1/2 -translate-x-1/2 z-50 max-w-md w-full px-4"
+        className="fixed bottom-24 left-4 right-4 md:left-auto md:right-8 md:bottom-8 z-30 max-w-md"
       >
-        <div className="bg-card/95 backdrop-blur-md border border-primary/20 rounded-xl px-4 py-2 shadow-lg flex items-center gap-3">
-          <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
-            <Sparkles className="w-3 h-3 text-primary" />
+        <div className="bg-card/95 backdrop-blur-sm border border-border rounded-2xl p-4 shadow-lg">
+          <div className="flex items-start gap-3">
+            <div className="flex-1">
+              <p className="text-sm font-medium text-foreground mb-1">
+                🌟 {currentSeason.name}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {currentSeason.effects.helperMessage}
+              </p>
+            </div>
+            <button
+              onClick={() => setDismissed(true)}
+              className="p-1 hover:bg-muted rounded-full transition-colors"
+            >
+              <X className="w-4 h-4 text-muted-foreground" />
+            </button>
           </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-xs font-medium text-foreground truncate">
-              {currentSeason.name}
-            </p>
-            <p className="text-xs text-muted-foreground truncate">
-              {currentSeason.effects.helperMessage}
-            </p>
-          </div>
-          <button
-            onClick={() => setDismissed(true)}
-            className="flex-shrink-0 p-1 hover:bg-muted rounded-full transition-colors"
-          >
-            <X className="w-3 h-3 text-muted-foreground" />
-          </button>
         </div>
       </motion.div>
     </AnimatePresence>

@@ -8,8 +8,8 @@ import { useCustomCategories } from "@/hooks/useCustomCategories";
 import { useCompanionGrowth } from "@/hooks/useCompanionGrowth";
 import { DomainTabs } from "@/components/DomainTabs";
 import { CategoryManager } from "@/components/CategoryManager";
-import { DndContext, DragEndEvent, DragOverlay, PointerSensor, useSensor, useSensors, closestCenter } from "@dnd-kit/core";
-import { SortableContext, verticalListSortingStrategy, arrayMove } from "@dnd-kit/sortable";
+import { DndContext, DragEndEvent, DragOverlay, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
+import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { TaskCard } from "@/components/TaskCard";
 import { TaskCategoryFeedback } from "@/components/TaskCategoryFeedback";
 import { useToast } from "@/hooks/use-toast";
@@ -74,7 +74,7 @@ export const TaskList = ({ category: externalCategory }: TaskListProps = {}) => 
     const { active, over } = event;
     setActiveId(null);
 
-    if (!over || active.id === over.id) return;
+    if (!over) return;
 
     const taskId = active.id as string;
     const task = tasks?.find((t) => t.id === taskId);
@@ -95,30 +95,6 @@ export const TaskList = ({ category: externalCategory }: TaskListProps = {}) => 
         toast({
           title: "Task moved",
           description: `Moved to ${newCategory.charAt(0).toUpperCase() + newCategory.slice(1)}`,
-        });
-      }
-      return;
-    }
-
-    // Handle reordering within the same list
-    if (filteredTasks.some(t => t.id === over.id)) {
-      const oldIndex = filteredTasks.findIndex((t) => t.id === active.id);
-      const newIndex = filteredTasks.findIndex((t) => t.id === over.id);
-
-      if (oldIndex !== newIndex) {
-        const reorderedTasks = arrayMove(filteredTasks, oldIndex, newIndex);
-        
-        // Update display order for all affected tasks
-        reorderedTasks.forEach((task, index) => {
-          updateTask({
-            id: task.id,
-            updates: { display_order: index },
-          });
-        });
-
-        toast({
-          title: "Task reordered",
-          description: "Task order updated",
         });
       }
     }
@@ -177,7 +153,7 @@ export const TaskList = ({ category: externalCategory }: TaskListProps = {}) => 
   }
 
   // Filter tasks by selected domain or custom category, excluding focus tasks
-  const filteredTasks = (tasks?.filter(task => {
+  const filteredTasks = tasks?.filter(task => {
     if (task.is_focus) return false;
     
     // Show all non-focus tasks if "all" is selected
@@ -191,13 +167,7 @@ export const TaskList = ({ category: externalCategory }: TaskListProps = {}) => 
     }
     
     return task.category === selectedDomain;
-  }) || []).sort((a, b) => {
-    // Sort by display_order if available, otherwise by created_at
-    const orderA = a.display_order ?? Number.MAX_SAFE_INTEGER;
-    const orderB = b.display_order ?? Number.MAX_SAFE_INTEGER;
-    if (orderA !== orderB) return orderA - orderB;
-    return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
-  });
+  }) || [];
   const activeTask = activeId ? tasks?.find((t) => t.id === activeId) : null;
 
   if (!tasks || tasks.length === 0) {
@@ -308,7 +278,6 @@ export const TaskList = ({ category: externalCategory }: TaskListProps = {}) => 
   return (
     <DndContext
       sensors={sensors}
-      collisionDetection={closestCenter}
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
       onDragCancel={handleDragCancel}
@@ -329,10 +298,10 @@ export const TaskList = ({ category: externalCategory }: TaskListProps = {}) => 
         )}
         
         {/* Keyboard shortcuts hint */}
-        {filteredTasks.length > 0 && !externalCategory && (
-          <div className="text-xs text-muted-foreground text-center py-1">
-            <kbd className="px-1.5 py-0.5 bg-muted rounded text-foreground text-[10px]">Drag</kbd> to reorder • 
-            Press <kbd className="px-1.5 py-0.5 bg-muted rounded text-foreground text-[10px]">1-5</kbd> to move
+        {filteredTasks.length > 0 && (
+          <div className="text-xs text-muted-foreground text-center">
+            Press <kbd className="px-1.5 py-0.5 bg-secondary rounded text-foreground">1-5</kbd> to move selected task • 
+            Press <kbd className="px-1.5 py-0.5 bg-secondary rounded text-foreground">Q</kbd> to create task
           </div>
         )}
         
@@ -395,7 +364,7 @@ export const TaskList = ({ category: externalCategory }: TaskListProps = {}) => 
 
       <DragOverlay>
         {activeTask ? (
-          <div className="cursor-grabbing">
+          <div className="rotate-3 opacity-90">
             <TaskCard
               id={activeTask.id}
               title={activeTask.title}
