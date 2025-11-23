@@ -13,6 +13,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
+import { EventTitleAutocomplete } from "@/components/EventTitleAutocomplete";
+import { useRecentEventTitles } from "@/hooks/useRecentEventTitles";
 
 type DrawerMode = "root" | "inbox" | "projects" | "work" | "home" | "gym" | "calendar";
 
@@ -35,6 +37,7 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
   const [drawerMode, setDrawerMode] = useState<DrawerMode>("root");
   const { tasks, updateTask, createTasks, deleteTask } = useTasks();
   const { toast } = useToast();
+  const { recordEventTitle } = useRecentEventTitles();
   const [completingTaskIds, setCompletingTaskIds] = useState<Set<string>>(new Set());
   const [isNewEventDialogOpen, setIsNewEventDialogOpen] = useState(false);
   const [newEventTitle, setNewEventTitle] = useState("");
@@ -196,6 +199,9 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
         }
       });
 
+      // Record event title for autocomplete
+      await recordEventTitle(newEventTitle);
+
       hapticSuccess();
       toast({
         title: "Event updated",
@@ -251,6 +257,9 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
           recurrence_day: recurrencePattern === 'weekly' ? recurrenceDay : undefined,
           recurrence_end_date: recurrenceEndDate ? new Date(recurrenceEndDate).toISOString() : undefined,
         }]);
+
+        // Record event title for autocomplete
+        await recordEventTitle(newEventTitle);
 
         hapticSuccess();
         toast({
@@ -667,11 +676,10 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
           <div className="space-y-4 pt-4">
             <div className="space-y-2">
               <Label htmlFor="drawer-title" className="font-mono text-[13px]">Event Title</Label>
-              <Input
-                id="drawer-title"
-                placeholder="Meeting, Appointment, etc."
+              <EventTitleAutocomplete
                 value={newEventTitle}
-                onChange={(e) => setNewEventTitle(e.target.value)}
+                onChange={setNewEventTitle}
+                placeholder="Meeting, Appointment, etc."
                 className="font-mono text-[14px]"
               />
             </div>
