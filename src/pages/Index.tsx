@@ -1,16 +1,12 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { AnimatePresence } from "framer-motion";
 import { Auth } from "@/components/Auth";
 import { GlobeButton } from "@/components/GlobeButton";
 import { LeftDrawer } from "@/components/LeftDrawer";
+import { RightDrawer } from "@/components/RightDrawer";
 import { HomeOrb } from "@/components/HomeOrb";
-import { CenterContentContainer } from "@/components/CenterContentContainer";
-import { DailyIntelligence } from "@/components/DailyIntelligence";
-import { TaskList } from "@/components/TaskList";
 import { CompanionOnboarding } from "@/components/CompanionOnboarding";
-import { useTasks } from "@/hooks/useTasks";
 import { useProfile } from "@/hooks/useProfile";
 import { useCompanionIdentity, PersonalityType } from "@/hooks/useCompanionIdentity";
 import { useToast } from "@/hooks/use-toast";
@@ -18,11 +14,10 @@ import { useToast } from "@/hooks/use-toast";
 const Index = () => {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  const [activeView, setActiveView] = useState<string>("home");
+  const [leftDrawerOpen, setLeftDrawerOpen] = useState(false);
+  const [rightDrawerOpen, setRightDrawerOpen] = useState(false);
   const navigate = useNavigate();
   const { profile } = useProfile();
-  const { tasks } = useTasks();
   const { companion, needsOnboarding, updateCompanion } = useCompanionIdentity();
   const { toast } = useToast();
 
@@ -60,73 +55,6 @@ const Index = () => {
     });
   };
 
-  const handleSelectView = (view: string) => {
-    setActiveView(view);
-    setDrawerOpen(false);
-
-    // Handle navigation for specific views
-    const navigationMap: Record<string, string> = {
-      inbox: "/inbox",
-      goals: "/goals",
-      insights: "/weekly-insights",
-      clusters: "/clusters",
-      journal: "/journal",
-      companion: "/customization",
-      settings: "/notifications",
-    };
-
-    if (navigationMap[view]) {
-      navigate(navigationMap[view]);
-    }
-  };
-
-  const handleReturnHome = () => {
-    setActiveView("home");
-    setDrawerOpen(false);
-  };
-
-  const renderContent = () => {
-    switch (activeView) {
-      case "home":
-        return <HomeOrb onCapture={() => setActiveView("today")} />;
-      
-      case "today":
-        return (
-          <CenterContentContainer>
-            <DailyIntelligence 
-              topPriorities={tasks?.filter(t => t.is_focus && !t.completed).slice(0, 3) || []}
-              followUps={[]}
-              quickWins={tasks?.filter(t => !t.completed).slice(0, 3) || []}
-            />
-            <div className="mt-8">
-              <TaskList category="today" />
-            </div>
-          </CenterContentContainer>
-        );
-      
-      case "upcoming":
-        return (
-          <CenterContentContainer>
-            <h2 className="text-2xl font-mono mb-6">Upcoming Tasks</h2>
-            <TaskList category="upcoming" />
-          </CenterContentContainer>
-        );
-      
-      case "work":
-      case "home":
-      case "gym":
-        return (
-          <CenterContentContainer>
-            <h2 className="text-2xl font-mono mb-6 capitalize">{activeView}</h2>
-            <TaskList category={activeView} />
-          </CenterContentContainer>
-        );
-      
-      default:
-        return <HomeOrb onCapture={() => setActiveView("today")} />;
-    }
-  };
-
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -145,35 +73,37 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Top-Left Globe - Menu */}
+      {/* Top-Left Planet - Tasks Drawer */}
       <GlobeButton
         position="top-left"
         variant="menu"
-        onClick={() => setDrawerOpen(!drawerOpen)}
-        isActive={drawerOpen}
+        onClick={() => setLeftDrawerOpen(!leftDrawerOpen)}
+        isActive={leftDrawerOpen}
       />
 
-      {/* Top-Right Globe - Return Home */}
+      {/* Top-Right Planet - Companion Drawer */}
       <GlobeButton
         position="top-right"
         variant="home"
-        onClick={handleReturnHome}
-        isActive={activeView !== "home"}
+        onClick={() => setRightDrawerOpen(!rightDrawerOpen)}
+        isActive={rightDrawerOpen}
       />
 
-      {/* Left Navigation Drawer */}
+      {/* Left Tasks Drawer */}
       <LeftDrawer
-        isOpen={drawerOpen}
-        activeView={activeView}
-        onSelectView={handleSelectView}
+        isOpen={leftDrawerOpen}
+        onClose={() => setLeftDrawerOpen(false)}
+        onNavigate={(path) => navigate(path)}
       />
 
-      {/* Main Content Area */}
-      <div className="min-h-screen flex items-center justify-center">
-        <AnimatePresence mode="wait">
-          {renderContent()}
-        </AnimatePresence>
-      </div>
+      {/* Right Companion Drawer */}
+      <RightDrawer
+        isOpen={rightDrawerOpen}
+        onClose={() => setRightDrawerOpen(false)}
+      />
+
+      {/* Main Content - Always Show Orb */}
+      <HomeOrb />
     </div>
   );
 };
