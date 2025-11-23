@@ -35,6 +35,10 @@ import Quests from "./pages/Quests";
 import AmbientWorlds from "./pages/AmbientWorlds";
 import Clusters from "./pages/Clusters";
 import TimeTravel from "./pages/TimeTravel";
+import TopPriorities from "./pages/TopPriorities";
+import QuickWins from "./pages/QuickWins";
+import FollowUps from "./pages/FollowUps";
+import AllTasks from "./pages/AllTasks";
 import { useCutsceneManager } from "./features/cutscenes/useCutsceneManager";
 import { JOURNAL_EVENTS } from "./features/journal/journalEvents";
 import { bondingMeter, BONDING_INCREMENTS } from "./state/bondingMeter";
@@ -108,6 +112,11 @@ const App = () => {
               <Route path="/ambient-worlds" element={<AmbientWorlds />} />
               <Route path="/clusters" element={<Clusters />} />
               <Route path="/timetravel" element={<TimeTravel />} />
+              <Route path="/top-priorities" element={<TopPriorities />} />
+              <Route path="/quick-wins" element={<QuickWins />} />
+              <Route path="/follow-ups" element={<FollowUps />} />
+              <Route path="/all-tasks" element={<AllTasks />} />
+              <Route path="/reminders" element={<Reminders />} />
               <Route path="/install" element={<Install />} />
               <Route path="/admin" element={<Admin />} />
               <Route path="/trends" element={<Trends />} />
