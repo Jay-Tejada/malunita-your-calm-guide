@@ -30,6 +30,8 @@ const Calendar = () => {
   const { toast } = useToast();
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [isNewEventDialogOpen, setIsNewEventDialogOpen] = useState(false);
+  const [isEditEventDialogOpen, setIsEditEventDialogOpen] = useState(false);
+  const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
   const [newEventTitle, setNewEventTitle] = useState("");
   const [newEventDate, setNewEventDate] = useState("");
   const [newEventTime, setNewEventTime] = useState("");
@@ -114,6 +116,61 @@ const Calendar = () => {
       toast({
         title: "Error",
         description: "Failed to create event. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleEventClick = (event: CalendarEvent) => {
+    hapticLight();
+    setEditingEvent(event);
+    setNewEventTitle(event.title);
+    setNewEventDate(format(event.date, "yyyy-MM-dd"));
+    setNewEventTime(format(event.date, "HH:mm"));
+    setNewEventDescription(event.description || "");
+    setIsEditEventDialogOpen(true);
+  };
+
+  const handleUpdateEvent = async () => {
+    if (!editingEvent || !newEventTitle.trim() || !newEventDate || !newEventTime) {
+      toast({
+        title: "Missing information",
+        description: "Please fill in the title, date, and time.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const reminderDateTime = new Date(`${newEventDate}T${newEventTime}`);
+      
+      await updateTask({
+        id: editingEvent.taskId,
+        updates: {
+          title: newEventTitle,
+          reminder_time: reminderDateTime.toISOString(),
+          context: newEventDescription || undefined,
+        }
+      });
+
+      hapticSuccess();
+      toast({
+        title: "Event updated",
+        description: "Your calendar event has been updated.",
+      });
+
+      // Reset form
+      setNewEventTitle("");
+      setNewEventDate("");
+      setNewEventTime("");
+      setNewEventDescription("");
+      setEditingEvent(null);
+      setIsEditEventDialogOpen(false);
+    } catch (error) {
+      console.error('Error updating event:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update event. Please try again.",
         variant: "destructive",
       });
     }
@@ -240,6 +297,7 @@ const Calendar = () => {
                     "hover:shadow-md transition-shadow cursor-pointer",
                     event.completed && "opacity-60"
                   )}
+                  onClick={() => handleEventClick(event)}
                 >
                   <CardContent className="p-4">
                     <div className="flex items-start gap-4">
@@ -371,6 +429,79 @@ const Calendar = () => {
                 onClick={handleCreateEvent}
               >
                 Create Event
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Event Dialog */}
+      <Dialog open={isEditEventDialogOpen} onOpenChange={setIsEditEventDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Edit Event</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 pt-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-title">Event Title</Label>
+              <Input
+                id="edit-title"
+                placeholder="Meeting, Appointment, etc."
+                value={newEventTitle}
+                onChange={(e) => setNewEventTitle(e.target.value)}
+              />
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-date">Date</Label>
+                <Input
+                  id="edit-date"
+                  type="date"
+                  value={newEventDate}
+                  onChange={(e) => setNewEventDate(e.target.value)}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="edit-time">Time</Label>
+                <Input
+                  id="edit-time"
+                  type="time"
+                  value={newEventTime}
+                  onChange={(e) => setNewEventTime(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="edit-description">Description (optional)</Label>
+              <Textarea
+                id="edit-description"
+                placeholder="Add notes or location..."
+                value={newEventDescription}
+                onChange={(e) => setNewEventDescription(e.target.value)}
+                rows={3}
+              />
+            </div>
+
+            <div className="flex gap-2 pt-2">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => {
+                  hapticLight();
+                  setIsEditEventDialogOpen(false);
+                  setEditingEvent(null);
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                className="flex-1"
+                onClick={handleUpdateEvent}
+              >
+                Save Changes
               </Button>
             </div>
           </div>
