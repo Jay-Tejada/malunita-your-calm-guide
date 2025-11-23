@@ -1,8 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { getExpressionAsset } from '@/utils/getExpressionAsset';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLevelSystem } from '@/state/levelSystem';
+import { useEmotionalMemory } from '@/state/emotionalMemory';
+import { Sparkles } from 'lucide-react';
 
 // Import all expression assets
 import baseExpression from '@/assets/companions/base_expression.png';
@@ -21,6 +23,17 @@ import lowEnergyExpression from '@/assets/companions/low_energy_expression.png';
 import sleepingExpression from '@/assets/companions/sleeping_expression.png';
 import angryExpression from '@/assets/companions/angry_expression.png';
 
+type AnimationMode = 
+  | 'floating_idle' 
+  | 'walking' 
+  | 'turning_left' 
+  | 'turning_right' 
+  | 'falling_asleep' 
+  | 'waking_up' 
+  | 'excited_bounce'
+  | 'sleeping_loop'
+  | 'none';
+
 interface CreatureSpriteProps {
   emotion: string;             // determines the sprite to display
   size?: number;               // default 160px
@@ -28,6 +41,7 @@ interface CreatureSpriteProps {
   className?: string;          // extra classes
   listening?: boolean;         // shows listening animation
   typing?: boolean;            // shows typing/thinking state
+  onWakeUp?: () => void;       // callback when creature wakes up
 }
 
 // Map filenames to imported assets
@@ -55,38 +69,92 @@ export const CreatureSprite = ({
   animate = false, 
   className,
   listening = false,
-  typing = false
+  typing = false,
+  onWakeUp
 }: CreatureSpriteProps) => {
   const [microEmotion, setMicroEmotion] = useState<string | null>(null);
+  const [animationMode, setAnimationMode] = useState<AnimationMode>('floating_idle');
+  const [showSparkles, setShowSparkles] = useState(false);
   const { level } = useLevelSystem();
+  const { joy } = useEmotionalMemory();
+  const prevEmotionRef = useRef(emotion);
   
   // Calculate visual enhancements based on level
   const brightness = 1 + (level - 1) * 0.02; // 1.0 to 1.38 at level 20
   const glowIntensity = level >= 10 ? 0.3 + (level - 10) * 0.03 : 0;
   const hasParticles = level >= 10;
+  const isHappy = joy >= 70;
 
-  // Idle cycle timer - random micro-expressions
+  // Sleeping state transitions
+  useEffect(() => {
+    if (emotion === 'sleeping' && prevEmotionRef.current !== 'sleeping') {
+      // Transition to sleeping
+      setAnimationMode('falling_asleep');
+      setTimeout(() => setAnimationMode('sleeping_loop'), 1000);
+    } else if (emotion === 'surprised2' && prevEmotionRef.current === 'sleeping') {
+      // Waking up from sleep
+      setAnimationMode('waking_up');
+      setTimeout(() => {
+        setAnimationMode('floating_idle');
+        onWakeUp?.();
+      }, 800);
+    } else if (emotion !== 'sleeping' && animationMode === 'sleeping_loop') {
+      setAnimationMode('floating_idle');
+    }
+    
+    prevEmotionRef.current = emotion;
+  }, [emotion, animationMode, onWakeUp]);
+
+  // Bounce on strong mood changes
+  useEffect(() => {
+    const strongMoods = ['overjoyed', 'excited', 'angry', 'surprised', 'surprised2'];
+    if (strongMoods.includes(emotion) && prevEmotionRef.current !== emotion) {
+      setAnimationMode('excited_bounce');
+      setTimeout(() => setAnimationMode('floating_idle'), 400);
+    }
+  }, [emotion]);
+
+  // Random idle animation events (20-45 seconds)
   useEffect(() => {
     // Skip idle animations for strong emotions, when listening, or when typing
     if (listening || typing || ['angry', 'sleeping', 'sad'].includes(emotion)) {
       return;
     }
 
-    const interval = setInterval(() => {
-      const options = ['winking', 'laughing', 'welcoming', null];
-      const pick = options[Math.floor(Math.random() * options.length)];
-      setMicroEmotion(pick);
-    }, 4000 + Math.random() * 4000); // 4-8 seconds
+    const scheduleIdle = () => {
+      const delay = 20000 + Math.random() * 25000; // 20-45 seconds
+      return setTimeout(() => {
+        const idleActions: AnimationMode[] = ['turning_left', 'turning_right', 'walking'];
+        const randomAction = idleActions[Math.floor(Math.random() * idleActions.length)];
+        
+        setAnimationMode(randomAction);
+        
+        // Also trigger micro-expression
+        const expressions = ['winking', 'welcoming', 'concerned'];
+        setMicroEmotion(expressions[Math.floor(Math.random() * expressions.length)]);
+        
+        // Reset after animation completes
+        setTimeout(() => {
+          setAnimationMode('floating_idle');
+          setMicroEmotion(null);
+        }, randomAction === 'walking' ? 1500 : 800);
+        
+        scheduleIdle();
+      }, delay);
+    };
 
-    return () => clearInterval(interval);
+    const timer = scheduleIdle();
+    return () => clearTimeout(timer);
   }, [emotion, listening, typing]);
 
-  // Auto-clear micro-expression after 1200ms
+  // Sparkles for high happiness
   useEffect(() => {
-    if (!microEmotion) return;
-    const timer = setTimeout(() => setMicroEmotion(null), 1200);
-    return () => clearTimeout(timer);
-  }, [microEmotion]);
+    if (isHappy && !listening && !typing) {
+      setShowSparkles(true);
+      const timer = setTimeout(() => setShowSparkles(false), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [isHappy, listening, typing]);
 
   // Determine expression to show
   const getDisplayEmotion = () => {
@@ -110,16 +178,99 @@ export const CreatureSprite = ({
   const filename = getExpressionAsset(finalEmotion);
   const imageSrc = assetMap[filename] || baseExpression;
 
+  // Animation variants for framer-motion
+  const getAnimationVariants = () => {
+    switch (animationMode) {
+      case 'floating_idle':
+        return {
+          animate: {
+            y: [0, -6, 0],
+            rotate: [-1, 1, -1],
+          },
+          transition: { duration: 3, repeat: Infinity }
+        };
+      case 'walking':
+        return {
+          animate: {
+            y: [0, -4, 0, -4, 0],
+            x: [0, 2, 0, -2, 0],
+          },
+          transition: { duration: 1.5 }
+        };
+      case 'turning_left':
+        return {
+          animate: {
+            rotate: [-2, -8, -2],
+            x: [0, -3, 0],
+          },
+          transition: { duration: 0.8 }
+        };
+      case 'turning_right':
+        return {
+          animate: {
+            rotate: [-2, 8, -2],
+            x: [0, 3, 0],
+          },
+          transition: { duration: 0.8 }
+        };
+      case 'falling_asleep':
+        return {
+          animate: {
+            y: 8,
+            rotate: -15,
+            scale: 0.95,
+            opacity: 0.8,
+          },
+          transition: { duration: 1 }
+        };
+      case 'sleeping_loop':
+        return {
+          animate: {
+            y: [8, 10, 8],
+            rotate: [-15, -14, -15],
+            scale: 0.95,
+            opacity: 0.8,
+          },
+          transition: { duration: 4, repeat: Infinity }
+        };
+      case 'waking_up':
+        return {
+          animate: {
+            y: 0,
+            rotate: 0,
+            scale: 1,
+            opacity: 1,
+          },
+          transition: { duration: 0.8 }
+        };
+      case 'excited_bounce':
+        return {
+          animate: {
+            y: [0, -12, 0],
+            scale: [1, 1.05, 1],
+          },
+          transition: { duration: 0.4 }
+        };
+      default:
+        return {
+          animate: {},
+          transition: {}
+        };
+    }
+  };
+
+  const animationConfig = getAnimationVariants();
+
   return (
-    <div 
+    <motion.div 
       className={cn(
         "flex items-center justify-center relative",
-        animate && "animate-[float_3s_ease-in-out_infinite]",
-        listening && "animate-[pulse_2s_ease-in-out_infinite] shadow-lg shadow-white/40",
-        typing && "animate-[sway_1.5s_ease-in-out_infinite]",
+        listening && "shadow-lg shadow-white/40",
         className
       )}
       style={{ width: size, height: size }}
+      animate={animationConfig.animate}
+      transition={animationConfig.transition}
     >
       {/* Level-based glow effect */}
       {glowIntensity > 0 && (
@@ -156,6 +307,34 @@ export const CreatureSprite = ({
         </AnimatePresence>
       )}
 
+      {/* Sparkles for high happiness (joy >= 70) */}
+      {showSparkles && (
+        <AnimatePresence>
+          {[...Array(6)].map((_, i) => (
+            <motion.div
+              key={`sparkle-${i}`}
+              initial={{ opacity: 0, scale: 0, rotate: 0 }}
+              animate={{ 
+                opacity: [0, 1, 0],
+                scale: [0, 1, 0],
+                rotate: [0, 180, 360],
+                x: [0, (Math.random() - 0.5) * 60],
+                y: [0, (Math.random() - 0.5) * 60]
+              }}
+              transition={{
+                duration: 1.5,
+                repeat: Infinity,
+                delay: i * 0.25,
+                ease: "easeOut"
+              }}
+              className="absolute top-1/2 left-1/2"
+            >
+              <Sparkles className="w-3 h-3 text-yellow-400 fill-yellow-400" />
+            </motion.div>
+          ))}
+        </AnimatePresence>
+      )}
+
       <AnimatePresence mode="wait">
         <motion.div
           key={filename}
@@ -176,6 +355,6 @@ export const CreatureSprite = ({
           />
         </motion.div>
       </AnimatePresence>
-    </div>
+    </motion.div>
   );
 };

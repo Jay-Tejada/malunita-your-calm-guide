@@ -300,6 +300,10 @@ const AssistantBubble = ({ onOpenChat, className = '', typing = false }: Assista
             animate={mood === 'neutral' || mood === 'happy'}
             listening={listening}
             typing={typing}
+            onWakeUp={() => {
+              updateMood('surprised2');
+              increaseEnergy(5);
+            }}
           />
           
           {/* Typing indicator */}
