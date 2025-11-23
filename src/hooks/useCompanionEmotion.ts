@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { PersonalityType } from './useCompanionIdentity';
 import { MotionState } from './useCompanionMotion';
+import { CreatureExpression } from '@/constants/expressions';
+import { PersonalityArchetype, getExpressionWeight } from '@/state/personality';
 
 export type EmotionState = 
   | 'neutral' 
@@ -96,7 +98,8 @@ export interface EmotionContext {
 }
 
 export const useCompanionEmotion = (
-  personality: PersonalityType = 'zen'
+  personality: PersonalityType = 'zen',
+  archetype?: PersonalityArchetype
 ): CompanionEmotionHook => {
   const [emotion, setEmotion] = useState<EmotionState>('neutral');
   const emotionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -123,6 +126,30 @@ export const useCompanionEmotion = (
 
   // Auto-return to neutral after emotion duration
   const triggerTemporaryEmotion = (newEmotion: EmotionState, duration: number = 5000) => {
+    // Apply personality archetype weighting to emotion selection
+    if (archetype) {
+      const emotionExpressionMap: Record<EmotionState, CreatureExpression> = {
+        neutral: 'neutral',
+        curious: 'surprised',
+        focused: 'neutral',
+        proud: 'happy',
+        calm: 'neutral',
+        sleepy: 'sleepy',
+        excited: 'excited',
+        encouraging: 'welcoming',
+        inspired: 'overjoyed',
+        overwhelmed: 'worried',
+      };
+      
+      const expressionForEmotion = emotionExpressionMap[newEmotion];
+      const weight = getExpressionWeight(archetype, expressionForEmotion);
+      
+      // If this emotion's expression is avoided by the archetype, reduce duration
+      if (weight < 0.5) {
+        duration = duration * 0.5;
+      }
+    }
+    
     if (emotionTimeoutRef.current) {
       clearTimeout(emotionTimeoutRef.current);
     }

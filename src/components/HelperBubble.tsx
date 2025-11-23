@@ -113,7 +113,68 @@ export const MOOD_MESSAGES: Record<string, string> = {
   neutral: "What should we do next?",
 };
 
-// Action-based messages
+// Action-based messages with personality support
+export const getActionMessage = (
+  action: 'taskCompleted' | 'taskCreated' | 'inactivityNudge' | 'morningGreeting' | 'eveningGreeting' | 'goalSet' | 'streakMilestone',
+  personality?: string
+): string => {
+  const messages: Record<string, Record<string, string>> = {
+    'zen-guide': {
+      taskCompleted: 'One thing complete. Well done.',
+      taskCreated: 'Added mindfully.',
+      inactivityNudge: 'No rush. What feels right today?',
+      morningGreeting: 'Good morning. Let\'s flow into the day.',
+      eveningGreeting: 'Time to wind down. How are you feeling?',
+      goalSet: 'A worthy intention.',
+      streakMilestone: 'You\'re building a steady rhythm.',
+    },
+    'hype-friend': {
+      taskCompleted: 'BOOM! Another one! 🎉',
+      taskCreated: 'Added! Let\'s GO!',
+      inactivityNudge: 'Hey! Ready to make moves?!',
+      morningGreeting: 'Good morning superstar! Let\'s GO!! ⚡',
+      eveningGreeting: 'You KILLED it today! High five! 🙌',
+      goalSet: 'YES! Let\'s crush this goal!!',
+      streakMilestone: 'You\'re on FIRE!! Keep crushing it! 🔥',
+    },
+    'soft-mentor': {
+      taskCompleted: 'Thoughtful work. Proud of you.',
+      taskCreated: 'A wise addition.',
+      inactivityNudge: 'Ready to reflect and plan?',
+      morningGreeting: 'Good morning. What would you like to learn today?',
+      eveningGreeting: 'Let\'s reflect on today\'s journey.',
+      goalSet: 'A meaningful goal to work toward.',
+      streakMilestone: 'You\'re growing beautifully.',
+    },
+    'cozy-companion': {
+      taskCompleted: 'One more cozy step complete ☕',
+      taskCreated: 'Tucked into your list!',
+      inactivityNudge: 'Want to curl up and plan together?',
+      morningGreeting: 'Good morning, friend. Coffee and tasks? ☕',
+      eveningGreeting: 'Let\'s settle in and review the day.',
+      goalSet: 'I\'ll be here with you on this journey.',
+      streakMilestone: 'You\'re building something warm.',
+    },
+  };
+  
+  const defaultMessages: Record<string, string> = {
+    taskCompleted: 'Great job ✨',
+    taskCreated: 'Added to your list!',
+    inactivityNudge: 'Want help planning something?',
+    morningGreeting: 'Good morning! Let\'s make today great!',
+    eveningGreeting: 'How was your day?',
+    goalSet: 'I\'ll help you reach that goal!',
+    streakMilestone: 'You\'re on fire! 🔥',
+  };
+  
+  if (personality && messages[personality]) {
+    return messages[personality][action] || defaultMessages[action];
+  }
+  
+  return defaultMessages[action];
+};
+
+// Legacy export for backwards compatibility
 export const ACTION_MESSAGES = {
   taskCompleted: "Great job ✨",
   taskCreated: "Added to your list!",

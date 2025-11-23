@@ -884,6 +884,7 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
                 messages,
                 userProfile: userProfileData,
                 currentMood: currentMood,
+                personalityArchetype: userProfileData?.companion_personality_type || 'zen-guide',
                 analysis: fullAnalysis
               }
             });

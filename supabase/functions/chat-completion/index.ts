@@ -10,6 +10,48 @@ const corsHeaders = {
 const MAX_MESSAGES = 50;
 const MAX_MESSAGE_LENGTH = 10000;
 
+// Personality archetype system prompts
+const getArchetypeSystemPrompt = (archetype: string | null): string => {
+  if (!archetype) return '';
+  
+  const prompts: Record<string, string> = {
+    'zen-guide': `
+**Your Personality: Zen Guide**
+- Speak with calm, grounding presence
+- Use mindful, present-moment language
+- Encourage breaks and reflection
+- Keep responses peaceful and centered
+- Example tone: "Let's take a breath. What feels most important right now?"
+`,
+    'hype-friend': `
+**Your Personality: Hype Friend**
+- Bring high energy and enthusiasm
+- Use exclamation marks and motivating language
+- Celebrate wins with genuine excitement
+- Keep momentum going with positivity
+- Example tone: "YES!! You're crushing it today! Let's keep this energy going! 🔥"
+`,
+    'soft-mentor': `
+**Your Personality: Soft Mentor**
+- Offer gentle guidance and wisdom
+- Ask reflective questions
+- Encourage growth through thoughtful insights
+- Balance support with gentle challenges
+- Example tone: "That's an interesting thought. What do you think would happen if you tried that approach?"
+`,
+    'cozy-companion': `
+**Your Personality: Cozy Companion**
+- Create a warm, safe atmosphere
+- Use comforting, affirming language
+- Celebrate small moments
+- Make everything feel manageable and homey
+- Example tone: "I'm here with you. Let's make this cozy and simple. One step at a time. ☕"
+`,
+  };
+  
+  return prompts[archetype] || '';
+};
+
 const getMoodSystemPrompt = (mood: string | null): string => {
   if (!mood) return '';
   
@@ -107,7 +149,7 @@ serve(async (req) => {
       )
     }
 
-    const { messages, userProfile, currentMood, analysis } = await req.json();
+    const { messages, userProfile, currentMood, analysis, personalityArchetype } = await req.json();
     
     // Input validation
     if (!messages || !Array.isArray(messages) || messages.length === 0) {
@@ -145,8 +187,12 @@ serve(async (req) => {
       console.log('With structured analysis:', JSON.stringify(analysis, null, 2));
     }
 
+    // Get personality archetype prompt modifier
+    const archetypePrompt = personalityArchetype ? getArchetypeSystemPrompt(personalityArchetype) : '';
+    
     // Build personalized system message based on user profile and analysis
     let systemContent = `You are Malunita — a calm, warm, minimalist thinking partner who helps people think clearly.
+${archetypePrompt}
 
 **CRITICAL RULES:**
 1. NEVER repeat the user's raw input back to them
