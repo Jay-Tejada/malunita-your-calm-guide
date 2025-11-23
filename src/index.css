@@ -1704,4 +1704,50 @@ All colors MUST be HSL.
     filter: brightness(0.85);
     animation: companion-idle-breathe 5s ease-in-out infinite;
   }
+
+  /* Mapbox Geocoder Customization */
+  .mapbox-geocoder-container .mapboxgl-ctrl-geocoder {
+    width: 100%;
+    max-width: none;
+    box-shadow: none;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 14px;
+    border-radius: 0.375rem;
+    border: 1px solid hsl(var(--border));
+    background-color: hsl(var(--background));
+  }
+
+  .mapbox-geocoder-container .mapboxgl-ctrl-geocoder--input {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 14px;
+    color: hsl(var(--foreground));
+    padding: 0.5rem 0.75rem;
+  }
+
+  .mapbox-geocoder-container .mapboxgl-ctrl-geocoder--input:focus {
+    outline: none;
+    border-color: hsl(var(--ring));
+    box-shadow: 0 0 0 2px hsl(var(--ring) / 0.2);
+  }
+
+  .mapbox-geocoder-container .suggestions {
+    background-color: hsl(var(--popover));
+    border: 1px solid hsl(var(--border));
+    border-radius: 0.5rem;
+    margin-top: 0.25rem;
+    font-family: 'IBM Plex Mono', monospace;
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+  }
+
+  .mapbox-geocoder-container .suggestions > li > a {
+    padding: 0.5rem 0.75rem;
+    font-size: 14px;
+    color: hsl(var(--foreground));
+  }
+
+  .mapbox-geocoder-container .suggestions > .active > a,
+  .mapbox-geocoder-container .suggestions > li > a:hover {
+    background-color: hsl(var(--accent));
+    color: hsl(var(--accent-foreground));
+  }
 }
