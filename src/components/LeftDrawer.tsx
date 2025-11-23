@@ -12,7 +12,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { ToastAction } from "@/components/ui/toast";
 import { format } from "date-fns";
 
 type DrawerMode = "root" | "inbox" | "projects" | "work" | "home" | "gym" | "calendar";
@@ -34,7 +33,7 @@ const categories = [
 
 export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => {
   const [drawerMode, setDrawerMode] = useState<DrawerMode>("root");
-  const { tasks, updateTask, createTasks } = useTasks();
+  const { tasks, updateTask, createTasks, deleteTask } = useTasks();
   const { toast } = useToast();
   const [completingTaskIds, setCompletingTaskIds] = useState<Set<string>>(new Set());
   const [isNewEventDialogOpen, setIsNewEventDialogOpen] = useState(false);
@@ -45,6 +44,8 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
   const [recurrencePattern, setRecurrencePattern] = useState<'none' | 'daily' | 'weekly' | 'monthly'>('none');
   const [recurrenceDay, setRecurrenceDay] = useState<number>(0);
   const [recurrenceEndDate, setRecurrenceEndDate] = useState("");
+  const [isEventDetailsOpen, setIsEventDetailsOpen] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<any>(null);
 
   const handleCategoryClick = (categoryId: DrawerMode) => {
     hapticLight();
@@ -58,61 +59,32 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
 
   const handleTaskToggle = async (taskId: string, completed: boolean) => {
     try {
-      // If completing, add to animating set and show undo toast
-      if (!completed) {
+      // Add animation for non-calendar categories
+      if (!completed && drawerMode !== 'calendar') {
         setCompletingTaskIds(prev => new Set(prev).add(taskId));
         hapticSuccess();
         
-        let undoClicked = false;
-        const task = tasks?.find(t => t.id === taskId);
-        
-        // Show toast with undo option
-        toast({
-          title: "Task completed",
-          description: task?.title,
-          action: (
-            <ToastAction
-              altText="Undo completion"
-              onClick={() => {
-                undoClicked = true;
-                setCompletingTaskIds(prev => {
-                  const next = new Set(prev);
-                  next.delete(taskId);
-                  return next;
-                });
-                hapticLight();
-              }}
-            >
-              Undo
-            </ToastAction>
-          ),
-          duration: 4000,
-        });
-        
-        // Wait for animation before actually updating
         setTimeout(async () => {
-          if (!undoClicked) {
-            await updateTask({
-              id: taskId,
-              updates: {
-                completed: true,
-                completed_at: new Date().toISOString(),
-              }
-            });
-          }
+          await updateTask({
+            id: taskId,
+            updates: {
+              completed: true,
+              completed_at: new Date().toISOString(),
+            }
+          });
           setCompletingTaskIds(prev => {
             const next = new Set(prev);
             next.delete(taskId);
             return next;
           });
-        }, 400); // Match animation duration
+        }, 400);
       } else {
-        hapticLight();
+        hapticSuccess();
         await updateTask({
           id: taskId,
           updates: {
-            completed: false,
-            completed_at: null,
+            completed: !completed,
+            completed_at: !completed ? new Date().toISOString() : null,
           }
         });
       }
@@ -122,6 +94,132 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
         const next = new Set(prev);
         next.delete(taskId);
         return next;
+      });
+    }
+  };
+
+  const handleEventClick = (task: any) => {
+    hapticLight();
+    setSelectedEvent(task);
+    setIsEventDetailsOpen(true);
+  };
+
+  const handleCompleteEvent = async () => {
+    if (!selectedEvent) return;
+    
+    try {
+      hapticSuccess();
+      await updateTask({
+        id: selectedEvent.id,
+        updates: {
+          completed: true,
+          completed_at: new Date().toISOString(),
+        }
+      });
+      setIsEventDetailsOpen(false);
+      setSelectedEvent(null);
+      toast({
+        title: "Event completed",
+        description: selectedEvent.title,
+      });
+    } catch (error) {
+      console.error("Failed to complete event:", error);
+      toast({
+        title: "Error",
+        description: "Failed to complete event",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteEvent = async () => {
+    if (!selectedEvent) return;
+    
+    try {
+      hapticMedium();
+      await deleteTask(selectedEvent.id);
+      setIsEventDetailsOpen(false);
+      setSelectedEvent(null);
+      toast({
+        title: "Event deleted",
+        description: selectedEvent.title,
+      });
+    } catch (error) {
+      console.error("Failed to delete event:", error);
+      toast({
+        title: "Error",
+        description: "Failed to delete event",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleRescheduleEvent = () => {
+    if (!selectedEvent) return;
+    
+    const eventDateTime = new Date(selectedEvent.reminder_time!);
+    setNewEventTitle(selectedEvent.title);
+    setNewEventDate(format(eventDateTime, 'yyyy-MM-dd'));
+    setNewEventTime(format(eventDateTime, 'HH:mm'));
+    setNewEventDescription(selectedEvent.context || "");
+    setRecurrencePattern(selectedEvent.recurrence_pattern || 'none');
+    setRecurrenceDay(selectedEvent.recurrence_day || 0);
+    setRecurrenceEndDate(selectedEvent.recurrence_end_date ? format(new Date(selectedEvent.recurrence_end_date), 'yyyy-MM-dd') : "");
+    
+    setIsEventDetailsOpen(false);
+    setIsNewEventDialogOpen(true);
+  };
+
+  const handleUpdateEvent = async () => {
+    if (!newEventTitle.trim() || !newEventDate || !newEventTime) {
+      toast({
+        title: "Missing information",
+        description: "Please fill in the title, date, and time.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const reminderDateTime = new Date(`${newEventDate}T${newEventTime}`);
+      
+      await updateTask({
+        id: selectedEvent.id,
+        updates: {
+          title: newEventTitle,
+          reminder_time: reminderDateTime.toISOString(),
+          context: newEventDescription || undefined,
+          has_reminder: true,
+          recurrence_pattern: recurrencePattern,
+          recurrence_day: recurrencePattern === 'weekly' ? recurrenceDay : undefined,
+          recurrence_end_date: recurrenceEndDate ? new Date(recurrenceEndDate).toISOString() : undefined,
+        }
+      });
+
+      hapticSuccess();
+      toast({
+        title: "Event updated",
+        description: recurrencePattern !== 'none' 
+          ? "Your recurring event has been updated."
+          : "Your calendar event has been updated.",
+      });
+
+      // Reset form
+      setNewEventTitle("");
+      setNewEventDate("");
+      setNewEventTime("");
+      setNewEventDescription("");
+      setRecurrencePattern('none');
+      setRecurrenceDay(0);
+      setRecurrenceEndDate("");
+      setSelectedEvent(null);
+      setIsNewEventDialogOpen(false);
+    } catch (error) {
+      console.error('Error updating event:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update event. Please try again.",
+        variant: "destructive",
       });
     }
   };
@@ -139,33 +237,39 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
     try {
       const reminderDateTime = new Date(`${newEventDate}T${newEventTime}`);
       
-      await createTasks([{
-        title: newEventTitle,
-        reminder_time: reminderDateTime.toISOString(),
-        context: newEventDescription || undefined,
-        has_reminder: true,
-        recurrence_pattern: recurrencePattern,
-        recurrence_day: recurrencePattern === 'weekly' ? recurrenceDay : undefined,
-        recurrence_end_date: recurrenceEndDate ? new Date(recurrenceEndDate).toISOString() : undefined,
-      }]);
+      if (selectedEvent) {
+        // Update existing event
+        await handleUpdateEvent();
+      } else {
+        // Create new event
+        await createTasks([{
+          title: newEventTitle,
+          reminder_time: reminderDateTime.toISOString(),
+          context: newEventDescription || undefined,
+          has_reminder: true,
+          recurrence_pattern: recurrencePattern,
+          recurrence_day: recurrencePattern === 'weekly' ? recurrenceDay : undefined,
+          recurrence_end_date: recurrenceEndDate ? new Date(recurrenceEndDate).toISOString() : undefined,
+        }]);
 
-      hapticSuccess();
-      toast({
-        title: "Event created",
-        description: recurrencePattern !== 'none' 
-          ? "Your recurring event has been added."
-          : "Your calendar event has been added.",
-      });
+        hapticSuccess();
+        toast({
+          title: "Event created",
+          description: recurrencePattern !== 'none' 
+            ? "Your recurring event has been added."
+            : "Your calendar event has been added.",
+        });
 
-      // Reset form
-      setNewEventTitle("");
-      setNewEventDate("");
-      setNewEventTime("");
-      setNewEventDescription("");
-      setRecurrencePattern('none');
-      setRecurrenceDay(0);
-      setRecurrenceEndDate("");
-      setIsNewEventDialogOpen(false);
+        // Reset form
+        setNewEventTitle("");
+        setNewEventDate("");
+        setNewEventTime("");
+        setNewEventDescription("");
+        setRecurrencePattern('none');
+        setRecurrenceDay(0);
+        setRecurrenceEndDate("");
+        setIsNewEventDialogOpen(false);
+      }
     } catch (error) {
       console.error('Error creating event:', error);
       toast({
@@ -393,25 +497,13 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
                                   {/* Events List */}
                                   <div className="space-y-3">
                                     {dayEvents.map((task) => {
-                                      const isCompleting = completingTaskIds.has(task.id);
                                       const eventTime = new Date(task.reminder_time!);
                                       
                                       return (
-                                        <motion.button
+                                        <button
                                           key={task.id}
-                                          initial={{ opacity: 1, x: 0 }}
-                                          animate={isCompleting ? { 
-                                            opacity: 0, 
-                                            x: -20,
-                                            height: 0,
-                                            marginBottom: 0
-                                          } : { 
-                                            opacity: 1, 
-                                            x: 0 
-                                          }}
-                                          transition={{ duration: 0.4, ease: "easeOut" }}
-                                          onClick={() => handleTaskToggle(task.id, task.completed || false)}
-                                          className="w-full text-left flex items-start gap-3 py-2 px-2 -mx-2 rounded-md transition-colors overflow-hidden"
+                                          onClick={() => handleEventClick(task)}
+                                          className="w-full text-left flex items-start gap-3 py-2 px-2 -mx-2 rounded-md transition-colors"
                                           style={{ backgroundColor: 'transparent' }}
                                           onMouseEnter={(e) => {
                                             e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.02)';
@@ -438,7 +530,7 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
                                               {format(eventTime, 'h:mm a')}
                                             </div>
                                           </div>
-                                        </motion.button>
+                                        </button>
                                       );
                                     })}
                                   </div>
@@ -509,11 +601,68 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
         )}
       </AnimatePresence>
 
+      {/* Event Details Dialog */}
+      <Dialog open={isEventDetailsOpen} onOpenChange={setIsEventDetailsOpen}>
+        <DialogContent className="sm:max-w-[425px] rounded-lg" style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.06)' }}>
+          <DialogHeader>
+            <DialogTitle className="font-mono text-[16px]">Event Details</DialogTitle>
+          </DialogHeader>
+          {selectedEvent && (
+            <div className="space-y-6 pt-4">
+              <div className="space-y-3">
+                <div>
+                  <div className="font-mono text-[13px]" style={{ color: '#888' }}>Title</div>
+                  <div className="font-mono text-[15px] mt-1" style={{ color: '#111' }}>{selectedEvent.title}</div>
+                </div>
+                
+                <div>
+                  <div className="font-mono text-[13px]" style={{ color: '#888' }}>Date & Time</div>
+                  <div className="font-mono text-[15px] mt-1" style={{ color: '#111' }}>
+                    {format(new Date(selectedEvent.reminder_time!), 'EEEE, MMM d')} at {format(new Date(selectedEvent.reminder_time!), 'h:mm a')}
+                  </div>
+                </div>
+                
+                {selectedEvent.context && (
+                  <div>
+                    <div className="font-mono text-[13px]" style={{ color: '#888' }}>Description</div>
+                    <div className="font-mono text-[14px] mt-1" style={{ color: '#555' }}>{selectedEvent.context}</div>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex flex-col gap-2 pt-2">
+                <Button
+                  className="w-full font-mono text-[14px]"
+                  onClick={handleCompleteEvent}
+                >
+                  Complete
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full font-mono text-[14px]"
+                  onClick={handleRescheduleEvent}
+                >
+                  Reschedule
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full font-mono text-[14px]"
+                  onClick={handleDeleteEvent}
+                  style={{ color: '#dc2626' }}
+                >
+                  Delete
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
       {/* New Event Dialog */}
       <Dialog open={isNewEventDialogOpen} onOpenChange={setIsNewEventDialogOpen}>
         <DialogContent className="sm:max-w-[425px] rounded-lg" style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.06)' }}>
           <DialogHeader>
-            <DialogTitle className="font-mono text-[16px]">Create New Event</DialogTitle>
+            <DialogTitle className="font-mono text-[16px]">{selectedEvent ? 'Reschedule Event' : 'Create New Event'}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 pt-4">
             <div className="space-y-2">
@@ -617,6 +766,14 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
                 className="flex-1 font-mono text-[14px]"
                 onClick={() => {
                   hapticLight();
+                  setSelectedEvent(null);
+                  setNewEventTitle("");
+                  setNewEventDate("");
+                  setNewEventTime("");
+                  setNewEventDescription("");
+                  setRecurrencePattern('none');
+                  setRecurrenceDay(0);
+                  setRecurrenceEndDate("");
                   setIsNewEventDialogOpen(false);
                 }}
               >
@@ -626,7 +783,7 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
                 className="flex-1 font-mono text-[14px]"
                 onClick={handleCreateEvent}
               >
-                Create Event
+                {selectedEvent ? 'Update Event' : 'Create Event'}
               </Button>
             </div>
           </div>
