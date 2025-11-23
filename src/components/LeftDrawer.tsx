@@ -5,6 +5,14 @@ import { useSwipeable } from "react-swipeable";
 import { cn } from "@/lib/utils";
 import { useTasks } from "@/hooks/useTasks";
 import { hapticLight, hapticMedium, hapticSuccess, hapticSwipe } from "@/utils/haptics";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
+import { format } from "date-fns";
 
 type DrawerMode = "root" | "inbox" | "projects" | "work" | "home" | "gym" | "calendar";
 
@@ -25,7 +33,16 @@ const categories = [
 
 export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => {
   const [drawerMode, setDrawerMode] = useState<DrawerMode>("root");
-  const { tasks, updateTask } = useTasks();
+  const { tasks, updateTask, createTasks } = useTasks();
+  const { toast } = useToast();
+  const [isNewEventDialogOpen, setIsNewEventDialogOpen] = useState(false);
+  const [newEventTitle, setNewEventTitle] = useState("");
+  const [newEventDate, setNewEventDate] = useState("");
+  const [newEventTime, setNewEventTime] = useState("");
+  const [newEventDescription, setNewEventDescription] = useState("");
+  const [recurrencePattern, setRecurrencePattern] = useState<'none' | 'daily' | 'weekly' | 'monthly'>('none');
+  const [recurrenceDay, setRecurrenceDay] = useState<number>(0);
+  const [recurrenceEndDate, setRecurrenceEndDate] = useState("");
 
   const handleCategoryClick = (categoryId: DrawerMode) => {
     hapticLight();
@@ -55,6 +72,56 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
       });
     } catch (error) {
       console.error("Failed to toggle task:", error);
+    }
+  };
+
+  const handleCreateEvent = async () => {
+    if (!newEventTitle.trim() || !newEventDate || !newEventTime) {
+      toast({
+        title: "Missing information",
+        description: "Please fill in the title, date, and time.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const reminderDateTime = new Date(`${newEventDate}T${newEventTime}`);
+      
+      await createTasks([{
+        title: newEventTitle,
+        reminder_time: reminderDateTime.toISOString(),
+        context: newEventDescription || undefined,
+        has_reminder: true,
+        recurrence_pattern: recurrencePattern,
+        recurrence_day: recurrencePattern === 'weekly' ? recurrenceDay : undefined,
+        recurrence_end_date: recurrenceEndDate ? new Date(recurrenceEndDate).toISOString() : undefined,
+      }]);
+
+      hapticSuccess();
+      toast({
+        title: "Event created",
+        description: recurrencePattern !== 'none' 
+          ? "Your recurring event has been added."
+          : "Your calendar event has been added.",
+      });
+
+      // Reset form
+      setNewEventTitle("");
+      setNewEventDate("");
+      setNewEventTime("");
+      setNewEventDescription("");
+      setRecurrencePattern('none');
+      setRecurrenceDay(0);
+      setRecurrenceEndDate("");
+      setIsNewEventDialogOpen(false);
+    } catch (error) {
+      console.error('Error creating event:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create event. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -168,13 +235,27 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
                     {/* Category Links */}
                     <div className="flex flex-col gap-1">
                       {categories.map((category) => (
-                        <button
-                          key={category.id}
-                          onClick={() => handleCategoryClick(category.id as DrawerMode)}
-                          className="text-left py-2 px-3 font-mono text-[14px] text-foreground/60 hover:text-foreground/90 hover:bg-muted/30 rounded-md transition-colors"
-                        >
-                          {category.label}
-                        </button>
+                        <div key={category.id} className="flex items-center gap-2">
+                          <button
+                            onClick={() => handleCategoryClick(category.id as DrawerMode)}
+                            className="flex-1 text-left py-2 px-3 font-mono text-[14px] text-foreground/60 hover:text-foreground/90 hover:bg-muted/30 rounded-md transition-colors"
+                          >
+                            {category.label}
+                          </button>
+                          {category.id === 'calendar' && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                hapticLight();
+                                setIsNewEventDialogOpen(true);
+                              }}
+                              className="p-2 hover:bg-muted/30 rounded-md transition-colors"
+                              aria-label="Add new event"
+                            >
+                              <Plus className="w-4 h-4 text-foreground/60" />
+                            </button>
+                          )}
+                        </div>
                       ))}
                     </div>
 
@@ -240,6 +321,125 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
           </>
         )}
       </AnimatePresence>
+
+      {/* New Event Dialog */}
+      <Dialog open={isNewEventDialogOpen} onOpenChange={setIsNewEventDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Create New Event</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 pt-4">
+            <div className="space-y-2">
+              <Label htmlFor="drawer-title">Event Title</Label>
+              <Input
+                id="drawer-title"
+                placeholder="Meeting, Appointment, etc."
+                value={newEventTitle}
+                onChange={(e) => setNewEventTitle(e.target.value)}
+              />
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="drawer-date">Date</Label>
+                <Input
+                  id="drawer-date"
+                  type="date"
+                  value={newEventDate}
+                  onChange={(e) => setNewEventDate(e.target.value)}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="drawer-time">Time</Label>
+                <Input
+                  id="drawer-time"
+                  type="time"
+                  value={newEventTime}
+                  onChange={(e) => setNewEventTime(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="drawer-description">Description (optional)</Label>
+              <Textarea
+                id="drawer-description"
+                placeholder="Add notes or location..."
+                value={newEventDescription}
+                onChange={(e) => setNewEventDescription(e.target.value)}
+                rows={3}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="drawer-recurrence">Repeat</Label>
+              <Select value={recurrencePattern} onValueChange={(value: any) => setRecurrencePattern(value)}>
+                <SelectTrigger id="drawer-recurrence">
+                  <SelectValue placeholder="Does not repeat" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Does not repeat</SelectItem>
+                  <SelectItem value="daily">Daily</SelectItem>
+                  <SelectItem value="weekly">Weekly</SelectItem>
+                  <SelectItem value="monthly">Monthly</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {recurrencePattern === 'weekly' && (
+              <div className="space-y-2">
+                <Label htmlFor="drawer-recurrence-day">Day of Week</Label>
+                <Select value={recurrenceDay.toString()} onValueChange={(value) => setRecurrenceDay(parseInt(value))}>
+                  <SelectTrigger id="drawer-recurrence-day">
+                    <SelectValue placeholder="Select day" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="0">Sunday</SelectItem>
+                    <SelectItem value="1">Monday</SelectItem>
+                    <SelectItem value="2">Tuesday</SelectItem>
+                    <SelectItem value="3">Wednesday</SelectItem>
+                    <SelectItem value="4">Thursday</SelectItem>
+                    <SelectItem value="5">Friday</SelectItem>
+                    <SelectItem value="6">Saturday</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {recurrencePattern !== 'none' && (
+              <div className="space-y-2">
+                <Label htmlFor="drawer-recurrence-end">End Date (optional)</Label>
+                <Input
+                  id="drawer-recurrence-end"
+                  type="date"
+                  value={recurrenceEndDate}
+                  onChange={(e) => setRecurrenceEndDate(e.target.value)}
+                />
+              </div>
+            )}
+
+            <div className="flex gap-2 pt-2">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => {
+                  hapticLight();
+                  setIsNewEventDialogOpen(false);
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                className="flex-1"
+                onClick={handleCreateEvent}
+              >
+                Create Event
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 };
