@@ -16,6 +16,7 @@ import {
   TrendingUp,
   Sparkles,
   Bell,
+  Trophy,
   Camera,
   Focus,
   Globe,
@@ -244,6 +245,16 @@ export function AppSidebar({ onSettingsClick, onCategoryClick, onFocusModeClick,
                 >
                   <Sparkles className="mr-2 h-4 w-4" />
                   <span>Tiny Task Fiesta</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              <SidebarMenuItem>
+                <SidebarMenuButton 
+                  onClick={() => navigate('/quests')}
+                  className="hover:bg-muted/50"
+                >
+                  <Trophy className="mr-2 h-4 w-4" />
+                  <span>Weekly Quests</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
 
