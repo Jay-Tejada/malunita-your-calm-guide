@@ -17,6 +17,7 @@ import { CompanionIntroSequence } from "@/components/CompanionIntroSequence";
 import { DailySessionView } from "@/components/DailySessionView";
 import { FocusMode } from "@/features/focus/FocusMode";
 import { TaskWorldMap } from "@/features/worldmap/TaskWorldMap";
+import { ShareMalunita } from "@/features/social/ShareMalunita";
 import { useAdmin } from "@/hooks/useAdmin";
 import { useTasks } from "@/hooks/useTasks";
 import { useProfile } from "@/hooks/useProfile";
@@ -144,6 +145,7 @@ const Index = () => {
   const [showRunwayReview, setShowRunwayReview] = useState(false);
   const [showFocusMode, setShowFocusMode] = useState(false);
   const [showWorldMap, setShowWorldMap] = useState(false);
+  const [showShareMalunita, setShowShareMalunita] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [showTodaysFocus, setShowTodaysFocus] = useState(false);
   const [showDailySession, setShowDailySession] = useState(false);
@@ -453,6 +455,7 @@ const Index = () => {
           onSettingsClick={() => setShowSettings(true)}
           onFocusModeClick={handleFocusMode}
           onWorldMapClick={handleWorldMap}
+          onShareMalunitaClick={() => setShowShareMalunita(true)}
           onCategoryClick={(category) => {
             if (category === 'daily-session') {
               setShowDailySession(true);
@@ -573,6 +576,12 @@ const Index = () => {
             currentCategory={activeCategory}
           />
         )}
+        
+        {/* Share Malunita */}
+        <ShareMalunita
+          open={showShareMalunita}
+          onClose={() => setShowShareMalunita(false)}
+        />
         
         {/* Companion Onboarding - Full Screen Intro Sequence */}
         {!isCompanionLoading && needsOnboarding && (
