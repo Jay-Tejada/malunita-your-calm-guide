@@ -28,7 +28,9 @@ import Reminders from "./pages/Reminders";
 import HatchingGallery from "./pages/HatchingGallery";
 import Backup from "./pages/Backup";
 import Customization from "./pages/Customization";
+import Journal from "./pages/Journal";
 import { useCutsceneManager } from "./features/cutscenes/useCutsceneManager";
+import { JOURNAL_EVENTS } from "./features/journal/journalEvents";
 
 const queryClient = new QueryClient();
 
@@ -39,6 +41,9 @@ const App = () => {
   const handleRitualComplete = (type: 'morning' | 'evening') => {
     showRitualCutscene(type);
     dismissRitual();
+    
+    // Create journal entry for ritual completion
+    JOURNAL_EVENTS.RITUAL_COMPLETE(type);
   };
 
   // Initialize emotional memory monitoring on app start
@@ -79,9 +84,9 @@ const App = () => {
               <Route path="/hatching-gallery" element={<HatchingGallery />} />
               <Route path="/tiny-task-fiesta" element={<TinyTaskFiesta />} />
               <Route path="/notifications" element={<Notifications />} />
-              <Route path="/reminders" element={<Reminders />} />
               <Route path="/backup" element={<Backup />} />
               <Route path="/customization" element={<Customization />} />
+              <Route path="/journal" element={<Journal />} />
               <Route path="/install" element={<Install />} />
               <Route path="/admin" element={<Admin />} />
               <Route path="/trends" element={<Trends />} />

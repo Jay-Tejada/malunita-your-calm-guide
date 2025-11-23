@@ -342,6 +342,48 @@ export type Database = {
         }
         Relationships: []
       }
+      memory_journal: {
+        Row: {
+          ai_summary: string | null
+          created_at: string
+          date: string
+          emotional_state: Json
+          entry_type: string | null
+          id: string
+          mood: string
+          tasks_completed: number | null
+          tasks_created: number | null
+          timestamp: string
+          user_id: string
+        }
+        Insert: {
+          ai_summary?: string | null
+          created_at?: string
+          date: string
+          emotional_state?: Json
+          entry_type?: string | null
+          id?: string
+          mood: string
+          tasks_completed?: number | null
+          tasks_created?: number | null
+          timestamp?: string
+          user_id: string
+        }
+        Update: {
+          ai_summary?: string | null
+          created_at?: string
+          date?: string
+          emotional_state?: Json
+          entry_type?: string | null
+          id?: string
+          mood?: string
+          tasks_completed?: number | null
+          tasks_created?: number | null
+          timestamp?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           autocategorize_enabled: boolean | null

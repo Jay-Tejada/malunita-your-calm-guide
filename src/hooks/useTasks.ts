@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { logHabitCompletion } from "@/ai/habitPredictor";
 import { useCognitiveLoad } from "@/state/cognitiveLoad";
+import { JOURNAL_EVENTS } from "@/features/journal/journalEvents";
 
 export interface Task {
   id: string;
@@ -117,6 +118,12 @@ export const useTasks = () => {
           data.title,
           undefined // We don't track duration yet
         );
+        
+        // Check for task milestone and create journal entry
+        const completedCount = tasks?.filter(t => t.completed).length || 0;
+        if ([3, 5, 10, 20].includes(completedCount)) {
+          JOURNAL_EVENTS.TASK_MILESTONE(completedCount);
+        }
       }
     },
     onError: (error: any) => {
