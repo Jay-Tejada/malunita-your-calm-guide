@@ -9,13 +9,9 @@ interface HomeOrbProps {
 export const HomeOrb = ({ onCapture, isRecording = false }: HomeOrbProps) => {
   const [isHovered, setIsHovered] = useState(false);
 
-  // Recording colors - vibrant red/pink gradient
-  const recordingGradient = "radial-gradient(circle at 30% 30%, rgba(255, 100, 100, 0.9), rgba(255, 50, 80, 0.8) 50%, rgba(220, 40, 70, 0.7))";
-  const recordingGlow = "rgba(255, 80, 90, 0.6)";
-  
-  // Default colors - warm golden
-  const defaultGradient = "radial-gradient(circle at 30% 30%, rgba(255, 248, 220, 0.9), rgba(247, 217, 141, 0.8) 50%, rgba(237, 197, 101, 0.7))";
-  const defaultGlow = "rgba(247, 217, 141, 0.5)";
+  // All states use warm golden palette - only animation intensity changes
+  const orbGradient = "radial-gradient(circle at 30% 30%, rgba(255, 248, 220, 0.9), rgba(247, 217, 141, 0.8) 50%, rgba(237, 197, 101, 0.7))";
+  const orbGlow = "rgba(247, 217, 141, 0.5)";
 
   return (
     <div className="fixed bottom-24 left-0 right-0 flex flex-col items-center">
@@ -34,13 +30,11 @@ export const HomeOrb = ({ onCapture, isRecording = false }: HomeOrbProps) => {
           ease: "easeInOut",
         }}
       >
-        {/* Outer glow layer */}
+        {/* Outer glow layer - subtle breathing pulse when recording */}
         <motion.div
           className="absolute inset-0 rounded-full blur-[60px]"
           style={{
-            background: isRecording 
-              ? "radial-gradient(circle, rgba(255, 80, 90, 0.6) 0%, rgba(255, 80, 90, 0.2) 70%, transparent 100%)"
-              : "radial-gradient(circle, rgba(247, 217, 141, 0.4) 0%, rgba(247, 217, 141, 0.1) 70%, transparent 100%)",
+            background: "radial-gradient(circle, rgba(247, 217, 141, 0.5) 0%, rgba(247, 217, 141, 0.15) 70%, transparent 100%)",
             width: "320px",
             height: "320px",
             left: "50%",
@@ -48,11 +42,11 @@ export const HomeOrb = ({ onCapture, isRecording = false }: HomeOrbProps) => {
             transform: "translate(-50%, -50%)",
           }}
           animate={{
-            scale: isRecording ? [1, 1.2, 1] : (isHovered ? [1, 1.15, 1] : [1, 1.08, 1]),
-            opacity: isRecording ? [0.8, 1, 0.8] : (isHovered ? [0.6, 0.8, 0.6] : [0.4, 0.6, 0.4]),
+            scale: isRecording ? [1, 1.12, 1] : (isHovered ? [1, 1.1, 1] : [1, 1.05, 1]),
+            opacity: isRecording ? [0.7, 0.95, 0.7] : (isHovered ? [0.6, 0.8, 0.6] : [0.4, 0.6, 0.4]),
           }}
           transition={{
-            duration: isRecording ? 1.5 : 3,
+            duration: isRecording ? 2 : 3,
             repeat: Infinity,
             ease: "easeInOut",
           }}
@@ -62,9 +56,7 @@ export const HomeOrb = ({ onCapture, isRecording = false }: HomeOrbProps) => {
         <motion.div
           className="absolute inset-0 rounded-full blur-[40px]"
           style={{
-            background: isRecording
-              ? "radial-gradient(circle, rgba(255, 80, 90, 0.8) 0%, rgba(255, 80, 90, 0.3) 60%, transparent 100%)"
-              : "radial-gradient(circle, rgba(247, 217, 141, 0.6) 0%, rgba(247, 217, 141, 0.2) 60%, transparent 100%)",
+            background: "radial-gradient(circle, rgba(247, 217, 141, 0.7) 0%, rgba(247, 217, 141, 0.25) 60%, transparent 100%)",
             width: "240px",
             height: "240px",
             left: "50%",
@@ -72,32 +64,30 @@ export const HomeOrb = ({ onCapture, isRecording = false }: HomeOrbProps) => {
             transform: "translate(-50%, -50%)",
           }}
           animate={{
-            scale: isRecording ? [1, 1.15, 1] : (isHovered ? [1, 1.12, 1] : [1, 1.05, 1]),
-            opacity: isRecording ? [0.9, 1, 0.9] : (isHovered ? [0.7, 0.9, 0.7] : [0.5, 0.7, 0.5]),
+            scale: isRecording ? [1, 1.1, 1] : (isHovered ? [1, 1.08, 1] : [1, 1.05, 1]),
+            opacity: isRecording ? [0.85, 1, 0.85] : (isHovered ? [0.7, 0.9, 0.7] : [0.5, 0.7, 0.5]),
           }}
           transition={{
-            duration: isRecording ? 1.2 : 2.5,
+            duration: isRecording ? 1.8 : 2.5,
             repeat: Infinity,
             ease: "easeInOut",
           }}
         />
 
-        {/* Core orb */}
+        {/* Core orb - consistent golden with gentle breathing */}
         <motion.div
           className="relative rounded-full shadow-2xl"
           style={{
             width: "180px",
             height: "180px",
-            background: isRecording ? recordingGradient : defaultGradient,
-            boxShadow: isRecording 
-              ? `0 8px 32px ${recordingGlow}, inset 0 2px 8px rgba(255, 255, 255, 0.3)`
-              : `0 8px 32px ${defaultGlow}, inset 0 2px 8px rgba(255, 255, 255, 0.3)`,
+            background: orbGradient,
+            boxShadow: `0 8px 32px ${orbGlow}, inset 0 2px 8px rgba(255, 255, 255, 0.3)`,
           }}
           animate={isRecording ? {
-            scale: [1, 1.05, 1],
+            scale: [1, 1.03, 1],
           } : {}}
           transition={{
-            duration: 0.8,
+            duration: 2,
             repeat: Infinity,
             ease: "easeInOut",
           }}
@@ -106,16 +96,23 @@ export const HomeOrb = ({ onCapture, isRecording = false }: HomeOrbProps) => {
         />
       </motion.button>
 
-      {/* Prompt text */}
+      {/* Prompt text - subtle color shift */}
       <motion.p
-        className="mt-12 text-xl font-mono text-foreground/70 tracking-wide"
+        className="mt-12 text-xl font-mono tracking-wide"
+        style={{ color: "rgba(128, 128, 128, 0.7)" }}
         initial={{ opacity: 0, y: 10 }}
         animate={{ 
-          opacity: 1, 
+          opacity: isRecording ? [0.7, 1, 0.7] : 1, 
           y: 0,
-          color: isRecording ? "rgba(255, 80, 90, 0.8)" : "rgba(128, 128, 128, 0.7)"
         }}
-        transition={{ delay: 0.4 }}
+        transition={{ 
+          delay: 0.4,
+          opacity: {
+            duration: 2,
+            repeat: isRecording ? Infinity : 0,
+            ease: "easeInOut"
+          }
+        }}
       >
         {isRecording ? "Listening..." : "What's on your mind?"}
       </motion.p>
