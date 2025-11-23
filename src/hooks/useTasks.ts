@@ -6,6 +6,8 @@ import { useCognitiveLoad } from "@/state/cognitiveLoad";
 import { JOURNAL_EVENTS } from "@/features/journal/journalEvents";
 import { questTracker } from "@/lib/questTracker";
 import { bondingMeter, BONDING_INCREMENTS } from "@/state/bondingMeter";
+import { useSeasonalEvent } from "./useSeasonalEvent";
+import { useCustomizationStore } from "@/features/customization/useCustomizationStore";
 
 export interface Task {
   id: string;
@@ -37,6 +39,8 @@ export const useTasks = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { recordTaskAdded, recordTaskCompleted, updateOverdueTasks } = useCognitiveLoad();
+  const { isStarfallNight } = useSeasonalEvent();
+  const { unlockCosmetic } = useCustomizationStore();
 
   const { data: tasks, isLoading } = useQuery({
     queryKey: ['tasks'],
@@ -132,6 +136,23 @@ export const useTasks = () => {
           BONDING_INCREMENTS.TASK_COMPLETED,
           "Task completed! Malunita is proud"
         );
+        
+        // Starfall Night special: chance to unlock rare cosmetic
+        if (isStarfallNight && Math.random() < 0.15) { // 15% chance
+          const rareCosmetics = [
+            { type: 'trail', id: 'starlight-trail' },
+            { type: 'aura', id: 'celestial-aura' },
+            { type: 'accessory', id: 'star-crown' },
+          ];
+          const randomCosmetic = rareCosmetics[Math.floor(Math.random() * rareCosmetics.length)];
+          unlockCosmetic(randomCosmetic.type as any, randomCosmetic.id);
+          
+          toast({
+            title: "✨ Starfall Blessing!",
+            description: `You unlocked a rare ${randomCosmetic.id.replace(/-/g, ' ')}!`,
+            duration: 5000,
+          });
+        }
         
         // Check for task milestone and create journal entry
         const completedCount = tasks?.filter(t => t.completed).length || 0;
