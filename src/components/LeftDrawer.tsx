@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { ToastAction } from "@/components/ui/toast";
 import { format } from "date-fns";
 
 type DrawerMode = "root" | "inbox" | "projects" | "work" | "home" | "gym" | "calendar";
@@ -57,20 +58,48 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
 
   const handleTaskToggle = async (taskId: string, completed: boolean) => {
     try {
-      // If completing, add to animating set
+      // If completing, add to animating set and show undo toast
       if (!completed) {
         setCompletingTaskIds(prev => new Set(prev).add(taskId));
         hapticSuccess();
         
+        let undoClicked = false;
+        const task = tasks?.find(t => t.id === taskId);
+        
+        // Show toast with undo option
+        toast({
+          title: "Task completed",
+          description: task?.title,
+          action: (
+            <ToastAction
+              altText="Undo completion"
+              onClick={() => {
+                undoClicked = true;
+                setCompletingTaskIds(prev => {
+                  const next = new Set(prev);
+                  next.delete(taskId);
+                  return next;
+                });
+                hapticLight();
+              }}
+            >
+              Undo
+            </ToastAction>
+          ),
+          duration: 4000,
+        });
+        
         // Wait for animation before actually updating
         setTimeout(async () => {
-          await updateTask({
-            id: taskId,
-            updates: {
-              completed: true,
-              completed_at: new Date().toISOString(),
-            }
-          });
+          if (!undoClicked) {
+            await updateTask({
+              id: taskId,
+              updates: {
+                completed: true,
+                completed_at: new Date().toISOString(),
+              }
+            });
+          }
           setCompletingTaskIds(prev => {
             const next = new Set(prev);
             next.delete(taskId);
