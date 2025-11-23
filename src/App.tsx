@@ -28,11 +28,18 @@ import Reminders from "./pages/Reminders";
 import HatchingGallery from "./pages/HatchingGallery";
 import Backup from "./pages/Backup";
 import Customization from "./pages/Customization";
+import { useCutsceneManager } from "./features/cutscenes/useCutsceneManager";
 
 const queryClient = new QueryClient();
 
 const App = () => {
   const { shouldShowRitual, dismissRitual } = useRitualTrigger();
+  const { showRitualCutscene } = useCutsceneManager();
+
+  const handleRitualComplete = (type: 'morning' | 'evening') => {
+    showRitualCutscene(type);
+    dismissRitual();
+  };
 
   // Initialize emotional memory monitoring on app start
   useEffect(() => {
@@ -50,13 +57,13 @@ const App = () => {
           <AnimatePresence>
             {shouldShowRitual === "morning" && (
               <MorningRitual
-                onComplete={dismissRitual}
+                onComplete={() => handleRitualComplete('morning')}
                 onSkip={dismissRitual}
               />
             )}
             {shouldShowRitual === "evening" && (
               <EveningRitual
-                onComplete={dismissRitual}
+                onComplete={() => handleRitualComplete('evening')}
                 onSkip={dismissRitual}
               />
             )}

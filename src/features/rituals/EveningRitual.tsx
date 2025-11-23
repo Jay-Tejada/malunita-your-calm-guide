@@ -126,9 +126,10 @@ export function EveningRitual({ onComplete, onSkip }: EveningRitualProps) {
         description: data.message || "Rest well, see you tomorrow!",
       });
 
+      // Delay onComplete to show cutscene first
       setTimeout(() => {
         onComplete();
-      }, 2000);
+      }, 100);
     } catch (error) {
       console.error('Error processing evening ritual:', error);
       toast({
