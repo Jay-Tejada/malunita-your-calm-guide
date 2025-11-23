@@ -26,6 +26,7 @@ interface CreatureSpriteProps {
   animate?: boolean;           // enables idle bounce animation
   className?: string;          // extra classes
   listening?: boolean;         // shows listening animation
+  typing?: boolean;            // shows typing/thinking state
 }
 
 // Map filenames to imported assets
@@ -52,14 +53,15 @@ export const CreatureSprite = ({
   size = 160, 
   animate = false, 
   className,
-  listening = false
+  listening = false,
+  typing = false
 }: CreatureSpriteProps) => {
   const [microEmotion, setMicroEmotion] = useState<string | null>(null);
 
   // Idle cycle timer - random micro-expressions
   useEffect(() => {
-    // Skip idle animations for strong emotions or when listening
-    if (listening || ['angry', 'sleeping', 'sad'].includes(emotion)) {
+    // Skip idle animations for strong emotions, when listening, or when typing
+    if (listening || typing || ['angry', 'sleeping', 'sad'].includes(emotion)) {
       return;
     }
 
@@ -70,7 +72,7 @@ export const CreatureSprite = ({
     }, 4000 + Math.random() * 4000); // 4-8 seconds
 
     return () => clearInterval(interval);
-  }, [emotion, listening]);
+  }, [emotion, listening, typing]);
 
   // Auto-clear micro-expression after 1200ms
   useEffect(() => {
@@ -79,12 +81,25 @@ export const CreatureSprite = ({
     return () => clearTimeout(timer);
   }, [microEmotion]);
 
-  // Use listening expression if listening, otherwise use micro-expression or main emotion
-  const displayEmotion = listening 
-    ? (Math.random() > 0.5 ? 'welcoming' : 'laughing')
-    : (microEmotion ?? emotion);
+  // Determine expression to show
+  const getDisplayEmotion = () => {
+    // Typing state takes precedence
+    if (typing) {
+      if (emotion === 'angry') return 'worried';
+      if (emotion === 'sleepy' || emotion === 'sleeping') return 'sleepy';
+      return 'concerned'; // Default thinking expression
+    }
+    
+    // Listening state
+    if (listening) {
+      return Math.random() > 0.5 ? 'welcoming' : 'laughing';
+    }
+    
+    // Normal state - use micro-expression or main emotion
+    return microEmotion ?? emotion;
+  };
   
-  const finalEmotion = displayEmotion;
+  const finalEmotion = getDisplayEmotion();
   const filename = getExpressionAsset(finalEmotion);
   const imageSrc = assetMap[filename] || baseExpression;
 
@@ -94,6 +109,7 @@ export const CreatureSprite = ({
         "flex items-center justify-center",
         animate && "animate-[float_3s_ease-in-out_infinite]",
         listening && "animate-[pulse_2s_ease-in-out_infinite] shadow-lg shadow-white/40",
+        typing && "animate-[sway_1.5s_ease-in-out_infinite]",
         className
       )}
       style={{ width: size, height: size }}
