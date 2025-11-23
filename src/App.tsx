@@ -4,6 +4,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
+import { useEffect } from "react";
+import { startEmotionalMemoryMonitoring } from "@/state/emotionalMemory";
 import Index from "./pages/Index";
 import Install from "./pages/Install";
 import NotFound from "./pages/NotFound";
@@ -23,36 +25,43 @@ import HatchingGallery from "./pages/HatchingGallery";
 
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/inbox" element={<Inbox />} />
-            <Route path="/goals" element={<Goals />} />
-            <Route path="/daily-session" element={<DailySession />} />
-            <Route path="/weekly-insights" element={<WeeklyInsights />} />
-            <Route path="/hatching-gallery" element={<HatchingGallery />} />
-            <Route path="/tiny-task-fiesta" element={<TinyTaskFiesta />} />
-            <Route path="/notifications" element={<Notifications />} />
-            <Route path="/reminders" element={<Reminders />} />
-            <Route path="/install" element={<Install />} />
-            <Route path="/admin" element={<Admin />} />
-            <Route path="/trends" element={<Trends />} />
-            <Route path="/reset-password" element={<ResetPassword />} />
-            <Route path="/test-core" element={<TestCore />} />
-            <Route path="/test-all" element={<TestAll />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
-    </ThemeProvider>
-  </QueryClientProvider>
-);
+const App = () => {
+  // Initialize emotional memory monitoring on app start
+  useEffect(() => {
+    startEmotionalMemoryMonitoring();
+  }, []);
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/inbox" element={<Inbox />} />
+              <Route path="/goals" element={<Goals />} />
+              <Route path="/daily-session" element={<DailySession />} />
+              <Route path="/weekly-insights" element={<WeeklyInsights />} />
+              <Route path="/hatching-gallery" element={<HatchingGallery />} />
+              <Route path="/tiny-task-fiesta" element={<TinyTaskFiesta />} />
+              <Route path="/notifications" element={<Notifications />} />
+              <Route path="/reminders" element={<Reminders />} />
+              <Route path="/install" element={<Install />} />
+              <Route path="/admin" element={<Admin />} />
+              <Route path="/trends" element={<Trends />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
+              <Route path="/test-core" element={<TestCore />} />
+              <Route path="/test-all" element={<TestAll />} />
+              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </ThemeProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;
