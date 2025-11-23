@@ -24,6 +24,7 @@ import { useWorkflowRituals } from "@/hooks/useWorkflowRituals";
 import { useCompanionIdentity, PersonalityType } from "@/hooks/useCompanionIdentity";
 import { AppSidebar } from "@/components/AppSidebar";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { startAutoIdleCheck } from "@/state/moodMachine";
 
 import { WakeWordIndicator } from "@/components/WakeWordIndicator";
 
@@ -245,6 +246,12 @@ const Index = () => {
 
   // Workflow Rituals - Morning, Midday, Evening, Weekly
   useWorkflowRituals();
+  
+  // Start auto-idle mood checking
+  useEffect(() => {
+    const cleanup = startAutoIdleCheck();
+    return cleanup;
+  }, []);
 
   // Build complete navigation list including Daily Session
   const allViews = [

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useCompanionIdleBehavior } from '@/lib/companion/useCompanionIdleBehavior';
-import malunitaNeutral from '@/assets/companions/malunita-neutral.png';
+import { CreatureSprite } from '@/components/CreatureSprite';
+import { useMoodStore, type Mood } from '@/state/moodMachine';
 
 export type CompanionMode = 
   | 'idle' 
@@ -11,12 +12,6 @@ export type CompanionMode =
 
 export type SpecialAnimation = 'celebrate' | 'spin' | 'peek' | null;
 
-type CompanionExpression = 
-  | 'baby_happy' 
-  | 'baby_neutral' 
-  | 'baby_sleepy' 
-  | 'baby_listening';
-
 interface CompanionAvatarProps {
   mode?: CompanionMode;
   lastEvent?: string | null;
@@ -24,49 +19,23 @@ interface CompanionAvatarProps {
   onSpecialAnimationEnd?: () => void;
 }
 
-// Mode → Expression mapping
-const getModeExpression = (mode: CompanionMode): CompanionExpression => {
-  switch (mode) {
-    case 'celebrating':
-      return 'baby_happy';
-    case 'listening':
-      return 'baby_listening';
-    case 'sleeping':
-      return 'baby_sleepy';
-    case 'thinking':
-    case 'idle':
-    default:
-      return 'baby_neutral';
-  }
-};
-
-// Asset mapping - using neutral sprite temporarily until expressions are added
-const getAssetForExpression = (expression: CompanionExpression) => {
-  // All expressions use the neutral sprite for now
-  return { webp: malunitaNeutral, png: malunitaNeutral };
-};
-
 export const CompanionAvatar = ({
   mode = 'idle',
   lastEvent = null,
   specialAnimation = null,
   onSpecialAnimationEnd,
 }: CompanionAvatarProps) => {
-  const [currentExpression, setCurrentExpression] = useState<CompanionExpression>('baby_neutral');
   const [isPlayingSpecial, setIsPlayingSpecial] = useState(false);
+  
+  // Get current mood from store
+  const mood = useMoodStore((state) => state.mood);
 
   // Idle behavior system - only when mode is 'idle'
   const isActive = mode !== 'idle';
   const { currentIdleAnimation } = useCompanionIdleBehavior({
     isActive,
-    userMood: null, // Can be passed in from props later
+    userMood: null,
   });
-
-  // Update expression when mode changes
-  useEffect(() => {
-    const newExpression = getModeExpression(mode);
-    setCurrentExpression(newExpression);
-  }, [mode]);
 
   // Handle special animations
   useEffect(() => {
@@ -142,8 +111,21 @@ export const CompanionAvatar = ({
     return classes.join(' ');
   };
 
-  const assets = getAssetForExpression(currentExpression);
   const animationClasses = getAnimationClasses();
+  
+  // Map mode to mood override (mode takes priority over base mood)
+  const getEffectiveMood = (): Mood => {
+    // Mode-based overrides
+    if (mode === 'celebrating') return 'overjoyed';
+    if (mode === 'sleeping') return 'sleeping';
+    if (mode === 'listening') return 'welcoming';
+    if (mode === 'thinking') return 'concerned';
+    
+    // Otherwise use the current mood from store (with safety fallback)
+    return mood || 'neutral';
+  };
+  
+  const effectiveMood = getEffectiveMood();
 
   return (
     <div 
@@ -159,16 +141,12 @@ export const CompanionAvatar = ({
         background: 'transparent',
       }}
     >
-      <picture>
-        <source srcSet={assets.webp} type="image/webp" />
-        <img
-          src={assets.png}
-          alt="Malunita companion"
-          className="w-[140px] sm:w-[180px] md:w-[240px] lg:w-[260px] object-contain drop-shadow-[0_4px_12px_rgba(0,0,0,0.15)]"
-          style={{ background: 'transparent' }}
-          draggable={false}
-        />
-      </picture>
+      <CreatureSprite
+        emotion={effectiveMood}
+        size={240}
+        animate={mode === 'idle'}
+        className="drop-shadow-[0_4px_12px_rgba(0,0,0,0.15)]"
+      />
     </div>
   );
 };
