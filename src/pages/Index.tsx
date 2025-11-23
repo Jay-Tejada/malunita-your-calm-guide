@@ -18,6 +18,7 @@ import { DailySessionView } from "@/components/DailySessionView";
 import { FocusMode } from "@/features/focus/FocusMode";
 import { TaskWorldMap } from "@/features/worldmap/TaskWorldMap";
 import { ShareMalunita } from "@/features/social/ShareMalunita";
+import { DreamMode } from "@/features/dreams/DreamMode";
 import { CognitiveLoadIndicator } from "@/components/CognitiveLoadIndicator";
 import { useAdmin } from "@/hooks/useAdmin";
 import { useTasks } from "@/hooks/useTasks";
@@ -148,6 +149,7 @@ const Index = () => {
   const [showFocusMode, setShowFocusMode] = useState(false);
   const [showWorldMap, setShowWorldMap] = useState(false);
   const [showShareMalunita, setShowShareMalunita] = useState(false);
+  const [showDreamMode, setShowDreamMode] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [showTodaysFocus, setShowTodaysFocus] = useState(false);
   const [showDailySession, setShowDailySession] = useState(false);
@@ -254,6 +256,28 @@ const Index = () => {
 
   // Workflow Rituals - Morning, Midday, Evening, Weekly
   useWorkflowRituals();
+  
+  // Check for night-time and offer Dream Mode
+  useEffect(() => {
+    const checkDreamMode = () => {
+      const hour = new Date().getHours();
+      const isNightTime = hour >= 22 || hour < 6;
+      
+      // Auto-show Dream Mode if nighttime and not already shown
+      if (isNightTime && !showDreamMode && user && !showSettings) {
+        // Only auto-trigger once per session
+        const hasAutoTriggered = sessionStorage.getItem('dreamModeAutoTriggered');
+        if (!hasAutoTriggered) {
+          setTimeout(() => {
+            setShowDreamMode(true);
+            sessionStorage.setItem('dreamModeAutoTriggered', 'true');
+          }, 2000); // Small delay after app load
+        }
+      }
+    };
+    
+    checkDreamMode();
+  }, [user, showDreamMode, showSettings]);
   
   // Start auto-idle mood checking
   useEffect(() => {
@@ -458,6 +482,21 @@ const Index = () => {
     setShowDailySession(false);
   };
 
+  const handleDreamMode = () => {
+    setShowDreamMode(true);
+  };
+
+  const handleDreamModeClose = () => {
+    setShowDreamMode(false);
+  };
+
+  const handleMorningRitual = () => {
+    setShowDreamMode(false);
+    setShowDailySession(true);
+    setActiveCategory(null);
+    setShowTodaysFocus(false);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -487,6 +526,7 @@ const Index = () => {
           onFocusModeClick={handleFocusMode}
           onWorldMapClick={handleWorldMap}
           onShareMalunitaClick={() => setShowShareMalunita(true)}
+          onDreamModeClick={handleDreamMode}
           onCategoryClick={(category) => {
             if (category === 'daily-session') {
               setShowDailySession(true);
@@ -618,6 +658,14 @@ const Index = () => {
           open={showShareMalunita}
           onClose={() => setShowShareMalunita(false)}
         />
+        
+        {/* Dream Mode */}
+        {showDreamMode && (
+          <DreamMode 
+            onClose={handleDreamModeClose}
+            onMorningRitual={handleMorningRitual}
+          />
+        )}
         
         {/* Companion Onboarding - Full Screen Intro Sequence */}
         {!isCompanionLoading && needsOnboarding && (
