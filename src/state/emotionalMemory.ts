@@ -43,6 +43,14 @@ export const useEmotionalMemory = create<EmotionalMemoryState & EmotionalMemoryA
     }));
     get().calculateMoodInfluence();
     get().maybeSyncToSupabase();
+    
+    // Auto-create journal entry on high joy
+    const newJoy = get().joy;
+    if (newJoy >= 80) {
+      import('../features/journal/journalEvents').then(({ JOURNAL_EVENTS }) => {
+        JOURNAL_EVENTS.HIGH_JOY();
+      });
+    }
   },
 
   adjustStress: (amount) => {
@@ -51,6 +59,14 @@ export const useEmotionalMemory = create<EmotionalMemoryState & EmotionalMemoryA
     }));
     get().calculateMoodInfluence();
     get().maybeSyncToSupabase();
+    
+    // Auto-create journal entry on high stress
+    const newStress = get().stress;
+    if (newStress >= 75) {
+      import('../features/journal/journalEvents').then(({ JOURNAL_EVENTS }) => {
+        JOURNAL_EVENTS.HIGH_STRESS();
+      });
+    }
   },
 
   adjustAffection: (amount) => {
