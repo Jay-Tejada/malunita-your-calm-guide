@@ -10,13 +10,13 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Parchment & Amber - Malunita 3-Orb Navigation System */
-    --background: 36 36% 92%; /* #F8F3EB soft parchment */
+    /* Notion-inspired Design System - Warm Neutral Beige */
+    --background: 40 17% 95%; /* #F7F5F1 warm neutral beige */
     --foreground: 0 0% 13%; /* #212121 near black for text */
     --foreground-soft: 0 0% 45%; /* #737373 secondary text */
 
     --card: 0 0% 100%; /* #FFFFFF clean white cards */
-    --card-strong: 36 28% 96%; /* subtle off-parchment */
+    --card-strong: 40 14% 97%; /* #FAF9F7 subtle off-white */
     --card-foreground: 0 0% 13%; /* #212121 */
 
     --popover: 0 0% 100%;
@@ -25,13 +25,13 @@ All colors MUST be HSL.
     --primary: 0 0% 13%; /* #212121 dark for primary actions */
     --primary-foreground: 0 0% 100%; /* white text on primary */
 
-    --secondary: 36 28% 96%; /* card-strong for secondary */
+    --secondary: 40 14% 97%; /* card-strong for secondary */
     --secondary-foreground: 0 0% 13%;
 
-    --muted: 36 28% 96%; /* card-strong for muted */
+    --muted: 40 14% 97%; /* card-strong for muted */
     --muted-foreground: 0 0% 45%; /* foreground-soft */
 
-    --accent: 36 28% 96%; /* card-strong */
+    --accent: 40 14% 97%; /* card-strong */
     --accent-foreground: 0 0% 13%;
 
     --success: 142 71% 45%; /* green for success */
@@ -48,13 +48,8 @@ All colors MUST be HSL.
     --surface: 0 0% 100%; /* same as card */
     
     /* Sidebar */
-    --sidebar-bg: 36 36% 92%; /* same as background */
-    --sidebar-active: 36 28% 96%; /* card-strong */
-
-    /* 3-Orb Navigation Colors - Amber Glow */
-    --orb-amber: 39 100% 82%; /* #FFDFA8 soft amber glow */
-    --orb-amber-glow: 39 100% 75%; /* deeper amber */
-    --orb-amber-shadow: 39 80% 60%; /* amber shadow */
+    --sidebar-bg: 40 17% 95%; /* same as background */
+    --sidebar-active: 40 14% 97%; /* card-strong */
 
     --radius: 10px; /* rounded corners: 10px */
   }
