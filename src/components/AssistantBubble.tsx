@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CreatureSprite } from '@/components/CreatureSprite';
 import { useMoodStore } from '@/state/moodMachine';
@@ -7,6 +7,8 @@ import { Heart, Mic, MicOff } from 'lucide-react';
 import { startVoiceInput, stopVoiceInput, isVoiceInputSupported } from '@/utils/voiceInput';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { HelperBubble, createMessageQueue, MOOD_MESSAGES, ACTION_MESSAGES } from '@/components/HelperBubble';
+import type { Mood } from '@/state/moodMachine';
 
 interface AssistantBubbleProps {
   onOpenChat?: () => void;
@@ -19,7 +21,10 @@ const AssistantBubble = ({ onOpenChat, className = '' }: AssistantBubbleProps) =
   const [showHearts, setShowHearts] = useState(false);
   const [voiceMode, setVoiceMode] = useState(false);
   const [listening, setListening] = useState(false);
+  const [helperMessage, setHelperMessage] = useState<string | null>(null);
   const { toast } = useToast();
+  const messageQueueRef = useRef(createMessageQueue(setHelperMessage));
+  const prevMoodRef = useRef<Mood>(mood);
 
   // Idle cycle behavior - random animations every 15-25 seconds
   useEffect(() => {
@@ -54,6 +59,36 @@ const AssistantBubble = ({ onOpenChat, className = '' }: AssistantBubbleProps) =
       return () => clearTimeout(timer);
     }
   }, [mood]);
+
+  // Helper bubble messages based on mood changes
+  useEffect(() => {
+    // Don't show helper during angry or sleeping
+    if (mood === 'angry' || mood === 'sleeping') {
+      return;
+    }
+
+    // Only show message when mood actually changes
+    if (prevMoodRef.current !== mood) {
+      const message = MOOD_MESSAGES[mood];
+      if (message) {
+        messageQueueRef.current.enqueue(message);
+      }
+      prevMoodRef.current = mood;
+    }
+  }, [mood]);
+
+  // Inactivity nudge after 30 seconds
+  useEffect(() => {
+    if (mood === 'sleeping' || mood === 'angry' || listening || voiceMode) {
+      return;
+    }
+
+    const inactivityTimer = setTimeout(() => {
+      messageQueueRef.current.enqueue(ACTION_MESSAGES.inactivityNudge);
+    }, 30000);
+
+    return () => clearTimeout(inactivityTimer);
+  }, [mood, listening, voiceMode]);
 
   // Voice mode toggle
   const toggleVoiceMode = useCallback(async (e: React.MouseEvent) => {
@@ -162,6 +197,12 @@ const AssistantBubble = ({ onOpenChat, className = '' }: AssistantBubbleProps) =
       whileHover={{ scale: 1.05 }}
       whileTap={{ scale: 0.95 }}
     >
+      {/* Helper bubble */}
+      <HelperBubble 
+        message={helperMessage} 
+        onDismiss={() => setHelperMessage(null)}
+      />
+
       {/* Container with glow effect */}
       <div className="relative">
         {/* Glow effect - enhanced when listening */}
