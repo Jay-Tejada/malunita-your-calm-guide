@@ -34,6 +34,7 @@ import MonthlyInsights from "./pages/MonthlyInsights";
 import Quests from "./pages/Quests";
 import AmbientWorlds from "./pages/AmbientWorlds";
 import Clusters from "./pages/Clusters";
+import TimeTravel from "./pages/TimeTravel";
 import { useCutsceneManager } from "./features/cutscenes/useCutsceneManager";
 import { JOURNAL_EVENTS } from "./features/journal/journalEvents";
 
@@ -99,6 +100,7 @@ const App = () => {
               <Route path="/quests" element={<Quests />} />
               <Route path="/ambient-worlds" element={<AmbientWorlds />} />
               <Route path="/clusters" element={<Clusters />} />
+              <Route path="/timetravel" element={<TimeTravel />} />
               <Route path="/install" element={<Install />} />
               <Route path="/admin" element={<Admin />} />
               <Route path="/trends" element={<Trends />} />
