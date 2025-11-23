@@ -128,9 +128,10 @@ export function MorningRitual({ onComplete, onSkip }: MorningRitualProps) {
         description: `Created ${data.tasks?.length || 0} tasks for today`,
       });
 
+      // Delay onComplete to show cutscene first
       setTimeout(() => {
         onComplete();
-      }, 2000);
+      }, 100);
     } catch (error) {
       console.error('Error processing morning ritual:', error);
       toast({

@@ -31,6 +31,11 @@ import { AppSidebar } from "@/components/AppSidebar";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { startAutoIdleCheck } from "@/state/moodMachine";
 import { startCognitiveLoadMonitoring, useCognitiveLoad } from "@/state/cognitiveLoad";
+import { useLevelSystem } from "@/state/levelSystem";
+import { useCutsceneManager } from "@/features/cutscenes/useCutsceneManager";
+import { EvolutionCutscene } from "@/features/cutscenes/EvolutionCutscene";
+import { LevelUpCutscene } from "@/features/cutscenes/LevelUpCutscene";
+import { RitualCompleteCutscene } from "@/features/cutscenes/RitualCompleteCutscene";
 
 import { WakeWordIndicator } from "@/components/WakeWordIndicator";
 
@@ -168,6 +173,8 @@ const Index = () => {
   const { profile } = useProfile();
   const { categories: customCategories, createCategory } = useCustomCategories();
   const { companion, isLoading: isCompanionLoading, updateCompanion, needsOnboarding } = useCompanionIdentity();
+  const levelSystem = useLevelSystem();
+  const { activeCutscene, showLevelUpCutscene, showEvolutionCutscene, dismissCutscene } = useCutsceneManager();
   
   const { toast } = useToast();
 
@@ -313,6 +320,24 @@ const Index = () => {
     }
     prevCategoryRef.current = activeCategory;
   }, [activeCategory, recordCategorySwitch]);
+
+  // Watch for level ups and evolution changes
+  const prevLevelRef = useRef(levelSystem.level);
+  const prevStageRef = useRef(levelSystem.evolutionStage);
+  
+  useEffect(() => {
+    // Check for level up
+    if (levelSystem.level > prevLevelRef.current) {
+      showLevelUpCutscene(levelSystem.level);
+    }
+    prevLevelRef.current = levelSystem.level;
+    
+    // Check for evolution
+    if (levelSystem.evolutionStage > prevStageRef.current) {
+      showEvolutionCutscene(levelSystem.evolutionStage);
+    }
+    prevStageRef.current = levelSystem.evolutionStage;
+  }, [levelSystem.level, levelSystem.evolutionStage, showLevelUpCutscene, showEvolutionCutscene]);
 
   // Build complete navigation list including Daily Session
   const allViews = [
@@ -664,6 +689,28 @@ const Index = () => {
           <DreamMode 
             onClose={handleDreamModeClose}
             onMorningRitual={handleMorningRitual}
+          />
+        )}
+
+        {/* Cutscenes */}
+        {activeCutscene?.type === 'evolution' && (
+          <EvolutionCutscene
+            stage={activeCutscene.stage}
+            onComplete={dismissCutscene}
+          />
+        )}
+        
+        {activeCutscene?.type === 'levelup' && (
+          <LevelUpCutscene
+            level={activeCutscene.level}
+            onComplete={dismissCutscene}
+          />
+        )}
+        
+        {activeCutscene?.type === 'ritual' && (
+          <RitualCompleteCutscene
+            type={activeCutscene.ritualType}
+            onComplete={dismissCutscene}
           />
         )}
         
