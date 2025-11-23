@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -8,48 +10,48 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* New Malunita Background System - Paper aesthetic */
-    --background: 38 27% 89%; /* #EDE7DD warm paper background */
-    --foreground: 0 0% 17%; /* #2B2B2B deep charcoal text */
-    --foreground-soft: 0 0% 35%; /* #595959 secondary text */
+    /* Notion-inspired Design System - Warm Neutral Beige */
+    --background: 40 17% 95%; /* #F7F5F1 warm neutral beige */
+    --foreground: 0 0% 13%; /* #212121 near black for text */
+    --foreground-soft: 0 0% 45%; /* #737373 secondary text */
 
-    --card: 38 29% 94%; /* #F6F2EC light cream paper */
-    --card-strong: 38 25% 90%; /* #EFE9DF darker cream for depth */
-    --card-foreground: 0 0% 17%; /* #2B2B2B */
+    --card: 0 0% 100%; /* #FFFFFF clean white cards */
+    --card-strong: 40 14% 97%; /* #FAF9F7 subtle off-white */
+    --card-foreground: 0 0% 13%; /* #212121 */
 
-    --popover: 38 29% 94%; /* same as card */
-    --popover-foreground: 0 0% 17%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 13%;
 
-    --primary: 0 0% 17%; /* #2B2B2B charcoal for primary actions */
+    --primary: 0 0% 13%; /* #212121 dark for primary actions */
     --primary-foreground: 0 0% 100%; /* white text on primary */
 
-    --secondary: 38 25% 90%; /* card-strong for secondary */
-    --secondary-foreground: 0 0% 17%;
+    --secondary: 40 14% 97%; /* card-strong for secondary */
+    --secondary-foreground: 0 0% 13%;
 
-    --muted: 38 25% 90%; /* card-strong for muted */
-    --muted-foreground: 0 0% 35%; /* foreground-soft */
+    --muted: 40 14% 97%; /* card-strong for muted */
+    --muted-foreground: 0 0% 45%; /* foreground-soft */
 
-    --accent: 38 25% 90%; /* card-strong */
-    --accent-foreground: 0 0% 17%;
+    --accent: 40 14% 97%; /* card-strong */
+    --accent-foreground: 0 0% 13%;
 
-    --success: 120 45% 50%; /* green for success */
+    --success: 142 71% 45%; /* green for success */
     --success-foreground: 0 0% 100%;
 
-    --destructive: 0 70% 50%;
+    --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 0% / 0.06; /* rgba(0,0,0,0.06) subtle border */
-    --input: 0 0% 0% / 0.12; /* rgba(0,0,0,0.12) for input borders */
-    --ring: 0 0% 17%;
+    --border: 0 0% 0% / 0.07; /* rgba(0,0,0,0.07) minimal border */
+    --input: 0 0% 0% / 0.10; /* rgba(0,0,0,0.10) for input borders */
+    --ring: 0 0% 13%;
     
     /* Surface and UI Elements */
-    --surface: 38 29% 94%; /* same as card */
+    --surface: 0 0% 100%; /* same as card */
     
     /* Sidebar */
-    --sidebar-bg: 38 27% 89%; /* same as background */
-    --sidebar-active: 38 25% 90%; /* card-strong */
+    --sidebar-bg: 40 17% 95%; /* same as background */
+    --sidebar-active: 40 14% 97%; /* card-strong */
 
-    --radius: 1rem;
+    --radius: 10px; /* rounded corners: 10px */
   }
 
   /* Dark Mode - Warm Charcoal with Cream accents */
@@ -185,10 +187,16 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground font-light;
-    font-family: 'Inter', 'Work Sans', system-ui, -apple-system, sans-serif;
-    letter-spacing: 0.01em;
+    @apply bg-background text-foreground;
+    font-family: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+    font-weight: 400;
+    letter-spacing: -0.01em;
     position: relative;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'IBM Plex Mono', 'Courier New', monospace;
+    font-weight: 500;
   }
 
   /* Paper texture overlay */
