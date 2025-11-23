@@ -8,14 +8,16 @@ import { startVoiceInput, stopVoiceInput, isVoiceInputSupported } from '@/utils/
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { HelperBubble, createMessageQueue, MOOD_MESSAGES, ACTION_MESSAGES } from '@/components/HelperBubble';
+import { TypingIndicator } from '@/components/TypingIndicator';
 import type { Mood } from '@/state/moodMachine';
 
 interface AssistantBubbleProps {
   onOpenChat?: () => void;
   className?: string;
+  typing?: boolean; // When AI is generating a response
 }
 
-const AssistantBubble = ({ onOpenChat, className = '' }: AssistantBubbleProps) => {
+const AssistantBubble = ({ onOpenChat, className = '', typing = false }: AssistantBubbleProps) => {
   const { mood, updateMood, recordInteraction, increaseEnergy, decreaseEnergy } = useMoodStore();
   const [idleAnimation, setIdleAnimation] = useState<'none' | 'wink' | 'bounce' | 'look'>('none');
   const [showHearts, setShowHearts] = useState(false);
@@ -222,7 +224,15 @@ const AssistantBubble = ({ onOpenChat, className = '' }: AssistantBubbleProps) =
             size={90}
             animate={mood === 'neutral' || mood === 'happy'}
             listening={listening}
+            typing={typing}
           />
+          
+          {/* Typing indicator */}
+          {typing && (
+            <div className="absolute -bottom-2 left-1/2 -translate-x-1/2">
+              <TypingIndicator mood={mood} />
+            </div>
+          )}
         </div>
 
         {/* Mic button */}

@@ -416,6 +416,12 @@ All colors MUST be HSL.
     100% { transform: rotate(var(--tilt-angle, 5deg)); }
   }
 
+  @keyframes sway {
+    0%, 100% { transform: rotate(0deg); }
+    25% { transform: rotate(-2deg); }
+    75% { transform: rotate(2deg); }
+  }
+
   @keyframes companion-sparkle {
     0%, 100% { 
       opacity: 0;
