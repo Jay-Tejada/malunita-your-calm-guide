@@ -3,11 +3,16 @@ import { useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Calendar as CalendarIcon, ArrowLeft, Plus, Clock, MapPin, CheckCircle } from "lucide-react";
-import { hapticLight } from "@/utils/haptics";
+import { hapticLight, hapticSuccess } from "@/utils/haptics";
 import { format, addDays, startOfWeek, isSameDay, parseISO } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useTasks } from "@/hooks/useTasks";
+import { useToast } from "@/hooks/use-toast";
 
 interface CalendarEvent {
   id: string;
@@ -22,8 +27,14 @@ interface CalendarEvent {
 
 const Calendar = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const { tasks, isLoading, updateTask } = useTasks();
+  const [isNewEventDialogOpen, setIsNewEventDialogOpen] = useState(false);
+  const [newEventTitle, setNewEventTitle] = useState("");
+  const [newEventDate, setNewEventDate] = useState("");
+  const [newEventTime, setNewEventTime] = useState("");
+  const [newEventDescription, setNewEventDescription] = useState("");
+  const { tasks, isLoading, updateTask, createTasks } = useTasks();
   
   // Convert tasks with reminder times to calendar events
   const events = useMemo(() => {
@@ -66,6 +77,48 @@ const Calendar = () => {
     }
   };
 
+  const handleCreateEvent = async () => {
+    if (!newEventTitle.trim() || !newEventDate || !newEventTime) {
+      toast({
+        title: "Missing information",
+        description: "Please fill in the title, date, and time.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const reminderDateTime = new Date(`${newEventDate}T${newEventTime}`);
+      
+      await createTasks([{
+        title: newEventTitle,
+        reminder_time: reminderDateTime.toISOString(),
+        context: newEventDescription || undefined,
+        has_reminder: true,
+      }]);
+
+      hapticSuccess();
+      toast({
+        title: "Event created",
+        description: "Your calendar event has been added.",
+      });
+
+      // Reset form
+      setNewEventTitle("");
+      setNewEventDate("");
+      setNewEventTime("");
+      setNewEventDescription("");
+      setIsNewEventDialogOpen(false);
+    } catch (error) {
+      console.error('Error creating event:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create event. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="min-h-screen pb-20 bg-background">
       <Header />
@@ -89,7 +142,14 @@ const Calendar = () => {
               <CalendarIcon className="w-8 h-8" />
               Calendar
             </h1>
-            <Button size="sm" variant="default">
+            <Button 
+              size="sm" 
+              variant="default"
+              onClick={() => {
+                hapticLight();
+                setIsNewEventDialogOpen(true);
+              }}
+            >
               <Plus className="w-4 h-4 mr-2" />
               New Event
             </Button>
@@ -244,6 +304,78 @@ const Calendar = () => {
           )}
         </div>
       </main>
+
+      {/* New Event Dialog */}
+      <Dialog open={isNewEventDialogOpen} onOpenChange={setIsNewEventDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Create New Event</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 pt-4">
+            <div className="space-y-2">
+              <Label htmlFor="title">Event Title</Label>
+              <Input
+                id="title"
+                placeholder="Meeting, Appointment, etc."
+                value={newEventTitle}
+                onChange={(e) => setNewEventTitle(e.target.value)}
+              />
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="date">Date</Label>
+                <Input
+                  id="date"
+                  type="date"
+                  value={newEventDate}
+                  onChange={(e) => setNewEventDate(e.target.value)}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="time">Time</Label>
+                <Input
+                  id="time"
+                  type="time"
+                  value={newEventTime}
+                  onChange={(e) => setNewEventTime(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="description">Description (optional)</Label>
+              <Textarea
+                id="description"
+                placeholder="Add notes or location..."
+                value={newEventDescription}
+                onChange={(e) => setNewEventDescription(e.target.value)}
+                rows={3}
+              />
+            </div>
+
+            <div className="flex gap-2 pt-2">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => {
+                  hapticLight();
+                  setIsNewEventDialogOpen(false);
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                className="flex-1"
+                onClick={handleCreateEvent}
+              >
+                Create Event
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
