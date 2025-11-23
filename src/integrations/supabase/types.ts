@@ -418,6 +418,7 @@ export type Database = {
           reflection_streak: number | null
           ritual_preferences: Json | null
           selected_accessory: string | null
+          selected_ambient_world: string | null
           selected_aura: string | null
           selected_colorway: string | null
           selected_trail: string | null
@@ -468,6 +469,7 @@ export type Database = {
           reflection_streak?: number | null
           ritual_preferences?: Json | null
           selected_accessory?: string | null
+          selected_ambient_world?: string | null
           selected_aura?: string | null
           selected_colorway?: string | null
           selected_trail?: string | null
@@ -518,6 +520,7 @@ export type Database = {
           reflection_streak?: number | null
           ritual_preferences?: Json | null
           selected_accessory?: string | null
+          selected_ambient_world?: string | null
           selected_aura?: string | null
           selected_colorway?: string | null
           selected_trail?: string | null
