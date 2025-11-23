@@ -626,9 +626,9 @@ const Index = () => {
               <div className="max-w-5xl mx-auto py-8 space-y-6">
                 {/* Daily Intelligence Panel */}
                 <DailyIntelligence 
-                  topPriorities={tasks.filter(t => t.is_focus && !t.completed).slice(0, 3)}
+                  topPriorities={tasks?.filter(t => t.is_focus && !t.completed).slice(0, 3) || []}
                   followUps={[]}
-                  quickWins={tasks.filter(t => !t.completed).slice(0, 3)}
+                  quickWins={tasks?.filter(t => !t.completed).slice(0, 3) || []}
                 />
 
                 {/* Today Tasks Section */}
