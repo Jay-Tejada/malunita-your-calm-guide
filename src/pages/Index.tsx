@@ -15,6 +15,7 @@ import { FloatingReminder } from "@/components/FloatingReminder";
 import { CompanionOnboarding } from "@/components/CompanionOnboarding";
 import { CompanionIntroSequence } from "@/components/CompanionIntroSequence";
 import { DailySessionView } from "@/components/DailySessionView";
+import { FocusMode } from "@/features/focus/FocusMode";
 import { useAdmin } from "@/hooks/useAdmin";
 import { useTasks } from "@/hooks/useTasks";
 import { useProfile } from "@/hooks/useProfile";
@@ -140,6 +141,7 @@ const Index = () => {
   const [loading, setLoading] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
   const [showRunwayReview, setShowRunwayReview] = useState(false);
+  const [showFocusMode, setShowFocusMode] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [showTodaysFocus, setShowTodaysFocus] = useState(false);
   const [showDailySession, setShowDailySession] = useState(false);
@@ -406,6 +408,10 @@ const Index = () => {
     setShowRunwayReview(true);
   };
 
+  const handleFocusMode = () => {
+    setShowFocusMode(true);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -432,6 +438,7 @@ const Index = () => {
         {/* Sidebar - Hidden by default */}
         <AppSidebar 
           onSettingsClick={() => setShowSettings(true)}
+          onFocusModeClick={handleFocusMode}
           onCategoryClick={(category) => {
             if (category === 'daily-session') {
               setShowDailySession(true);
@@ -540,6 +547,9 @@ const Index = () => {
 
         {/* Runway Review Modal */}
         {showRunwayReview && <RunwayReview onClose={() => setShowRunwayReview(false)} />}
+        
+        {/* Focus Mode */}
+        {showFocusMode && <FocusMode onClose={() => setShowFocusMode(false)} />}
         
         {/* Companion Onboarding - Full Screen Intro Sequence */}
         {!isCompanionLoading && needsOnboarding && (

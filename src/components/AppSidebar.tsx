@@ -16,7 +16,8 @@ import {
   TrendingUp,
   Sparkles,
   Bell,
-  Camera
+  Camera,
+  Focus
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAdmin } from "@/hooks/useAdmin";
@@ -40,6 +41,7 @@ import { Separator } from "@/components/ui/separator";
 interface AppSidebarProps {
   onSettingsClick: () => void;
   onCategoryClick: (category: string) => void;
+  onFocusModeClick?: () => void;
   activeCategory: string | null;
 }
 
@@ -55,7 +57,7 @@ const defaultCategories = [
   { label: "Gym", icon: Dumbbell, path: "/gym" },
 ];
 
-export function AppSidebar({ onSettingsClick, onCategoryClick, activeCategory }: AppSidebarProps) {
+export function AppSidebar({ onSettingsClick, onCategoryClick, onFocusModeClick, activeCategory }: AppSidebarProps) {
   const navigate = useNavigate();
   const { isAdmin } = useAdmin();
   const { categories: customCategories } = useCustomCategories();
@@ -157,6 +159,18 @@ export function AppSidebar({ onSettingsClick, onCategoryClick, activeCategory }:
                   <span>Daily Session</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
+
+              {onFocusModeClick && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton 
+                    onClick={onFocusModeClick}
+                    className="hover:bg-muted/50"
+                  >
+                    <Focus className="mr-2 h-4 w-4" />
+                    <span>Focus Mode</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
 
               <SidebarMenuItem>
                 <SidebarMenuButton 
