@@ -13,6 +13,8 @@ import type { Mood } from '@/state/moodMachine';
 import { playSfx } from '@/utils/sound';
 import { useLevelSystem, XP_REWARDS } from '@/state/levelSystem';
 import { supabase } from '@/integrations/supabase/client';
+import { greetUser } from '@/utils/greetings';
+import { useEmotionalMemory } from '@/state/emotionalMemory';
 
 interface AssistantBubbleProps {
   onOpenChat?: () => void;
@@ -36,13 +38,46 @@ const AssistantBubble = ({ onOpenChat, className = '', typing = false }: Assista
   // TODO: Connect to user profile settings
   const soundEnabled = true; // userProfile?.soundEffectsEnabled ?? true;
 
-  // Get current user
+  // Get current user and show greeting on mount
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
+    const initializeUser = async () => {
+      const { data } = await supabase.auth.getUser();
       if (data.user) {
         setUserId(data.user.id);
+        
+        // Load profile data for greeting context
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('task_completion_streak, updated_at, emotional_memory')
+          .eq('id', data.user.id)
+          .single();
+        
+        if (profile) {
+          // Load emotional memory if available
+          const emotionalMemory = useEmotionalMemory.getState();
+          if (profile.emotional_memory) {
+            emotionalMemory.loadFromProfile(profile.emotional_memory as any);
+          }
+          
+          // Calculate hours since last activity
+          const lastActivity = profile.updated_at ? new Date(profile.updated_at) : new Date();
+          const hoursSinceActivity = (Date.now() - lastActivity.getTime()) / (1000 * 60 * 60);
+          
+          // Show personalized greeting
+          const greeting = greetUser({
+            streakCount: profile.task_completion_streak || 0,
+            lastActivityHours: hoursSinceActivity,
+          });
+          
+          // Queue greeting message after a short delay
+          setTimeout(() => {
+            messageQueueRef.current.enqueue(greeting);
+          }, 1000);
+        }
       }
-    });
+    };
+    
+    initializeUser();
   }, []);
 
   // Idle cycle behavior - random animations every 15-25 seconds
