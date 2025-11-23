@@ -11,6 +11,8 @@ import { HelperBubble, createMessageQueue, MOOD_MESSAGES, ACTION_MESSAGES } from
 import { TypingIndicator } from '@/components/TypingIndicator';
 import type { Mood } from '@/state/moodMachine';
 import { playSfx } from '@/utils/sound';
+import { useLevelSystem, XP_REWARDS } from '@/state/levelSystem';
+import { supabase } from '@/integrations/supabase/client';
 
 interface AssistantBubbleProps {
   onOpenChat?: () => void;
@@ -20,17 +22,28 @@ interface AssistantBubbleProps {
 
 const AssistantBubble = ({ onOpenChat, className = '', typing = false }: AssistantBubbleProps) => {
   const { mood, updateMood, recordInteraction, increaseEnergy, decreaseEnergy } = useMoodStore();
+  const { grantXp, level } = useLevelSystem();
   const [idleAnimation, setIdleAnimation] = useState<'none' | 'wink' | 'bounce' | 'look'>('none');
   const [showHearts, setShowHearts] = useState(false);
   const [voiceMode, setVoiceMode] = useState(false);
   const [listening, setListening] = useState(false);
   const [helperMessage, setHelperMessage] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
   const { toast } = useToast();
   const messageQueueRef = useRef(createMessageQueue(setHelperMessage));
   const prevMoodRef = useRef<Mood>(mood);
   
   // TODO: Connect to user profile settings
   const soundEnabled = true; // userProfile?.soundEffectsEnabled ?? true;
+
+  // Get current user
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user) {
+        setUserId(data.user.id);
+      }
+    });
+  }, []);
 
   // Idle cycle behavior - random animations every 15-25 seconds
   useEffect(() => {
@@ -173,12 +186,24 @@ const AssistantBubble = ({ onOpenChat, className = '', typing = false }: Assista
     }
   }, [voiceMode, recordInteraction, updateMood, increaseEnergy, decreaseEnergy, toast]);
 
-  // Poke to wake handler
-  const handleClick = useCallback(() => {
+  // Poke to wake handler with XP reward
+  const handleClick = useCallback(async () => {
     if (voiceMode) return; // Don't handle click when in voice mode
     
     recordInteraction();
     playSfx('tap', soundEnabled);
+    
+    // Grant tap XP
+    const leveledUp = await grantXp(XP_REWARDS.TAP_INTERACTION, userId || undefined);
+    
+    if (leveledUp) {
+      updateMood('overjoyed');
+      playSfx('sparkle', soundEnabled);
+      toast({
+        title: "Level Up! ✨",
+        description: `Malunita reached level ${level + 1}!`,
+      });
+    }
 
     // Poke to wake logic
     if (mood === 'sleeping') {
@@ -188,7 +213,7 @@ const AssistantBubble = ({ onOpenChat, className = '', typing = false }: Assista
     } else if (onOpenChat) {
       onOpenChat();
     }
-  }, [mood, updateMood, recordInteraction, onOpenChat, voiceMode, soundEnabled]);
+  }, [mood, updateMood, recordInteraction, onOpenChat, voiceMode, soundEnabled, grantXp, userId, level, toast]);
 
   // Animation classes based on idle state
   const getAnimationClass = () => {
