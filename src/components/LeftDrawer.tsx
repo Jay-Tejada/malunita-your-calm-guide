@@ -184,6 +184,28 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
     return tasks?.filter(t => !t.completed && category.filter(t)) || [];
   };
 
+  // Group tasks by date for calendar view
+  const groupEventsByDate = (tasks: any[]) => {
+    const grouped: Record<string, any[]> = {};
+    
+    tasks
+      .filter(task => task.reminder_time && !task.completed)
+      .sort((a, b) => new Date(a.reminder_time!).getTime() - new Date(b.reminder_time!).getTime())
+      .forEach(task => {
+        const date = new Date(task.reminder_time!);
+        const dateKey = date.toDateString();
+        if (!grouped[dateKey]) {
+          grouped[dateKey] = [];
+        }
+        grouped[dateKey].push(task);
+      });
+    
+    return grouped;
+  };
+
+  const groupedEvents = drawerMode === 'calendar' ? groupEventsByDate(tasks || []) : {};
+  const hasEvents = Object.keys(groupedEvents).length > 0;
+
   const categoryTasks = getCurrentCategoryTasks();
   const currentCategory = categories.find(c => c.id === drawerMode);
 
@@ -318,8 +340,8 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
                     </button>
 
                     {/* Category Title */}
-                    <div className="flex items-center justify-between mb-6">
-                      <h2 className="font-mono text-[18px] font-medium text-foreground">
+                    <div className="flex items-center justify-between mb-8">
+                      <h2 className="font-mono text-[16px] font-medium" style={{ color: '#111' }}>
                         {currentCategory?.label}
                       </h2>
                       {drawerMode === 'calendar' && (
@@ -328,127 +350,159 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
                             hapticLight();
                             setIsNewEventDialogOpen(true);
                           }}
-                          className="p-1.5 hover:bg-muted/30 rounded-md transition-colors"
+                          className="p-1.5 hover:bg-black/5 rounded-md transition-colors"
                           aria-label="Add new event"
                         >
-                          <Plus className="w-4 h-4 text-foreground/60" />
+                          <Plus className="w-4 h-4" style={{ color: '#777' }} />
                         </button>
                       )}
                     </div>
 
-                    {/* Task List */}
-                    <div className="flex-1 space-y-2">
-                      {categoryTasks.length === 0 ? (
-                        <p className="font-mono text-[14px] text-foreground/40 text-center py-8">
-                          No tasks in {currentCategory?.label}
-                        </p>
-                      ) : drawerMode === 'calendar' ? (
-                        categoryTasks.map((task) => {
-                          const eventDate = task.reminder_time ? new Date(task.reminder_time) : new Date();
-                          const today = new Date();
-                          const nextWeekEnd = new Date(today);
-                          nextWeekEnd.setDate(today.getDate() + 14);
-                          
-                          const isUpcoming = eventDate <= nextWeekEnd;
-                          const dateDisplay = isUpcoming 
-                            ? format(eventDate, 'EEEE')
-                            : format(eventDate, 'M/d');
-                          
-                          const isCompleting = completingTaskIds.has(task.id);
-                          
-                          return (
-                            <motion.div
-                              key={task.id}
-                              initial={{ opacity: 1, x: 0 }}
-                              animate={isCompleting ? { 
-                                opacity: 0, 
-                                x: -20,
-                                height: 0,
-                                marginBottom: 0
-                              } : { 
-                                opacity: 1, 
-                                x: 0 
-                              }}
-                              transition={{ duration: 0.4, ease: "easeOut" }}
-                              className="flex items-start gap-3 py-2.5 px-3 hover:bg-muted/20 rounded-md transition-colors group overflow-hidden"
-                            >
-                              <button
-                                onClick={() => handleTaskToggle(task.id, task.completed || false)}
-                                className={cn(
-                                  "flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center mt-0.5 transition-all duration-300 ease-out",
-                                  task.completed
-                                    ? "bg-foreground/90 border-2 border-foreground/90 scale-100 shadow-[0_0_12px_rgba(0,0,0,0.3)]"
-                                    : "border-2 border-foreground/20 hover:border-foreground/40 hover:scale-110 hover:shadow-[0_0_8px_rgba(0,0,0,0.15)]"
-                                )}
+                    {/* Calendar View */}
+                    {drawerMode === 'calendar' ? (
+                      <div className="flex-1">
+                        {!hasEvents ? (
+                          <p className="font-mono text-[14px] text-center py-16" style={{ color: '#999' }}>
+                            No upcoming events
+                          </p>
+                        ) : (
+                          <div className="space-y-6">
+                            {Object.entries(groupedEvents).map(([dateKey, dayEvents]) => {
+                              const date = new Date(dateKey);
+                              const dayOfWeek = format(date, 'EEEE');
+                              const monthDay = format(date, 'MMM d');
+                              
+                              return (
+                                <div key={dateKey} className="space-y-3">
+                                  <div className="space-y-1">
+                                    <div className="font-mono text-[14px]" style={{ color: '#777' }}>
+                                      {dayOfWeek}
+                                    </div>
+                                    <div className="font-mono text-[14px] font-medium" style={{ color: '#111' }}>
+                                      {monthDay}
+                                    </div>
+                                  </div>
+                                  
+                                  <div 
+                                    className="h-px" 
+                                    style={{ backgroundColor: 'rgba(0,0,0,0.06)' }}
+                                  />
+                                  
+                                  <div className="space-y-3">
+                                    {dayEvents.map((task) => {
+                                      const isCompleting = completingTaskIds.has(task.id);
+                                      const eventTime = new Date(task.reminder_time!);
+                                      
+                                      return (
+                                        <motion.button
+                                          key={task.id}
+                                          initial={{ opacity: 1, x: 0 }}
+                                          animate={isCompleting ? { 
+                                            opacity: 0, 
+                                            x: -20,
+                                            height: 0,
+                                            marginBottom: 0
+                                          } : { 
+                                            opacity: 1, 
+                                            x: 0 
+                                          }}
+                                          transition={{ duration: 0.4, ease: "easeOut" }}
+                                          onClick={() => handleTaskToggle(task.id, task.completed || false)}
+                                          className="w-full text-left flex items-start gap-3 py-2 px-2 -mx-2 rounded-md transition-colors overflow-hidden"
+                                          style={{
+                                            backgroundColor: 'transparent'
+                                          }}
+                                          onMouseEnter={(e) => {
+                                            e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.02)';
+                                          }}
+                                          onMouseLeave={(e) => {
+                                            e.currentTarget.style.backgroundColor = 'transparent';
+                                          }}
+                                        >
+                                          <div className="flex-shrink-0 mt-0.5">
+                                            <div 
+                                              className="w-1.5 h-1.5 rounded-full"
+                                              style={{ backgroundColor: '#111' }}
+                                            />
+                                          </div>
+                                          
+                                          <div className="flex-1 min-w-0 space-y-1">
+                                            <div 
+                                              className="font-mono text-[14px] leading-tight"
+                                              style={{ color: '#111' }}
+                                            >
+                                              {task.title}
+                                            </div>
+                                            <div 
+                                              className="font-mono text-[13px]"
+                                              style={{ color: '#999' }}
+                                            >
+                                              {format(eventTime, 'h:mm a')}
+                                            </div>
+                                          </div>
+                                        </motion.button>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="flex-1 space-y-2">
+                        {categoryTasks.length === 0 ? (
+                          <p className="font-mono text-[14px] text-foreground/40 text-center py-8">
+                            No tasks in {currentCategory?.label}
+                          </p>
+                        ) : (
+                          categoryTasks.map((task) => {
+                            const isCompleting = completingTaskIds.has(task.id);
+                            
+                            return (
+                              <motion.div
+                                key={task.id}
+                                initial={{ opacity: 1, x: 0 }}
+                                animate={isCompleting ? { 
+                                  opacity: 0, 
+                                  x: -20,
+                                  height: 0,
+                                  marginBottom: 0
+                                } : { 
+                                  opacity: 1, 
+                                  x: 0 
+                                }}
+                                transition={{ duration: 0.4, ease: "easeOut" }}
+                                className="flex items-start gap-3 py-2.5 px-3 hover:bg-muted/20 rounded-md transition-colors group overflow-hidden"
                               >
-                                {task.completed ? (
-                                  <Check className="w-3 h-3 text-background animate-in fade-in zoom-in duration-200" />
-                                ) : (
-                                  <Circle className="w-2 h-2 text-foreground/20 transition-all duration-200" />
-                                )}
-                              </button>
-                              <div className={cn(
-                                "flex-1 font-mono text-[13px] leading-snug",
-                                task.completed && "opacity-60"
-                              )}>
-                                <div className={cn(
-                                  task.completed && "line-through"
+                                <button
+                                  onClick={() => handleTaskToggle(task.id, task.completed || false)}
+                                  className={cn(
+                                    "flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center mt-0.5 transition-all duration-300 ease-out",
+                                    task.completed
+                                      ? "bg-foreground/90 border-2 border-foreground/90 scale-100 shadow-[0_0_12px_rgba(0,0,0,0.3)]"
+                                      : "border-2 border-foreground/20 hover:border-foreground/40 hover:scale-110 hover:shadow-[0_0_8px_rgba(0,0,0,0.15)]"
+                                  )}
+                                >
+                                  {task.completed ? (
+                                    <Check className="w-3 h-3 text-background animate-in fade-in zoom-in duration-200" />
+                                  ) : (
+                                    <Circle className="w-2 h-2 text-foreground/20 transition-all duration-200" />
+                                  )}
+                                </button>
+                                <span className={cn(
+                                  "flex-1 font-mono text-[14px] leading-snug",
+                                  task.completed ? "text-foreground/40 line-through" : "text-foreground/90"
                                 )}>
-                                  • {task.title}
-                                </div>
-                                <div className="text-foreground/50 mt-0.5">
-                                  {dateDisplay} at {format(eventDate, 'h:mm a')}
-                                </div>
-                              </div>
-                            </motion.div>
-                          );
-                        })
-                      ) : (
-                        categoryTasks.map((task) => {
-                          const isCompleting = completingTaskIds.has(task.id);
-                          
-                          return (
-                            <motion.div
-                              key={task.id}
-                              initial={{ opacity: 1, x: 0 }}
-                              animate={isCompleting ? { 
-                                opacity: 0, 
-                                x: -20,
-                                height: 0,
-                                marginBottom: 0
-                              } : { 
-                                opacity: 1, 
-                                x: 0 
-                              }}
-                              transition={{ duration: 0.4, ease: "easeOut" }}
-                              className="flex items-start gap-3 py-2.5 px-3 hover:bg-muted/20 rounded-md transition-colors group overflow-hidden"
-                            >
-                              <button
-                                onClick={() => handleTaskToggle(task.id, task.completed || false)}
-                                className={cn(
-                                  "flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center mt-0.5 transition-all duration-300 ease-out",
-                                  task.completed
-                                    ? "bg-foreground/90 border-2 border-foreground/90 scale-100 shadow-[0_0_12px_rgba(0,0,0,0.3)]"
-                                    : "border-2 border-foreground/20 hover:border-foreground/40 hover:scale-110 hover:shadow-[0_0_8px_rgba(0,0,0,0.15)]"
-                                )}
-                              >
-                                {task.completed ? (
-                                  <Check className="w-3 h-3 text-background animate-in fade-in zoom-in duration-200" />
-                                ) : (
-                                  <Circle className="w-2 h-2 text-foreground/20 transition-all duration-200" />
-                                )}
-                              </button>
-                              <span className={cn(
-                                "flex-1 font-mono text-[14px] leading-snug",
-                                task.completed ? "text-foreground/40 line-through" : "text-foreground/90"
-                              )}>
-                                {task.title}
-                              </span>
-                            </motion.div>
-                          );
-                        })
-                      )}
-                    </div>
+                                  {task.title}
+                                </span>
+                              </motion.div>
+                            );
+                          })
+                        )}
+                      </div>
+                    )}
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -459,84 +513,88 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
 
       {/* New Event Dialog */}
       <Dialog open={isNewEventDialogOpen} onOpenChange={setIsNewEventDialogOpen}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="sm:max-w-[425px] rounded-lg shadow-lg">
           <DialogHeader>
-            <DialogTitle>Create New Event</DialogTitle>
+            <DialogTitle className="font-mono text-[16px]">Create New Event</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 pt-4">
             <div className="space-y-2">
-              <Label htmlFor="drawer-title">Event Title</Label>
+              <Label htmlFor="drawer-title" className="font-mono text-[13px]">Event Title</Label>
               <Input
                 id="drawer-title"
                 placeholder="Meeting, Appointment, etc."
                 value={newEventTitle}
                 onChange={(e) => setNewEventTitle(e.target.value)}
+                className="font-mono text-[14px]"
               />
             </div>
             
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="drawer-date">Date</Label>
+                <Label htmlFor="drawer-date" className="font-mono text-[13px]">Date</Label>
                 <Input
                   id="drawer-date"
                   type="date"
                   value={newEventDate}
                   onChange={(e) => setNewEventDate(e.target.value)}
+                  className="font-mono text-[14px]"
                 />
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="drawer-time">Time</Label>
+                <Label htmlFor="drawer-time" className="font-mono text-[13px]">Time</Label>
                 <Input
                   id="drawer-time"
                   type="time"
                   value={newEventTime}
                   onChange={(e) => setNewEventTime(e.target.value)}
+                  className="font-mono text-[14px]"
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="drawer-description">Description (optional)</Label>
+              <Label htmlFor="drawer-description" className="font-mono text-[13px]">Description (optional)</Label>
               <Textarea
                 id="drawer-description"
                 placeholder="Add notes or location..."
                 value={newEventDescription}
                 onChange={(e) => setNewEventDescription(e.target.value)}
                 rows={3}
+                className="font-mono text-[14px]"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="drawer-recurrence">Repeat</Label>
+              <Label htmlFor="drawer-recurrence" className="font-mono text-[13px]">Repeat</Label>
               <Select value={recurrencePattern} onValueChange={(value: any) => setRecurrencePattern(value)}>
-                <SelectTrigger id="drawer-recurrence">
+                <SelectTrigger id="drawer-recurrence" className="font-mono text-[14px]">
                   <SelectValue placeholder="Does not repeat" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none">Does not repeat</SelectItem>
-                  <SelectItem value="daily">Daily</SelectItem>
-                  <SelectItem value="weekly">Weekly</SelectItem>
-                  <SelectItem value="monthly">Monthly</SelectItem>
+                  <SelectItem value="none" className="font-mono text-[14px]">Does not repeat</SelectItem>
+                  <SelectItem value="daily" className="font-mono text-[14px]">Daily</SelectItem>
+                  <SelectItem value="weekly" className="font-mono text-[14px]">Weekly</SelectItem>
+                  <SelectItem value="monthly" className="font-mono text-[14px]">Monthly</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             {recurrencePattern === 'weekly' && (
               <div className="space-y-2">
-                <Label htmlFor="drawer-recurrence-day">Day of Week</Label>
+                <Label htmlFor="drawer-recurrence-day" className="font-mono text-[13px]">Day of Week</Label>
                 <Select value={recurrenceDay.toString()} onValueChange={(value) => setRecurrenceDay(parseInt(value))}>
-                  <SelectTrigger id="drawer-recurrence-day">
+                  <SelectTrigger id="drawer-recurrence-day" className="font-mono text-[14px]">
                     <SelectValue placeholder="Select day" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="0">Sunday</SelectItem>
-                    <SelectItem value="1">Monday</SelectItem>
-                    <SelectItem value="2">Tuesday</SelectItem>
-                    <SelectItem value="3">Wednesday</SelectItem>
-                    <SelectItem value="4">Thursday</SelectItem>
-                    <SelectItem value="5">Friday</SelectItem>
-                    <SelectItem value="6">Saturday</SelectItem>
+                    <SelectItem value="0" className="font-mono text-[14px]">Sunday</SelectItem>
+                    <SelectItem value="1" className="font-mono text-[14px]">Monday</SelectItem>
+                    <SelectItem value="2" className="font-mono text-[14px]">Tuesday</SelectItem>
+                    <SelectItem value="3" className="font-mono text-[14px]">Wednesday</SelectItem>
+                    <SelectItem value="4" className="font-mono text-[14px]">Thursday</SelectItem>
+                    <SelectItem value="5" className="font-mono text-[14px]">Friday</SelectItem>
+                    <SelectItem value="6" className="font-mono text-[14px]">Saturday</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -544,12 +602,13 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
 
             {recurrencePattern !== 'none' && (
               <div className="space-y-2">
-                <Label htmlFor="drawer-recurrence-end">End Date (optional)</Label>
+                <Label htmlFor="drawer-recurrence-end" className="font-mono text-[13px]">End Date (optional)</Label>
                 <Input
                   id="drawer-recurrence-end"
                   type="date"
                   value={recurrenceEndDate}
                   onChange={(e) => setRecurrenceEndDate(e.target.value)}
+                  className="font-mono text-[14px]"
                 />
               </div>
             )}
@@ -557,7 +616,7 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
             <div className="flex gap-2 pt-2">
               <Button
                 variant="outline"
-                className="flex-1"
+                className="flex-1 font-mono text-[14px]"
                 onClick={() => {
                   hapticLight();
                   setIsNewEventDialogOpen(false);
@@ -566,7 +625,7 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
                 Cancel
               </Button>
               <Button
-                className="flex-1"
+                className="flex-1 font-mono text-[14px]"
                 onClick={handleCreateEvent}
               >
                 Create Event
