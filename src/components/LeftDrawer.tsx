@@ -373,21 +373,24 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
                               const monthDay = format(date, 'MMM d');
                               
                               return (
-                                <div key={dateKey} className="space-y-3">
-                                  <div className="space-y-1">
-                                    <div className="font-mono text-[14px]" style={{ color: '#777' }}>
+                                <div key={dateKey} className="space-y-3 pt-6 first:pt-0">
+                                  {/* Day Header */}
+                                  <div className="space-y-1 pb-2">
+                                    <div className="font-mono font-semibold text-[18px]" style={{ color: '#111' }}>
                                       {dayOfWeek}
                                     </div>
-                                    <div className="font-mono text-[14px] font-medium" style={{ color: '#111' }}>
+                                    <div className="font-mono text-[16px]" style={{ color: '#555' }}>
                                       {monthDay}
                                     </div>
                                   </div>
                                   
+                                  {/* Divider */}
                                   <div 
-                                    className="h-px" 
+                                    className="h-px mb-3" 
                                     style={{ backgroundColor: 'rgba(0,0,0,0.06)' }}
                                   />
                                   
+                                  {/* Events List */}
                                   <div className="space-y-3">
                                     {dayEvents.map((task) => {
                                       const isCompleting = completingTaskIds.has(task.id);
@@ -409,9 +412,7 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
                                           transition={{ duration: 0.4, ease: "easeOut" }}
                                           onClick={() => handleTaskToggle(task.id, task.completed || false)}
                                           className="w-full text-left flex items-start gap-3 py-2 px-2 -mx-2 rounded-md transition-colors overflow-hidden"
-                                          style={{
-                                            backgroundColor: 'transparent'
-                                          }}
+                                          style={{ backgroundColor: 'transparent' }}
                                           onMouseEnter={(e) => {
                                             e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.02)';
                                           }}
@@ -419,23 +420,20 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
                                             e.currentTarget.style.backgroundColor = 'transparent';
                                           }}
                                         >
-                                          <div className="flex-shrink-0 mt-0.5">
-                                            <div 
-                                              className="w-1.5 h-1.5 rounded-full"
-                                              style={{ backgroundColor: '#111' }}
-                                            />
+                                          <div className="flex-shrink-0 mt-1">
+                                            <span className="font-mono text-[14px]" style={{ color: '#111' }}>•</span>
                                           </div>
                                           
-                                          <div className="flex-1 min-w-0 space-y-1">
+                                          <div className="flex-1 min-w-0 space-y-0.5">
                                             <div 
-                                              className="font-mono text-[14px] leading-tight"
+                                              className="font-mono text-[15px] leading-tight"
                                               style={{ color: '#111' }}
                                             >
                                               {task.title}
                                             </div>
                                             <div 
-                                              className="font-mono text-[13px]"
-                                              style={{ color: '#999' }}
+                                              className="font-mono text-[14px]"
+                                              style={{ color: '#888' }}
                                             >
                                               {format(eventTime, 'h:mm a')}
                                             </div>
@@ -513,7 +511,7 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
 
       {/* New Event Dialog */}
       <Dialog open={isNewEventDialogOpen} onOpenChange={setIsNewEventDialogOpen}>
-        <DialogContent className="sm:max-w-[425px] rounded-lg shadow-lg">
+        <DialogContent className="sm:max-w-[425px] rounded-lg" style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.06)' }}>
           <DialogHeader>
             <DialogTitle className="font-mono text-[16px]">Create New Event</DialogTitle>
           </DialogHeader>
