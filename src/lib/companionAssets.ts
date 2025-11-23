@@ -1,7 +1,4 @@
-import malunitaHappy from '@/assets/companions/malunita-happy.png';
-import malunitaExcited from '@/assets/companions/malunita-excited.png';
-import malunitaCalm from '@/assets/companions/malunita-calm.png';
-import malunitaCurious from '@/assets/companions/malunita-curious.png';
+import malunitaNeutral from '@/assets/companions/malunita-neutral.png';
 
 export type CompanionVisualState = 
   | 'happy' 
@@ -11,11 +8,11 @@ export type CompanionVisualState =
   | 'neutral';
 
 export const companionAssets: Record<CompanionVisualState, string> = {
-  happy: malunitaHappy,
-  excited: malunitaExcited,
-  calm: malunitaCalm,
-  curious: malunitaCurious,
-  neutral: malunitaCurious, // Default to curious for neutral
+  happy: malunitaNeutral,
+  excited: malunitaNeutral,
+  calm: malunitaNeutral,
+  curious: malunitaNeutral,
+  neutral: malunitaNeutral,
 };
 
 // Map emotion states to visual assets

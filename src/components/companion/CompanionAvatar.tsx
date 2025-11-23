@@ -1,13 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useCompanionIdleBehavior } from '@/lib/companion/useCompanionIdleBehavior';
-import babyHappyWebp from '@/assets/companions/baby-happy.webp';
-import babyHappyPng from '@/assets/companions/baby-happy.png';
-import babyNeutralWebp from '@/assets/companions/baby-neutral.webp';
-import babyNeutralPng from '@/assets/companions/baby-neutral.png';
-import babySleepyWebp from '@/assets/companions/baby-sleepy.webp';
-import babySleepyPng from '@/assets/companions/baby-sleepy.png';
-import babyListeningWebp from '@/assets/companions/baby-listening.webp';
-import babyListeningPng from '@/assets/companions/baby-listening.png';
+import malunitaNeutral from '@/assets/companions/malunita-neutral.png';
 
 export type CompanionMode = 
   | 'idle' 
@@ -47,18 +40,10 @@ const getModeExpression = (mode: CompanionMode): CompanionExpression => {
   }
 };
 
-// Asset mapping with WebP/PNG fallback
+// Asset mapping - using neutral sprite temporarily until expressions are added
 const getAssetForExpression = (expression: CompanionExpression) => {
-  switch (expression) {
-    case 'baby_happy':
-      return { webp: babyHappyWebp, png: babyHappyPng };
-    case 'baby_neutral':
-      return { webp: babyNeutralWebp, png: babyNeutralPng };
-    case 'baby_sleepy':
-      return { webp: babySleepyWebp, png: babySleepyPng };
-    case 'baby_listening':
-      return { webp: babyListeningWebp, png: babyListeningPng };
-  }
+  // All expressions use the neutral sprite for now
+  return { webp: malunitaNeutral, png: malunitaNeutral };
 };
 
 export const CompanionAvatar = ({
