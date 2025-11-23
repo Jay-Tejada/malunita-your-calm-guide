@@ -453,10 +453,9 @@ const Index = () => {
               detectionTrigger={wakeWordDetected}
             />
             
-            {/* Cognitive Load Indicator */}
+            {/* Other Indicators */}
             {user && !showSettings && (
               <>
-                <CognitiveLoadIndicator />
                 <div className="fixed top-20 right-4 z-30">
                   <BondingMeter />
                 </div>
