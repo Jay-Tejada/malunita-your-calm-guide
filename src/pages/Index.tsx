@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 const Index = () => {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [isRecording, setIsRecording] = useState(false);
   const { profile } = useProfile();
   const { companion, needsOnboarding, updateCompanion } = useCompanionIdentity();
   const { toast } = useToast();
@@ -74,8 +75,11 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <HomeOrb onCapture={handleOrbClick} />
-      <MalunitaVoice ref={voiceRef} />
+      <HomeOrb onCapture={handleOrbClick} isRecording={isRecording} />
+      <MalunitaVoice 
+        ref={voiceRef} 
+        onRecordingStateChange={setIsRecording}
+      />
     </div>
   );
 };
