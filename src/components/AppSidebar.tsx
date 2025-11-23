@@ -27,6 +27,7 @@ import {
   BookHeart,
   MapIcon,
   Network,
+  Clock,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAdmin } from "@/hooks/useAdmin";
@@ -307,6 +308,16 @@ export function AppSidebar({ onSettingsClick, onCategoryClick, onFocusModeClick,
                 >
                   <Network className="mr-2 h-4 w-4" />
                   <span>Knowledge Clusters</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              <SidebarMenuItem>
+                <SidebarMenuButton 
+                  onClick={() => navigate('/timetravel')}
+                  className="hover:bg-muted/50"
+                >
+                  <Clock className="mr-2 h-4 w-4" />
+                  <span>Time Travel</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
 
