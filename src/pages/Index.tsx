@@ -1,8 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Auth } from "@/components/Auth";
 import { HomeOrb } from "@/components/HomeOrb";
 import { CompanionOnboarding } from "@/components/CompanionOnboarding";
+import { MalunitaVoice, MalunitaVoiceRef } from "@/components/MalunitaVoice";
 import { useProfile } from "@/hooks/useProfile";
 import { useCompanionIdentity, PersonalityType } from "@/hooks/useCompanionIdentity";
 import { useToast } from "@/hooks/use-toast";
@@ -13,6 +14,7 @@ const Index = () => {
   const { profile } = useProfile();
   const { companion, needsOnboarding, updateCompanion } = useCompanionIdentity();
   const { toast } = useToast();
+  const voiceRef = useRef<MalunitaVoiceRef>(null);
 
   useEffect(() => {
     const {
@@ -64,9 +66,16 @@ const Index = () => {
     return <CompanionOnboarding open={true} onComplete={handleCompanionComplete} />;
   }
 
+  const handleOrbClick = () => {
+    if (voiceRef.current) {
+      voiceRef.current.startRecording();
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
-      <HomeOrb />
+      <HomeOrb onCapture={handleOrbClick} />
+      <MalunitaVoice ref={voiceRef} />
     </div>
   );
 };
