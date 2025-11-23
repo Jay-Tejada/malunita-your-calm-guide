@@ -27,6 +27,7 @@ import TinyTaskFiesta from "./pages/TinyTaskFiesta";
 import Reminders from "./pages/Reminders";
 import HatchingGallery from "./pages/HatchingGallery";
 import Backup from "./pages/Backup";
+import Customization from "./pages/Customization";
 
 const queryClient = new QueryClient();
 
@@ -73,6 +74,7 @@ const App = () => {
               <Route path="/notifications" element={<Notifications />} />
               <Route path="/reminders" element={<Reminders />} />
               <Route path="/backup" element={<Backup />} />
+              <Route path="/customization" element={<Customization />} />
               <Route path="/install" element={<Install />} />
               <Route path="/admin" element={<Admin />} />
               <Route path="/trends" element={<Trends />} />
