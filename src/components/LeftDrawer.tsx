@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Plus, ListTodo, ChevronLeft, Circle, Check } from "lucide-react";
+import { useSwipeable } from "react-swipeable";
 import { cn } from "@/lib/utils";
 import { useTasks } from "@/hooks/useTasks";
 
@@ -57,6 +58,28 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
 
   const categoryTasks = getCurrentCategoryTasks();
   const currentCategory = categories.find(c => c.id === drawerMode);
+
+  // Swipe handlers
+  const drawerSwipeHandlers = useSwipeable({
+    onSwipedLeft: () => {
+      if (isOpen) {
+        onClose();
+      }
+    },
+    trackMouse: false,
+    trackTouch: true,
+  });
+
+  const categorySwipeHandlers = useSwipeable({
+    onSwipedRight: () => {
+      if (drawerMode !== "root") {
+        handleBack();
+      }
+    },
+    trackMouse: false,
+    trackTouch: true,
+  });
+
   return (
     <>
       <AnimatePresence>
@@ -74,6 +97,7 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
 
             {/* Drawer */}
             <motion.div
+              {...drawerSwipeHandlers}
               initial={{ x: "-100%" }}
               animate={{ x: 0 }}
               exit={{ x: "-100%" }}
@@ -144,6 +168,7 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
                   </motion.div>
                 ) : (
                   <motion.div
+                    {...categorySwipeHandlers}
                     key={drawerMode}
                     initial={{ opacity: 0, x: 20 }}
                     animate={{ opacity: 1, x: 0 }}
