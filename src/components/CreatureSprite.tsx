@@ -25,6 +25,7 @@ interface CreatureSpriteProps {
   size?: number;               // default 160px
   animate?: boolean;           // enables idle bounce animation
   className?: string;          // extra classes
+  listening?: boolean;         // shows listening animation
 }
 
 // Map filenames to imported assets
@@ -50,14 +51,15 @@ export const CreatureSprite = ({
   emotion, 
   size = 160, 
   animate = false, 
-  className 
+  className,
+  listening = false
 }: CreatureSpriteProps) => {
   const [microEmotion, setMicroEmotion] = useState<string | null>(null);
 
   // Idle cycle timer - random micro-expressions
   useEffect(() => {
-    // Skip idle animations for strong emotions
-    if (['angry', 'sleeping', 'sad'].includes(emotion)) {
+    // Skip idle animations for strong emotions or when listening
+    if (listening || ['angry', 'sleeping', 'sad'].includes(emotion)) {
       return;
     }
 
@@ -68,7 +70,7 @@ export const CreatureSprite = ({
     }, 4000 + Math.random() * 4000); // 4-8 seconds
 
     return () => clearInterval(interval);
-  }, [emotion]);
+  }, [emotion, listening]);
 
   // Auto-clear micro-expression after 1200ms
   useEffect(() => {
@@ -77,8 +79,12 @@ export const CreatureSprite = ({
     return () => clearTimeout(timer);
   }, [microEmotion]);
 
-  // Use micro-expression if available, otherwise use main emotion
-  const finalEmotion = microEmotion ?? emotion;
+  // Use listening expression if listening, otherwise use micro-expression or main emotion
+  const displayEmotion = listening 
+    ? (Math.random() > 0.5 ? 'welcoming' : 'laughing')
+    : (microEmotion ?? emotion);
+  
+  const finalEmotion = displayEmotion;
   const filename = getExpressionAsset(finalEmotion);
   const imageSrc = assetMap[filename] || baseExpression;
 
@@ -87,6 +93,7 @@ export const CreatureSprite = ({
       className={cn(
         "flex items-center justify-center",
         animate && "animate-[float_3s_ease-in-out_infinite]",
+        listening && "animate-[pulse_2s_ease-in-out_infinite] shadow-lg shadow-white/40",
         className
       )}
       style={{ width: size, height: size }}

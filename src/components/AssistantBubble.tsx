@@ -2,7 +2,11 @@ import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CreatureSprite } from '@/components/CreatureSprite';
 import { useMoodStore } from '@/state/moodMachine';
-import { Heart } from 'lucide-react';
+import { detectMoodFromMessage } from '@/state/moodMachine';
+import { Heart, Mic, MicOff } from 'lucide-react';
+import { startVoiceInput, stopVoiceInput, isVoiceInputSupported } from '@/utils/voiceInput';
+import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
 
 interface AssistantBubbleProps {
   onOpenChat?: () => void;
@@ -10,9 +14,12 @@ interface AssistantBubbleProps {
 }
 
 const AssistantBubble = ({ onOpenChat, className = '' }: AssistantBubbleProps) => {
-  const { mood, updateMood, recordInteraction } = useMoodStore();
+  const { mood, updateMood, recordInteraction, increaseEnergy, decreaseEnergy } = useMoodStore();
   const [idleAnimation, setIdleAnimation] = useState<'none' | 'wink' | 'bounce' | 'look'>('none');
   const [showHearts, setShowHearts] = useState(false);
+  const [voiceMode, setVoiceMode] = useState(false);
+  const [listening, setListening] = useState(false);
+  const { toast } = useToast();
 
   // Idle cycle behavior - random animations every 15-25 seconds
   useEffect(() => {
@@ -48,8 +55,77 @@ const AssistantBubble = ({ onOpenChat, className = '' }: AssistantBubbleProps) =
     }
   }, [mood]);
 
+  // Voice mode toggle
+  const toggleVoiceMode = useCallback(async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    if (!isVoiceInputSupported()) {
+      toast({
+        title: "Not Supported",
+        description: "Voice input is not supported in this browser",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (voiceMode) {
+      // Stop listening
+      stopVoiceInput();
+      setVoiceMode(false);
+      setListening(false);
+    } else {
+      // Start listening
+      setVoiceMode(true);
+      recordInteraction();
+      updateMood('welcoming');
+      
+      try {
+        await startVoiceInput({
+          onTranscript: (text) => {
+            console.log('Transcript received:', text);
+            setVoiceMode(false);
+            setListening(false);
+            
+            // Detect mood from transcript
+            const shortPhrases = ['hmm', 'uhh', 'um', 'uh'];
+            const isShortOrFiller = text.length < 10 || shortPhrases.some(p => text.toLowerCase().includes(p));
+            
+            if (isShortOrFiller) {
+              updateMood('worried');
+              decreaseEnergy(3);
+            } else {
+              const detectedMood = detectMoodFromMessage(text);
+              updateMood(detectedMood);
+              increaseEnergy(5);
+            }
+            
+            // TODO: Send transcript to AI via onOpenChat or separate handler
+            toast({
+              title: "Heard you!",
+              description: text,
+            });
+          },
+          onListeningChange: (isListening) => {
+            setListening(isListening);
+          }
+        });
+      } catch (error) {
+        console.error('Voice input error:', error);
+        toast({
+          title: "Error",
+          description: error instanceof Error ? error.message : "Failed to start voice input",
+          variant: "destructive"
+        });
+        setVoiceMode(false);
+        setListening(false);
+      }
+    }
+  }, [voiceMode, recordInteraction, updateMood, increaseEnergy, decreaseEnergy, toast]);
+
   // Poke to wake handler
   const handleClick = useCallback(() => {
+    if (voiceMode) return; // Don't handle click when in voice mode
+    
     recordInteraction();
 
     // Poke to wake logic
@@ -60,7 +136,7 @@ const AssistantBubble = ({ onOpenChat, className = '' }: AssistantBubbleProps) =
     } else if (onOpenChat) {
       onOpenChat();
     }
-  }, [mood, updateMood, recordInteraction, onOpenChat]);
+  }, [mood, updateMood, recordInteraction, onOpenChat, voiceMode]);
 
   // Animation classes based on idle state
   const getAnimationClass = () => {
@@ -88,17 +164,40 @@ const AssistantBubble = ({ onOpenChat, className = '' }: AssistantBubbleProps) =
     >
       {/* Container with glow effect */}
       <div className="relative">
-        {/* Glow effect */}
-        <div className="absolute inset-0 rounded-full bg-primary/20 blur-xl animate-pulse" />
+        {/* Glow effect - enhanced when listening */}
+        <div className={cn(
+          "absolute inset-0 rounded-full blur-xl animate-pulse",
+          listening ? "bg-primary/40" : "bg-primary/20"
+        )} />
         
         {/* Main bubble */}
-        <div className={`relative bg-background/80 backdrop-blur-sm rounded-full p-3 shadow-2xl border-2 border-primary/30 ${getAnimationClass()}`}>
+        <div className={cn(
+          "relative bg-background/80 backdrop-blur-sm rounded-full p-3 shadow-2xl border-2",
+          listening ? "border-primary/60" : "border-primary/30",
+          getAnimationClass()
+        )}>
           <CreatureSprite
             emotion={mood}
             size={90}
             animate={mood === 'neutral' || mood === 'happy'}
+            listening={listening}
           />
         </div>
+
+        {/* Mic button */}
+        <motion.button
+          onClick={toggleVoiceMode}
+          className={cn(
+            "absolute -bottom-2 -right-2 rounded-full p-2 shadow-lg",
+            voiceMode 
+              ? "bg-primary text-primary-foreground" 
+              : "bg-background border-2 border-primary/30"
+          )}
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+        >
+          {voiceMode ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+        </motion.button>
 
         {/* Heart particles when loving */}
         <AnimatePresence>
