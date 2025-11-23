@@ -1,12 +1,13 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Calendar as CalendarIcon, ArrowLeft, Plus, Clock, MapPin } from "lucide-react";
+import { Calendar as CalendarIcon, ArrowLeft, Plus, Clock, MapPin, CheckCircle } from "lucide-react";
 import { hapticLight } from "@/utils/haptics";
 import { format, addDays, startOfWeek, isSameDay, parseISO } from "date-fns";
 import { cn } from "@/lib/utils";
+import { useTasks } from "@/hooks/useTasks";
 
 interface CalendarEvent {
   id: string;
@@ -15,36 +16,32 @@ interface CalendarEvent {
   time: string;
   location?: string;
   description?: string;
+  completed: boolean;
+  taskId: string;
 }
 
 const Calendar = () => {
   const navigate = useNavigate();
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const { tasks, isLoading, updateTask } = useTasks();
   
-  // Sample events - in a real app, these would come from the database
-  const [events] = useState<CalendarEvent[]>([
-    {
-      id: "1",
-      title: "Dentist Appointment (Dr. Russo)",
-      date: new Date(2025, 0, 12), // Jan 12, 2025
-      time: "3:00 PM",
-      location: "Downtown Dental Care",
-    },
-    {
-      id: "2",
-      title: "PCMH Meeting w/ Serenity Medical",
-      date: new Date(2025, 0, 13), // Jan 13, 2025
-      time: "10:00 AM",
-      location: "Medical Center",
-    },
-    {
-      id: "3",
-      title: "Gym — Training Session",
-      date: new Date(2025, 0, 15), // Jan 15, 2025
-      time: "7:00 PM",
-      location: "FitZone Gym",
-    },
-  ]);
+  // Convert tasks with reminder times to calendar events
+  const events = useMemo(() => {
+    if (!tasks) return [];
+    
+    return tasks
+      .filter(task => task.reminder_time)
+      .map(task => ({
+        id: task.id,
+        title: task.title,
+        date: new Date(task.reminder_time!),
+        time: format(new Date(task.reminder_time!), "h:mm a"),
+        location: task.category ? task.category.charAt(0).toUpperCase() + task.category.slice(1) : undefined,
+        description: task.context,
+        completed: task.completed,
+        taskId: task.id,
+      }));
+  }, [tasks]);
 
   const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 }); // Start on Monday
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
@@ -54,8 +51,20 @@ const Calendar = () => {
   };
 
   const upcomingEvents = events
-    .filter(event => event.date >= new Date())
+    .filter(event => event.date >= new Date() && !event.completed)
     .sort((a, b) => a.date.getTime() - b.date.getTime());
+
+  const handleToggleComplete = async (eventId: string, completed: boolean) => {
+    try {
+      await updateTask({
+        id: eventId,
+        updates: { completed: !completed }
+      });
+      hapticLight();
+    } catch (error) {
+      console.error('Error updating task:', error);
+    }
+  };
 
   return (
     <div className="min-h-screen pb-20 bg-background">
@@ -145,20 +154,32 @@ const Calendar = () => {
         {/* Upcoming Events List */}
         <div>
           <h2 className="text-xl font-semibold mb-4">Upcoming Events</h2>
-          <div className="space-y-3">
-            {upcomingEvents.length === 0 ? (
-              <Card>
-                <CardContent className="p-6 text-center">
-                  <CalendarIcon className="w-12 h-12 mx-auto mb-3 text-muted-foreground/50" />
-                  <p className="text-muted-foreground">No upcoming events</p>
-                </CardContent>
-              </Card>
-            ) : (
-              upcomingEvents.map((event) => (
+          
+          {isLoading ? (
+            <Card>
+              <CardContent className="p-6 text-center">
+                <p className="text-muted-foreground">Loading events...</p>
+              </CardContent>
+            </Card>
+          ) : upcomingEvents.length === 0 ? (
+            <Card>
+              <CardContent className="p-6 text-center">
+                <CalendarIcon className="w-12 h-12 mx-auto mb-3 text-muted-foreground/50" />
+                <p className="text-muted-foreground">No upcoming events</p>
+                <p className="text-sm text-muted-foreground mt-2">
+                  Add reminder times to your tasks to see them here
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-3">
+              {upcomingEvents.map((event) => (
                 <Card
                   key={event.id}
-                  className="hover:shadow-md transition-shadow cursor-pointer"
-                  onClick={() => hapticLight()}
+                  className={cn(
+                    "hover:shadow-md transition-shadow cursor-pointer",
+                    event.completed && "opacity-60"
+                  )}
                 >
                   <CardContent className="p-4">
                     <div className="flex items-start gap-4">
@@ -175,9 +196,28 @@ const Calendar = () => {
                       </div>
                       
                       <div className="flex-1">
-                        <h3 className="font-semibold text-foreground mb-1">
-                          {event.title}
-                        </h3>
+                        <div className="flex items-start justify-between gap-2">
+                          <h3 className={cn(
+                            "font-semibold text-foreground mb-1",
+                            event.completed && "line-through"
+                          )}>
+                            {event.title}
+                          </h3>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleToggleComplete(event.taskId, event.completed);
+                            }}
+                            className="h-8 w-8 p-0"
+                          >
+                            <CheckCircle className={cn(
+                              "w-5 h-5",
+                              event.completed ? "fill-primary text-primary" : "text-muted-foreground"
+                            )} />
+                          </Button>
+                        </div>
                         <div className="flex flex-col gap-1 text-sm text-muted-foreground">
                           <div className="flex items-center gap-2">
                             <Clock className="w-4 h-4" />
@@ -189,14 +229,19 @@ const Calendar = () => {
                               <span>{event.location}</span>
                             </div>
                           )}
+                          {event.description && (
+                            <p className="text-xs mt-1 text-muted-foreground/80">
+                              {event.description}
+                            </p>
+                          )}
                         </div>
                       </div>
                     </div>
                   </CardContent>
                 </Card>
-              ))
-            )}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       </main>
     </div>
