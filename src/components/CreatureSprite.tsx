@@ -57,7 +57,7 @@ export const CreatureSprite = ({
   // Idle cycle timer - random micro-expressions
   useEffect(() => {
     // Skip idle animations for strong emotions
-    if (['angry', 'sleeping', 'sad', 'worried', 'concerned', 'sleepy'].includes(emotion)) {
+    if (['angry', 'sleeping', 'sad'].includes(emotion)) {
       return;
     }
 
