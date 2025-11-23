@@ -39,6 +39,7 @@ import { LevelUpCutscene } from "@/features/cutscenes/LevelUpCutscene";
 import { RitualCompleteCutscene } from "@/features/cutscenes/RitualCompleteCutscene";
 
 import { WakeWordIndicator } from "@/components/WakeWordIndicator";
+import { MoodWeatherLayer } from "@/features/moodWeather/MoodWeatherLayer";
 
 import { SidebarProvider, useSidebar } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
@@ -546,7 +547,8 @@ const Index = () => {
   return (
     <SidebarProvider>
       <QuestProgressNotification />
-      <div className="min-h-screen flex w-full bg-background">
+      <div className="min-h-screen flex w-full relative">
+        <MoodWeatherLayer />
         {/* Sidebar - Hidden by default */}
         <AppSidebar 
           onSettingsClick={() => setShowSettings(true)}
@@ -569,7 +571,7 @@ const Index = () => {
         />
 
         {/* Main Content */}
-        <main className="flex-1 flex flex-col relative">
+        <main className="flex-1 flex flex-col relative z-10">
           {/* Install Banner */}
           <InstallPromptBanner />
           
