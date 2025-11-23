@@ -235,27 +235,13 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
                     {/* Category Links */}
                     <div className="flex flex-col gap-1">
                       {categories.map((category) => (
-                        <div key={category.id} className="flex items-center gap-2">
-                          <button
-                            onClick={() => handleCategoryClick(category.id as DrawerMode)}
-                            className="flex-1 text-left py-2 px-3 font-mono text-[14px] text-foreground/60 hover:text-foreground/90 hover:bg-muted/30 rounded-md transition-colors"
-                          >
-                            {category.label}
-                          </button>
-                          {category.id === 'calendar' && (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                hapticLight();
-                                setIsNewEventDialogOpen(true);
-                              }}
-                              className="p-2 hover:bg-muted/30 rounded-md transition-colors"
-                              aria-label="Add new event"
-                            >
-                              <Plus className="w-4 h-4 text-foreground/60" />
-                            </button>
-                          )}
-                        </div>
+                        <button
+                          key={category.id}
+                          onClick={() => handleCategoryClick(category.id as DrawerMode)}
+                          className="text-left py-2 px-3 font-mono text-[14px] text-foreground/60 hover:text-foreground/90 hover:bg-muted/30 rounded-md transition-colors"
+                        >
+                          {category.label}
+                        </button>
                       ))}
                     </div>
 
@@ -281,9 +267,23 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
                     </button>
 
                     {/* Category Title */}
-                    <h2 className="font-mono text-[18px] font-medium text-foreground mb-6">
-                      {currentCategory?.label}
-                    </h2>
+                    <div className="flex items-center justify-between mb-6">
+                      <h2 className="font-mono text-[18px] font-medium text-foreground">
+                        {currentCategory?.label}
+                      </h2>
+                      {drawerMode === 'calendar' && (
+                        <button
+                          onClick={() => {
+                            hapticLight();
+                            setIsNewEventDialogOpen(true);
+                          }}
+                          className="flex items-center gap-2 px-3 py-1.5 bg-primary text-primary-foreground hover:bg-primary/90 rounded-md font-mono text-[13px] transition-colors"
+                        >
+                          <Plus className="w-4 h-4" />
+                          New
+                        </button>
+                      )}
+                    </div>
 
                     {/* Task List */}
                     <div className="flex-1 space-y-2">
