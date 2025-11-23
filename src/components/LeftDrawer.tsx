@@ -4,6 +4,7 @@ import { Plus, ListTodo, ChevronLeft, Circle, Check } from "lucide-react";
 import { useSwipeable } from "react-swipeable";
 import { cn } from "@/lib/utils";
 import { useTasks } from "@/hooks/useTasks";
+import { hapticLight, hapticMedium, hapticSuccess, hapticSwipe } from "@/utils/haptics";
 
 type DrawerMode = "root" | "inbox" | "projects" | "work" | "home" | "gym" | "goals";
 
@@ -27,15 +28,24 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
   const { tasks, updateTask } = useTasks();
 
   const handleCategoryClick = (categoryId: DrawerMode) => {
+    hapticLight();
     setDrawerMode(categoryId);
   };
 
   const handleBack = () => {
+    hapticLight();
     setDrawerMode("root");
   };
 
   const handleTaskToggle = async (taskId: string, completed: boolean) => {
     try {
+      // Haptic feedback on toggle
+      if (!completed) {
+        hapticSuccess(); // Success pattern when completing
+      } else {
+        hapticLight(); // Light tap when uncompleting
+      }
+      
       await updateTask({
         id: taskId,
         updates: {
@@ -63,6 +73,7 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
   const drawerSwipeHandlers = useSwipeable({
     onSwipedLeft: () => {
       if (isOpen) {
+        hapticSwipe();
         onClose();
       }
     },
@@ -73,6 +84,7 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
   const categorySwipeHandlers = useSwipeable({
     onSwipedRight: () => {
       if (drawerMode !== "root") {
+        hapticSwipe();
         handleBack();
       }
     },
@@ -130,6 +142,7 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
                     {/* Add New Task Button */}
                     <button
                       onClick={() => {
+                        hapticMedium();
                         onNavigate("/");
                         onClose();
                       }}
@@ -142,6 +155,7 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
                     {/* View All Tasks Button */}
                     <button
                       onClick={() => {
+                        hapticMedium();
                         onNavigate("/");
                         onClose();
                       }}
