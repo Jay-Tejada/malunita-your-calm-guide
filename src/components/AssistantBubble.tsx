@@ -10,6 +10,7 @@ import { cn } from '@/lib/utils';
 import { HelperBubble, createMessageQueue, MOOD_MESSAGES, ACTION_MESSAGES } from '@/components/HelperBubble';
 import { TypingIndicator } from '@/components/TypingIndicator';
 import type { Mood } from '@/state/moodMachine';
+import { playSfx } from '@/utils/sound';
 
 interface AssistantBubbleProps {
   onOpenChat?: () => void;
@@ -27,6 +28,9 @@ const AssistantBubble = ({ onOpenChat, className = '', typing = false }: Assista
   const { toast } = useToast();
   const messageQueueRef = useRef(createMessageQueue(setHelperMessage));
   const prevMoodRef = useRef<Mood>(mood);
+  
+  // TODO: Connect to user profile settings
+  const soundEnabled = true; // userProfile?.soundEffectsEnabled ?? true;
 
   // Idle cycle behavior - random animations every 15-25 seconds
   useEffect(() => {
@@ -62,22 +66,32 @@ const AssistantBubble = ({ onOpenChat, className = '', typing = false }: Assista
     }
   }, [mood]);
 
-  // Helper bubble messages based on mood changes
+  // Helper bubble messages and sound effects based on mood changes
   useEffect(() => {
-    // Don't show helper during angry or sleeping
-    if (mood === 'angry' || mood === 'sleeping') {
-      return;
-    }
-
-    // Only show message when mood actually changes
+    // Only react when mood actually changes
     if (prevMoodRef.current !== mood) {
-      const message = MOOD_MESSAGES[mood];
-      if (message) {
-        messageQueueRef.current.enqueue(message);
+      // Play sound effects for mood changes
+      if (mood === 'loving') {
+        playSfx('sparkle', soundEnabled);
+      } else if (mood === 'excited' || mood === 'overjoyed') {
+        playSfx('happy', soundEnabled);
+      } else if (mood === 'angry') {
+        playSfx('angry', soundEnabled);
+      } else if (mood === 'sleepy' || mood === 'sleeping') {
+        playSfx('sleep', soundEnabled);
       }
+
+      // Show helper messages (skip for angry/sleeping)
+      if (mood !== 'angry' && mood !== 'sleeping') {
+        const message = MOOD_MESSAGES[mood];
+        if (message) {
+          messageQueueRef.current.enqueue(message);
+        }
+      }
+      
       prevMoodRef.current = mood;
     }
-  }, [mood]);
+  }, [mood, soundEnabled]);
 
   // Inactivity nudge after 30 seconds
   useEffect(() => {
@@ -164,6 +178,7 @@ const AssistantBubble = ({ onOpenChat, className = '', typing = false }: Assista
     if (voiceMode) return; // Don't handle click when in voice mode
     
     recordInteraction();
+    playSfx('tap', soundEnabled);
 
     // Poke to wake logic
     if (mood === 'sleeping') {
@@ -173,7 +188,7 @@ const AssistantBubble = ({ onOpenChat, className = '', typing = false }: Assista
     } else if (onOpenChat) {
       onOpenChat();
     }
-  }, [mood, updateMood, recordInteraction, onOpenChat, voiceMode]);
+  }, [mood, updateMood, recordInteraction, onOpenChat, voiceMode, soundEnabled]);
 
   // Animation classes based on idle state
   const getAnimationClass = () => {
