@@ -683,7 +683,8 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
                     body: { 
                       text: cleanedText,
                       userProfile: profile,
-                      userId: user?.id
+                      userId: user?.id,
+                      currentDate: new Date().toISOString()
                     }
                   });
 
