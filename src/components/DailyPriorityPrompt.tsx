@@ -22,18 +22,12 @@ export function DailyPriorityPrompt() {
     checkIfShouldShowPrompt();
   }, [checkIfShouldShowPrompt]);
 
-  // Determine if it's evening (after 6 PM) - ask about tomorrow
-  const currentHour = new Date().getHours();
-  const isEvening = currentHour >= 18;
-  const targetDay = isEvening ? 'tomorrow' : 'today';
+  // Always ask about today (morning focus)
+  const targetDay = 'today';
   
-  // Calculate focus date (today or tomorrow)
+  // Get today's date as focus date
   const getFocusDate = () => {
-    const date = new Date();
-    if (isEvening) {
-      date.setDate(date.getDate() + 1);
-    }
-    return date.toISOString().split('T')[0];
+    return new Date().toISOString().split('T')[0];
   };
 
   const handlePromptClick = () => {
@@ -58,9 +52,9 @@ export function DailyPriorityPrompt() {
         is_time_based: false,
       }]);
       
-      // Store the priority task ID for check-ins
+      // Store the priority task ID
       if (createdTasks && createdTasks.length > 0) {
-        markPromptAnswered(createdTasks[0].id, isEvening);
+        markPromptAnswered(createdTasks[0].id);
       }
       
       setIsDialogOpen(false);
@@ -112,16 +106,16 @@ export function DailyPriorityPrompt() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Sparkles className="w-5 h-5 text-primary" />
-              {isEvening ? "Tomorrow's Priority" : "Today's Priority"}
+              Today's Priority
             </DialogTitle>
             <DialogDescription>
-              What's the one thing that would make {targetDay} a success?
+              What's the one thing that would make today a success?
             </DialogDescription>
           </DialogHeader>
           
           <div className="space-y-4 pt-4">
             <Input
-              placeholder={`Enter your top priority for ${targetDay}...`}
+              placeholder="Enter your top priority for today..."
               value={taskInput}
               onChange={(e) => setTaskInput(e.target.value)}
               onKeyPress={handleKeyPress}
