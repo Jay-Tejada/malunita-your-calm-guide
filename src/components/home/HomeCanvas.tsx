@@ -32,10 +32,17 @@ export function HomeCanvas({ children }: HomeCanvasProps) {
           const message = data.headline || data.focus_message;
           if (message) {
             setBillboardMessage(message);
+            // Trigger ping for new daily brief
+            window.dispatchEvent(new CustomEvent('companion:ping'));
           }
           
           setDailySummary(data.summary_markdown || null);
           setQuickWins(data.quick_wins || []);
+          
+          // Trigger ping if focus suggestion changes
+          if (data.focus_message && data.focus_message !== focusSuggestion) {
+            window.dispatchEvent(new CustomEvent('companion:ping'));
+          }
           setFocusSuggestion(data.focus_message || null);
         }
       } catch (error) {
