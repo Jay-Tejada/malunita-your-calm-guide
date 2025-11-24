@@ -20,6 +20,7 @@ import { summaryComposer } from "@/lib/summaryComposer";
 import { useMoodStore, detectMoodFromMessage } from "@/state/moodMachine";
 import { useCognitiveLoad } from "@/state/cognitiveLoad";
 import { checkAndHandlePrediction } from "@/utils/predictionChecker";
+import { useAutoSplitTask } from "@/hooks/useAutoSplitTask";
 
 interface Message {
   role: 'user' | 'assistant';
@@ -97,6 +98,7 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
   const { tasks, updateTask, createTasks } = useTasks();
   const { companion } = useCompanionIdentity();
   const { recordStressedLanguage } = useCognitiveLoad();
+  const { generateAndCreateSubtasks } = useAutoSplitTask();
   const audioEnabled = profile?.wants_voice_playback ?? true;
   const isMobile = useIsMobile();
 
@@ -583,6 +585,9 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
                     
                     // Check prediction for each suggested focus task
                     checkAndHandlePrediction(task.id, task.title);
+                    
+                    // Auto-split if complex
+                    generateAndCreateSubtasks(task);
                   }
                 }
 

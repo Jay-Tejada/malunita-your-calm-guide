@@ -112,4 +112,7 @@ verify_jwt = false
 [functions.suggest-micro-steps]
 verify_jwt = true
 
+[functions.generate-subtasks]
+verify_jwt = true
+
 

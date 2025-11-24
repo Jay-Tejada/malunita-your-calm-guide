@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/hooks/useProfile";
 import { checkAndHandlePrediction } from "@/utils/predictionChecker";
+import { useAutoSplitTask } from "@/hooks/useAutoSplitTask";
 
 interface TodaysFocusProps {
   onReflectClick?: () => void;
@@ -18,6 +19,7 @@ export const TodaysFocus = ({ onReflectClick }: TodaysFocusProps) => {
   const { profile } = useProfile();
   const [isSuggesting, setIsSuggesting] = React.useState(false);
   const { toast } = useToast();
+  const { generateAndCreateSubtasks } = useAutoSplitTask();
 
   const today = new Date().toISOString().split('T')[0];
   const focusTasks = tasks?.filter(task => 
@@ -97,6 +99,9 @@ export const TodaysFocus = ({ onReflectClick }: TodaysFocusProps) => {
           
           // Check prediction for each suggested focus task
           checkAndHandlePrediction(task.id, task.title);
+          
+          // Auto-split if complex
+          generateAndCreateSubtasks(task);
         }
       }
 

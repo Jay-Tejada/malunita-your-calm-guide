@@ -15,6 +15,7 @@ import { TaskCategoryFeedback } from "@/components/TaskCategoryFeedback";
 import { TaskEditDialog } from "@/components/TaskEditDialog";
 import { useToast } from "@/hooks/use-toast";
 import { checkAndHandlePrediction } from "@/utils/predictionChecker";
+import { useAutoSplitTask } from "@/hooks/useAutoSplitTask";
 import {
   Drawer,
   DrawerClose,
@@ -33,6 +34,7 @@ export const TaskList = ({ category: externalCategory }: TaskListProps = {}) => 
   const { tasks, isLoading, updateTask, deleteTask } = useTasks();
   const { categories, createCategory } = useCustomCategories();
   const growth = useCompanionGrowth();
+  const { generateAndCreateSubtasks } = useAutoSplitTask();
   const [internalDomain, setInternalDomain] = useState("inbox");
   const [activeId, setActiveId] = useState<string | null>(null);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
@@ -214,11 +216,11 @@ export const TaskList = ({ category: externalCategory }: TaskListProps = {}) => 
     }
   };
 
-  const handleAddToFocus = (taskId: string) => {
+  const handleAddToFocus = async (taskId: string) => {
     const task = tasks?.find(t => t.id === taskId);
     if (!task) return;
     
-    updateTask({
+    await updateTask({
       id: taskId,
       updates: {
         is_focus: true,
@@ -228,6 +230,9 @@ export const TaskList = ({ category: externalCategory }: TaskListProps = {}) => 
     
     // Check prediction
     checkAndHandlePrediction(taskId, task.title);
+    
+    // Auto-split if complex
+    generateAndCreateSubtasks(task);
     
     toast({
       title: "Added to Focus",
