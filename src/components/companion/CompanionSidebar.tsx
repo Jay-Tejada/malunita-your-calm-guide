@@ -32,17 +32,10 @@ export function CompanionSidebar() {
   }
 
   return (
-    <aside 
-      className="h-full bg-sidebar-bg border-l border-border flex flex-col"
-      style={{ padding: "24px" }}
-    >
-      <div id="companion-visual-slot" className="flex justify-center items-center mb-6">
+    <div className="h-full flex flex-col p-6">
+      <div className="flex-1 flex flex-col items-center justify-center">
         <CompanionExpression expression={currentExpression} />
       </div>
-      
-      <div className="text-muted-foreground">
-        Companion Sidebar
-      </div>
-    </aside>
+    </div>
   );
 }

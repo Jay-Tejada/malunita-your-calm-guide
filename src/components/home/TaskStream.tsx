@@ -37,164 +37,104 @@ export function TaskStream() {
 
   if (isLoading) {
     return (
-      <div 
-        className="w-full flex justify-center"
-        style={{ paddingTop: "24px" }}
-      >
-        <div 
-          className="w-full flex flex-col"
-          style={{ 
-            maxWidth: "760px",
-            gap: "12px"
-          }}
-        >
-          <div style={{ color: "#7D7467", fontSize: "14px" }}>Loading tasks...</div>
-        </div>
+      <div className="w-full pt-6">
+        <div className="text-sm text-muted-foreground">Loading tasks...</div>
       </div>
     );
   }
 
   if (!hasAnyTasks) {
     return (
-      <div 
-        className="w-full flex justify-center"
-        style={{ paddingTop: "24px" }}
-      >
-        <div 
-          className="w-full flex flex-col items-center"
-          style={{ 
-            maxWidth: "760px",
-            padding: "40px 0"
-          }}
-        >
-          <div 
-            style={{ 
-              color: "#7D7467", 
-              fontSize: "15px",
-              textAlign: "center"
-            }}
-          >
-            Empty page. What's on your mind?
-          </div>
+      <div className="w-full py-10 flex items-center justify-center">
+        <div className="text-sm text-muted-foreground text-center">
+          Empty page. What's on your mind?
         </div>
       </div>
     );
   }
 
   return (
-    <div 
-      className="w-full flex justify-center"
-      style={{ paddingTop: "24px" }}
-    >
-      <div 
-        className="w-full flex flex-col"
-        style={{ 
-          maxWidth: "760px",
-          gap: "32px"
-        }}
-      >
-        {/* Today Section */}
-        {routing.today.length > 0 && (
-          <div>
-            <h2 
-              style={{ 
-                color: "#3B352B",
-                fontSize: "16px",
-                fontWeight: 600,
-                marginBottom: "12px"
-              }}
-            >
-              Today
-            </h2>
-            <div style={{ display: "flex", flexDirection: "column" }}>
-              {routing.today.map(taskId => {
-                const task = taskMap.get(taskId);
-                if (!task) return null;
-                return (
-                  <TaskCardMinimal
-                    key={task.id}
-                    task={{
-                      id: task.id,
-                      title: task.title,
-                      due_date: task.reminder_time,
-                      section: task.category,
-                    }}
-                    fullTask={task}
-                  />
-                );
-              })}
-            </div>
+    <div className="w-full space-y-8 pt-6">
+      {/* Today Section */}
+      {routing.today.length > 0 && (
+        <div className="space-y-3">
+          <h2 className="text-base font-semibold text-foreground">
+            Today
+          </h2>
+          <div className="flex flex-col">
+            {routing.today.map(taskId => {
+              const task = taskMap.get(taskId);
+              if (!task) return null;
+              return (
+                <TaskCardMinimal
+                  key={task.id}
+                  task={{
+                    id: task.id,
+                    title: task.title,
+                    due_date: task.reminder_time,
+                    section: task.category,
+                  }}
+                  fullTask={task}
+                />
+              );
+            })}
           </div>
-        )}
+        </div>
+      )}
 
-        {/* This Week Section */}
-        {routing.this_week.length > 0 && (
-          <div>
-            <h2 
-              style={{ 
-                color: "#3B352B",
-                fontSize: "16px",
-                fontWeight: 600,
-                marginBottom: "12px"
-              }}
-            >
-              This Week
-            </h2>
-            <div style={{ display: "flex", flexDirection: "column" }}>
-              {routing.this_week.map(taskId => {
-                const task = taskMap.get(taskId);
-                if (!task) return null;
-                return (
-                  <TaskCardMinimal
-                    key={task.id}
-                    task={{
-                      id: task.id,
-                      title: task.title,
-                      due_date: task.reminder_time,
-                      section: task.category,
-                    }}
-                    fullTask={task}
-                  />
-                );
-              })}
-            </div>
+      {/* This Week Section */}
+      {routing.this_week.length > 0 && (
+        <div className="space-y-3">
+          <h2 className="text-base font-semibold text-foreground">
+            This Week
+          </h2>
+          <div className="flex flex-col">
+            {routing.this_week.map(taskId => {
+              const task = taskMap.get(taskId);
+              if (!task) return null;
+              return (
+                <TaskCardMinimal
+                  key={task.id}
+                  task={{
+                    id: task.id,
+                    title: task.title,
+                    due_date: task.reminder_time,
+                    section: task.category,
+                  }}
+                  fullTask={task}
+                />
+              );
+            })}
           </div>
-        )}
+        </div>
+      )}
 
-        {/* Later Section */}
-        {laterTaskIds.length > 0 && (
-          <div>
-            <h2 
-              style={{ 
-                color: "#3B352B",
-                fontSize: "16px",
-                fontWeight: 600,
-                marginBottom: "12px"
-              }}
-            >
-              Later
-            </h2>
-            <div style={{ display: "flex", flexDirection: "column" }}>
-              {laterTaskIds.map(taskId => {
-                const task = taskMap.get(taskId);
-                if (!task) return null;
-                return (
-                  <TaskCardMinimal
-                    key={task.id}
-                    task={{
-                      id: task.id,
-                      title: task.title,
-                      due_date: task.reminder_time,
-                      section: task.category,
-                    }}
-                    fullTask={task}
-                  />
-                );
-              })}
-            </div>
+      {/* Later Section */}
+      {laterTaskIds.length > 0 && (
+        <div className="space-y-3">
+          <h2 className="text-base font-semibold text-foreground">
+            Later
+          </h2>
+          <div className="flex flex-col">
+            {laterTaskIds.map(taskId => {
+              const task = taskMap.get(taskId);
+              if (!task) return null;
+              return (
+                <TaskCardMinimal
+                  key={task.id}
+                  task={{
+                    id: task.id,
+                    title: task.title,
+                    due_date: task.reminder_time,
+                    section: task.category,
+                  }}
+                  fullTask={task}
+                />
+              );
+            })}
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

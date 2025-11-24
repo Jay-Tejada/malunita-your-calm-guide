@@ -79,16 +79,10 @@ export function HomeShell({
     );
   }
 
-  // Desktop Layout - CSS Grid
+  // Desktop Layout
   return (
     <SidebarProvider>
-      <div
-        className="min-h-screen w-full"
-        style={{
-          display: "grid",
-          gridTemplateColumns: "280px 1fr 340px",
-        }}
-      >
+      <div className="flex min-h-screen w-full">
         {/* Left Sidebar */}
         <AppSidebar
           onSettingsClick={onSettingsClick}
@@ -101,12 +95,14 @@ export function HomeShell({
         />
 
         {/* Center Canvas */}
-        <main className="overflow-auto">
+        <main className="flex-1 overflow-auto">
           <HomeCanvas>{children}</HomeCanvas>
         </main>
 
         {/* Right Companion Sidebar */}
-        <CompanionSidebar />
+        <div className="w-80 border-l border-border bg-sidebar-bg">
+          <CompanionSidebar />
+        </div>
       </div>
     </SidebarProvider>
   );
