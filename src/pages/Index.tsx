@@ -19,6 +19,7 @@ import { useEndOfDayWrapUp } from "@/hooks/useEndOfDayWrapUp";
 import { usePrimaryFocusPrediction } from "@/hooks/usePrimaryFocusPrediction";
 import { useTasks, Task } from "@/hooks/useTasks";
 import { AutoFocusNotification } from "@/components/AutoFocusNotification";
+import { CompanionContextMessage } from "@/components/CompanionContextMessage";
 
 const Index = () => {
   const [user, setUser] = useState<any>(null);
@@ -168,6 +169,7 @@ const Index = () => {
   return (
     <>
       <AutoFocusNotification />
+      <CompanionContextMessage />
       <HomeShell
         onSettingsClick={handleSettingsClick}
         onCategoryClick={handleCategoryClick}

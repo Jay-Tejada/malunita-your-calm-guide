@@ -118,6 +118,11 @@ export interface EmotionContext {
   timeOfDay?: 'morning' | 'afternoon' | 'evening' | 'night';
   rapidTaskCreation?: boolean;
   primaryFocusCreated?: boolean;
+  isStormDay?: boolean;
+  burnoutRisk?: number;
+  focusStreak?: number;
+  unlocksCount?: number;
+  autoFocusTriggered?: boolean;
 }
 
 export const useCompanionEmotion = (
@@ -132,18 +137,20 @@ export const useCompanionEmotion = (
   const suggestedMotion = emotionToMotionMap[emotion];
   const taskPreference = emotionToTaskPreference[emotion];
 
-  // Check burnout recovery mode and adjust emotion
+  // Check burnout, storms, and streaks to adjust emotion intelligently
   useEffect(() => {
-    const checkBurnoutAndAdjust = async () => {
+    const checkIntelligentContext = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
+      // Fetch profile data
       const { data: profile } = await supabase
         .from('profiles')
-        .select('burnout_recovery_until')
+        .select('burnout_recovery_until, burnout_risk')
         .eq('id', user.id)
         .single();
 
+      // Check burnout recovery mode (HIGHEST PRIORITY)
       const inRecoveryMode = profile?.burnout_recovery_until 
         ? new Date(profile.burnout_recovery_until) > new Date()
         : false;
@@ -152,6 +159,67 @@ export const useCompanionEmotion = (
         // During burnout recovery, shift to calm/supportive tone
         setEmotion('calm');
         return;
+      }
+
+      // Check if burnout risk is high but not in recovery yet (WARNING)
+      if (profile?.burnout_risk && profile.burnout_risk >= 0.5) {
+        setEmotion('overwhelmed');
+        return;
+      }
+
+      // Check focus streak (ENCOURAGEMENT)
+      const { data: streakData } = await supabase
+        .from('focus_streaks')
+        .select('current_streak')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      const currentStreak = streakData?.current_streak || 0;
+      if (currentStreak >= 3) {
+        setEmotion('proud');
+        return;
+      }
+
+      // Check for upcoming storm day (PREEMPTIVE FOCUS)
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      const tomorrowDate = tomorrow.toISOString().split('T')[0];
+
+      const { data: stormData } = await supabase
+        .from('priority_storms')
+        .select('expected_load_score')
+        .eq('user_id', user.id)
+        .eq('date', tomorrowDate)
+        .maybeSingle();
+
+      if (stormData && stormData.expected_load_score >= 60) {
+        setEmotion('focused');
+        return;
+      }
+
+      // Check current ONE thing's unlocks count (MOTIVATION)
+      const today = new Date().toISOString().split('T')[0];
+      const { data: focusTasks } = await supabase
+        .from('tasks')
+        .select('id, title')
+        .eq('user_id', user.id)
+        .eq('is_focus', true)
+        .eq('focus_date', today)
+        .maybeSingle();
+
+      if (focusTasks) {
+        const { data: embeddingData } = await supabase
+          .from('focus_embeddings')
+          .select('unlocks_count')
+          .eq('user_id', user.id)
+          .eq('task_id', focusTasks.id)
+          .maybeSingle();
+
+        const unlocksCount = embeddingData?.unlocks_count || 0;
+        if (unlocksCount >= 3) {
+          setEmotion('inspired');
+          return;
+        }
       }
 
       // Auto-detect time of day and adjust emotion baseline
@@ -169,7 +237,11 @@ export const useCompanionEmotion = (
       }
     };
 
-    checkBurnoutAndAdjust();
+    checkIntelligentContext();
+    
+    // Re-check every 5 minutes
+    const interval = setInterval(checkIntelligentContext, 5 * 60 * 1000);
+    return () => clearInterval(interval);
   }, [emotion]);
 
   // Auto-return to neutral after emotion duration
@@ -218,9 +290,59 @@ export const useCompanionEmotion = (
       isVoiceActive = false,
       lastActivityMinutesAgo = 0,
       rapidTaskCreation = false,
+      isStormDay = false,
+      burnoutRisk = 0,
+      focusStreak = 0,
+      unlocksCount = 0,
+      autoFocusTriggered = false,
     } = context;
 
-    // Priority-based emotion selection
+    // HIGHEST PRIORITY: Burnout signals
+    if (burnoutRisk >= 0.6) {
+      triggerTemporaryEmotion('overwhelmed', 12000);
+      return;
+    }
+
+    if (burnoutRisk >= 0.5) {
+      triggerTemporaryEmotion('calm', 10000);
+      return;
+    }
+
+    // AutoFocus triggered - show reassuring emotion
+    if (autoFocusTriggered) {
+      triggerTemporaryEmotion('encouraging', 10000);
+      return;
+    }
+
+    // Storm day prediction - show preemptive focus
+    if (isStormDay) {
+      triggerTemporaryEmotion('focused', 10000);
+      return;
+    }
+
+    // Focus streak - show pride
+    if (focusStreak >= 5) {
+      triggerTemporaryEmotion('excited', 9000);
+      return;
+    }
+
+    if (focusStreak >= 3) {
+      triggerTemporaryEmotion('proud', 7000);
+      return;
+    }
+
+    // High unlocks count - show motivation
+    if (unlocksCount >= 5) {
+      triggerTemporaryEmotion('inspired', 8000);
+      return;
+    }
+
+    if (unlocksCount >= 3) {
+      triggerTemporaryEmotion('excited', 6000);
+      return;
+    }
+
+    // Existing conditions
     if (lastActivityMinutesAgo > 90) {
       setEmotion('sleepy');
       return;
