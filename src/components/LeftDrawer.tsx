@@ -17,6 +17,7 @@ import { EventTitleAutocomplete } from "@/components/EventTitleAutocomplete";
 import { useRecentEventTitles } from "@/hooks/useRecentEventTitles";
 import { MapboxLocationPicker } from "@/components/MapboxLocationPicker";
 import { MapFullScreen } from "@/components/MapFullScreen";
+import { TaskGlobe } from "@/components/TaskGlobe";
 import { useMapboxToken } from "@/hooks/useMapboxToken";
 import { MapPin } from "lucide-react";
 
@@ -59,6 +60,7 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
   const [isLocationPickerOpen, setIsLocationPickerOpen] = useState(false);
   const [isMapFullScreenOpen, setIsMapFullScreenOpen] = useState(false);
+  const [isGlobeOpen, setIsGlobeOpen] = useState(false);
 
   const handleCategoryClick = (categoryId: DrawerMode) => {
     hapticLight();
@@ -462,8 +464,7 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
                     <button
                       onClick={() => {
                         hapticLight();
-                        onNavigate("/globe");
-                        onClose();
+                        setIsGlobeOpen(true);
                       }}
                       className="flex items-center justify-center w-10 h-10 rounded-full hover:bg-muted/30 text-muted-foreground hover:text-foreground transition-colors mb-4 self-center"
                       title="Task Globe"
@@ -937,6 +938,13 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
           accessToken={mapboxToken}
         />
       )}
+
+      {/* Globe Dialog */}
+      <Dialog open={isGlobeOpen} onOpenChange={setIsGlobeOpen}>
+        <DialogContent className="sm:max-w-[90vw] sm:max-h-[90vh] h-[90vh] p-0 overflow-hidden">
+          <TaskGlobe />
+        </DialogContent>
+      </Dialog>
     </>
   );
 };
