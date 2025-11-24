@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useTasks } from './useTasks';
 import { format, subDays } from 'date-fns';
+import { useFocusStreak } from './useFocusStreak';
 
 interface FocusReflection {
   outcome: 'done' | 'partial' | 'missed';
@@ -10,6 +11,7 @@ interface FocusReflection {
 
 export const useFocusReflection = () => {
   const { tasks } = useTasks();
+  const { updateStreak } = useFocusStreak();
   const [yesterdaysFocusTask, setYesterdaysFocusTask] = useState<string | null>(null);
   const [showPrompt, setShowPrompt] = useState(false);
   const [hasReflectedToday, setHasReflectedToday] = useState(false);
@@ -72,6 +74,9 @@ export const useFocusReflection = () => {
       });
 
     if (!error) {
+      // Update focus streak based on outcome
+      await updateStreak(reflection.outcome, yesterday);
+      
       setShowPrompt(false);
       setHasReflectedToday(true);
     }

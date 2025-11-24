@@ -229,6 +229,36 @@ export type Database = {
         }
         Relationships: []
       }
+      focus_streaks: {
+        Row: {
+          created_at: string | null
+          current_streak: number
+          id: string
+          last_updated_date: string
+          longest_streak: number
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          current_streak?: number
+          id?: string
+          last_updated_date?: string
+          longest_streak?: number
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          current_streak?: number
+          id?: string
+          last_updated_date?: string
+          longest_streak?: number
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       habit_logs: {
         Row: {
           completed_at: string

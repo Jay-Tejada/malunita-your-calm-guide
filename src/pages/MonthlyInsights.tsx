@@ -1,11 +1,13 @@
 import { MonthlyInsights as MonthlyInsightsComponent } from '@/features/insights/MonthlyInsights';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Flame } from 'lucide-react';
 import { hapticLight } from '@/utils/haptics';
+import { useFocusStreak } from '@/hooks/useFocusStreak';
 
 const MonthlyInsights = () => {
   const navigate = useNavigate();
+  const { streak, isLoading: isLoadingStreak } = useFocusStreak();
 
   return (
     <div className="min-h-screen bg-background">
@@ -29,6 +31,15 @@ const MonthlyInsights = () => {
             Your personalized monthly summary powered by AI
           </p>
         </div>
+
+        {/* Focus Streak */}
+        {!isLoadingStreak && streak && (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
+            <Flame className="w-4 h-4" />
+            <span>Primary Focus Streak: <span className="font-medium text-foreground">{streak.current_streak} days</span> | Longest streak: <span className="font-medium text-foreground">{streak.longest_streak} days</span></span>
+          </div>
+        )}
+
         <MonthlyInsightsComponent />
       </div>
     </div>
