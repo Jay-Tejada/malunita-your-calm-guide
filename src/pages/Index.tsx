@@ -8,6 +8,8 @@ import { useProfile } from "@/hooks/useProfile";
 import { useCompanionIdentity, PersonalityType } from "@/hooks/useCompanionIdentity";
 import { useToast } from "@/hooks/use-toast";
 import { HomeShell } from "@/layouts/HomeShell";
+import { DailyPriorityPrompt } from "@/components/DailyPriorityPrompt";
+import { useDailyPriorityPrompt } from "@/state/useDailyPriorityPrompt";
 
 const Index = () => {
   const [user, setUser] = useState<any>(null);
@@ -24,6 +26,7 @@ const Index = () => {
   const { companion, needsOnboarding, updateCompanion } = useCompanionIdentity();
   const { toast } = useToast();
   const voiceRef = useRef<MalunitaVoiceRef>(null);
+  const { checkIfShouldShowPrompt } = useDailyPriorityPrompt();
 
   useEffect(() => {
     const {
@@ -39,6 +42,13 @@ const Index = () => {
 
     return () => subscription.unsubscribe();
   }, []);
+
+  // Check if we should show the daily priority prompt
+  useEffect(() => {
+    if (user && !needsOnboarding) {
+      checkIfShouldShowPrompt();
+    }
+  }, [user, needsOnboarding, checkIfShouldShowPrompt]);
 
   const handleCompanionComplete = async (name: string, personality: PersonalityType) => {
     const colorwayMap = {
@@ -124,6 +134,7 @@ const Index = () => {
         onDreamModeClick={handleDreamModeClick}
         activeCategory={activeCategory}
       >
+        <DailyPriorityPrompt />
         <HomeOrb 
           onCapture={handleOrbClick} 
           isRecording={isRecording} 
