@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -9,13 +9,18 @@ import { useCompanionEvents } from "@/hooks/useCompanionEvents";
 import { Sparkles } from "lucide-react";
 
 export function DailyPriorityPrompt() {
-  const { showPrompt, markPromptAnswered } = useDailyPriorityPrompt();
+  const { showPrompt, checkIfShouldShowPrompt, markPromptAnswered } = useDailyPriorityPrompt();
   const { createTasks } = useTasks();
   const { onTaskCompleted } = useCompanionEvents();
   
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [taskInput, setTaskInput] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Check if prompt should show on mount
+  useEffect(() => {
+    checkIfShouldShowPrompt();
+  }, [checkIfShouldShowPrompt]);
 
   // Determine if it's evening (after 6 PM) - ask about tomorrow
   const currentHour = new Date().getHours();
