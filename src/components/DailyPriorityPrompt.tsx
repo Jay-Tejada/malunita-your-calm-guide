@@ -17,6 +17,20 @@ export function DailyPriorityPrompt() {
   const [taskInput, setTaskInput] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Determine if it's evening (after 6 PM) - ask about tomorrow
+  const currentHour = new Date().getHours();
+  const isEvening = currentHour >= 18;
+  const targetDay = isEvening ? 'tomorrow' : 'today';
+  
+  // Calculate focus date (today or tomorrow)
+  const getFocusDate = () => {
+    const date = new Date();
+    if (isEvening) {
+      date.setDate(date.getDate() + 1);
+    }
+    return date.toISOString().split('T')[0];
+  };
+
   const handlePromptClick = () => {
     setIsDialogOpen(true);
   };
@@ -31,7 +45,7 @@ export function DailyPriorityPrompt() {
         title: taskInput,
         category: 'focus',
         is_focus: true,
-        focus_date: new Date().toISOString().split('T')[0],
+        focus_date: getFocusDate(),
         input_method: 'text',
         completed: false,
         has_reminder: false,
@@ -41,7 +55,7 @@ export function DailyPriorityPrompt() {
       
       // Store the priority task ID for check-ins
       if (createdTasks && createdTasks.length > 0) {
-        markPromptAnswered(createdTasks[0].id);
+        markPromptAnswered(createdTasks[0].id, isEvening);
       }
       
       setIsDialogOpen(false);
@@ -81,7 +95,7 @@ export function DailyPriorityPrompt() {
             <div className="flex items-center gap-3">
               <Sparkles className="w-4 h-4 text-primary/70 group-hover:text-primary transition-colors" />
               <p className="text-sm font-medium text-foreground/80 group-hover:text-foreground transition-colors">
-                What's the one thing you must get done today?
+                What's the one thing you must get done {targetDay}?
               </p>
             </div>
           </button>
@@ -93,16 +107,16 @@ export function DailyPriorityPrompt() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Sparkles className="w-5 h-5 text-primary" />
-              Today's Priority
+              {isEvening ? "Tomorrow's Priority" : "Today's Priority"}
             </DialogTitle>
             <DialogDescription>
-              What's the one thing that would make today a success?
+              What's the one thing that would make {targetDay} a success?
             </DialogDescription>
           </DialogHeader>
           
           <div className="space-y-4 pt-4">
             <Input
-              placeholder="Enter your top priority..."
+              placeholder={`Enter your top priority for ${targetDay}...`}
               value={taskInput}
               onChange={(e) => setTaskInput(e.target.value)}
               onKeyPress={handleKeyPress}

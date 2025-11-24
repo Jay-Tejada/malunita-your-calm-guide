@@ -24,7 +24,9 @@ serve(async (req) => {
     const today = new Date().toISOString().split('T')[0];
     const currentHour = new Date().getHours();
     
-    // Determine which check-in this is (mid-day = 14:00, end-of-day = 17:00)
+    // Determine which check-in this is
+    // Mid-day: 1:00 PM - 3:00 PM
+    // End-of-day: 5:00 PM - 7:00 PM (not too late)
     const isMidDay = currentHour >= 13 && currentHour < 15;
     const isEndOfDay = currentHour >= 17 && currentHour < 19;
     
@@ -58,19 +60,19 @@ serve(async (req) => {
     
     // Check each user's priority task
     for (const userId of userIds) {
-      // Get today's focus task for this user
+      // Get today's focus task for this user (not tomorrow's)
       const { data: focusTask, error: taskError } = await supabase
         .from('tasks')
         .select('*')
         .eq('user_id', userId)
         .eq('is_focus', true)
-        .eq('focus_date', today)
+        .eq('focus_date', today) // Only check tasks for TODAY
         .eq('completed', false)
         .single();
       
       if (taskError || !focusTask) {
         skippedCount++;
-        continue; // User doesn't have an incomplete priority task
+        continue; // User doesn't have an incomplete priority task for today
       }
       
       // Get user's profile to check notification preferences
