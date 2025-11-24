@@ -8,6 +8,7 @@ import { questTracker } from "@/lib/questTracker";
 import { bondingMeter, BONDING_INCREMENTS } from "@/state/bondingMeter";
 import { useSeasonalEvent } from "./useSeasonalEvent";
 import { useCustomizationStore } from "@/features/customization/useCustomizationStore";
+import { useOneThingAvoidance } from "./useOneThingAvoidance";
 
 export interface Task {
   id: string;
@@ -45,6 +46,7 @@ export const useTasks = () => {
   const { recordTaskAdded, recordTaskCompleted, updateOverdueTasks } = useCognitiveLoad();
   const { isStarfallNight } = useSeasonalEvent();
   const { unlockCosmetic } = useCustomizationStore();
+  const { checkAfterTaskCompletion } = useOneThingAvoidance();
 
   const { data: tasks, isLoading } = useQuery({
     queryKey: ['tasks'],
@@ -157,6 +159,9 @@ export const useTasks = () => {
             duration: 5000,
           });
         }
+        
+        // Check for ONE-thing avoidance after task completion
+        checkAfterTaskCompletion();
         
         // Check for task milestone and create journal entry
         const completedCount = tasks?.filter(t => t.completed).length || 0;

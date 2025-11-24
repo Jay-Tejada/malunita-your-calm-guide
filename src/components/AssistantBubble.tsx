@@ -57,12 +57,18 @@ const AssistantBubble = ({ onOpenChat, className = '', typing = false }: Assista
       }
     };
 
+    const handleOneThingAvoidance = () => {
+      messageQueueRef.current.enqueue("Are you avoiding your most important thing today?");
+    };
+
     window.addEventListener('companion:focus-complete' as any, handleFocusComplete);
     window.addEventListener('companion:prediction-match' as any, handlePredictionMatch);
+    window.addEventListener('companion:one-thing-avoidance' as any, handleOneThingAvoidance);
     
     return () => {
       window.removeEventListener('companion:focus-complete' as any, handleFocusComplete);
       window.removeEventListener('companion:prediction-match' as any, handlePredictionMatch);
+      window.removeEventListener('companion:one-thing-avoidance' as any, handleOneThingAvoidance);
     };
   }, []);
 
