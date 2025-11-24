@@ -3,12 +3,17 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Sparkles } from 'lucide-react';
 import { Button } from './ui/button';
 import { useAutoFocus } from '@/hooks/useAutoFocus';
+import { useCompanionEmotion } from '@/hooks/useCompanionEmotion';
 
 export const AutoFocusNotification = () => {
   const { autoFocusTriggered, autoFocusTask, clearAutoFocusMessage } = useAutoFocus();
+  const { triggerEmotionFromContext } = useCompanionEmotion();
 
   useEffect(() => {
     if (autoFocusTriggered) {
+      // Trigger companion emotion
+      triggerEmotionFromContext({ autoFocusTriggered: true });
+      
       // Auto-dismiss after 10 seconds
       const timeout = setTimeout(() => {
         clearAutoFocusMessage();
@@ -16,7 +21,7 @@ export const AutoFocusNotification = () => {
 
       return () => clearTimeout(timeout);
     }
-  }, [autoFocusTriggered, clearAutoFocusMessage]);
+  }, [autoFocusTriggered, clearAutoFocusMessage, triggerEmotionFromContext]);
 
   return (
     <AnimatePresence>
