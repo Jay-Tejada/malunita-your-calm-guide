@@ -80,6 +80,15 @@ serve(async (req) => {
           .order('created_at', { ascending: false })
           .limit(200);
 
+        // 6. Get today's primary focus for alignment analysis
+        const today = new Date().toISOString().split('T')[0];
+        const { data: todayFocus } = await supabase
+          .from('daily_focus_history')
+          .select('focus_task, cluster_label')
+          .eq('user_id', profile.id)
+          .eq('date', today)
+          .maybeSingle();
+
         // Analyze patterns
         const insights = analyzeUserPatterns({
           completedTasks: completedTasks || [],
@@ -87,6 +96,7 @@ serve(async (req) => {
           feedback: feedback || [],
           sessions: sessions || [],
           allTasks: allTasks || [],
+          todayFocus: todayFocus,
         });
 
         console.log('💡 Generated insights:', insights);
@@ -147,6 +157,7 @@ function analyzeUserPatterns(data: {
   feedback: any[];
   sessions: any[];
   allTasks: any[];
+  todayFocus: any;
 }) {
   const insights: any = {
     productivityPatterns: {},
@@ -155,6 +166,7 @@ function analyzeUserPatterns(data: {
     ignoredTaskPatterns: [],
     recommendations: [],
     suggestedHabits: [],
+    primaryFocusAlignment: {},
     lastUpdated: new Date().toISOString(),
   };
 
@@ -183,10 +195,13 @@ function analyzeUserPatterns(data: {
   // 4. Ignored tasks patterns
   insights.ignoredTaskPatterns = identifyIgnoredPatterns(data.overdueTasks);
 
-  // 5. Recommendations
+  // 5. Primary focus alignment analysis
+  insights.primaryFocusAlignment = analyzePrimaryFocusAlignment(data.allTasks, data.feedback, data.todayFocus);
+
+  // 6. Recommendations (now includes ONE-thing alignment learning)
   insights.recommendations = generateRecommendations(data);
 
-  // 6. Suggested habits
+  // 7. Suggested habits
   insights.suggestedHabits = generateHabitSuggestions(data);
 
   return insights;
@@ -405,4 +420,73 @@ function generateHabitSuggestions(data: any) {
   });
   
   return habits.slice(0, 5);
+}
+
+function analyzePrimaryFocusAlignment(allTasks: any[], feedback: any[], todayFocus: any) {
+  // Analyze how well the AI understands alignment with ONE-thing priorities
+  const alignmentAnalysis: {
+    alignedTasksCompleted: number;
+    distractingTasksCompleted: number;
+    neutralTasksCompleted: number;
+    alignmentAccuracy: number;
+    correctionPatterns: Array<{
+      suggestedAlignment: string;
+      actualAlignment: string;
+      taskTitle: string;
+    }>;
+    learningWeight: number;
+  } = {
+    alignedTasksCompleted: 0,
+    distractingTasksCompleted: 0,
+    neutralTasksCompleted: 0,
+    alignmentAccuracy: 0,
+    correctionPatterns: [],
+    learningWeight: 0.5, // Start neutral, adjust based on corrections
+  };
+
+  if (!todayFocus) {
+    return alignmentAnalysis;
+  }
+
+  // Count completed tasks by alignment
+  const completedWithAlignment = allTasks.filter(t => t.completed && t.primary_focus_alignment);
+  completedWithAlignment.forEach(task => {
+    if (task.primary_focus_alignment === 'aligned') {
+      alignmentAnalysis.alignedTasksCompleted++;
+    } else if (task.primary_focus_alignment === 'distracting') {
+      alignmentAnalysis.distractingTasksCompleted++;
+    } else {
+      alignmentAnalysis.neutralTasksCompleted++;
+    }
+  });
+
+  // Analyze feedback corrections related to alignment
+  const alignmentCorrections = feedback.filter((f: any) => 
+    f.was_corrected && 
+    (f.actual_category === 'aligned' || f.actual_category === 'distracting' || f.actual_category === 'neutral')
+  );
+
+  if (alignmentCorrections.length > 0) {
+    alignmentAnalysis.correctionPatterns = alignmentCorrections.map((f: any) => ({
+      suggestedAlignment: f.suggested_category,
+      actualAlignment: f.actual_category,
+      taskTitle: f.task_title,
+    }));
+
+    // Calculate accuracy
+    const correctAlignments = alignmentCorrections.filter((f: any) => 
+      f.suggested_category === f.actual_category
+    ).length;
+    alignmentAnalysis.alignmentAccuracy = correctAlignments / alignmentCorrections.length;
+
+    // Adjust learning weight based on accuracy
+    // Higher weight = trust AI more, lower weight = rely more on user corrections
+    if (alignmentAnalysis.alignmentAccuracy > 0.8) {
+      alignmentAnalysis.learningWeight = 0.7; // AI is accurate, boost its confidence
+    } else if (alignmentAnalysis.alignmentAccuracy < 0.5) {
+      alignmentAnalysis.learningWeight = 0.3; // AI is struggling, reduce confidence
+    }
+  }
+
+  return alignmentAnalysis;
 }
