@@ -141,6 +141,10 @@ serve(async (req) => {
     const allTasks = existingTasks || [];
     console.log('Existing open tasks:', allTasks.length);
 
+    // Step 2.5: Fetch today's ONE thing (primary focus)
+    const primaryFocusTask = allTasks.find(t => t.is_focus && t.focus_date === today);
+    console.log('Primary focus task:', primaryFocusTask?.title || 'None set');
+
     // Step 3: Fetch companion state and focus preferences
     const { data: profileData } = await supabase
       .from('profiles')
@@ -343,6 +347,55 @@ Return ONLY the insight sentence. No extra text.`;
     const insightData = await insightResponse.json();
     const executiveInsight = insightData.choices?.[0]?.message?.content?.trim() || "Here is what actually matters today.";
 
+    // Generate ONE-thing summary and reasoning
+    let oneThingSummary = '';
+    let oneThingReasoning = '';
+
+    if (primaryFocusTask) {
+      oneThingSummary = `Today's primary focus is ${primaryFocusTask.title}.`;
+      
+      // Generate reasoning for the chosen ONE thing
+      const reasoningPrompt = `Explain in ONE short sentence (max 12 words) why this task is a good primary focus:
+Task: "${primaryFocusTask.title}"
+Category: ${primaryFocusTask.category || 'general'}
+
+Reasoning should focus on impact (e.g., "reduces blockers", "increases momentum", "unlocks team progress", "clears critical path").
+Return ONLY the reasoning sentence starting with "Chosen because...". No extra text.`;
+
+      const reasoningResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${lovableApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'google/gemini-2.5-flash',
+          messages: [
+            { role: 'system', content: 'You provide concise task reasoning.' },
+            { role: 'user', content: reasoningPrompt }
+          ],
+        }),
+      });
+
+      if (reasoningResponse.ok) {
+        const reasoningData = await reasoningResponse.json();
+        oneThingReasoning = reasoningData.choices?.[0]?.message?.content?.trim() || 'Chosen because it moves the needle.';
+      } else {
+        oneThingReasoning = 'Chosen because it moves the needle.';
+      }
+    } else {
+      // No ONE thing set - suggest a candidate
+      const candidateTask = priorityTasks[0] || todaysSchedule[0] || quickWins[0];
+      
+      if (candidateTask) {
+        oneThingSummary = `If you need direction today, consider focusing on ${candidateTask}.`;
+        oneThingReasoning = 'Setting one primary focus helps maintain clarity and momentum.';
+      } else {
+        oneThingSummary = 'No primary focus set yet.';
+        oneThingReasoning = 'Consider choosing one key task to anchor your day.';
+      }
+    }
+
     // Format response based on mode
     if (isHomeScreenMode) {
       // Home screen expects: headline, summary_markdown, quick_wins, focus_message
@@ -356,7 +409,9 @@ Return ONLY the insight sentence. No extra text.`;
           headline: executiveInsight,
           summary_markdown: `You have ${allTasks.length} open tasks. ${priorityTasks.length > 0 ? `${priorityTasks.length} priority items need attention.` : ''}`,
           quick_wins: quickWinsData,
-          focus_message: priorityTasks.length > 0 ? `Focus on: ${priorityTasks[0]}` : "Clear slate — ready to plan your day?"
+          focus_message: priorityTasks.length > 0 ? `Focus on: ${priorityTasks[0]}` : "Clear slate — ready to plan your day?",
+          one_thing_summary: oneThingSummary,
+          one_thing_reasoning: oneThingReasoning
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
@@ -374,7 +429,12 @@ Return ONLY the insight sentence. No extra text.`;
       };
 
       return new Response(
-        JSON.stringify({ summary, extractedTasks }),
+        JSON.stringify({ 
+          summary, 
+          extractedTasks,
+          one_thing_summary: oneThingSummary,
+          one_thing_reasoning: oneThingReasoning
+        }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
