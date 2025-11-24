@@ -7,11 +7,13 @@ import { MalunitaVoice, MalunitaVoiceRef } from "@/components/MalunitaVoice";
 import { useProfile } from "@/hooks/useProfile";
 import { useCompanionIdentity, PersonalityType } from "@/hooks/useCompanionIdentity";
 import { useToast } from "@/hooks/use-toast";
+import { HomeShell } from "@/layouts/HomeShell";
 
 const Index = () => {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isRecording, setIsRecording] = useState(false);
+  const [activeCategory, setActiveCategory] = useState<string | null>("today");
   const [voiceStatus, setVoiceStatus] = useState<{ isListening: boolean; isProcessing: boolean; isSpeaking: boolean; recordingDuration: number }>({
     isListening: false,
     isProcessing: false,
@@ -86,8 +88,41 @@ const Index = () => {
     return 'ready';
   };
 
+  // Stub handlers for HomeShell
+  const handleSettingsClick = () => {
+    console.log("Settings clicked");
+  };
+
+  const handleCategoryClick = (category: string) => {
+    setActiveCategory(category);
+  };
+
+  const handleFocusModeClick = () => {
+    console.log("Focus mode clicked");
+  };
+
+  const handleWorldMapClick = () => {
+    console.log("World map clicked");
+  };
+
+  const handleShareMalunitaClick = () => {
+    console.log("Share Malunita clicked");
+  };
+
+  const handleDreamModeClick = () => {
+    console.log("Dream mode clicked");
+  };
+
   return (
-    <div className="min-h-screen bg-background">
+    <HomeShell
+      onSettingsClick={handleSettingsClick}
+      onCategoryClick={handleCategoryClick}
+      onFocusModeClick={handleFocusModeClick}
+      onWorldMapClick={handleWorldMapClick}
+      onShareMalunitaClick={handleShareMalunitaClick}
+      onDreamModeClick={handleDreamModeClick}
+      activeCategory={activeCategory}
+    >
       <HomeOrb 
         onCapture={handleOrbClick} 
         isRecording={isRecording} 
@@ -99,7 +134,7 @@ const Index = () => {
         onRecordingStateChange={setIsRecording}
         onStatusChange={setVoiceStatus}
       />
-    </div>
+    </HomeShell>
   );
 };
 
