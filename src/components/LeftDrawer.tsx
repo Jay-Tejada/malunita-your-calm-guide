@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, ListTodo, ChevronLeft, Circle, Check } from "lucide-react";
+import { Plus, ListTodo, ChevronLeft, Circle, Check, Globe } from "lucide-react";
 import { useSwipeable } from "react-swipeable";
 import { cn } from "@/lib/utils";
 import { useTasks } from "@/hooks/useTasks";
@@ -457,6 +457,19 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
                     </div>
 
                     <div className="flex-1" />
+
+                    {/* Globe button at bottom */}
+                    <button
+                      onClick={() => {
+                        hapticLight();
+                        onNavigate("/globe");
+                        onClose();
+                      }}
+                      className="flex items-center justify-center w-10 h-10 rounded-full hover:bg-muted/30 text-muted-foreground hover:text-foreground transition-colors mb-4 self-center"
+                      title="Task Globe"
+                    >
+                      <Globe className="w-5 h-5" />
+                    </button>
                   </motion.div>
                 ) : (
                   <motion.div
