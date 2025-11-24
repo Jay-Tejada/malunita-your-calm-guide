@@ -245,7 +245,8 @@ export const FocusMode = ({ onClose }: FocusModeProps) => {
         </Button>
 
         {/* Malunita with breathing animation */}
-        <motion.div
+        {/* CompanionVisual - COMMENTED OUT - now lives in CompanionSidebar */}
+        {/* <motion.div
           animate={{
             scale: [1, 1.03, 1],
           }}
@@ -262,7 +263,7 @@ export const FocusMode = ({ onClose }: FocusModeProps) => {
             size="xl"
             className="animate-float-idle"
           />
-        </motion.div>
+        </motion.div> */}
 
         {/* Helper bubble */}
         <AnimatePresence>

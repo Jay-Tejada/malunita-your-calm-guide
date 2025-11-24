@@ -244,8 +244,8 @@ export const ShareMalunita = ({ open, onClose }: ShareMalunitaProps) => {
                   </div>
                 </div>
 
-                {/* Malunita */}
-                <div className="flex-1 flex items-center justify-center">
+                {/* Malunita - COMMENTED OUT - now lives in CompanionSidebar */}
+                {/* <div className="flex-1 flex items-center justify-center">
                   <motion.div
                     animate={{ y: [0, -10, 0] }}
                     transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
@@ -256,7 +256,7 @@ export const ShareMalunita = ({ open, onClose }: ShareMalunitaProps) => {
                       size="xl"
                     />
                   </motion.div>
-                </div>
+                </div> */}
 
                 {/* Stats */}
                 <div className="w-full space-y-4">

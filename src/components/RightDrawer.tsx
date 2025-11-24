@@ -42,10 +42,10 @@ export const RightDrawer = ({ isOpen, onClose }: RightDrawerProps) => {
             className="fixed right-0 top-0 bottom-0 w-80 bg-background/95 backdrop-blur-md border-l border-border/50 shadow-2xl z-50"
           >
             <div className="h-full flex flex-col py-8 px-6">
-              {/* Companion Visual */}
-              <div className="flex-shrink-0 flex justify-center mb-6">
+              {/* Companion Visual - COMMENTED OUT - now lives in CompanionSidebar */}
+              {/* <div className="flex-shrink-0 flex justify-center mb-6">
                 <CompanionAvatar mode="idle" />
-              </div>
+              </div> */}
 
               {/* Stats Section */}
               <div className="flex-shrink-0 space-y-4 mb-6">
