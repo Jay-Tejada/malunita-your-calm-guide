@@ -10,8 +10,11 @@ import { useToast } from "@/hooks/use-toast";
 import { HomeShell } from "@/layouts/HomeShell";
 import { DailyPriorityPrompt } from "@/components/DailyPriorityPrompt";
 import { FocusReflectionPrompt } from "@/components/FocusReflectionPrompt";
+import { MidDayFocusReminder } from "@/components/MidDayFocusReminder";
 import { useDailyPriorityPrompt } from "@/state/useDailyPriorityPrompt";
 import { useFocusReflection } from "@/hooks/useFocusReflection";
+import { useMidDayFocusReminder } from "@/hooks/useMidDayFocusReminder";
+import { useTasks, Task } from "@/hooks/useTasks";
 
 const Index = () => {
   const [user, setUser] = useState<any>(null);
@@ -30,6 +33,8 @@ const Index = () => {
   const voiceRef = useRef<MalunitaVoiceRef>(null);
   const { checkIfShouldShowPrompt } = useDailyPriorityPrompt();
   const { yesterdaysFocusTask, showPrompt: showReflection, saveReflection, dismissPrompt } = useFocusReflection();
+  const { showReminder: showMidDayReminder, focusTask: midDayFocusTask, dismissReminder } = useMidDayFocusReminder();
+  const { updateTask } = useTasks();
 
   useEffect(() => {
     const {
@@ -136,6 +141,22 @@ const Index = () => {
     }
   };
 
+  const handleMidDayTaskSave = async (taskId: string, updates: Partial<Task>) => {
+    try {
+      await updateTask({ id: taskId, updates });
+      toast({
+        title: "Task updated",
+        description: "Your ONE thing has been updated.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update task.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <>
       <HomeShell
@@ -154,6 +175,17 @@ const Index = () => {
                 focusTask={yesterdaysFocusTask}
                 onSubmit={handleReflectionSubmit}
                 onDismiss={dismissPrompt}
+              />
+            </div>
+          </div>
+        )}
+        {showMidDayReminder && midDayFocusTask && (
+          <div className="absolute top-32 sm:top-28 md:top-24 left-0 right-0 flex justify-center z-20 px-4">
+            <div className="max-w-xl w-full">
+              <MidDayFocusReminder
+                focusTask={midDayFocusTask}
+                onDismiss={dismissReminder}
+                onSave={handleMidDayTaskSave}
               />
             </div>
           </div>
