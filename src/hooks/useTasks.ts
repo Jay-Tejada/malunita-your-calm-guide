@@ -41,6 +41,12 @@ export interface Task {
   location_lng?: number | null;
   location_address?: string | null;
   parent_task_id?: string | null;
+  // Task Intelligence Fields
+  priority?: 'MUST' | 'SHOULD' | 'COULD';
+  effort?: 'tiny' | 'small' | 'medium' | 'large';
+  scheduled_bucket?: 'today' | 'tomorrow' | 'this_week' | 'upcoming' | 'someday';
+  is_tiny?: boolean;
+  idea_metadata?: any;
 }
 
 export const useTasks = () => {
