@@ -133,4 +133,7 @@ verify_jwt = true
 [functions.focus-explainer]
 verify_jwt = true
 
+[functions.score-task-priority]
+verify_jwt = true
+
 

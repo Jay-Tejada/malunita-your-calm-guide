@@ -80,13 +80,13 @@ serve(async (req) => {
       companionMood
     });
 
-    // Get all incomplete tasks with context
+    // Get all incomplete tasks with context, including future_priority_score
     const { data: allTasks } = await supabase
       .from('tasks')
       .select('*')
       .eq('user_id', userId)
       .eq('completed', false)
-      .order('created_at', { ascending: false })
+      .order('future_priority_score', { ascending: false, nullsFirst: false })
       .limit(50);
 
     // Calculate cognitive load from task data
@@ -168,11 +168,12 @@ serve(async (req) => {
       }
     }
 
-    // Apply companion mood influence and burnout recovery to task selection
+    // Apply companion mood influence, burnout recovery, and future priority to task selection
     const applyCompanionMoodWeight = (tasks: any[]): any[] => {
       return tasks.map(task => {
         let moodBoost = 0;
         const taskComplexity = task.title.split(/\s+/).length; // Word count as proxy for complexity
+        const futurePriorityBoost = (task.future_priority_score || 0) * 0.15; // 0-15% boost based on AI prediction
         
         // During burnout recovery, strongly prioritize tiny/simple tasks
         if (burnoutRecovery) {
@@ -183,7 +184,7 @@ serve(async (req) => {
           }
           return {
             ...task,
-            moodBoost
+            moodBoost: moodBoost + futurePriorityBoost
           };
         }
         
@@ -212,7 +213,7 @@ serve(async (req) => {
         
         return {
           ...task,
-          moodBoost
+          moodBoost: moodBoost + futurePriorityBoost
         };
       });
     };
