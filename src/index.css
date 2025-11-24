@@ -15,6 +15,29 @@
   animation: breathingSurface 12s ease-in-out infinite;
 }
 
+/* Global Typography - Calm Minimalism */
+:root {
+  --ink-strong: #3B352B;
+  --ink-medium: #6F6556;
+  --ink-light: #7D7467;
+  --paper: #F8F4EC;
+}
+
+body {
+  color: var(--ink-strong);
+  background: var(--paper);
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+}
+
+h1, h2, h3 {
+  color: var(--ink-strong);
+  font-weight: 600;
+}
+
+p, span, small {
+  color: var(--ink-medium);
+}
+
 /* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
 All colors MUST be HSL.
 */
