@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useTasks } from './useTasks';
 import { format, subDays } from 'date-fns';
 import { useFocusStreak } from './useFocusStreak';
+import { useEmotionalMemory } from '@/state/emotionalMemory';
 
 interface FocusReflection {
   outcome: 'done' | 'partial' | 'missed';
@@ -76,6 +77,30 @@ export const useFocusReflection = () => {
     if (!error) {
       // Update focus streak based on outcome
       await updateStreak(reflection.outcome, yesterday);
+      
+      // If the ONE thing was completed, trigger companion celebration
+      if (reflection.outcome === 'done') {
+        const emotionalMemory = useEmotionalMemory.getState();
+        
+        // Increase joy and affection
+        emotionalMemory.adjustJoy(6);
+        emotionalMemory.adjustAffection(4);
+        
+        // Trigger overjoyed expression for 4 seconds
+        window.dispatchEvent(new CustomEvent('companion:reaction', {
+          detail: { expression: 'overjoyed', duration: 4000 }
+        }));
+        
+        // Dispatch companion ping event
+        window.dispatchEvent(new CustomEvent('companion:ping'));
+        
+        // Dispatch special message event
+        window.dispatchEvent(new CustomEvent('companion:focus-complete', {
+          detail: { 
+            message: "That was the most important thing today. Great job — I'm really proud of you!" 
+          }
+        }));
+      }
       
       setShowPrompt(false);
       setHasReflectedToday(true);
