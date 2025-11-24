@@ -12,6 +12,12 @@ const Index = () => {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isRecording, setIsRecording] = useState(false);
+  const [voiceStatus, setVoiceStatus] = useState<{ isListening: boolean; isProcessing: boolean; isSpeaking: boolean; recordingDuration: number }>({
+    isListening: false,
+    isProcessing: false,
+    isSpeaking: false,
+    recordingDuration: 0,
+  });
   const { profile } = useProfile();
   const { companion, needsOnboarding, updateCompanion } = useCompanionIdentity();
   const { toast } = useToast();
@@ -73,12 +79,25 @@ const Index = () => {
     }
   };
 
+  const getOrbStatus = (): 'ready' | 'listening' | 'processing' | 'speaking' => {
+    if (voiceStatus.isSpeaking) return 'speaking';
+    if (voiceStatus.isProcessing) return 'processing';
+    if (voiceStatus.isListening) return 'listening';
+    return 'ready';
+  };
+
   return (
     <div className="min-h-screen bg-background">
-      <HomeOrb onCapture={handleOrbClick} isRecording={isRecording} />
+      <HomeOrb 
+        onCapture={handleOrbClick} 
+        isRecording={isRecording} 
+        status={getOrbStatus()}
+        recordingDuration={voiceStatus.recordingDuration}
+      />
       <MalunitaVoice 
         ref={voiceRef} 
         onRecordingStateChange={setIsRecording}
+        onStatusChange={setVoiceStatus}
       />
     </div>
   );

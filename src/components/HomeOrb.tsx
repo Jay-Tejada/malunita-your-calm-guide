@@ -4,9 +4,11 @@ import { useState } from "react";
 interface HomeOrbProps {
   onCapture?: () => void;
   isRecording?: boolean;
+  status?: 'ready' | 'listening' | 'processing' | 'speaking';
+  recordingDuration?: number;
 }
 
-export const HomeOrb = ({ onCapture, isRecording = false }: HomeOrbProps) => {
+export const HomeOrb = ({ onCapture, isRecording = false, status = 'ready', recordingDuration = 0 }: HomeOrbProps) => {
   const [isHovered, setIsHovered] = useState(false);
 
   // All states use warm golden palette - only animation intensity changes
@@ -96,26 +98,43 @@ export const HomeOrb = ({ onCapture, isRecording = false }: HomeOrbProps) => {
         />
       </motion.button>
 
-      {/* Prompt text - subtle color shift */}
-      <motion.p
-        className="mt-12 text-xl font-mono tracking-wide"
-        style={{ color: "rgba(128, 128, 128, 0.7)" }}
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ 
-          opacity: isRecording ? [0.7, 1, 0.7] : 1, 
-          y: 0,
-        }}
-        transition={{ 
-          delay: 0.4,
-          opacity: {
-            duration: 2,
-            repeat: isRecording ? Infinity : 0,
-            ease: "easeInOut"
-          }
-        }}
-      >
-        {isRecording ? "Listening..." : "What's on your mind?"}
-      </motion.p>
+      {/* Status and timer text */}
+      <div className="mt-12 flex flex-col items-center gap-2">
+        <motion.p
+          className="text-xl font-mono tracking-wide"
+          style={{ color: "rgba(128, 128, 128, 0.7)" }}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ 
+            opacity: status === 'listening' ? [0.7, 1, 0.7] : 1, 
+            y: 0,
+          }}
+          transition={{ 
+            delay: 0.4,
+            opacity: {
+              duration: 2,
+              repeat: status === 'listening' ? Infinity : 0,
+              ease: "easeInOut"
+            }
+          }}
+        >
+          {status === 'listening' && 'Listening...'}
+          {status === 'processing' && 'Processing...'}
+          {status === 'speaking' && 'Speaking...'}
+          {status === 'ready' && "What's on your mind?"}
+        </motion.p>
+        
+        {status === 'listening' && recordingDuration > 0 && (
+          <motion.p
+            className="text-sm font-mono"
+            style={{ color: "rgba(128, 128, 128, 0.5)" }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.6 }}
+          >
+            {Math.floor(recordingDuration / 1000)}s
+          </motion.p>
+        )}
+      </div>
     </div>
   );
 };
