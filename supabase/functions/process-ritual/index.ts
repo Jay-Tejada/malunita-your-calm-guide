@@ -10,11 +10,14 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  console.log('🔥 process-ritual called');
+
   try {
     // At this point, JWT has already been verified by the platform (verify_jwt = true)
     // so we can safely trust the Authorization header and do not need a second auth check.
 
     const { type, focusAnswer, appointmentsAnswer, winsAnswer, stressAnswer, tomorrowAnswer } = await req.json();
+    console.log('📝 Ritual type:', type);
 
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) {
@@ -76,7 +79,11 @@ Extract tasks with appropriate categories and time-based flags.`;
         }),
       });
 
+      console.log('✅ AI response status:', response.status);
+
       if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ AI processing failed:', response.status, errorText);
         throw new Error('AI processing failed');
       }
 
