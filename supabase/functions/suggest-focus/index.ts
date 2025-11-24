@@ -15,43 +15,38 @@ serve(async (req) => {
   try {
     console.log('🎯 suggest-focus function called');
 
-    // Extract JWT and validate user
-    const authHeader = req.headers.get('Authorization')
+    // JWT is already verified by platform (verify_jwt = true in config.toml)
+    // Get user ID from Authorization header
+    const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
-      return new Response(
-        JSON.stringify({ error: 'Authentication required' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
+      throw new Error('No authorization header');
     }
 
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
       { global: { headers: { Authorization: authHeader } } }
-    )
+    );
 
-    const { data: { user }, error: userError } = await supabase.auth.getUser()
-    if (userError || !user) {
-      return new Response(
-        JSON.stringify({ error: 'Invalid authentication' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
-    }
+    // Extract user ID from JWT (already verified by platform)
+    const token = authHeader.replace('Bearer ', '');
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    const userId = payload.sub;
 
-    console.log('✅ User authenticated:', user.id);
+    console.log('✅ User ID from JWT:', userId);
 
     // Get user's profile for personalization
     const { data: profile } = await supabase
       .from('profiles')
       .select('companion_name, current_goal, peak_activity_time')
-      .eq('id', user.id)
+      .eq('id', userId)
       .maybeSingle();
 
     // Get today's tasks
     const { data: todayTasks } = await supabase
       .from('tasks')
       .select('*')
-      .eq('user_id', user.id)
+      .eq('user_id', userId)
       .eq('category', 'today')
       .eq('completed', false);
 
@@ -59,7 +54,7 @@ serve(async (req) => {
     const { data: upcomingTasks } = await supabase
       .from('tasks')
       .select('*')
-      .eq('user_id', user.id)
+      .eq('user_id', userId)
       .eq('category', 'upcoming')
       .eq('completed', false)
       .limit(5);
