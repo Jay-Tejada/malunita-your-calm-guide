@@ -54,7 +54,7 @@ serve(async (req) => {
       )
     }
 
-    const { tasks, domain, userId } = await req.json();
+    const { tasks, domain, userId, burnoutRecovery } = await req.json();
     
     // Input validation
     if (!tasks || !Array.isArray(tasks)) {
@@ -128,9 +128,21 @@ serve(async (req) => {
           .join('\n')}`
       : '';
 
+    const burnoutGuidance = burnoutRecovery 
+      ? `\n\n**⚠️ BURNOUT RECOVERY MODE ACTIVE**
+
+CRITICAL ADJUSTMENTS:
+- **ONLY suggest tiny, simple tasks** (< 5 words, low cognitive load)
+- **Prioritize recovery activities**: rest, self-care, easy wins
+- **AVOID complex or demanding tasks** that require deep focus
+- **Keep suggestions minimal and achievable**
+- **Focus on quick wins** to rebuild momentum
+
+` : '';
+
     const systemPrompt = `You are an intelligent productivity assistant. Your role is to:
 
-${primaryFocusTask ? `**🎯 TODAY'S ONE-THING PRIORITY: "${primaryFocusTask}"${primaryFocusCluster ? ` (${primaryFocusCluster} domain)` : ''}**
+${burnoutGuidance}${primaryFocusTask ? `**🎯 TODAY'S ONE-THING PRIORITY: "${primaryFocusTask}"${primaryFocusCluster ? ` (${primaryFocusCluster} domain)` : ''}**
 
 CRITICAL: All suggestions MUST be evaluated against this primary focus:
 - **Prioritize "aligned" tasks** that directly support or enable the ONE-thing

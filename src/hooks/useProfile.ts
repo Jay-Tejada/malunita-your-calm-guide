@@ -34,6 +34,9 @@ export interface UserProfile {
   selected_accessory?: string;
   unlocked_accessories?: string[];
   unlocked_expressions?: string[];
+  burnout_risk?: number;
+  burnout_detected_at?: string;
+  burnout_recovery_until?: string;
 }
 
 export const useProfile = () => {

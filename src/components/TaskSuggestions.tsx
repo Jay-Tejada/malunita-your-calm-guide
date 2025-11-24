@@ -45,11 +45,23 @@ export const TaskSuggestions = ({ tasks, domain, onAddTask }: TaskSuggestionsPro
     try {
       const { data: { user } } = await supabase.auth.getUser();
       
+      // Check if in burnout recovery mode
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('burnout_recovery_until')
+        .eq('id', user?.id || '')
+        .maybeSingle();
+
+      const burnoutRecovery = profile?.burnout_recovery_until 
+        ? new Date(profile.burnout_recovery_until) > new Date()
+        : false;
+      
       const { data, error } = await supabase.functions.invoke('suggest-tasks', {
         body: { 
           tasks, 
           domain,
-          userId: user?.id 
+          userId: user?.id,
+          burnoutRecovery,
         }
       });
 

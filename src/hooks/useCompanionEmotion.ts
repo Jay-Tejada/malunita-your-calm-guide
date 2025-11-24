@@ -3,6 +3,7 @@ import { PersonalityType } from './useCompanionIdentity';
 import { MotionState } from './useCompanionMotion';
 import { CreatureExpression } from '@/constants/expressions';
 import { PersonalityArchetype, getExpressionWeight } from '@/state/personality';
+import { supabase } from '@/integrations/supabase/client';
 
 export type EmotionState = 
   | 'neutral' 
@@ -131,20 +132,44 @@ export const useCompanionEmotion = (
   const suggestedMotion = emotionToMotionMap[emotion];
   const taskPreference = emotionToTaskPreference[emotion];
 
-  // Auto-detect time of day and adjust emotion baseline
+  // Check burnout recovery mode and adjust emotion
   useEffect(() => {
-    const hour = new Date().getHours();
-    let timeOfDay: EmotionContext['timeOfDay'];
-    
-    if (hour >= 6 && hour < 12) timeOfDay = 'morning';
-    else if (hour >= 12 && hour < 17) timeOfDay = 'afternoon';
-    else if (hour >= 17 && hour < 21) timeOfDay = 'evening';
-    else timeOfDay = 'night';
+    const checkBurnoutAndAdjust = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
 
-    // Subtle baseline adjustment based on time
-    if (timeOfDay === 'night' && emotion === 'neutral') {
-      setEmotion('calm');
-    }
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('burnout_recovery_until')
+        .eq('id', user.id)
+        .single();
+
+      const inRecoveryMode = profile?.burnout_recovery_until 
+        ? new Date(profile.burnout_recovery_until) > new Date()
+        : false;
+
+      if (inRecoveryMode) {
+        // During burnout recovery, shift to calm/supportive tone
+        setEmotion('calm');
+        return;
+      }
+
+      // Auto-detect time of day and adjust emotion baseline
+      const hour = new Date().getHours();
+      let timeOfDay: EmotionContext['timeOfDay'];
+      
+      if (hour >= 6 && hour < 12) timeOfDay = 'morning';
+      else if (hour >= 12 && hour < 17) timeOfDay = 'afternoon';
+      else if (hour >= 17 && hour < 21) timeOfDay = 'evening';
+      else timeOfDay = 'night';
+
+      // Subtle baseline adjustment based on time
+      if (timeOfDay === 'night' && emotion === 'neutral') {
+        setEmotion('calm');
+      }
+    };
+
+    checkBurnoutAndAdjust();
   }, [emotion]);
 
   // Auto-return to neutral after emotion duration

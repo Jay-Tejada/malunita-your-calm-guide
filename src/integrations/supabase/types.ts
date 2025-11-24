@@ -490,6 +490,9 @@ export type Database = {
           average_tasks_per_day: number | null
           bonding_score: number | null
           bonding_tier: string | null
+          burnout_detected_at: string | null
+          burnout_recovery_until: string | null
+          burnout_risk: number | null
           common_prefixes: string[] | null
           companion_colorway: string | null
           companion_name: string | null
@@ -547,6 +550,9 @@ export type Database = {
           average_tasks_per_day?: number | null
           bonding_score?: number | null
           bonding_tier?: string | null
+          burnout_detected_at?: string | null
+          burnout_recovery_until?: string | null
+          burnout_risk?: number | null
           common_prefixes?: string[] | null
           companion_colorway?: string | null
           companion_name?: string | null
@@ -604,6 +610,9 @@ export type Database = {
           average_tasks_per_day?: number | null
           bonding_score?: number | null
           bonding_tier?: string | null
+          burnout_detected_at?: string | null
+          burnout_recovery_until?: string | null
+          burnout_risk?: number | null
           common_prefixes?: string[] | null
           companion_colorway?: string | null
           companion_name?: string | null

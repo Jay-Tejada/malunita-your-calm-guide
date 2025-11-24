@@ -40,6 +40,7 @@ serve(async (req) => {
     const locationContext = body.location || null; // { lat, lng, context: 'home' | 'work' }
     const companionMood = body.companionMood || 'medium'; // 'ambitious' | 'medium' | 'simple' | 'low-cognitive'
     const focusPersona = body.focusPersona || null;
+    const burnoutRecovery = body.burnoutRecovery || false;
 
     // Get user's profile for personalization and emotional state
     const { data: profile } = await supabase
@@ -167,11 +168,24 @@ serve(async (req) => {
       }
     }
 
-    // Apply companion mood influence to task selection
+    // Apply companion mood influence and burnout recovery to task selection
     const applyCompanionMoodWeight = (tasks: any[]): any[] => {
       return tasks.map(task => {
         let moodBoost = 0;
         const taskComplexity = task.title.split(/\s+/).length; // Word count as proxy for complexity
+        
+        // During burnout recovery, strongly prioritize tiny/simple tasks
+        if (burnoutRecovery) {
+          if (taskComplexity <= 5) {
+            moodBoost = 0.3; // Strong boost for tiny tasks
+          } else if (taskComplexity > 8) {
+            moodBoost = -0.5; // Strong penalty for complex tasks
+          }
+          return {
+            ...task,
+            moodBoost
+          };
+        }
         
         switch (companionMood) {
           case 'ambitious': // Joyful/Excited → favor challenging tasks
