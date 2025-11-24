@@ -16,6 +16,7 @@ import { TaskEditDialog } from "@/components/TaskEditDialog";
 import { useToast } from "@/hooks/use-toast";
 import { checkAndHandlePrediction } from "@/utils/predictionChecker";
 import { useAutoSplitTask } from "@/hooks/useAutoSplitTask";
+import { useRelatedTaskSuggestions } from "@/hooks/useRelatedTaskSuggestions";
 import {
   Drawer,
   DrawerClose,
@@ -35,6 +36,7 @@ export const TaskList = ({ category: externalCategory }: TaskListProps = {}) => 
   const { categories, createCategory } = useCustomCategories();
   const growth = useCompanionGrowth();
   const { generateAndCreateSubtasks } = useAutoSplitTask();
+  const { checkForRelatedTasks } = useRelatedTaskSuggestions();
   const [internalDomain, setInternalDomain] = useState("inbox");
   const [activeId, setActiveId] = useState<string | null>(null);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
@@ -233,6 +235,9 @@ export const TaskList = ({ category: externalCategory }: TaskListProps = {}) => 
     
     // Auto-split if complex
     generateAndCreateSubtasks(task);
+    
+    // Check for related tasks
+    checkForRelatedTasks(task);
     
     toast({
       title: "Added to Focus",
