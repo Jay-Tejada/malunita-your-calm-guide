@@ -78,12 +78,22 @@ export function MorningRitual({ onComplete, onSkip }: MorningRitualProps) {
     updateMood("happy");
 
     try {
+      // Get current session to ensure auth token is fresh
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        throw new Error('No active session');
+      }
+
       // Call AI to process ritual responses
       const { data, error } = await supabase.functions.invoke('process-ritual', {
         body: {
           type: 'morning',
           focusAnswer,
           appointmentsAnswer: appointmentsAnswer || null
+        },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`
         }
       });
 

@@ -63,6 +63,13 @@ export function EveningRitual({ onComplete, onSkip }: EveningRitualProps) {
     updateMood("sleepy");
 
     try {
+      // Get current session to ensure auth token is fresh
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        throw new Error('No active session');
+      }
+
       // Call AI to process ritual responses
       const { data, error } = await supabase.functions.invoke('process-ritual', {
         body: {
@@ -70,6 +77,9 @@ export function EveningRitual({ onComplete, onSkip }: EveningRitualProps) {
           winsAnswer: winsAnswer || null,
           stressAnswer: stressAnswer || null,
           tomorrowAnswer: tomorrowAnswer || null
+        },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`
         }
       });
 
