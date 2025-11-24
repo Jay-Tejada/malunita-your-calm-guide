@@ -109,3 +109,7 @@ verify_jwt = true
 [functions.get-mapbox-token]
 verify_jwt = false
 
+[functions.suggest-micro-steps]
+verify_jwt = true
+
+
