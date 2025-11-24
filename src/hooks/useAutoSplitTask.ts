@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Task } from './useTasks';
+import { recordComplexPrimaryFocus } from '@/state/cognitiveLoad';
 
 interface Subtask {
   title: string;
@@ -32,6 +33,9 @@ export const useAutoSplitTask = () => {
       console.log('Task not complex enough for auto-split');
       return;
     }
+
+    // Record complex primary focus in cognitive load system
+    recordComplexPrimaryFocus();
 
     setIsGenerating(true);
     try {

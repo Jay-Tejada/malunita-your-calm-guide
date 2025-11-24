@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { logHabitCompletion } from "@/ai/habitPredictor";
 import { useCognitiveLoad } from "@/state/cognitiveLoad";
+import { recordPrimaryFocusCompleted } from "@/state/cognitiveLoad";
 import { JOURNAL_EVENTS } from "@/features/journal/journalEvents";
 import { questTracker } from "@/lib/questTracker";
 import { bondingMeter, BONDING_INCREMENTS } from "@/state/bondingMeter";
@@ -162,6 +163,12 @@ export const useTasks = () => {
         
         // Check for ONE-thing avoidance after task completion
         checkAfterTaskCompletion();
+        
+        // If this was the ONE thing (primary focus), reduce cognitive load
+        if (data.is_focus) {
+          console.log('Primary focus task completed:', data.title);
+          recordPrimaryFocusCompleted();
+        }
         
         // Check for task milestone and create journal entry
         const completedCount = tasks?.filter(t => t.completed).length || 0;

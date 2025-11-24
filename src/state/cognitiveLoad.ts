@@ -13,6 +13,8 @@ interface TaskActivity {
   categorySwitch: number;
   lastCategorySwitch: number | null;
   overdueTasks: number;
+  hasComplexPrimaryFocus: boolean;
+  primaryFocusBaselineBoost: number;
 }
 
 interface CognitiveLoadState {
@@ -31,6 +33,8 @@ interface CognitiveLoadActions {
   recordCategorySwitch: () => void;
   recordStressedLanguage: (text: string) => void;
   updateOverdueTasks: (count: number) => void;
+  recordComplexPrimaryFocus: () => void;
+  recordPrimaryFocusCompleted: () => void;
   getRecommendations: () => string[];
   applyLoadEffects: () => void;
   reset: () => void;
@@ -54,6 +58,8 @@ const initialTaskActivity: TaskActivity = {
   categorySwitch: 0,
   lastCategorySwitch: null,
   overdueTasks: 0,
+  hasComplexPrimaryFocus: false,
+  primaryFocusBaselineBoost: 0,
 };
 
 export const useCognitiveLoad = create<CognitiveLoadState & CognitiveLoadActions>((set, get) => ({
@@ -104,9 +110,12 @@ export const useCognitiveLoad = create<CognitiveLoadState & CognitiveLoadActions
     const overdueScore = Math.min(cleanedActivity.overdueTasks * 0.5, 5);
     const behaviorScore = categoryScore + languageScore + overdueScore;
     
+    // Apply primary focus baseline boost if complex ONE thing is set
+    const primaryFocusBoost = cleanedActivity.primaryFocusBaselineBoost;
+    
     // Total score (0-100)
     const totalScore = Math.min(
-      Math.round(stressScore + rapidTaskScore + completionScore + behaviorScore),
+      Math.round(stressScore + rapidTaskScore + completionScore + behaviorScore + primaryFocusBoost),
       100
     );
     
@@ -187,6 +196,41 @@ export const useCognitiveLoad = create<CognitiveLoadState & CognitiveLoadActions
     get().calculateLoad();
   },
 
+  recordComplexPrimaryFocus: () => {
+    console.log('Recording complex primary focus - increasing cognitive load baseline by +2');
+    set((state) => ({
+      taskActivity: {
+        ...state.taskActivity,
+        hasComplexPrimaryFocus: true,
+        primaryFocusBaselineBoost: 2,
+      }
+    }));
+    
+    // Increase fatigue slightly when tackling complex primary focus
+    const emotionalMemory = useEmotionalMemory.getState();
+    emotionalMemory.adjustFatigue(1);
+    
+    get().calculateLoad();
+  },
+
+  recordPrimaryFocusCompleted: () => {
+    console.log('Recording primary focus completed - reducing cognitive load by -4');
+    set((state) => ({
+      score: Math.max(state.score - 4, 0),
+      taskActivity: {
+        ...state.taskActivity,
+        hasComplexPrimaryFocus: false,
+        primaryFocusBaselineBoost: 0,
+      }
+    }));
+    
+    // Reduce fatigue by -2 on ONE thing completion
+    const emotionalMemory = useEmotionalMemory.getState();
+    emotionalMemory.adjustFatigue(-2);
+    
+    get().calculateLoad();
+  },
+
   getRecommendations: () => {
     const { level, taskActivity, score } = get();
     const recommendations: string[] = [];
@@ -254,6 +298,15 @@ export const useCognitiveLoad = create<CognitiveLoadState & CognitiveLoadActions
     });
   },
 }));
+
+// Export helper functions for primary focus tracking
+export const recordComplexPrimaryFocus = () => {
+  useCognitiveLoad.getState().recordComplexPrimaryFocus();
+};
+
+export const recordPrimaryFocusCompleted = () => {
+  useCognitiveLoad.getState().recordPrimaryFocusCompleted();
+};
 
 // Helper function to monitor task activity
 export const startCognitiveLoadMonitoring = () => {
