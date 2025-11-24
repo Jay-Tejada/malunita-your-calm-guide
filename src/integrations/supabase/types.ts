@@ -145,6 +145,36 @@ export type Database = {
         }
         Relationships: []
       }
+      daily_focus_history: {
+        Row: {
+          created_at: string
+          date: string
+          focus_task: string
+          id: string
+          note: string | null
+          outcome: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          focus_task: string
+          id?: string
+          note?: string | null
+          outcome: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          focus_task?: string
+          id?: string
+          note?: string | null
+          outcome?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       daily_sessions: {
         Row: {
           created_at: string

@@ -9,7 +9,9 @@ import { useCompanionIdentity, PersonalityType } from "@/hooks/useCompanionIdent
 import { useToast } from "@/hooks/use-toast";
 import { HomeShell } from "@/layouts/HomeShell";
 import { DailyPriorityPrompt } from "@/components/DailyPriorityPrompt";
+import { FocusReflectionPrompt } from "@/components/FocusReflectionPrompt";
 import { useDailyPriorityPrompt } from "@/state/useDailyPriorityPrompt";
+import { useFocusReflection } from "@/hooks/useFocusReflection";
 
 const Index = () => {
   const [user, setUser] = useState<any>(null);
@@ -27,6 +29,7 @@ const Index = () => {
   const { toast } = useToast();
   const voiceRef = useRef<MalunitaVoiceRef>(null);
   const { checkIfShouldShowPrompt } = useDailyPriorityPrompt();
+  const { yesterdaysFocusTask, showPrompt: showReflection, saveReflection, dismissPrompt } = useFocusReflection();
 
   useEffect(() => {
     const {
@@ -123,6 +126,16 @@ const Index = () => {
     console.log("Dream mode clicked");
   };
 
+  const handleReflectionSubmit = async (outcome: 'done' | 'partial' | 'missed', note?: string) => {
+    const { error } = await saveReflection({ outcome, note });
+    if (!error) {
+      toast({
+        title: "Reflection saved",
+        description: "Keep up the great work!",
+      });
+    }
+  };
+
   return (
     <>
       <HomeShell
@@ -134,6 +147,17 @@ const Index = () => {
         onDreamModeClick={handleDreamModeClick}
         activeCategory={activeCategory}
       >
+        {showReflection && yesterdaysFocusTask && (
+          <div className="absolute top-12 sm:top-10 md:top-8 left-0 right-0 flex justify-center z-20 px-4">
+            <div className="max-w-xl w-full">
+              <FocusReflectionPrompt
+                focusTask={yesterdaysFocusTask}
+                onSubmit={handleReflectionSubmit}
+                onDismiss={dismissPrompt}
+              />
+            </div>
+          </div>
+        )}
         <DailyPriorityPrompt />
         <HomeOrb 
           onCapture={handleOrbClick} 
