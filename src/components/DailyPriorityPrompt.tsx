@@ -8,6 +8,8 @@ import { useTasks, Task } from "@/hooks/useTasks";
 import { useCompanionEvents } from "@/hooks/useCompanionEvents";
 import { checkAndHandlePrediction } from "@/utils/predictionChecker";
 import { useAutoSplitTask } from "@/hooks/useAutoSplitTask";
+import { useRelatedTaskSuggestions } from "@/hooks/useRelatedTaskSuggestions";
+import { RelatedTaskSuggestions } from "@/components/RelatedTaskSuggestions";
 import { Sparkles } from "lucide-react";
 
 export function DailyPriorityPrompt() {
@@ -15,6 +17,13 @@ export function DailyPriorityPrompt() {
   const { createTasks } = useTasks();
   const { onTaskCompleted } = useCompanionEvents();
   const { generateAndCreateSubtasks } = useAutoSplitTask();
+  const {
+    suggestions,
+    isProcessing: isSuggestionsProcessing,
+    checkForRelatedTasks,
+    acceptSuggestion,
+    declineSuggestion,
+  } = useRelatedTaskSuggestions();
   
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [taskInput, setTaskInput] = useState("");
@@ -66,6 +75,9 @@ export function DailyPriorityPrompt() {
         
         // Auto-split if complex
         generateAndCreateSubtasks(selectedTask);
+        
+        // Check for related tasks
+        checkForRelatedTasks(selectedTask);
       }
       
       setIsDialogOpen(false);
@@ -128,6 +140,18 @@ export function DailyPriorityPrompt() {
               autoFocus
               className="text-base"
             />
+            
+            {/* Show related task suggestions after submission */}
+            {suggestions.length > 0 && (
+              <div className="pt-2">
+                <RelatedTaskSuggestions
+                  suggestions={suggestions}
+                  isProcessing={isSuggestionsProcessing}
+                  onAccept={acceptSuggestion}
+                  onDecline={declineSuggestion}
+                />
+              </div>
+            )}
             
             <div className="flex gap-2 justify-end">
               <Button

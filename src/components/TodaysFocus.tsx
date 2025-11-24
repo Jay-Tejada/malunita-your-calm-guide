@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useTasks, Task } from "@/hooks/useTasks";
 import { FocusCard } from "@/components/FocusCard";
 import { Card } from "@/components/ui/card";
@@ -9,6 +9,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/hooks/useProfile";
 import { checkAndHandlePrediction } from "@/utils/predictionChecker";
 import { useAutoSplitTask } from "@/hooks/useAutoSplitTask";
+import { useRelatedTaskSuggestions } from "@/hooks/useRelatedTaskSuggestions";
+import { RelatedTaskSuggestions } from "@/components/RelatedTaskSuggestions";
 
 interface TodaysFocusProps {
   onReflectClick?: () => void;
@@ -20,6 +22,13 @@ export const TodaysFocus = ({ onReflectClick }: TodaysFocusProps) => {
   const [isSuggesting, setIsSuggesting] = React.useState(false);
   const { toast } = useToast();
   const { generateAndCreateSubtasks } = useAutoSplitTask();
+  const {
+    suggestions,
+    isProcessing: isSuggestionsProcessing,
+    checkForRelatedTasks,
+    acceptSuggestion,
+    declineSuggestion,
+  } = useRelatedTaskSuggestions();
 
   const today = new Date().toISOString().split('T')[0];
   const focusTasks = tasks?.filter(task => 
@@ -29,6 +38,16 @@ export const TodaysFocus = ({ onReflectClick }: TodaysFocusProps) => {
   ) || [];
 
   const pendingTasks = tasks?.filter(task => !task.completed && !task.is_focus) || [];
+
+  // Check for related tasks when focus tasks change
+  useEffect(() => {
+    if (focusTasks.length > 0) {
+      const primaryFocus = focusTasks[0];
+      if (primaryFocus) {
+        checkForRelatedTasks(primaryFocus);
+      }
+    }
+  }, [focusTasks.length]);
 
   const handleToggleComplete = (task: Task) => {
     updateTask({
@@ -102,6 +121,11 @@ export const TodaysFocus = ({ onReflectClick }: TodaysFocusProps) => {
           
           // Auto-split if complex
           generateAndCreateSubtasks(task);
+          
+          // Check for related tasks (only for first focus task)
+          if (suggestion.taskIndex === 0) {
+            checkForRelatedTasks(task);
+          }
         }
       }
 
@@ -168,6 +192,16 @@ export const TodaysFocus = ({ onReflectClick }: TodaysFocusProps) => {
           )}
         </div>
       </div>
+
+      {/* Related task suggestions */}
+      {suggestions.length > 0 && (
+        <RelatedTaskSuggestions
+          suggestions={suggestions}
+          isProcessing={isSuggestionsProcessing}
+          onAccept={acceptSuggestion}
+          onDecline={declineSuggestion}
+        />
+      )}
 
       {focusTasks.length === 0 ? (
         <Card className="p-6 text-center border-dashed">

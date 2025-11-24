@@ -5,6 +5,8 @@ interface Task {
   reminder_time?: string | null;
   is_focus?: boolean;
   focus_date?: string | null;
+  keywords?: string[];
+  context?: string;
 }
 
 interface ContextMap {
@@ -23,15 +25,24 @@ interface TaskScore {
   big_task: boolean;
 }
 
+interface RelatedTaskSuggestion {
+  task_id: string;
+  task_title: string;
+  shared_keywords: string[];
+  suggested_bucket: 'today' | 'this_week';
+}
+
 interface AgendaRouting {
   today: string[];
   tomorrow: string[];
   this_week: string[];
   upcoming: string[];
   someday: string[];
+  relatedTaskSuggestions?: RelatedTaskSuggestion[];
 }
 
 const MAX_TODAY_TASKS = 8; // Limit for "today" bucket to avoid overwhelming
+const MAX_RELATED_SUGGESTIONS = 2; // Maximum related tasks to suggest
 
 function isOverdue(deadline: string): boolean {
   const deadlineDate = new Date(deadline);
@@ -86,6 +97,53 @@ function routeTaskByPriority(
   return 'upcoming';
 }
 
+/**
+ * Find related tasks based on keyword overlap with the primary focus task
+ */
+function findRelatedTasks(
+  primaryFocusTask: Task,
+  allTasks: Task[],
+  primaryFocusTaskIds: string[]
+): RelatedTaskSuggestion[] {
+  if (!primaryFocusTask.keywords || primaryFocusTask.keywords.length === 0) {
+    return [];
+  }
+
+  const primaryKeywords = new Set(primaryFocusTask.keywords.map(k => k.toLowerCase()));
+  const relatedTasks: Array<{ task: Task; sharedKeywords: string[]; score: number }> = [];
+
+  for (const task of allTasks) {
+    // Skip if it's a primary focus task, completed, or has no ID
+    if (!task.id || primaryFocusTaskIds.includes(task.id)) continue;
+
+    // Skip if task has no keywords
+    if (!task.keywords || task.keywords.length === 0) continue;
+
+    // Calculate keyword overlap
+    const taskKeywords = task.keywords.map(k => k.toLowerCase());
+    const sharedKeywords = taskKeywords.filter(k => primaryKeywords.has(k));
+
+    if (sharedKeywords.length > 0) {
+      // Score based on keyword overlap
+      const score = sharedKeywords.length;
+      relatedTasks.push({ task, sharedKeywords, score });
+    }
+  }
+
+  // Sort by score (most overlap first) and limit to MAX_RELATED_SUGGESTIONS
+  relatedTasks.sort((a, b) => b.score - a.score);
+  const topRelated = relatedTasks.slice(0, MAX_RELATED_SUGGESTIONS);
+
+  // Convert to suggestions with appropriate buckets
+  return topRelated.map((related, index) => ({
+    task_id: related.task.id!,
+    task_title: related.task.title,
+    shared_keywords: related.sharedKeywords,
+    // First suggestion goes to today, second to this_week
+    suggested_bucket: index === 0 ? 'today' : 'this_week',
+  }));
+}
+
 export function agendaRouter(
   extractedTasks: Task[],
   contextMap: ContextMap,
@@ -97,6 +155,7 @@ export function agendaRouter(
     this_week: [],
     upcoming: [],
     someday: [],
+    relatedTaskSuggestions: [],
   };
   
   const tasks = extractedTasks || [];
@@ -115,6 +174,8 @@ export function agendaRouter(
   
   // First pass: handle primary focus tasks (always first in today)
   const primaryFocusTasks: string[] = [];
+  let primaryFocusTask: Task | null = null;
+  
   for (const task of tasks) {
     if (!task.id) continue;
     
@@ -122,7 +183,20 @@ export function agendaRouter(
     if (task.category === 'primary_focus' && task.is_focus && task.focus_date === today) {
       primaryFocusTasks.push(task.id);
       todayCount++;
+      // Store the primary focus task for related task detection
+      if (!primaryFocusTask) {
+        primaryFocusTask = task;
+      }
     }
+  }
+  
+  // Find related tasks if there's a primary focus
+  if (primaryFocusTask) {
+    routing.relatedTaskSuggestions = findRelatedTasks(
+      primaryFocusTask,
+      tasks,
+      primaryFocusTasks
+    );
   }
   
   // Second pass: route tasks with explicit deadlines
@@ -202,4 +276,42 @@ export function agendaRouter(
   routing.today = [...primaryFocusTasks, ...routing.today.filter(id => !primaryFocusTasks.includes(id))];
   
   return routing;
+}
+
+/**
+ * Apply related task suggestions to tasks by moving them to suggested buckets
+ */
+export function applyRelatedTaskSuggestions(
+  tasks: Task[],
+  suggestions: RelatedTaskSuggestion[]
+): Task[] {
+  const updatedTasks = [...tasks];
+  const suggestionMap = new Map(suggestions.map(s => [s.task_id, s.suggested_bucket]));
+
+  return updatedTasks.map(task => {
+    if (!task.id || !suggestionMap.has(task.id)) return task;
+
+    const suggestedBucket = suggestionMap.get(task.id)!;
+    
+    // For "today" suggestions, set as focus task
+    if (suggestedBucket === 'today') {
+      return {
+        ...task,
+        is_focus: true,
+        focus_date: new Date().toISOString().split('T')[0],
+      };
+    }
+    
+    // For "this_week" suggestions, add context
+    if (suggestedBucket === 'this_week') {
+      return {
+        ...task,
+        context: task.context 
+          ? `${task.context} (Related to primary focus)`
+          : 'Related to primary focus',
+      };
+    }
+
+    return task;
+  });
 }
