@@ -119,6 +119,7 @@ export function TaskStream() {
                       due_date: task.reminder_time,
                       section: task.category,
                     }}
+                    fullTask={task}
                   />
                 );
               })}
@@ -152,6 +153,7 @@ export function TaskStream() {
                       due_date: task.reminder_time,
                       section: task.category,
                     }}
+                    fullTask={task}
                   />
                 );
               })}
@@ -185,6 +187,7 @@ export function TaskStream() {
                       due_date: task.reminder_time,
                       section: task.category,
                     }}
+                    fullTask={task}
                   />
                 );
               })}
