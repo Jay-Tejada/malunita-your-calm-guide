@@ -53,7 +53,12 @@ serve(async (req) => {
       )
     }
 
-    const { text, userProfile, userId } = await req.json();
+    const { text, userProfile, userId, currentDate } = await req.json();
+    
+    // Get current date for time calculations
+    const now = currentDate ? new Date(currentDate) : new Date();
+    const currentDateStr = now.toISOString().split('T')[0];
+    const currentTimeStr = now.toTimeString().split(' ')[0];
     
     // Input validation
     if (!text || typeof text !== 'string') {
@@ -148,10 +153,12 @@ Guidelines:
 - Suggest appropriate categories: inbox, work, home, projects, gym, someday, or user's custom categories
 - Suggest timeframes: today, this_week, later
 - Extract reminder dates AND times if mentioned:
+  * Current date context: ${currentDateStr} at ${currentTimeStr}
   * Relative dates: "tomorrow at 10 AM", "next Monday at 3 PM", "in 3 days at noon"
   * Absolute dates: "November 10th at 10 AM", "Dec 25 at 9:00", "on the 15th at 2 PM"
-  * Time only: "remind me at 10 AM" (assumes today)
-  * Date only: "remind me tomorrow" (assumes 9 AM)
+  * Time only: "remind me at 10 AM" or "due at 3 PM" (assumes today: ${currentDateStr})
+  * Date only: "remind me tomorrow" or "due tomorrow" (assumes 9 AM)
+  * "today" references should use: ${currentDateStr}
 - Return reminder_time as complete ISO 8601 timestamp (YYYY-MM-DDTHH:MM:SSZ) including date and time
 - If no reminder mentioned, return null for reminder_time
 - Create friendly confirmation prompts for each task
@@ -184,11 +191,12 @@ Return valid JSON in this exact format:
   "conversation_reply": "Optional friendly reply if no tasks were found"
 }
 
-Examples for reminder_time:
-- "remind me at 10 AM" → "2024-11-13T10:00:00Z" (today at 10 AM)
-- "remind me tomorrow at 3 PM" → "2024-11-14T15:00:00Z"
+Examples for reminder_time (using current date ${currentDateStr}):
+- "due at 10 AM" or "at 10 AM today" → "${currentDateStr}T10:00:00Z"
+- "remind me tomorrow at 3 PM" → calculate tomorrow from ${currentDateStr}
 - "remind me November 10th at 10 AM" → "2024-11-10T10:00:00Z"
-- "remind me next Monday at 9 AM" → calculate the date for next Monday
+- "remind me next Monday at 9 AM" → calculate next Monday from ${currentDateStr}
+- "today at 5 PM" → "${currentDateStr}T17:00:00Z"
 - No reminder mentioned → null`;
 
     console.log('Extracting tasks from:', text);

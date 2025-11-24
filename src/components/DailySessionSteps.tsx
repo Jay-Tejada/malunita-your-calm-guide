@@ -250,7 +250,11 @@ export const DailySessionSteps = ({
     try {
       // Use existing extract-tasks function
       const { data, error } = await supabase.functions.invoke('extract-tasks', {
-        body: { text, userId: (await supabase.auth.getUser()).data.user?.id }
+        body: { 
+          text, 
+          userId: (await supabase.auth.getUser()).data.user?.id,
+          currentDate: new Date().toISOString()
+        }
       });
 
       if (error) throw error;
