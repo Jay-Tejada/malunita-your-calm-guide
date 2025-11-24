@@ -114,27 +114,32 @@ const Index = () => {
   };
 
   return (
-    <HomeShell
-      onSettingsClick={handleSettingsClick}
-      onCategoryClick={handleCategoryClick}
-      onFocusModeClick={handleFocusModeClick}
-      onWorldMapClick={handleWorldMapClick}
-      onShareMalunitaClick={handleShareMalunitaClick}
-      onDreamModeClick={handleDreamModeClick}
-      activeCategory={activeCategory}
-    >
-      <HomeOrb 
-        onCapture={handleOrbClick} 
-        isRecording={isRecording} 
-        status={getOrbStatus()}
-        recordingDuration={voiceStatus.recordingDuration}
+    <>
+      <HomeShell
+        onSettingsClick={handleSettingsClick}
+        onCategoryClick={handleCategoryClick}
+        onFocusModeClick={handleFocusModeClick}
+        onWorldMapClick={handleWorldMapClick}
+        onShareMalunitaClick={handleShareMalunitaClick}
+        onDreamModeClick={handleDreamModeClick}
+        activeCategory={activeCategory}
       />
+      
+      {/* Voice logic handler - UI hidden, will be integrated into CompanionSidebar later */}
       <MalunitaVoice 
         ref={voiceRef} 
         onRecordingStateChange={setIsRecording}
         onStatusChange={setVoiceStatus}
       />
-    </HomeShell>
+      
+      {/* HomeOrb - COMMENTED OUT - will be moved to CompanionSidebar */}
+      {/* <HomeOrb 
+        onCapture={handleOrbClick} 
+        isRecording={isRecording} 
+        status={getOrbStatus()}
+        recordingDuration={voiceStatus.recordingDuration}
+      /> */}
+    </>
   );
 };
 

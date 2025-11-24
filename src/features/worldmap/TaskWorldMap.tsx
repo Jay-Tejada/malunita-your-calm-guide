@@ -417,11 +417,12 @@ export const TaskWorldMap = ({ onClose, onPlanetClick, currentCategory }: TaskWo
                 }
           }
         >
-          <CompanionVisual
+          {/* CompanionVisual - COMMENTED OUT - now lives in CompanionSidebar */}
+          {/* <CompanionVisual
             emotion={mood === 'sleeping' || mood === 'sleepy' ? 'sleepy' : mood === 'happy' || mood === 'excited' ? 'excited' : 'neutral'}
             motion={isFlying ? 'excited' : 'idle'}
             size="lg"
-          />
+          /> */}
           
           {/* Trail effect when flying */}
           {isFlying && (
