@@ -11,9 +11,11 @@ import { HomeShell } from "@/layouts/HomeShell";
 import { DailyPriorityPrompt } from "@/components/DailyPriorityPrompt";
 import { FocusReflectionPrompt } from "@/components/FocusReflectionPrompt";
 import { MidDayFocusReminder } from "@/components/MidDayFocusReminder";
+import { EndOfDayWrapUp } from "@/components/EndOfDayWrapUp";
 import { useDailyPriorityPrompt } from "@/state/useDailyPriorityPrompt";
 import { useFocusReflection } from "@/hooks/useFocusReflection";
 import { useMidDayFocusReminder } from "@/hooks/useMidDayFocusReminder";
+import { useEndOfDayWrapUp } from "@/hooks/useEndOfDayWrapUp";
 import { useTasks, Task } from "@/hooks/useTasks";
 
 const Index = () => {
@@ -34,6 +36,7 @@ const Index = () => {
   const { checkIfShouldShowPrompt } = useDailyPriorityPrompt();
   const { yesterdaysFocusTask, showPrompt: showReflection, saveReflection, dismissPrompt } = useFocusReflection();
   const { showReminder: showMidDayReminder, focusTask: midDayFocusTask, dismissReminder } = useMidDayFocusReminder();
+  const { showWrapUp, completed: wrapUpCompleted } = useEndOfDayWrapUp();
   const { updateTask } = useTasks();
 
   useEffect(() => {
@@ -191,7 +194,12 @@ const Index = () => {
           </div>
         )}
         <DailyPriorityPrompt />
-        <HomeOrb 
+        {showWrapUp && (
+          <div className="mb-6">
+            <EndOfDayWrapUp completed={wrapUpCompleted} />
+          </div>
+        )}
+        <HomeOrb
           onCapture={handleOrbClick} 
           isRecording={isRecording} 
           status={getOrbStatus()}
