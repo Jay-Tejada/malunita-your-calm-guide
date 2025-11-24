@@ -10,6 +10,7 @@ import { bondingMeter, BONDING_INCREMENTS } from "@/state/bondingMeter";
 import { useSeasonalEvent } from "./useSeasonalEvent";
 import { useCustomizationStore } from "@/features/customization/useCustomizationStore";
 import { useOneThingAvoidance } from "./useOneThingAvoidance";
+import { updateBurnoutStatus } from "@/ai/burnoutDetector";
 
 export interface Task {
   id: string;
@@ -120,7 +121,7 @@ export const useTasks = () => {
     onSuccess: async (data) => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
       
-      // If task is marked as ONE-thing (is_focus), store embedding
+      // If task is marked as ONE-thing (is_focus), store embedding and update burnout status
       if (data.is_focus && !data.completed) {
         try {
           // Invoke focus-memory-store to create embedding
@@ -136,6 +137,12 @@ export const useTasks = () => {
           console.log('✅ Focus memory embedding created for ONE-thing task');
         } catch (error) {
           console.error('Failed to store focus memory:', error);
+        }
+
+        // Update burnout status when ONE thing is set
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user?.id) {
+          updateBurnoutStatus(user.id);
         }
       }
       
@@ -183,7 +190,7 @@ export const useTasks = () => {
         // Check for ONE-thing avoidance after task completion
         checkAfterTaskCompletion();
         
-        // If this was the ONE thing (primary focus), reduce cognitive load
+        // If this was the ONE thing (primary focus), reduce cognitive load and update burnout status
         if (data.is_focus) {
           console.log('Primary focus task completed:', data.title);
           recordPrimaryFocusCompleted();
@@ -205,6 +212,12 @@ export const useTasks = () => {
             }
           } catch (error) {
             console.error('Failed to update focus embedding outcome:', error);
+          }
+
+          // Update burnout status after primary focus completion
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user?.id) {
+            updateBurnoutStatus(user.id);
           }
         }
         

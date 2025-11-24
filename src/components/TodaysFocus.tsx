@@ -90,6 +90,11 @@ export const TodaysFocus = ({ onReflectClick }: TodaysFocusProps) => {
 
     setIsSuggesting(true);
     try {
+      // Check if in burnout recovery mode
+      const burnoutRecovery = profile?.burnout_recovery_until 
+        ? new Date(profile.burnout_recovery_until) > new Date()
+        : false;
+
       const { data, error } = await supabase.functions.invoke('suggest-focus', {
         body: { 
           tasks: pendingTasks.map(t => ({
@@ -101,7 +106,8 @@ export const TodaysFocus = ({ onReflectClick }: TodaysFocusProps) => {
             is_time_based: t.is_time_based
           })),
           userProfile: profile,
-          companionMood: taskPreference
+          companionMood: taskPreference,
+          burnoutRecovery,
         }
       });
 
