@@ -36,6 +36,7 @@ export interface Task {
   location_lat?: number | null;
   location_lng?: number | null;
   location_address?: string | null;
+  parent_task_id?: string | null;
 }
 
 export const useTasks = () => {

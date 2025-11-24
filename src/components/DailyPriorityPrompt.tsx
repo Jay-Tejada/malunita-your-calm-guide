@@ -4,15 +4,17 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useDailyPriorityPrompt } from "@/state/useDailyPriorityPrompt";
-import { useTasks } from "@/hooks/useTasks";
+import { useTasks, Task } from "@/hooks/useTasks";
 import { useCompanionEvents } from "@/hooks/useCompanionEvents";
 import { checkAndHandlePrediction } from "@/utils/predictionChecker";
+import { useAutoSplitTask } from "@/hooks/useAutoSplitTask";
 import { Sparkles } from "lucide-react";
 
 export function DailyPriorityPrompt() {
   const { showPrompt, checkIfShouldShowPrompt, markPromptAnswered } = useDailyPriorityPrompt();
   const { createTasks } = useTasks();
   const { onTaskCompleted } = useCompanionEvents();
+  const { generateAndCreateSubtasks } = useAutoSplitTask();
   
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [taskInput, setTaskInput] = useState("");
@@ -56,11 +58,14 @@ export function DailyPriorityPrompt() {
       
       // Store the priority task ID
       if (createdTasks && createdTasks.length > 0) {
-        const selectedTask = createdTasks[0];
+        const selectedTask = createdTasks[0] as Task;
         markPromptAnswered(selectedTask.id);
         
         // Check if this matches our prediction
         checkAndHandlePrediction(selectedTask.id, selectedTask.title);
+        
+        // Auto-split if complex
+        generateAndCreateSubtasks(selectedTask);
       }
       
       setIsDialogOpen(false);

@@ -838,6 +838,7 @@ export type Database = {
           location_address: string | null
           location_lat: number | null
           location_lng: number | null
+          parent_task_id: string | null
           recurrence_day: number | null
           recurrence_end_date: string | null
           recurrence_pattern: string | null
@@ -868,6 +869,7 @@ export type Database = {
           location_address?: string | null
           location_lat?: number | null
           location_lng?: number | null
+          parent_task_id?: string | null
           recurrence_day?: number | null
           recurrence_end_date?: string | null
           recurrence_pattern?: string | null
@@ -898,6 +900,7 @@ export type Database = {
           location_address?: string | null
           location_lat?: number | null
           location_lng?: number | null
+          parent_task_id?: string | null
           recurrence_day?: number | null
           recurrence_end_date?: string | null
           recurrence_pattern?: string | null
@@ -919,6 +922,13 @@ export type Database = {
             columns: ["daily_session_id"]
             isOneToOne: false
             referencedRelation: "daily_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_parent_task_id_fkey"
+            columns: ["parent_task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
             referencedColumns: ["id"]
           },
         ]

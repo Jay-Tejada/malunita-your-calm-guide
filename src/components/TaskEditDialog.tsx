@@ -12,10 +12,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { MapboxLocationPicker } from "@/components/MapboxLocationPicker";
-import { MapPin, Lightbulb, Loader2 } from "lucide-react";
+import { MapPin, Lightbulb, Loader2, CheckCircle2 } from "lucide-react";
 import { useMapboxToken } from "@/hooks/useMapboxToken";
 import { useMicroSuggestions } from "@/hooks/useMicroSuggestions";
-import { Task } from "@/hooks/useTasks";
+import { Task, useTasks } from "@/hooks/useTasks";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface TaskEditDialogProps {
   open: boolean;
@@ -35,6 +36,11 @@ export const TaskEditDialog = ({ open, task, onSave, onClose }: TaskEditDialogPr
   const [showLocationPicker, setShowLocationPicker] = useState(false);
   const { token: accessToken } = useMapboxToken();
   const { suggestions, isLoading: isSuggestionsLoading, generateSuggestions, clearSuggestions } = useMicroSuggestions();
+  const { tasks: allTasks, updateTask } = useTasks();
+  const queryClient = useQueryClient();
+
+  // Get subtasks for this task
+  const subtasks = allTasks?.filter(t => t.parent_task_id === task?.id) || [];
 
   useEffect(() => {
     if (task) {
@@ -145,6 +151,46 @@ export const TaskEditDialog = ({ open, task, onSave, onClose }: TaskEditDialogPr
               </SelectContent>
             </Select>
           </div>
+
+          {/* Subtasks for ONE thing tasks */}
+          {task?.is_focus && subtasks.length > 0 && (
+            <div className="space-y-2 pt-2">
+              <div className="flex items-center gap-2">
+                <Lightbulb className="w-4 h-4 text-primary" />
+                <Label className="text-sm font-medium">Breakdown Steps</Label>
+              </div>
+              <div className="space-y-2">
+                {subtasks.map((subtask) => (
+                  <div
+                    key={subtask.id}
+                    className="flex items-start gap-2 text-sm p-2 rounded-md bg-muted/50 cursor-pointer hover:bg-muted transition-colors"
+                    onClick={async () => {
+                      await updateTask({
+                        id: subtask.id,
+                        updates: { completed: !subtask.completed }
+                      });
+                      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+                    }}
+                  >
+                    <CheckCircle2 
+                      className={`flex-shrink-0 w-5 h-5 mt-0.5 transition-colors ${
+                        subtask.completed 
+                          ? 'text-primary fill-primary' 
+                          : 'text-muted-foreground'
+                      }`}
+                    />
+                    <span className={`flex-1 ${
+                      subtask.completed 
+                        ? 'text-muted-foreground line-through' 
+                        : 'text-foreground'
+                    }`}>
+                      {subtask.title}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Micro-suggestions for ONE thing tasks */}
           {task?.is_focus && (
