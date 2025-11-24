@@ -11,7 +11,7 @@ serve(async (req) => {
   }
 
   try {
-    const { tasks } = await req.json();
+    const { tasks, primaryFocusTask } = await req.json();
     
     if (!tasks || tasks.length === 0) {
       return new Response(
@@ -25,10 +25,12 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    // Prepare task summary for AI
-    const taskSummary = tasks.map((task: any, idx: number) => 
-      `${idx + 1}. "${task.title}" (Category: ${task.category || 'None'}, Context: ${task.context || 'None'})`
-    ).join('\n');
+    // Prepare task summary for AI, giving primary focus task higher weight
+    const taskSummary = tasks.map((task: any, idx: number) => {
+      const isPrimary = primaryFocusTask && task.id === primaryFocusTask.id;
+      const weight = isPrimary ? ' [WEIGHT: 1.2 - Primary Focus]' : '';
+      return `${idx + 1}. "${task.title}" (Category: ${task.category || 'None'}, Context: ${task.context || 'None'})${weight}`;
+    }).join('\n');
 
     const systemPrompt = `You are an AI task organizer. Analyze the given tasks and group them into semantic clusters based on their meaning and context, not just their categories.
 
@@ -40,6 +42,8 @@ Common cluster types to consider:
 - Learning & Skills (education, hobbies, self-improvement)
 - Home & Maintenance (cleaning, repairs, organization)
 - Creative Projects (art, writing, creative work)
+
+IMPORTANT: Tasks marked with [WEIGHT: 1.2 - Primary Focus] should influence cluster formation more strongly. Give them +0.2 additional weight when determining cluster boundaries and naming.
 
 Create 3-7 clusters based on the tasks provided. Each cluster should have:
 - A clear, descriptive name

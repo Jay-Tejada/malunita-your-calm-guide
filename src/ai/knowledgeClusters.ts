@@ -25,7 +25,7 @@ const CLUSTER_COLORS = [
   'hsl(260, 65%, 75%)', // lavender
 ];
 
-export const clusterTasks = async (tasks: any[]): Promise<ClusterAnalysis> => {
+export const clusterTasks = async (tasks: any[], primaryFocusTask?: any): Promise<ClusterAnalysis> => {
   // Filter active (incomplete) tasks
   const activeTasks = tasks.filter(task => !task.completed);
 
@@ -46,9 +46,20 @@ export const clusterTasks = async (tasks: any[]): Promise<ClusterAnalysis> => {
     has_reminder: task.has_reminder,
   }));
 
+  // Prepare primary focus task if provided
+  const primaryFocusData = primaryFocusTask ? {
+    id: primaryFocusTask.id,
+    title: primaryFocusTask.title,
+    category: primaryFocusTask.category,
+    context: primaryFocusTask.context,
+  } : undefined;
+
   try {
     const { data, error } = await supabase.functions.invoke('cluster-tasks', {
-      body: { tasks: taskData }
+      body: { 
+        tasks: taskData,
+        primaryFocusTask: primaryFocusData,
+      }
     });
 
     if (error) throw error;

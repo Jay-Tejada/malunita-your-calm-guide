@@ -4,6 +4,7 @@ import { useTasks } from './useTasks';
 import { format, subDays } from 'date-fns';
 import { useFocusStreak } from './useFocusStreak';
 import { useEmotionalMemory } from '@/state/emotionalMemory';
+import { clusterTasks } from '@/ai/knowledgeClusters';
 
 interface FocusReflection {
   outcome: 'done' | 'partial' | 'missed';
@@ -64,6 +65,32 @@ export const useFocusReflection = () => {
 
     const yesterday = format(subDays(new Date(), 1), 'yyyy-MM-dd');
 
+    // Determine cluster label for the focus task
+    let clusterLabel: string | null = null;
+    try {
+      // Find yesterday's focus task object
+      const yesterdayTask = tasks?.find(
+        task => task.is_focus && task.focus_date === yesterday
+      );
+      
+      if (yesterdayTask && tasks) {
+        // Run clustering with the focus task weighted
+        const analysis = await clusterTasks(tasks, yesterdayTask);
+        
+        // Find which cluster the focus task belongs to
+        const focusCluster = analysis.clusters.find(cluster => 
+          cluster.tasks.includes(yesterdayTask.id)
+        );
+        
+        if (focusCluster) {
+          clusterLabel = focusCluster.name;
+        }
+      }
+    } catch (error) {
+      console.error('Error determining cluster label:', error);
+      // Continue with saving reflection even if clustering fails
+    }
+
     const { error } = await supabase
       .from('daily_focus_history')
       .insert({
@@ -72,6 +99,7 @@ export const useFocusReflection = () => {
         focus_task: yesterdaysFocusTask,
         outcome: reflection.outcome,
         note: reflection.note || null,
+        cluster_label: clusterLabel,
       });
 
     if (!error) {

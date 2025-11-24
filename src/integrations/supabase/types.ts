@@ -147,6 +147,7 @@ export type Database = {
       }
       daily_focus_history: {
         Row: {
+          cluster_label: string | null
           created_at: string
           date: string
           focus_task: string
@@ -156,6 +157,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          cluster_label?: string | null
           created_at?: string
           date: string
           focus_task: string
@@ -165,6 +167,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          cluster_label?: string | null
           created_at?: string
           date?: string
           focus_task?: string
