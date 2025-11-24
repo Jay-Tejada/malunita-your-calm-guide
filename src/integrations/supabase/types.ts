@@ -232,6 +232,42 @@ export type Database = {
         }
         Relationships: []
       }
+      focus_embeddings: {
+        Row: {
+          cluster_label: string | null
+          created_at: string
+          embedding: string | null
+          id: string
+          outcome: string | null
+          task_id: string | null
+          task_text: string
+          unlocks_count: number | null
+          user_id: string
+        }
+        Insert: {
+          cluster_label?: string | null
+          created_at?: string
+          embedding?: string | null
+          id?: string
+          outcome?: string | null
+          task_id?: string | null
+          task_text: string
+          unlocks_count?: number | null
+          user_id: string
+        }
+        Update: {
+          cluster_label?: string | null
+          created_at?: string
+          embedding?: string | null
+          id?: string
+          outcome?: string | null
+          task_id?: string | null
+          task_text?: string
+          unlocks_count?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       focus_streaks: {
         Row: {
           created_at: string | null
@@ -1078,6 +1114,25 @@ export type Database = {
         Returns: boolean
       }
       is_service_role: { Args: never; Returns: boolean }
+      match_focus_embeddings: {
+        Args: {
+          match_count: number
+          match_threshold: number
+          query_embedding: string
+          target_user_id: string
+        }
+        Returns: {
+          cluster_label: string
+          created_at: string
+          id: string
+          outcome: string
+          similarity: number
+          task_id: string
+          task_text: string
+          unlocks_count: number
+          user_id: string
+        }[]
+      }
     }
     Enums: {
       app_role: "admin" | "user"
