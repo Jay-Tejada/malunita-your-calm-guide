@@ -4,6 +4,7 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Menu } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { HomeCanvas } from "@/components/home/HomeCanvas";
 
 interface HomeShellProps {
   children?: React.ReactNode;
@@ -16,18 +17,6 @@ interface HomeShellProps {
   activeCategory: string | null;
 }
 
-// Placeholder HomeCanvas component
-function HomeCanvas({ children }: { children?: React.ReactNode }) {
-  return (
-    <div className="h-full w-full flex items-center justify-center bg-background">
-      {children || (
-        <div className="text-muted-foreground">
-          Home Canvas - Content goes here
-        </div>
-      )}
-    </div>
-  );
-}
 
 // Placeholder CompanionSidebar component
 function CompanionSidebar() {
