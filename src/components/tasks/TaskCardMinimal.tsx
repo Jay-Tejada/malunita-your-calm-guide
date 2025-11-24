@@ -13,9 +13,10 @@ interface TaskCardMinimalProps {
     section?: string;
   };
   fullTask?: Task;
+  isPrimaryFocus?: boolean;
 }
 
-export function TaskCardMinimal({ task, fullTask }: TaskCardMinimalProps) {
+export function TaskCardMinimal({ task, fullTask, isPrimaryFocus }: TaskCardMinimalProps) {
   const { updateTask } = useTasks();
   const { onTaskCompleted, onQuickWinCompleted } = useCompanionEvents();
   const [isCompleting, setIsCompleting] = useState(false);
@@ -75,6 +76,9 @@ export function TaskCardMinimal({ task, fullTask }: TaskCardMinimalProps) {
         className="w-full py-4 transition-opacity hover:opacity-90 cursor-pointer flex items-start gap-3 group"
         style={{
           borderBottom: "1px solid #E6E1D7",
+          backgroundColor: isPrimaryFocus ? "rgba(139, 69, 19, 0.05)" : "transparent",
+          borderLeft: isPrimaryFocus ? "3px solid #8B4513" : "none",
+          paddingLeft: isPrimaryFocus ? "12px" : "0",
         }}
       >
       {/* Checkbox */}
@@ -101,13 +105,24 @@ export function TaskCardMinimal({ task, fullTask }: TaskCardMinimalProps) {
       <div className="flex-1">
         {/* Task Title */}
         <div
-          className="font-medium mb-1"
+          className="font-medium mb-1 flex items-center gap-2"
           style={{
             color: "#3B352B",
             fontSize: "15px",
           }}
         >
-          {task.title}
+          <span>{task.title}</span>
+          {isPrimaryFocus && (
+            <span 
+              className="text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded"
+              style={{
+                color: "#8B4513",
+                backgroundColor: "rgba(139, 69, 19, 0.1)",
+              }}
+            >
+              Primary Focus
+            </span>
+          )}
         </div>
 
         {/* Subtext: Due Date and Section */}

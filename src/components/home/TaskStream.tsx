@@ -65,6 +65,7 @@ export function TaskStream() {
             {routing.today.map(taskId => {
               const task = taskMap.get(taskId);
               if (!task) return null;
+              const isPrimaryFocus = task.category === 'primary_focus' && task.is_focus;
               return (
                 <TaskCardMinimal
                   key={task.id}
@@ -75,6 +76,7 @@ export function TaskStream() {
                     section: task.category,
                   }}
                   fullTask={task}
+                  isPrimaryFocus={isPrimaryFocus}
                 />
               );
             })}

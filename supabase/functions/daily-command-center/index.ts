@@ -162,7 +162,7 @@ serve(async (req) => {
 
     // Priority Tasks: High-impact, focus items, or urgent
     const priorityTasks = allTasks
-      .filter(t => t.is_focus || t.category === 'urgent')
+      .filter(t => t.is_focus || t.category === 'urgent' || t.category === 'primary_focus')
       .slice(0, 5)
       .map(t => t.title);
 

@@ -3,6 +3,8 @@ interface Task {
   title: string;
   category?: string;
   reminder_time?: string | null;
+  is_focus?: boolean;
+  focus_date?: string | null;
 }
 
 interface ContextMap {
@@ -111,9 +113,24 @@ export function agendaRouter(
   // Track how many tasks already assigned to today
   let todayCount = 0;
   
-  // First pass: route tasks with explicit deadlines
+  // First pass: handle primary focus tasks (always first in today)
+  const primaryFocusTasks: string[] = [];
   for (const task of tasks) {
     if (!task.id) continue;
+    
+    const today = new Date().toISOString().split('T')[0];
+    if (task.category === 'primary_focus' && task.is_focus && task.focus_date === today) {
+      primaryFocusTasks.push(task.id);
+      todayCount++;
+    }
+  }
+  
+  // Second pass: route tasks with explicit deadlines
+  for (const task of tasks) {
+    if (!task.id) continue;
+    
+    // Skip primary focus tasks (already handled)
+    if (primaryFocusTasks.includes(task.id)) continue;
     
     const score = scoreMap.get(task.id);
     if (!score) continue;
@@ -180,6 +197,9 @@ export function agendaRouter(
       if (bucket === 'today') todayCount++;
     }
   }
+  
+  // Ensure primary focus tasks are at the start of today
+  routing.today = [...primaryFocusTasks, ...routing.today.filter(id => !primaryFocusTasks.includes(id))];
   
   return routing;
 }

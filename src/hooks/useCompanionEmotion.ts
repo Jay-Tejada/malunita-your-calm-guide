@@ -95,6 +95,7 @@ export interface EmotionContext {
   lastActivityMinutesAgo?: number;
   timeOfDay?: 'morning' | 'afternoon' | 'evening' | 'night';
   rapidTaskCreation?: boolean;
+  primaryFocusCreated?: boolean;
 }
 
 export const useCompanionEmotion = (
@@ -195,6 +196,12 @@ export const useCompanionEmotion = (
 
     if (rapidTaskCreation) {
       triggerTemporaryEmotion('focused', 6000);
+      return;
+    }
+    
+    // Primary focus task created - show inspired emotion
+    if (context.primaryFocusCreated) {
+      triggerTemporaryEmotion('inspired', 8000);
       return;
     }
 
