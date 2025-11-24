@@ -21,6 +21,7 @@ import { usePrimaryFocusPrediction } from "@/hooks/usePrimaryFocusPrediction";
 import { useTasks, Task } from "@/hooks/useTasks";
 import { AutoFocusNotification } from "@/components/AutoFocusNotification";
 import { CompanionContextMessage } from "@/components/CompanionContextMessage";
+import { TaskInputBox } from "@/components/TaskInputBox";
 
 const Index = () => {
   const [user, setUser] = useState<any>(null);
@@ -234,6 +235,9 @@ const Index = () => {
           recordingDuration={voiceStatus.recordingDuration}
           onDataLoaded={setDailyIntelligenceData}
         />
+        <div className="mt-8">
+          <TaskInputBox />
+        </div>
       </HomeShell>
       
       <MalunitaVoice 
