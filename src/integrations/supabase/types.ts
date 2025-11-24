@@ -1074,6 +1074,48 @@ export type Database = {
         }
         Relationships: []
       }
+      tomorrow_plan: {
+        Row: {
+          created_at: string
+          id: string
+          plan_date: string
+          reasoning: string | null
+          recommended_one_thing: string
+          recommended_one_thing_id: string | null
+          storm_score: number | null
+          supporting_tasks: Json
+          tiny_task: string | null
+          tiny_task_id: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          plan_date: string
+          reasoning?: string | null
+          recommended_one_thing: string
+          recommended_one_thing_id?: string | null
+          storm_score?: number | null
+          supporting_tasks?: Json
+          tiny_task?: string | null
+          tiny_task_id?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          plan_date?: string
+          reasoning?: string | null
+          recommended_one_thing?: string
+          recommended_one_thing_id?: string | null
+          storm_score?: number | null
+          supporting_tasks?: Json
+          tiny_task?: string | null
+          tiny_task_id?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
