@@ -17,6 +17,8 @@ import { useToast } from "@/hooks/use-toast";
 import { checkAndHandlePrediction } from "@/utils/predictionChecker";
 import { useAutoSplitTask } from "@/hooks/useAutoSplitTask";
 import { useRelatedTaskSuggestions } from "@/hooks/useRelatedTaskSuggestions";
+import { WorkloadBalanceSuggestions } from "@/components/WorkloadBalanceSuggestions";
+import { WorkloadSuggestion } from "@/ai/adaptiveWorkloadBalancer";
 import {
   Drawer,
   DrawerClose,
@@ -298,6 +300,34 @@ export const TaskList = ({ category: externalCategory }: TaskListProps = {}) => 
     return cat.charAt(0).toUpperCase() + cat.slice(1);
   };
 
+  const handleApplySuggestion = async (suggestion: WorkloadSuggestion) => {
+    const today = new Date().toISOString().split('T')[0];
+    const weekFromNow = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    
+    let focusDate: string | null = null;
+    
+    if (suggestion.toBucket === 'today') {
+      focusDate = today;
+    } else if (suggestion.toBucket === 'thisWeek') {
+      focusDate = weekFromNow;
+    } else if (suggestion.toBucket === 'soon') {
+      focusDate = null;
+    }
+    
+    await updateTask({
+      id: suggestion.taskId,
+      updates: {
+        focus_date: focusDate,
+        is_focus: suggestion.toBucket === 'today',
+      },
+    });
+    
+    toast({
+      title: "Task moved",
+      description: `Moved "${suggestion.taskTitle}" to ${suggestion.toBucket === 'soon' ? 'Someday' : suggestion.toBucket}`,
+    });
+  };
+
   const allCategories = [
     { id: 'inbox', label: 'Inbox', icon: '📥' },
     { id: 'home', label: 'Home', icon: '🏠' },
@@ -332,6 +362,12 @@ export const TaskList = ({ category: externalCategory }: TaskListProps = {}) => 
             <CategoryManager />
           </div>
         )}
+        
+        {/* Workload Balance Suggestions */}
+        <WorkloadBalanceSuggestions 
+          tasks={tasks}
+          onApplySuggestion={handleApplySuggestion}
+        />
         
         {/* Keyboard shortcuts hint */}
         {filteredTasks.length > 0 && (
