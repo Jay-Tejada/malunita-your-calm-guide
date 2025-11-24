@@ -86,7 +86,7 @@ export function DailyPriorityPrompt() {
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -20 }}
-          className="absolute top-12 left-1/2 -translate-x-1/2 z-10"
+          className="fixed top-12 left-0 right-0 flex justify-center z-10"
         >
           <button
             onClick={handlePromptClick}
