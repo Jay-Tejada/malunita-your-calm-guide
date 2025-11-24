@@ -90,7 +90,7 @@ export function DailyPriorityPrompt() {
         >
           <button
             onClick={handlePromptClick}
-            className="text-sm text-foreground/80 hover:text-foreground transition-colors font-medium max-w-3xl text-center"
+            className="text-xs sm:text-sm text-foreground/80 hover:text-foreground transition-colors font-medium max-w-3xl text-center"
           >
             What is the ONE thing you could accomplish today that would get your head above water? Everything else is a bonus.
           </button>
