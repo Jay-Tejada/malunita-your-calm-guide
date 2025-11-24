@@ -11,15 +11,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-
-interface Task {
-  id: string;
-  title: string;
-  time?: string;
-  context: string;
-  completed: boolean;
-  category?: string;
-}
+import { MapboxLocationPicker } from "@/components/MapboxLocationPicker";
+import { MapPin } from "lucide-react";
+import { useMapboxToken } from "@/hooks/useMapboxToken";
+import { Task } from "@/hooks/useTasks";
 
 interface TaskEditDialogProps {
   open: boolean;
@@ -33,13 +28,21 @@ export const TaskEditDialog = ({ open, task, onSave, onClose }: TaskEditDialogPr
   const [time, setTime] = useState("");
   const [context, setContext] = useState("");
   const [category, setCategory] = useState("inbox");
+  const [locationLat, setLocationLat] = useState<number | null>(null);
+  const [locationLng, setLocationLng] = useState<number | null>(null);
+  const [locationAddress, setLocationAddress] = useState<string | null>(null);
+  const [showLocationPicker, setShowLocationPicker] = useState(false);
+  const { token: accessToken } = useMapboxToken();
 
   useEffect(() => {
     if (task) {
       setTitle(task.title);
-      setTime(task.time || "");
-      setContext(task.context);
+      setTime(task.reminder_time || "");
+      setContext(task.context || "");
       setCategory(task.category || "inbox");
+      setLocationLat(task.location_lat ?? null);
+      setLocationLng(task.location_lng ?? null);
+      setLocationAddress(task.location_address ?? null);
     }
   }, [task]);
 
@@ -48,11 +51,27 @@ export const TaskEditDialog = ({ open, task, onSave, onClose }: TaskEditDialogPr
     
     onSave(task.id, {
       title: title.trim() || task.title,
-      time: time.trim() || task.time,
-      context: context.trim() || task.context,
+      reminder_time: time.trim() || undefined,
+      context: context.trim() || undefined,
       category: category,
+      location_lat: locationLat,
+      location_lng: locationLng,
+      location_address: locationAddress,
     });
     onClose();
+  };
+
+  const handleLocationConfirm = (location: { lat: number; lng: number; address: string }) => {
+    setLocationLat(location.lat);
+    setLocationLng(location.lng);
+    setLocationAddress(location.address);
+    setShowLocationPicker(false);
+  };
+
+  const handleRemoveLocation = () => {
+    setLocationLat(null);
+    setLocationLng(null);
+    setLocationAddress(null);
   };
 
   const handleCancel = () => {
@@ -117,7 +136,44 @@ export const TaskEditDialog = ({ open, task, onSave, onClose }: TaskEditDialogPr
               </SelectContent>
             </Select>
           </div>
+
+          <div className="space-y-2">
+            <Label>Location</Label>
+            {locationAddress ? (
+              <div className="flex items-center gap-2">
+                <div className="flex-1 px-3 py-2 text-sm bg-secondary rounded-md flex items-center gap-2">
+                  <MapPin className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-foreground">{locationAddress}</span>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleRemoveLocation}
+                >
+                  Remove
+                </Button>
+              </div>
+            ) : (
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                onClick={() => setShowLocationPicker(true)}
+              >
+                <MapPin className="mr-2 h-4 w-4" />
+                Add Location
+              </Button>
+            )}
+          </div>
         </div>
+
+        <MapboxLocationPicker
+          open={showLocationPicker}
+          onOpenChange={setShowLocationPicker}
+          onConfirm={handleLocationConfirm}
+          accessToken={accessToken}
+        />
 
         <DialogFooter>
           <Button variant="outline" onClick={handleCancel}>

@@ -1,22 +1,28 @@
 import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 export const useMapboxToken = () => {
   const [token, setToken] = useState<string | undefined>(undefined);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Try to get token from environment variables
-    const envToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
-    
-    if (envToken) {
-      setToken(envToken);
-      setLoading(false);
-      return;
-    }
+    const fetchToken = async () => {
+      try {
+        const { data, error } = await supabase.functions.invoke('get-mapbox-token');
+        
+        if (error) throw error;
+        
+        if (data?.token) {
+          setToken(data.token);
+        }
+      } catch (error) {
+        console.error('Error fetching Mapbox token:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    // For production, you might want to fetch from edge function
-    // that has access to secrets
-    setLoading(false);
+    fetchToken();
   }, []);
 
   return { token, loading };

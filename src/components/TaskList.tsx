@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
-import { Trash2, User, Clock, Bell, Star } from "lucide-react";
+import { Trash2, User, Clock, Bell, Star, MapPin } from "lucide-react";
 import { useTasks, Task } from "@/hooks/useTasks";
 import { useCustomCategories } from "@/hooks/useCustomCategories";
 import { useCompanionGrowth } from "@/hooks/useCompanionGrowth";
@@ -12,6 +12,7 @@ import { DndContext, DragEndEvent, DragOverlay, PointerSensor, useSensor, useSen
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { TaskCard } from "@/components/TaskCard";
 import { TaskCategoryFeedback } from "@/components/TaskCategoryFeedback";
+import { TaskEditDialog } from "@/components/TaskEditDialog";
 import { useToast } from "@/hooks/use-toast";
 import {
   Drawer,
@@ -36,6 +37,8 @@ export const TaskList = ({ category: externalCategory }: TaskListProps = {}) => 
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [categoryDrawerOpen, setCategoryDrawerOpen] = useState(false);
   const [taskToMove, setTaskToMove] = useState<Task | null>(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [taskToEdit, setTaskToEdit] = useState<Task | null>(null);
   const { toast } = useToast();
   
   // Use external category if provided, otherwise use internal state
@@ -233,6 +236,21 @@ export const TaskList = ({ category: externalCategory }: TaskListProps = {}) => 
     setCategoryDrawerOpen(true);
   };
 
+  const handleEditTask = (task: Task) => {
+    setTaskToEdit(task);
+    setEditDialogOpen(true);
+  };
+
+  const handleSaveEdit = async (taskId: string, updates: Partial<Task>) => {
+    await updateTask({ id: taskId, updates });
+    setEditDialogOpen(false);
+    setTaskToEdit(null);
+    toast({
+      title: "Task updated",
+      description: "Your changes have been saved",
+    });
+  };
+
   const handleMoveToCategory = (category: string) => {
     if (!taskToMove) return;
     
@@ -324,9 +342,19 @@ export const TaskList = ({ category: externalCategory }: TaskListProps = {}) => 
                       onToggle={() => handleToggleComplete(task)}
                       onSelect={() => setSelectedTaskId(task.id)}
                       onLongPress={() => handleLongPress(task)}
+                      onEdit={() => handleEditTask(task)}
                       goalAligned={task.goal_aligned}
                       alignmentReason={task.alignment_reason}
                     />
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleEditTask(task)}
+                      className="shrink-0 text-muted-foreground hover:text-foreground"
+                      title="Edit task & add location"
+                    >
+                      <MapPin className="w-4 h-4" />
+                    </Button>
                     <Button
                       variant="ghost"
                       size="icon"
@@ -408,6 +436,17 @@ export const TaskList = ({ category: externalCategory }: TaskListProps = {}) => 
           </DrawerFooter>
         </DrawerContent>
       </Drawer>
+
+      {/* Edit Task Dialog */}
+      <TaskEditDialog
+        open={editDialogOpen}
+        task={taskToEdit}
+        onSave={handleSaveEdit}
+        onClose={() => {
+          setEditDialogOpen(false);
+          setTaskToEdit(null);
+        }}
+      />
     </DndContext>
   );
 };
