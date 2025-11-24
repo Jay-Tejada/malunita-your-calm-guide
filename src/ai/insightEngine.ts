@@ -33,6 +33,7 @@ export interface MonthlyInsight {
   challenges: string[];
   emergingHabits: string[];
   focusNext: string;
+  seasonalInsight?: string;
   generatedAt: string;
   rawData: MonthlyData;
 }
@@ -162,6 +163,7 @@ export async function generateMonthlyInsight(data: MonthlyData): Promise<Monthly
     challenges: result.challenges,
     emergingHabits: result.emergingHabits,
     focusNext: result.focusNext,
+    seasonalInsight: result.seasonalInsight,
     generatedAt: new Date().toISOString(),
     rawData: data,
   };

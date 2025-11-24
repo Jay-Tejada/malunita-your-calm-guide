@@ -5,7 +5,7 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { useMonthlyInsights } from '@/hooks/useMonthlyInsights';
 import { format, subMonths } from 'date-fns';
-import { Sparkles, TrendingUp, AlertCircle, Target, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Sparkles, TrendingUp, AlertCircle, Target, ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
 import { CreatureSprite } from '@/components/CreatureSprite';
 import { motion } from 'framer-motion';
 
@@ -89,6 +89,21 @@ export const MonthlyInsights = () => {
           animate={{ opacity: 1, y: 0 }}
           className="space-y-6"
         >
+          {/* Seasonal Insight */}
+          {generatedInsight.seasonalInsight && (
+            <Card className="p-6 bg-gradient-to-br from-accent/5 to-accent/10">
+              <div className="flex items-start gap-4">
+                <div className="mt-1">
+                  <Calendar className="h-6 w-6 text-accent" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold mb-2 text-accent-foreground">Seasonal Pattern</h3>
+                  <p className="text-base">{generatedInsight.seasonalInsight}</p>
+                </div>
+              </div>
+            </Card>
+          )}
+
           {/* Wins */}
           <Card className="p-6 bg-gradient-to-br from-primary/5 to-primary/10">
             <div className="flex items-start gap-4">

@@ -113,8 +113,35 @@ Return as JSON with structure:
     const content = result.choices[0].message.content;
     const insights = JSON.parse(content);
 
+    // Detect seasonal insight for display
+    const topCategories = data.topCategories || [];
+    let seasonalInsight = '';
+
+    if (topCategories.length > 0) {
+      // Analyze which seasonal pattern is strongest
+      const mondayTasks = topCategories.filter((c: any) => 
+        c.category.toLowerCase().includes('planning') || 
+        c.category.toLowerCase().includes('review')
+      );
+      const weekendTasks = topCategories.filter((c: any) => 
+        c.category.toLowerCase().includes('family') || 
+        c.category.toLowerCase().includes('personal')
+      );
+      
+      if (mondayTasks.length > 0) {
+        seasonalInsight = `Your ONE things on Mondays tend to cluster around ${mondayTasks[0].category}.`;
+      } else if (weekendTasks.length > 0) {
+        seasonalInsight = `Your ONE things on weekends tend to cluster around ${weekendTasks[0].category}.`;
+      } else if (topCategories[0]) {
+        seasonalInsight = `Your most common ONE-thing focus this month was ${topCategories[0].category}.`;
+      }
+    }
+
     return new Response(
-      JSON.stringify(insights),
+      JSON.stringify({ 
+        ...insights,
+        seasonalInsight 
+      }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {

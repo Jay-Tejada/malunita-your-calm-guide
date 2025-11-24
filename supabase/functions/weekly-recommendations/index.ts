@@ -210,6 +210,93 @@ Be specific, reference their actual patterns, and keep it encouraging but direct
 
     const recommendations = JSON.parse(toolCall.function.arguments).recommendations;
 
+    // Detect seasonal patterns from daily_focus_history
+    const { data: focusHistory } = await supabase
+      .from('daily_focus_history')
+      .select('date, focus_task, cluster_label')
+      .eq('user_id', user.id)
+      .order('date', { ascending: false })
+      .limit(90); // Last 3 months
+
+    const seasonalPatterns: Record<string, { count: number; categories: string[] }> = {
+      monday_reset: { count: 0, categories: [] },
+      weekend_family: { count: 0, categories: [] },
+      month_start_admin: { count: 0, categories: [] },
+      month_end_financial: { count: 0, categories: [] },
+    };
+
+    focusHistory?.forEach((record) => {
+      const date = new Date(record.date);
+      const dayOfWeek = date.getDay();
+      const dayOfMonth = date.getDate();
+      const category = record.cluster_label || 'uncategorized';
+
+      // Monday patterns
+      if (dayOfWeek === 1) {
+        seasonalPatterns.monday_reset.count++;
+        seasonalPatterns.monday_reset.categories.push(category);
+      }
+
+      // Weekend patterns
+      if (dayOfWeek === 0 || dayOfWeek === 6) {
+        seasonalPatterns.weekend_family.count++;
+        seasonalPatterns.weekend_family.categories.push(category);
+      }
+
+      // Start of month patterns (days 1-7)
+      if (dayOfMonth >= 1 && dayOfMonth <= 7) {
+        seasonalPatterns.month_start_admin.count++;
+        seasonalPatterns.month_start_admin.categories.push(category);
+      }
+
+      // End of month patterns (days 24-31)
+      if (dayOfMonth >= 24) {
+        seasonalPatterns.month_end_financial.count++;
+        seasonalPatterns.month_end_financial.categories.push(category);
+      }
+    });
+
+    // Calculate most common category for each pattern
+    const seasonalWeight: Record<string, any> = {};
+    
+    Object.entries(seasonalPatterns).forEach(([pattern, data]) => {
+      if (data.count >= 3) { // Minimum 3 occurrences to establish pattern
+        const categoryCount: Record<string, number> = {};
+        data.categories.forEach(cat => {
+          categoryCount[cat] = (categoryCount[cat] || 0) + 1;
+        });
+        const topCategory = Object.entries(categoryCount)
+          .sort((a, b) => b[1] - a[1])[0];
+        
+        if (topCategory && topCategory[1] >= 2) {
+          seasonalWeight[pattern] = {
+            category: topCategory[0],
+            confidence: topCategory[1] / data.count,
+            weight: 0.1
+          };
+        }
+      }
+    });
+
+    // Update user's focus_preferences with seasonal_weight
+    if (Object.keys(seasonalWeight).length > 0) {
+      const { data: currentProfile } = await supabase
+        .from('profiles')
+        .select('focus_preferences')
+        .eq('id', user.id)
+        .single();
+
+      const updatedPreferences = {
+        ...(currentProfile?.focus_preferences as Record<string, any> || {}),
+        seasonal_weight: seasonalWeight
+      };
+
+      await supabase
+        .from('profiles')
+        .update({ focus_preferences: updatedPreferences })
+        .eq('id', user.id);
+    }
+
     return new Response(
       JSON.stringify({ recommendations }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
