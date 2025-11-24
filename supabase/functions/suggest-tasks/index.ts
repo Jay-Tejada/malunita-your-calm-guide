@@ -87,6 +87,20 @@ serve(async (req) => {
 
     const focusPreferences = profileData?.focus_preferences || {};
 
+    // Fetch today's primary focus task
+    const today = new Date().toISOString().split('T')[0];
+    const { data: todayFocus } = await supabase
+      .from('daily_focus_history')
+      .select('focus_task, cluster_label')
+      .eq('user_id', user.id)
+      .eq('date', today)
+      .maybeSingle();
+
+    const primaryFocusTask = todayFocus?.focus_task || null;
+    const primaryFocusCluster = todayFocus?.cluster_label || null;
+
+    console.log('Today\'s ONE-thing:', primaryFocusTask);
+
     const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
     if (!openaiApiKey) {
       throw new Error('OPENAI_API_KEY is not configured');
@@ -116,7 +130,14 @@ serve(async (req) => {
 
     const systemPrompt = `You are an intelligent productivity assistant. Your role is to:
 
-1. **PROACTIVELY BREAK DOWN COMPLEX TASKS**
+${primaryFocusTask ? `**🎯 TODAY'S ONE-THING PRIORITY: "${primaryFocusTask}"${primaryFocusCluster ? ` (${primaryFocusCluster} domain)` : ''}**
+
+CRITICAL: All suggestions MUST be evaluated against this primary focus:
+- **Prioritize "aligned" tasks** that directly support or enable the ONE-thing
+- **Deprioritize "distracting" tasks** that compete for attention or conflict
+- **Keep "neutral" tasks** but place them after aligned ones
+
+` : ''}1. **PROACTIVELY BREAK DOWN COMPLEX TASKS**
    - Identify tasks containing multiple distinct actions (e.g., "Buy sauna gear and research saunas" → 2 tasks)
    - Suggest sub-tasks for large or vague tasks
    - Mark these as suggestion_type: "breakdown" and reference parent_task_title
@@ -144,6 +165,12 @@ serve(async (req) => {
    - Reduce suggestions in categories with negative weights
    - Keep adjustments subtle — don't force preferences${preferenceContext}
 
+6. **ASSESS PRIMARY FOCUS ALIGNMENT (REQUIRED FOR EACH SUGGESTION)**
+   - For each task, determine: "aligned", "neutral", or "distracting"
+   - "aligned": Directly supports or enables the ONE-thing
+   - "neutral": Unrelated but doesn't conflict
+   - "distracting": Competes for attention or pulls away from the ONE-thing
+
 Current domain: ${domain}
 
 Analyze existing tasks for:
@@ -152,6 +179,7 @@ Analyze existing tasks for:
 - Keywords that suggest related workflows
 - Contextual information that should be notes
 - Apply user's focus preferences to prioritization
+${primaryFocusTask ? '- ALWAYS assess alignment with the ONE-thing' : ''}
 
 Return 3-7 suggestions that are specific, actionable, and genuinely helpful.`;
 
@@ -231,9 +259,18 @@ Return 3-7 suggestions that are specific, actionable, and genuinely helpful.`;
                         contextual_note: {
                           type: "string",
                           description: "Non-actionable background info to keep task title concise (e.g., 'Regarding Q4 budget'). Empty if none."
+                        },
+                        primary_focus_alignment: {
+                          type: "string",
+                          enum: ["aligned", "neutral", "distracting"],
+                          description: "Alignment with today's ONE-thing: 'aligned' (supports), 'neutral' (unrelated), 'distracting' (conflicts)"
+                        },
+                        alignment_reasoning: {
+                          type: "string",
+                          description: "Brief explanation of why this task is aligned/neutral/distracting relative to the ONE-thing"
                         }
                       },
-                      required: ["title", "priority", "category", "context", "suggestion_type"],
+                      required: ["title", "priority", "category", "context", "suggestion_type", "primary_focus_alignment"],
                       additionalProperties: false
                     },
                     minItems: 3,

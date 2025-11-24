@@ -45,6 +45,20 @@ serve(async (req) => {
 
     console.log('User authenticated:', userId);
 
+    // Fetch today's primary focus task for alignment checking
+    const today = new Date().toISOString().split('T')[0];
+    const { data: todayFocus } = await supabase
+      .from('daily_focus_history')
+      .select('focus_task, cluster_label')
+      .eq('user_id', userId)
+      .eq('date', today)
+      .maybeSingle();
+
+    const primaryFocusTask = todayFocus?.focus_task || null;
+    const primaryFocusCluster = todayFocus?.cluster_label || null;
+
+    console.log('Today\'s ONE-thing:', primaryFocusTask);
+
     // Check rate limit
     const { data: rateLimitOk } = await supabase.rpc('check_rate_limit', {
       _user_id: userId,
@@ -95,8 +109,14 @@ Your job is to analyze the user's input and return a JSON object with the follow
   "ideas": ["idea 1", "idea 2"],
   "followups": ["followup 1", "followup 2"],
   "questions": ["question they're asking themselves"],
-  "emotional_tone": "neutral|overwhelmed|focused|stressed"
+  "emotional_tone": "neutral|overwhelmed|focused|stressed",
+  "primary_focus_alignment": {
+    "score": "aligned|neutral|distracting",
+    "reasoning": "Brief explanation of alignment"
+  }
 }
+
+${primaryFocusTask ? `\n**CRITICAL CONTEXT: Today's ONE-thing priority is "${primaryFocusTask}"**\nWhen analyzing tasks, consider their relationship to this primary focus:\n- "aligned": Tasks that directly support or enable the ONE-thing\n- "neutral": Unrelated tasks that don't conflict\n- "distracting": Tasks that compete for attention or conflict with the ONE-thing\n` : ''}
 
 Guidelines:
 - Keep summary SHORT (under 20 words)
@@ -105,13 +125,15 @@ Guidelines:
 - Identify questions they're asking themselves (not asking you)
 - Detect emotional tone from language patterns
 - Identify actionable follow-ups
-- Be concise and specific`;
+- Be concise and specific
+${primaryFocusTask ? '- ALWAYS assess alignment with the ONE-thing when provided' : ''}`;
 
     const userPrompt = `Analyze this input:
 
 "${text}"
 
 ${extractedTasks && extractedTasks.length > 0 ? `\nExtracted tasks: ${extractedTasks.map((t: any) => t.title).join(', ')}` : ''}
+${primaryFocusTask ? `\n\n**Today's ONE-thing priority**: "${primaryFocusTask}"${primaryFocusCluster ? ` (${primaryFocusCluster} domain)` : ''}` : ''}
 
 Return ONLY the JSON object, no other text.`;
 

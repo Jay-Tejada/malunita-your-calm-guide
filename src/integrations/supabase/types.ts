@@ -839,6 +839,7 @@ export type Database = {
           location_lat: number | null
           location_lng: number | null
           parent_task_id: string | null
+          primary_focus_alignment: string | null
           recurrence_day: number | null
           recurrence_end_date: string | null
           recurrence_pattern: string | null
@@ -870,6 +871,7 @@ export type Database = {
           location_lat?: number | null
           location_lng?: number | null
           parent_task_id?: string | null
+          primary_focus_alignment?: string | null
           recurrence_day?: number | null
           recurrence_end_date?: string | null
           recurrence_pattern?: string | null
@@ -901,6 +903,7 @@ export type Database = {
           location_lat?: number | null
           location_lng?: number | null
           parent_task_id?: string | null
+          primary_focus_alignment?: string | null
           recurrence_day?: number | null
           recurrence_end_date?: string | null
           recurrence_pattern?: string | null
