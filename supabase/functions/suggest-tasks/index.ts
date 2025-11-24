@@ -118,6 +118,18 @@ serve(async (req) => {
       `${t.completed ? '✓' : '○'} ${t.title}${t.context ? ` (${t.context})` : ''}`
     ).join('\n');
 
+    // Extract high-priority tasks (AI-predicted future ONE-things)
+    const highPriorityTasks = tasks
+      .filter((t: any) => !t.completed && (t.future_priority_score || 0) > 0.5)
+      .map((t: any) => t.title);
+
+    // Enhanced task summary with priority scores
+    const taskSummaryWithScores = tasks.map((t: any) => {
+      const score = t.future_priority_score || 0;
+      const scoreLabel = score > 0.7 ? '🔥' : score > 0.5 ? '⭐' : score > 0.3 ? '💡' : '';
+      return `${t.completed ? '✓' : '○'} ${t.title}${t.context ? ` (${t.context})` : ''} ${scoreLabel}`;
+    }).join('\n');
+
     // Format focus preferences for AI context
     const preferenceContext = Object.keys(focusPreferences).length > 0
       ? `\n\nUser's Focus Preferences (apply gentle weighting):\n${Object.entries(focusPreferences)
@@ -149,7 +161,10 @@ CRITICAL: All suggestions MUST be evaluated against this primary focus:
 - **Deprioritize "distracting" tasks** that compete for attention or conflict
 - **Keep "neutral" tasks** but place them after aligned ones
 
-` : ''}1. **PROACTIVELY BREAK DOWN COMPLEX TASKS**
+` : ''}**📊 FUTURE PRIORITY SCORES (AI-PREDICTED):**
+Tasks with high priority scores (> 0.5) have been predicted by AI as likely to become important ONE-things based on semantic similarity to past focus tasks. Consider these when making suggestions.
+
+1. **PROACTIVELY BREAK DOWN COMPLEX TASKS**
    - Identify tasks containing multiple distinct actions (e.g., "Buy sauna gear and research saunas" → 2 tasks)
    - Suggest sub-tasks for large or vague tasks
    - Mark these as suggestion_type: "breakdown" and reference parent_task_title
@@ -207,7 +222,7 @@ Return 3-7 suggestions that are specific, actionable, and genuinely helpful.`;
           { role: 'system', content: systemPrompt },
           { 
             role: 'user', 
-            content: `Current tasks:\n${taskSummary}\n\nSuggest 3-5 new tasks for the ${domain} domain.` 
+            content: `Current tasks${highPriorityTasks.length > 0 ? ` (🔥/⭐ = AI-predicted high priority)` : ''}:\n${taskSummaryWithScores}${highPriorityTasks.length > 0 ? `\n\nHigh-priority tasks (likely future ONE-things):\n${highPriorityTasks.map(t => `- ${t}`).join('\n')}` : ''}\n\nSuggest 3-5 new tasks for the ${domain} domain.` 
           }
         ],
         tools: [

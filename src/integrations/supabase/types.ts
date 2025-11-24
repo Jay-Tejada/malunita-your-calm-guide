@@ -921,6 +921,7 @@ export type Database = {
           display_order: number | null
           focus_date: string | null
           focus_source: string | null
+          future_priority_score: number | null
           goal_aligned: boolean | null
           has_person_name: boolean | null
           has_reminder: boolean | null
@@ -954,6 +955,7 @@ export type Database = {
           display_order?: number | null
           focus_date?: string | null
           focus_source?: string | null
+          future_priority_score?: number | null
           goal_aligned?: boolean | null
           has_person_name?: boolean | null
           has_reminder?: boolean | null
@@ -987,6 +989,7 @@ export type Database = {
           display_order?: number | null
           focus_date?: string | null
           focus_source?: string | null
+          future_priority_score?: number | null
           goal_aligned?: boolean | null
           has_person_name?: boolean | null
           has_reminder?: boolean | null

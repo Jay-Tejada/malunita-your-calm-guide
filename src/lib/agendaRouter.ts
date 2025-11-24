@@ -7,6 +7,7 @@ interface Task {
   focus_date?: string | null;
   keywords?: string[];
   context?: string;
+  future_priority_score?: number;
 }
 
 interface ContextMap {
@@ -199,7 +200,24 @@ export function agendaRouter(
     );
   }
   
+  // Create a map of tasks with combined priority scores
+  const taskPriorityMap = new Map<string, number>();
+  for (const task of tasks) {
+    if (!task.id) continue;
+    const score = scoreMap.get(task.id);
+    if (!score) continue;
+    
+    // Combine current priority score with future_priority_score
+    const basePriorityScore = score.priority === 'MUST' ? 1.0 : score.priority === 'SHOULD' ? 0.6 : 0.3;
+    const futurePriorityScore = task.future_priority_score || 0;
+    const combinedScore = basePriorityScore * 0.6 + futurePriorityScore * 0.4;
+    
+    taskPriorityMap.set(task.id, combinedScore);
+  }
+  
   // Second pass: route tasks with explicit deadlines
+  const remainingTasks: Task[] = [];
+  
   for (const task of tasks) {
     if (!task.id) continue;
     
@@ -248,6 +266,22 @@ export function agendaRouter(
       }
       continue;
     }
+    
+    // Tasks without explicit deadlines - save for priority-based routing
+    remainingTasks.push(task);
+  }
+  
+  // Third pass: Sort remaining tasks by combined priority score and route
+  remainingTasks.sort((a, b) => {
+    const scoreA = taskPriorityMap.get(a.id!) || 0;
+    const scoreB = taskPriorityMap.get(b.id!) || 0;
+    return scoreB - scoreA; // Higher scores first
+  });
+  
+  for (const task of remainingTasks) {
+    if (!task.id) continue;
+    const score = scoreMap.get(task.id);
+    if (!score) continue;
     
     // Route by priority and characteristics
     const bucket = routeTaskByPriority(
