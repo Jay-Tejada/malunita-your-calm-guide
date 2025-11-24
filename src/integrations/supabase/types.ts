@@ -485,6 +485,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          auto_focus_enabled: boolean | null
           autocategorize_enabled: boolean | null
           average_tasks_per_day: number | null
           bonding_score: number | null
@@ -541,6 +542,7 @@ export type Database = {
           wants_voice_playback: boolean | null
         }
         Insert: {
+          auto_focus_enabled?: boolean | null
           autocategorize_enabled?: boolean | null
           average_tasks_per_day?: number | null
           bonding_score?: number | null
@@ -597,6 +599,7 @@ export type Database = {
           wants_voice_playback?: boolean | null
         }
         Update: {
+          auto_focus_enabled?: boolean | null
           autocategorize_enabled?: boolean | null
           average_tasks_per_day?: number | null
           bonding_score?: number | null
@@ -866,6 +869,7 @@ export type Database = {
           daily_session_id: string | null
           display_order: number | null
           focus_date: string | null
+          focus_source: string | null
           goal_aligned: boolean | null
           has_person_name: boolean | null
           has_reminder: boolean | null
@@ -898,6 +902,7 @@ export type Database = {
           daily_session_id?: string | null
           display_order?: number | null
           focus_date?: string | null
+          focus_source?: string | null
           goal_aligned?: boolean | null
           has_person_name?: boolean | null
           has_reminder?: boolean | null
@@ -930,6 +935,7 @@ export type Database = {
           daily_session_id?: string | null
           display_order?: number | null
           focus_date?: string | null
+          focus_source?: string | null
           goal_aligned?: boolean | null
           has_person_name?: boolean | null
           has_reminder?: boolean | null
