@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { GuidanceBillboard } from "./GuidanceBillboard";
+import { DailyIntelligence } from "./DailyIntelligence";
 import { TaskStream } from "./TaskStream";
 
 interface HomeCanvasProps {
@@ -57,8 +58,13 @@ export function HomeCanvas({ children }: HomeCanvasProps) {
   }, [billboardMessage]);
 
   return (
-    <div className="w-full h-full overflow-y-auto flex flex-col items-center p-6 md:p-10" style={{ gap: "20px" }}>
+    <div className="w-full h-full overflow-y-auto flex flex-col items-center p-6 md:p-10" style={{ gap: "24px" }}>
       {billboardMessage && <GuidanceBillboard message={billboardMessage} />}
+      
+      <DailyIntelligence
+        summary={dailySummary}
+        quickWins={quickWins}
+      />
       
       <TaskStream />
       
