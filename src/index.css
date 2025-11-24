@@ -4,6 +4,17 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Breathing Surface Animation */
+@keyframes breathingSurface {
+  0%   { background-color: #F8F4EC; }
+  50%  { background-color: #F6F1E6; }
+  100% { background-color: #F8F4EC; }
+}
+
+.animate-breathing-surface {
+  animation: breathingSurface 12s ease-in-out infinite;
+}
+
 /* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
 All colors MUST be HSL.
 */

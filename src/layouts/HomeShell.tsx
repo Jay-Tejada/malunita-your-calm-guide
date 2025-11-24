@@ -36,7 +36,7 @@ export function HomeShell({
   if (isMobile) {
     return (
       <SidebarProvider>
-        <div className="min-h-screen flex flex-col w-full">
+        <div className="min-h-screen flex flex-col w-full animate-breathing-surface">
           {/* Mobile Header with Menu Trigger */}
           <header className="h-14 flex items-center border-b border-border bg-sidebar-bg px-4">
             <SidebarTrigger className="mr-2" />
@@ -83,7 +83,7 @@ export function HomeShell({
   return (
     <SidebarProvider>
       <div
-        className="min-h-screen w-full"
+        className="min-h-screen w-full animate-breathing-surface"
         style={{
           display: "grid",
           gridTemplateColumns: "280px 1fr 340px",
