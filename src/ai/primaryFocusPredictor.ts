@@ -13,6 +13,7 @@ interface CandidateTask {
   id: string;
   title: string;
   category?: string;
+  cluster_label?: string;
   is_time_based: boolean;
   reminder_time?: string;
   created_at: string;
@@ -25,6 +26,7 @@ interface ScoringFactors {
   habitScore: number;
   clusterScore: number;
   preferenceScore: number;
+  seasonalBoost: number;
   cognitiveLoadScore: number;
   reasoning: string[];
 }
@@ -228,7 +230,41 @@ async function scoreCandidate(
     reasoning.push('Aligns with your focus preferences');
   }
 
-  // 5. Cognitive load estimate (0-10 points, higher for simpler tasks)
+  // 5. Seasonal pattern boost (0-10 points)
+  let seasonalBoost = 0;
+  const seasonalWeight = (focusPreferences as any).seasonal_weight as Record<string, any> | undefined;
+  if (seasonalWeight) {
+    const now = new Date();
+    const dayOfWeek = now.getDay();
+    const dayOfMonth = now.getDate();
+    const category = task.cluster_label || task.category || '';
+
+    // Check Monday reset pattern
+    if (dayOfWeek === 1 && seasonalWeight.monday_reset?.category === category) {
+      seasonalBoost += seasonalWeight.monday_reset.weight * 100; // Scale to 10 points
+      reasoning.push('Monday pattern match');
+    }
+
+    // Check weekend pattern
+    if ((dayOfWeek === 0 || dayOfWeek === 6) && seasonalWeight.weekend_family?.category === category) {
+      seasonalBoost += seasonalWeight.weekend_family.weight * 100;
+      reasoning.push('Weekend pattern match');
+    }
+
+    // Check month-start pattern
+    if (dayOfMonth >= 1 && dayOfMonth <= 7 && seasonalWeight.month_start_admin?.category === category) {
+      seasonalBoost += seasonalWeight.month_start_admin.weight * 100;
+      reasoning.push('Month-start pattern');
+    }
+
+    // Check month-end pattern
+    if (dayOfMonth >= 24 && seasonalWeight.month_end_financial?.category === category) {
+      seasonalBoost += seasonalWeight.month_end_financial.weight * 100;
+      reasoning.push('Month-end pattern');
+    }
+  }
+
+  // 6. Cognitive load estimate (0-10 points, higher for simpler tasks)
   const wordCount = task.title.split(/\s+/).length;
   const isComplex = wordCount > 8;
   const cognitiveLoadScore = isComplex ? 5 : 10;
@@ -242,6 +278,7 @@ async function scoreCandidate(
     habitScore,
     clusterScore,
     preferenceScore,
+    seasonalBoost,
     cognitiveLoadScore,
     reasoning,
   };
@@ -294,12 +331,13 @@ export async function generatePrimaryFocusPredictions(): Promise<FocusPrediction
         const factors = await scoreCandidate(task, user.id, focusPreferences);
         
         // Calculate total score (0-110 points)
-        const totalScore = 
-          factors.priorityScore +
-          factors.habitScore +
-          factors.clusterScore +
-          factors.preferenceScore +
-          factors.cognitiveLoadScore;
+  const totalScore = 
+    factors.priorityScore +
+    factors.habitScore +
+    factors.clusterScore +
+    factors.preferenceScore +
+    factors.seasonalBoost +
+    factors.cognitiveLoadScore;
 
         // Normalize to 0-100 and calculate confidence
         const normalizedScore = Math.min((totalScore / 110) * 100, 100);
