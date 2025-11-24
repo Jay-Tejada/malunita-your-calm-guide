@@ -45,6 +45,7 @@ interface MalunitaVoiceProps {
   onTasksCreated?: () => void;
   taskStreak?: number;
   onRecordingStateChange?: (isRecording: boolean) => void;
+  onStatusChange?: (status: { isListening: boolean; isProcessing: boolean; isSpeaking: boolean; recordingDuration: number }) => void;
 }
 
 export interface MalunitaVoiceRef {
@@ -59,10 +60,13 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
   onTasksCreated,
   taskStreak = 0,
   onRecordingStateChange,
+  onStatusChange,
 }, ref) => {
   const [isListening, setIsListening] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [recordingDuration, setRecordingDuration] = useState(0);
+  const recordingStartTimeRef = useRef<number | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [stopWordDetected, setStopWordDetected] = useState(false);
@@ -98,7 +102,28 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
   // Notify parent of recording state changes
   useEffect(() => {
     onRecordingStateChange?.(isListening || isProcessing);
-  }, [isListening, isProcessing, onRecordingStateChange]);
+    onStatusChange?.({ isListening, isProcessing, isSpeaking, recordingDuration });
+  }, [isListening, isProcessing, isSpeaking, recordingDuration, onRecordingStateChange, onStatusChange]);
+
+  // Track recording duration
+  useEffect(() => {
+    if (isListening) {
+      recordingStartTimeRef.current = Date.now();
+      const interval = setInterval(() => {
+        if (recordingStartTimeRef.current) {
+          setRecordingDuration(Date.now() - recordingStartTimeRef.current);
+        }
+      }, 100);
+      return () => {
+        clearInterval(interval);
+        setRecordingDuration(0);
+        recordingStartTimeRef.current = null;
+      };
+    } else {
+      setRecordingDuration(0);
+      recordingStartTimeRef.current = null;
+    }
+  }, [isListening]);
 
   // ============================================================
   // THOUGHT ENGINE 2.0: All helper functions imported from src/lib/
