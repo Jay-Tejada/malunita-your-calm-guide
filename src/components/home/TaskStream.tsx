@@ -1,4 +1,4 @@
-import { useTasks } from "@/hooks/useTasks";
+import { useTasks, Task } from "@/hooks/useTasks";
 import { priorityScorer } from "@/lib/priorityScorer";
 import { contextMapper } from "@/lib/contextMapper";
 import { agendaRouter } from "@/lib/agendaRouter";
@@ -29,8 +29,41 @@ export function TaskStream() {
   // Create task lookup map
   const taskMap = new Map(incompleteTasks.map(t => [t.id, t]));
 
-  // Combine later tasks
+  // Sort function: MUST → SHOULD → COULD, with tiny tasks at bottom of each group
+  const sortTasksByPriority = (taskIds: string[]) => {
+    const tasksWithData = taskIds
+      .map(id => {
+        const task = taskMap.get(id);
+        return task ? { id, task } : null;
+      })
+      .filter(Boolean) as Array<{ id: string; task: Task }>;
+
+    return tasksWithData
+      .sort((a, b) => {
+        // Priority order
+        const priorityOrder = { 'MUST': 0, 'SHOULD': 1, 'COULD': 2 };
+        const aPriority = priorityOrder[a.task.priority || 'SHOULD'];
+        const bPriority = priorityOrder[b.task.priority || 'SHOULD'];
+        
+        if (aPriority !== bPriority) {
+          return aPriority - bPriority;
+        }
+
+        // Within same priority, non-tiny tasks first
+        if (a.task.is_tiny !== b.task.is_tiny) {
+          return a.task.is_tiny ? 1 : -1;
+        }
+
+        return 0;
+      })
+      .map(item => item.id);
+  };
+
+  // Apply sorting to each bucket
+  const sortedToday = sortTasksByPriority(routing.today);
+  const sortedThisWeek = sortTasksByPriority(routing.this_week);
   const laterTaskIds = [...routing.upcoming, ...routing.someday];
+  const sortedLater = sortTasksByPriority(laterTaskIds);
 
   // Check if we have any tasks at all
   const hasAnyTasks = incompleteTasks.length > 0;
@@ -56,13 +89,13 @@ export function TaskStream() {
   return (
     <div className="w-full space-y-8 pt-6">
       {/* Today Section */}
-      {routing.today.length > 0 && (
+      {sortedToday.length > 0 && (
         <div className="space-y-3">
           <h2 className="text-base font-semibold text-foreground">
             Today
           </h2>
           <div className="flex flex-col">
-            {routing.today.map(taskId => {
+            {sortedToday.map(taskId => {
               const task = taskMap.get(taskId);
               if (!task) return null;
               const isPrimaryFocus = task.category === 'primary_focus' && task.is_focus;
@@ -85,13 +118,13 @@ export function TaskStream() {
       )}
 
       {/* This Week Section */}
-      {routing.this_week.length > 0 && (
+      {sortedThisWeek.length > 0 && (
         <div className="space-y-3">
           <h2 className="text-base font-semibold text-foreground">
             This Week
           </h2>
           <div className="flex flex-col">
-            {routing.this_week.map(taskId => {
+            {sortedThisWeek.map(taskId => {
               const task = taskMap.get(taskId);
               if (!task) return null;
               return (
@@ -112,13 +145,13 @@ export function TaskStream() {
       )}
 
       {/* Later Section */}
-      {laterTaskIds.length > 0 && (
+      {sortedLater.length > 0 && (
         <div className="space-y-3">
           <h2 className="text-base font-semibold text-foreground">
             Later
           </h2>
           <div className="flex flex-col">
-            {laterTaskIds.map(taskId => {
+            {sortedLater.map(taskId => {
               const task = taskMap.get(taskId);
               if (!task) return null;
               return (

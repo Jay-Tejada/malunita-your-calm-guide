@@ -2,7 +2,7 @@ import { format, isToday, isTomorrow } from "date-fns";
 import { useState } from "react";
 import { useTasks, Task } from "@/hooks/useTasks";
 import { useCompanionEvents } from "@/hooks/useCompanionEvents";
-import { Check, Sparkles } from "lucide-react";
+import { Check, Sparkles, Zap } from "lucide-react";
 import { TaskLearningDialog } from "../TaskLearningDialog";
 
 interface TaskCardMinimalProps {
@@ -105,7 +105,7 @@ export function TaskCardMinimal({ task, fullTask, isPrimaryFocus }: TaskCardMini
       <div className="flex-1">
         {/* Task Title */}
         <div
-          className="font-medium mb-1 flex items-center gap-2"
+          className="font-medium mb-1 flex items-center gap-2 flex-wrap"
           style={{
             color: "#3B352B",
             fontSize: "15px",
@@ -122,6 +122,42 @@ export function TaskCardMinimal({ task, fullTask, isPrimaryFocus }: TaskCardMini
             >
               Primary Focus
             </span>
+          )}
+          {/* Intelligence Tags */}
+          {fullTask?.priority && (
+            <span 
+              className="text-[9px] font-mono font-semibold uppercase tracking-wide px-1.5 py-0.5"
+              style={{
+                color: "#7D7467",
+                border: "1px solid #B5A89A",
+                borderRadius: "2px",
+              }}
+            >
+              {fullTask.priority}
+            </span>
+          )}
+          {fullTask?.category && (
+            <span 
+              className="text-[9px] font-mono uppercase tracking-wide px-1.5 py-0.5"
+              style={{
+                color: "#7D7467",
+                backgroundColor: "rgba(181, 168, 154, 0.15)",
+                borderRadius: "2px",
+              }}
+            >
+              {fullTask.category}
+            </span>
+          )}
+          {fullTask?.is_tiny && (
+            <div title="Quick task">
+              <Zap 
+                size={12} 
+                style={{ 
+                  color: "#7D7467",
+                  flexShrink: 0 
+                }} 
+              />
+            </div>
           )}
         </div>
 

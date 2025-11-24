@@ -13,6 +13,7 @@ import { ConversationalTaskFlow } from "@/components/ConversationalTaskFlow";
 import { TaskFeedbackDialog } from "@/components/TaskFeedbackDialog";
 import { VoiceOrb } from "@/components/VoiceOrb";
 import { CompanionAvatar, CompanionMode } from "@/components/companion/CompanionAvatar";
+import { processRawInput } from "@/lib/taskProcessing";
 import { contextMapper } from "@/lib/contextMapper";
 import { priorityScorer } from "@/lib/priorityScorer";
 import { agendaRouter } from "@/lib/agendaRouter";
@@ -102,7 +103,7 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
   const { taskPreference } = useCompanionEmotion(
     (profile?.companion_personality_type as any) || 'zen'
   );
-  const { recordStressedLanguage } = useCognitiveLoad();
+  const { recordStressedLanguage, recordTaskAdded } = useCognitiveLoad();
   const { generateAndCreateSubtasks } = useAutoSplitTask();
   const { checkForRelatedTasks } = useRelatedTaskSuggestions();
   const audioEnabled = profile?.wants_voice_playback ?? true;
@@ -1072,104 +1073,64 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
 
   const autoSaveTasks = async (transcription: string, response: string, user: any, addToFocus: boolean = false) => {
     try {
-      // Split tasks using AI
-      const { data: splitData, error: splitError } = await supabase.functions.invoke('split-tasks', {
-        body: { text: transcription }
-      });
-
-      if (splitError) throw splitError;
-
-      const tasks = splitData.tasks || [];
-
-      if (tasks.length === 0) {
+      console.log('🚀 Starting Task Intelligence Pipeline...');
+      
+      // Process raw input through intelligence pipeline
+      const enrichedTasks = await processRawInput(transcription);
+      
+      if (enrichedTasks.length === 0) {
         console.log('No actionable tasks detected in transcription');
         return;
       }
 
+      console.log(`✅ Processed ${enrichedTasks.length} enriched tasks`);
+
       // Save tasks to database
       if (!user) return;
 
-      // Categorize each task or default to inbox
-      const tasksWithCategories = await Promise.all(
-        tasks.map(async (task: any) => {
-          try {
-            const { data: categoryData } = await supabase.functions.invoke('categorize-task', {
-              body: { 
-                text: task.title,
-                userId: user.id
-              }
-            });
-            
-            const category = categoryData?.category || 'inbox';
-            
-            return {
-              title: task.title,
-              context: response,
-              category,
-              has_reminder: task.has_reminder || false,
-              has_person_name: task.has_person_name || false,
-              is_time_based: task.is_time_based || false,
-              keywords: task.keywords || [],
-              input_method: 'voice' as const,
-              is_focus: addToFocus,
-              focus_date: addToFocus ? new Date().toISOString().split('T')[0] : null,
-              user_id: user.id,
-              goal_aligned: task.goal_aligned ?? null,
-              alignment_reason: task.alignment_reason || null,
-            };
-          } catch (error) {
-            // If categorization fails, default to inbox
-            return {
-              title: task.title,
-              context: response,
-              category: 'inbox',
-              has_reminder: task.has_reminder || false,
-              has_person_name: task.has_person_name || false,
-              is_time_based: task.is_time_based || false,
-              keywords: task.keywords || [],
-              input_method: 'voice' as const,
-              is_focus: addToFocus,
-              focus_date: addToFocus ? new Date().toISOString().split('T')[0] : null,
-              user_id: user.id,
-            };
-          }
-        })
-      );
+      const tasksToCreate = enrichedTasks.map(task => ({
+        title: task.title,
+        category: task.category,
+        custom_category_id: task.custom_category_id,
+        context: task.context,
+        input_method: 'voice' as const,
+        has_reminder: !!task.reminder_time,
+        reminder_time: task.reminder_time,
+        goal_aligned: task.goal_aligned,
+        alignment_reason: task.alignment_reason,
+        // Intelligence fields
+        priority: task.priority,
+        effort: task.effort,
+        scheduled_bucket: task.scheduled_bucket,
+        is_tiny: task.is_tiny,
+        // Store metadata as JSON
+        keywords: task.idea_metadata?.topics || [],
+      }));
 
-      const { error: insertError } = await supabase
-        .from('tasks')
-        .insert(tasksWithCategories);
+      await createTasks(tasksToCreate);
 
-      if (insertError) throw insertError;
+      setIsSaving(false);
+      setShowSuccess(true);
+      recordTaskAdded();
 
-      // Mark conversation as saved
-      await supabase
-        .from('conversation_history')
-        .update({ was_saved: true })
-        .eq('user_id', user.id)
-        .eq('session_id', sessionId)
-        .eq('content', transcription);
+      if (onTasksCreated) {
+        onTasksCreated();
+      }
 
-      const inboxCount = tasksWithCategories.filter(t => t.category === 'inbox').length;
-      const categorizedCount = tasksWithCategories.length - inboxCount;
-      
       toast({
         title: "Tasks saved",
-        description: categorizedCount > 0 
-          ? `${categorizedCount} categorized, ${inboxCount} in inbox`
-          : `${tasks.length} task${tasks.length > 1 ? 's' : ''} saved to inbox`,
+        description: `${enrichedTasks.length} enriched task${enrichedTasks.length > 1 ? 's' : ''} created with full intelligence`,
       });
-      
-      // Call legacy onSaveNote for backwards compatibility
-      if (onSaveNote) {
-        onSaveNote(transcription, response);
-      }
+
+      setTimeout(() => setShowSuccess(false), 2000);
     } catch (error: any) {
-      console.error('Error auto-saving tasks:', error);
+      console.error('Failed to save tasks:', error);
       toast({
-        title: "Note",
-        description: "Couldn't detect actionable tasks, but your conversation was saved.",
+        title: "Error",
+        description: "Failed to save tasks",
+        variant: "destructive",
       });
+      setIsSaving(false);
     }
   };
 
