@@ -483,6 +483,48 @@ export type Database = {
         }
         Relationships: []
       }
+      priority_storms: {
+        Row: {
+          cluster_density: Json | null
+          created_at: string | null
+          date: string
+          deadline_count: number | null
+          expected_load_score: number
+          id: string
+          recommended_focus_task: string | null
+          recurrence_count: number | null
+          task_count: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          cluster_density?: Json | null
+          created_at?: string | null
+          date: string
+          deadline_count?: number | null
+          expected_load_score: number
+          id?: string
+          recommended_focus_task?: string | null
+          recurrence_count?: number | null
+          task_count?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          cluster_density?: Json | null
+          created_at?: string | null
+          date?: string
+          deadline_count?: number | null
+          expected_load_score?: number
+          id?: string
+          recommended_focus_task?: string | null
+          recurrence_count?: number | null
+          task_count?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           auto_focus_enabled: boolean | null
