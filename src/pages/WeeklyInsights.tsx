@@ -10,6 +10,7 @@ import { useFocusStreak } from "@/hooks/useFocusStreak";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Cell } from "recharts";
 import { ChartContainer } from "@/components/ui/chart";
 import { Badge } from "@/components/ui/badge";
+import { FocusTrends } from "@/components/FocusTrends";
 
 const WeeklyInsights = () => {
   const navigate = useNavigate();
@@ -145,6 +146,11 @@ const WeeklyInsights = () => {
             </div>
             <p className="text-2xl font-light">{insights?.focusConsistency || 0}%</p>
           </Card>
+        </div>
+
+        {/* Focus Trends */}
+        <div className="mb-8">
+          <FocusTrends />
         </div>
 
         {/* Daily Activity Chart */}
