@@ -33,6 +33,9 @@ export interface Task {
   recurrence_pattern?: 'none' | 'daily' | 'weekly' | 'monthly';
   recurrence_day?: number;
   recurrence_end_date?: string;
+  location_lat?: number | null;
+  location_lng?: number | null;
+  location_address?: string | null;
 }
 
 export const useTasks = () => {
