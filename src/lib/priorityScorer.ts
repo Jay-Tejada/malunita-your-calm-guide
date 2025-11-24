@@ -2,6 +2,7 @@ interface Task {
   id?: string;
   title: string;
   category?: string;
+  is_focus?: boolean;
 }
 
 interface IdeaAnalysis {
@@ -86,6 +87,11 @@ function determinePriority(
   ideaAnalysis: IdeaAnalysis
 ): 'MUST' | 'SHOULD' | 'COULD' {
   const lowerText = task.title.toLowerCase();
+  
+  // Primary focus tasks are always MUST priority
+  if (task.category === 'primary_focus' && task.is_focus) {
+    return 'MUST';
+  }
   
   // Check for explicit priority keywords
   for (const keyword of PRIORITY_KEYWORDS.MUST) {

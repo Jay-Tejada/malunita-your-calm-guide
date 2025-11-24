@@ -42,7 +42,7 @@ export function DailyPriorityPrompt() {
     try {
       const createdTasks = await createTasks([{
         title: taskInput,
-        category: 'focus',
+        category: 'primary_focus',
         is_focus: true,
         focus_date: getFocusDate(),
         input_method: 'text',
@@ -50,6 +50,7 @@ export function DailyPriorityPrompt() {
         has_reminder: false,
         has_person_name: false,
         is_time_based: false,
+        context: 'Daily primary focus task', // Mark it clearly
       }]);
       
       // Store the priority task ID
