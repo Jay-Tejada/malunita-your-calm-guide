@@ -78,6 +78,15 @@ serve(async (req) => {
       )
     }
 
+    // Fetch user's focus preferences
+    const { data: profileData } = await supabase
+      .from('profiles')
+      .select('focus_preferences')
+      .eq('id', user.id)
+      .maybeSingle();
+
+    const focusPreferences = profileData?.focus_preferences || {};
+
     const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
     if (!openaiApiKey) {
       throw new Error('OPENAI_API_KEY is not configured');
@@ -94,6 +103,16 @@ serve(async (req) => {
     const taskSummary = tasks.map((t: any) => 
       `${t.completed ? '✓' : '○'} ${t.title}${t.context ? ` (${t.context})` : ''}`
     ).join('\n');
+
+    // Format focus preferences for AI context
+    const preferenceContext = Object.keys(focusPreferences).length > 0
+      ? `\n\nUser's Focus Preferences (apply gentle weighting):\n${Object.entries(focusPreferences)
+          .map(([category, weight]) => {
+            const weightNum = weight as number;
+            return `- ${category}: ${weightNum > 0 ? '+' : ''}${(weightNum * 100).toFixed(0)}% weight`;
+          })
+          .join('\n')}`
+      : '';
 
     const systemPrompt = `You are an intelligent productivity assistant. Your role is to:
 
@@ -120,6 +139,11 @@ serve(async (req) => {
    - Store in contextual_note field to keep task titles concise
    - Example: Task "Call John" + contextual_note: "Regarding Q4 budget discussion"
 
+5. **APPLY FOCUS PREFERENCES (GENTLE WEIGHTING)**
+   - Boost suggestions in categories with positive weights by their percentage
+   - Reduce suggestions in categories with negative weights
+   - Keep adjustments subtle — don't force preferences${preferenceContext}
+
 Current domain: ${domain}
 
 Analyze existing tasks for:
@@ -127,6 +151,7 @@ Analyze existing tasks for:
 - Tasks with implicit deadlines or temporal cues
 - Keywords that suggest related workflows
 - Contextual information that should be notes
+- Apply user's focus preferences to prioritization
 
 Return 3-7 suggestions that are specific, actionable, and genuinely helpful.`;
 

@@ -111,10 +111,25 @@ async function processUserPersonalization(
   // Analyze task patterns
   const analysis = analyzeTaskPatterns(tasks);
 
+  // Fetch focus history to track ONE thing patterns
+  const { data: focusHistory, error: focusError } = await supabaseAdmin
+    .from('daily_focus_history')
+    .select('cluster_label')
+    .eq('user_id', userId)
+    .gte('date', thirtyDaysAgo.toISOString().split('T')[0])
+    .not('cluster_label', 'is', null);
+
+  if (focusError) {
+    console.log('Error fetching focus history:', focusError);
+  }
+
+  // Calculate focus preferences based on ONE thing selections
+  const focusPreferences = calculateFocusPreferences(focusHistory || []);
+
   // Generate AI insights using Lovable AI
   const insights = await generateAIInsights(analysis, tasks);
 
-  // Update profile with insights
+  // Update profile with insights and focus preferences
   const { error: updateError } = await supabaseAdmin
     .from('profiles')
     .update({
@@ -127,6 +142,7 @@ async function processUserPersonalization(
         lastAnalyzed: new Date().toISOString(),
       },
       preferences_summary: insights,
+      focus_preferences: focusPreferences,
       last_personalization_run: new Date().toISOString(),
     })
     .eq('id', userId);
@@ -279,4 +295,43 @@ function generateFallbackInsights(analysis: TaskAnalysis): string {
   const timeOfDay = analysis.preferredInputTime;
   
   return `You're most productive in the ${timeOfDay}, focusing primarily on ${topCategory}. With a ${analysis.completionRate}% completion rate and ${analysis.avgTasksPerDay} tasks per day, you're maintaining good momentum. Consider batching similar tasks together to boost efficiency even further.`;
+}
+
+function calculateFocusPreferences(focusHistory: any[]): Record<string, number> {
+  if (!focusHistory || focusHistory.length === 0) {
+    return {};
+  }
+
+  // Count frequency of each cluster label
+  const clusterCounts: Record<string, number> = {};
+  focusHistory.forEach(entry => {
+    if (entry.cluster_label) {
+      clusterCounts[entry.cluster_label] = (clusterCounts[entry.cluster_label] || 0) + 1;
+    }
+  });
+
+  const totalFocusTasks = focusHistory.length;
+  const weights: Record<string, number> = {};
+
+  // Calculate weights for each cluster
+  Object.entries(clusterCounts).forEach(([cluster, count]) => {
+    const frequency = count / totalFocusTasks;
+    
+    if (frequency > 0.3) {
+      // Frequently chosen (>30%): +0.15 boost
+      weights[cluster] = 0.15;
+    } else if (frequency > 0.15) {
+      // Moderately chosen (15-30%): +0.08 boost
+      weights[cluster] = 0.08;
+    } else if (frequency > 0.05) {
+      // Occasionally chosen (5-15%): neutral
+      weights[cluster] = 0;
+    } else {
+      // Rarely/never chosen (<5%): -0.05 penalty
+      weights[cluster] = -0.05;
+    }
+  });
+
+  console.log('Calculated focus preferences:', weights);
+  return weights;
 }

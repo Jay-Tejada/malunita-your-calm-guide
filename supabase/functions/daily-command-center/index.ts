@@ -141,15 +141,16 @@ serve(async (req) => {
     const allTasks = existingTasks || [];
     console.log('Existing open tasks:', allTasks.length);
 
-    // Step 3: Fetch companion state
+    // Step 3: Fetch companion state and focus preferences
     const { data: profileData } = await supabase
       .from('profiles')
-      .select('companion_personality_type, companion_stage')
+      .select('companion_personality_type, companion_stage, focus_preferences')
       .eq('id', user.id)
       .single();
 
     const companionPersonality = profileData?.companion_personality_type || 'zen';
     const companionStage = profileData?.companion_stage || 1;
+    const focusPreferences = profileData?.focus_preferences || {};
 
     // Step 4: Categorize tasks intelligently
     const now = new Date();
@@ -251,11 +252,19 @@ Return ONLY bullet points of context notes found, or return "No context notes" i
     }
 
     // Generate Executive Insight with mood-aware, companion-aware tone
-    const insightPrompt = isHomeScreenMode 
+    const preferredCategories = Object.entries(focusPreferences)
+      .filter(([_, weight]) => (weight as number) > 0.1)
+      .map(([category]) => category);
+    
+    const focusPreferenceContext = preferredCategories.length > 0
+      ? `\n\nUser tends to focus well on: ${preferredCategories.join(', ')}`
+      : '';
+
+    const insightPrompt = isHomeScreenMode
       ? `You are an Executive Assistant with these attributes: clean, direct, minimalist, slightly dry humor, companion-aware.
 
 Companion personality: ${companionPersonality}
-Companion stage: ${companionStage}
+Companion stage: ${companionStage}${focusPreferenceContext}
 
 Task summary:
 - Priority tasks: ${priorityTasks.length}
@@ -281,7 +290,7 @@ Return ONLY the headline. No extra text.`
 User's input: "${text}"
 User's mood: ${mood}
 Companion personality: ${companionPersonality}
-Companion stage: ${companionStage}
+Companion stage: ${companionStage}${focusPreferenceContext}
 
 Task summary:
 - Priority tasks: ${priorityTasks.length}
