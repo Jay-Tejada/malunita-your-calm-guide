@@ -38,9 +38,11 @@ serve(async (req) => {
     // Get user's profile for personalization
     const { data: profile } = await supabase
       .from('profiles')
-      .select('companion_name, current_goal, peak_activity_time')
+      .select('companion_name, current_goal, peak_activity_time, focus_preferences')
       .eq('id', userId)
       .maybeSingle();
+
+    const focusPreferences = profile?.focus_preferences || {};
 
     // Get today's tasks
     const { data: todayTasks } = await supabase
@@ -66,9 +68,18 @@ serve(async (req) => {
     const companionName = profile?.companion_name || 'Malunita';
     const currentHour = new Date().getHours();
 
+    // Apply focus preferences to messaging (subtle influence)
+    const topPreferredCategories = Object.entries(focusPreferences)
+      .filter(([_, weight]) => (weight as number) > 0.1)
+      .map(([category]) => category);
+
+    const preferenceHint = topPreferredCategories.length > 0 
+      ? ` You tend to focus well on ${topPreferredCategories[0]} tasks.`
+      : '';
+
     if (todayTasks && todayTasks.length > 0) {
       if (currentHour < 12) {
-        message = `Good morning! You have ${todayTasks.length} task${todayTasks.length > 1 ? 's' : ''} to focus on today. Let's make progress! ✨`;
+        message = `Good morning! You have ${todayTasks.length} task${todayTasks.length > 1 ? 's' : ''} to focus on today.${preferenceHint} Let's make progress! ✨`;
       } else if (currentHour < 17) {
         message = `You're doing great! ${todayTasks.length} task${todayTasks.length > 1 ? 's' : ''} remaining today. Keep the momentum going! 🚀`;
       } else {
@@ -78,7 +89,7 @@ serve(async (req) => {
       message = `All caught up for today! Ready to plan ahead? You have ${upcomingTasks.length} upcoming task${upcomingTasks.length > 1 ? 's' : ''} to review. 🎯`;
     } else {
       if (currentHour < 12) {
-        message = `Fresh start! What would you like to accomplish today? ${companionName} is here to help you plan. ☀️`;
+        message = `Fresh start! What would you like to accomplish today?${preferenceHint} ${companionName} is here to help you plan. ☀️`;
       } else if (currentHour < 17) {
         message = `Looking peaceful! Add some tasks or take a moment to reflect on your day. 🌸`;
       } else {
