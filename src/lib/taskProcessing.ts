@@ -46,11 +46,22 @@ interface EnrichedTask {
   };
 }
 
+interface ProcessingResult {
+  tasks: EnrichedTask[];
+  ambiguous: boolean;
+  reason?: string;
+}
+
 /**
  * Main task intelligence pipeline
  * Takes raw user input and returns enriched task objects with full intelligence
+ * @param text - The raw input text
+ * @param clarificationData - Optional clarification answers from previous interaction
  */
-export async function processRawInput(text: string): Promise<EnrichedTask[]> {
+export async function processRawInput(
+  text: string, 
+  clarificationData?: any
+): Promise<ProcessingResult> {
   try {
     // Step 1: Extract tasks from natural language
     const { data: extractionData, error: extractionError } = await supabase.functions.invoke<{
@@ -61,14 +72,20 @@ export async function processRawInput(text: string): Promise<EnrichedTask[]> {
 
     if (extractionError || !extractionData?.tasks) {
       console.error('Task extraction failed:', extractionError);
-      return [];
+      return {
+        tasks: [],
+        ambiguous: false,
+      };
     }
 
-    // Step 2: Analyze the idea/context
+    // Step 2: Analyze the idea/context (include clarification data if available)
     const { data: ideaData, error: ideaError } = await supabase.functions.invoke<IdeaAnalysis>(
       'idea-analyzer',
       {
-        body: { text }
+        body: { 
+          text,
+          clarification: clarificationData 
+        }
       }
     );
 
@@ -186,9 +203,34 @@ export async function processRawInput(text: string): Promise<EnrichedTask[]> {
       });
     }
 
-    return enrichedTasks;
+    // Check for ambiguity
+    const isAmbiguous = enrichedTasks.length === 1 && (
+      !enrichedTasks[0].category || 
+      enrichedTasks[0].priority === 'COULD' ||
+      enrichedTasks[0].context.length < 10
+    );
+
+    let ambiguityReason: string | undefined;
+    if (isAmbiguous) {
+      if (!enrichedTasks[0].category) {
+        ambiguityReason = "Could you specify what type of task this is?";
+      } else if (enrichedTasks[0].priority === 'COULD') {
+        ambiguityReason = "How urgent is this task?";
+      } else {
+        ambiguityReason = "Could you provide more details?";
+      }
+    }
+
+    return {
+      tasks: enrichedTasks,
+      ambiguous: isAmbiguous,
+      reason: ambiguityReason,
+    };
   } catch (error) {
     console.error('Task processing pipeline failed:', error);
-    return [];
+    return {
+      tasks: [],
+      ambiguous: false,
+    };
   }
 }

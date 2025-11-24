@@ -1076,19 +1076,19 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
       console.log('🚀 Starting Task Intelligence Pipeline...');
       
       // Process raw input through intelligence pipeline
-      const enrichedTasks = await processRawInput(transcription);
+      const result = await processRawInput(transcription);
       
-      if (enrichedTasks.length === 0) {
+      if (result.tasks.length === 0) {
         console.log('No actionable tasks detected in transcription');
         return;
       }
 
-      console.log(`✅ Processed ${enrichedTasks.length} enriched tasks`);
+      console.log(`✅ Processed ${result.tasks.length} enriched tasks`);
 
       // Save tasks to database
       if (!user) return;
 
-      const tasksToCreate = enrichedTasks.map(task => ({
+      const tasksToCreate = result.tasks.map(task => ({
         title: task.title,
         category: task.category,
         custom_category_id: task.custom_category_id,
@@ -1119,7 +1119,7 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
 
       toast({
         title: "Tasks saved",
-        description: `${enrichedTasks.length} enriched task${enrichedTasks.length > 1 ? 's' : ''} created with full intelligence`,
+        description: `${result.tasks.length} enriched task${result.tasks.length > 1 ? 's' : ''} created with full intelligence`,
       });
 
       setTimeout(() => setShowSuccess(false), 2000);
