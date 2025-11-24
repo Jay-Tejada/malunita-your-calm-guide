@@ -28,6 +28,7 @@ import WeeklyInsights from "./pages/WeeklyInsights";
 import TinyTaskFiesta from "./pages/TinyTaskFiesta";
 import Reminders from "./pages/Reminders";
 import HatchingGallery from "./pages/HatchingGallery";
+import TaskGlobePage from "./pages/TaskGlobe";
 import Backup from "./pages/Backup";
 import Customization from "./pages/Customization";
 import Journal from "./pages/Journal";
@@ -111,6 +112,7 @@ const App = () => {
                 <Route path="/clusters" element={<Clusters />} />
                 <Route path="/timetravel" element={<TimeTravel />} />
                 <Route path="/reminders" element={<Reminders />} />
+                <Route path="/globe" element={<TaskGlobePage />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Route>
