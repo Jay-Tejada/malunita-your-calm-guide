@@ -1,11 +1,19 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
-interface GuidanceBillboardProps {
+type GuidanceBillboardProps = {
   message: string;
-}
+  subtitle?: string;
+  ctaLabel?: string;
+  onCtaClick?: () => void;
+};
 
-export function GuidanceBillboard({ message }: GuidanceBillboardProps) {
+export function GuidanceBillboard({ 
+  message, 
+  subtitle, 
+  ctaLabel, 
+  onCtaClick 
+}: GuidanceBillboardProps) {
   const [isVisible, setIsVisible] = useState(true);
 
   useEffect(() => {
@@ -16,6 +24,9 @@ export function GuidanceBillboard({ message }: GuidanceBillboardProps) {
 
     return () => clearTimeout(timer);
   }, []);
+
+  // Check if rich content is provided
+  const hasRichContent = subtitle || ctaLabel;
 
   return (
     <AnimatePresence>
@@ -34,9 +45,39 @@ export function GuidanceBillboard({ message }: GuidanceBillboardProps) {
               borderRadius: "16px",
               boxShadow: "0 4px 12px rgba(0, 0, 0, 0.08)",
             }}
-            className="px-6 py-4 text-center"
+            className={`px-6 py-4 ${hasRichContent ? 'flex items-center justify-between gap-4' : 'text-center'}`}
           >
-            <p className="text-sm font-medium">{message}</p>
+            <div className={hasRichContent ? 'flex-1' : ''}>
+              <p className="text-sm font-semibold">{message}</p>
+              {subtitle && (
+                <p 
+                  style={{ 
+                    color: "#7D7467", 
+                    fontSize: "13px" 
+                  }}
+                  className="mt-1"
+                >
+                  {subtitle}
+                </p>
+              )}
+            </div>
+            
+            {ctaLabel && onCtaClick && (
+              <button
+                onClick={onCtaClick}
+                style={{
+                  backgroundColor: "#E5D7C2",
+                  borderRadius: "999px",
+                  padding: "6px 10px",
+                  fontSize: "13px",
+                  color: "#3D3325",
+                  fontWeight: 500,
+                }}
+                className="transition-all hover:brightness-90 whitespace-nowrap"
+              >
+                {ctaLabel}
+              </button>
+            )}
           </div>
         </motion.div>
       )}
