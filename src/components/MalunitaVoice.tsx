@@ -19,6 +19,7 @@ import { clarificationPrompter } from "@/lib/clarificationPrompter";
 import { summaryComposer } from "@/lib/summaryComposer";
 import { useMoodStore, detectMoodFromMessage } from "@/state/moodMachine";
 import { useCognitiveLoad } from "@/state/cognitiveLoad";
+import { checkAndHandlePrediction } from "@/utils/predictionChecker";
 
 interface Message {
   role: 'user' | 'assistant';
@@ -579,6 +580,9 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
                         context: suggestion.reason
                       }
                     });
+                    
+                    // Check prediction for each suggested focus task
+                    checkAndHandlePrediction(task.id, task.title);
                   }
                 }
 

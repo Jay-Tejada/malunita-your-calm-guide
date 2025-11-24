@@ -41,7 +41,7 @@ const AssistantBubble = ({ onOpenChat, className = '', typing = false }: Assista
   // TODO: Connect to user profile settings
   const soundEnabled = true; // userProfile?.soundEffectsEnabled ?? true;
 
-  // Listen for focus completion celebration
+  // Listen for focus completion celebration and prediction matches
   useEffect(() => {
     const handleFocusComplete = (event: CustomEvent) => {
       const { message } = event.detail;
@@ -50,10 +50,19 @@ const AssistantBubble = ({ onOpenChat, className = '', typing = false }: Assista
       }
     };
 
+    const handlePredictionMatch = (event: CustomEvent) => {
+      const { message } = event.detail;
+      if (message) {
+        messageQueueRef.current.enqueue(message);
+      }
+    };
+
     window.addEventListener('companion:focus-complete' as any, handleFocusComplete);
+    window.addEventListener('companion:prediction-match' as any, handlePredictionMatch);
     
     return () => {
       window.removeEventListener('companion:focus-complete' as any, handleFocusComplete);
+      window.removeEventListener('companion:prediction-match' as any, handlePredictionMatch);
     };
   }, []);
 

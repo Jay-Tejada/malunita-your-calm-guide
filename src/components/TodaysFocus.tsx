@@ -7,6 +7,7 @@ import { Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/hooks/useProfile";
+import { checkAndHandlePrediction } from "@/utils/predictionChecker";
 
 interface TodaysFocusProps {
   onReflectClick?: () => void;
@@ -93,6 +94,9 @@ export const TodaysFocus = ({ onReflectClick }: TodaysFocusProps) => {
               context: suggestion.reason
             }
           });
+          
+          // Check prediction for each suggested focus task
+          checkAndHandlePrediction(task.id, task.title);
         }
       }
 

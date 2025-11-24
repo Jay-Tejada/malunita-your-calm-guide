@@ -16,6 +16,7 @@ import { useDailyPriorityPrompt } from "@/state/useDailyPriorityPrompt";
 import { useFocusReflection } from "@/hooks/useFocusReflection";
 import { useMidDayFocusReminder } from "@/hooks/useMidDayFocusReminder";
 import { useEndOfDayWrapUp } from "@/hooks/useEndOfDayWrapUp";
+import { usePrimaryFocusPrediction } from "@/hooks/usePrimaryFocusPrediction";
 import { useTasks, Task } from "@/hooks/useTasks";
 
 const Index = () => {
@@ -38,6 +39,9 @@ const Index = () => {
   const { showReminder: showMidDayReminder, focusTask: midDayFocusTask, dismissReminder } = useMidDayFocusReminder();
   const { showWrapUp, completed: wrapUpCompleted } = useEndOfDayWrapUp();
   const { updateTask } = useTasks();
+  
+  // Initialize prediction system (runs silently in background)
+  usePrimaryFocusPrediction();
 
   useEffect(() => {
     const {
