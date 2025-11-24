@@ -14,7 +14,7 @@ export const useDailyPriorityPrompt = create<DailyPriorityPromptState>()(
   persist(
     (set, get) => ({
       lastAnsweredDate: null,
-      showPrompt: true,
+      showPrompt: false,
       priorityTaskId: null,
       answeredForTomorrow: false,
       
@@ -23,22 +23,27 @@ export const useDailyPriorityPrompt = create<DailyPriorityPromptState>()(
         const lastAnswered = get().lastAnsweredDate;
         const currentHour = new Date().getHours();
         const isEvening = currentHour >= 18;
+        const answeredForTomorrow = get().answeredForTomorrow;
         
-        // If it's evening and we already answered for tomorrow, don't show
-        if (isEvening && get().answeredForTomorrow && lastAnswered === today) {
+        // If already answered today
+        if (lastAnswered === today) {
+          // In evening: if answered for tomorrow, don't show
+          if (isEvening && answeredForTomorrow) {
+            set({ showPrompt: false });
+            return;
+          }
+          // Not in evening: if answered for tomorrow, that was yesterday evening, so show for today
+          if (!isEvening && answeredForTomorrow) {
+            set({ showPrompt: true, answeredForTomorrow: false });
+            return;
+          }
+          // Already answered today (not for tomorrow)
           set({ showPrompt: false });
           return;
         }
         
-        // If it's a new day, reset and show the prompt
-        if (lastAnswered !== today) {
-          set({ showPrompt: true, priorityTaskId: null, answeredForTomorrow: false });
-        } else if (!isEvening && get().answeredForTomorrow) {
-          // New day has started, and we had answered for "tomorrow" yesterday evening
-          set({ showPrompt: true, answeredForTomorrow: false });
-        } else {
-          set({ showPrompt: false });
-        }
+        // New day - show the prompt
+        set({ showPrompt: true, priorityTaskId: null, answeredForTomorrow: false });
       },
       
       markPromptAnswered: (taskId: string, isForTomorrow = false) => {
