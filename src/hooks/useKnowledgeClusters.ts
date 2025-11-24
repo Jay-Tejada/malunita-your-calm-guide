@@ -44,7 +44,11 @@ export const useKnowledgeClusters = () => {
     setIsLoading(true);
 
     try {
-      const analysis = await clusterTasks(tasks);
+      // Find today's primary focus task
+      const today = new Date().toISOString().split('T')[0];
+      const primaryFocusTask = tasks.find(t => t.is_focus && t.focus_date === today);
+      
+      const analysis = await clusterTasks(tasks, primaryFocusTask);
       setClusters(analysis.clusters);
       setLastAnalysis(analysis);
       saveClusterAnalysis(analysis);
