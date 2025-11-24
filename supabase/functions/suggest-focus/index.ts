@@ -39,6 +39,7 @@ serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const locationContext = body.location || null; // { lat, lng, context: 'home' | 'work' }
     const companionMood = body.companionMood || 'medium'; // 'ambitious' | 'medium' | 'simple' | 'low-cognitive'
+    const focusPersona = body.focusPersona || null;
 
     // Get user's profile for personalization and emotional state
     const { data: profile } = await supabase

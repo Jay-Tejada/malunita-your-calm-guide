@@ -1,5 +1,6 @@
 import { supabase } from '@/integrations/supabase/client';
 import { loadClusterAnalysis } from './knowledgeClusters';
+import { getFocusPersona } from '@/ai/focusPersonaModel';
 
 export interface FocusPrediction {
   task_id: string;
@@ -331,10 +332,10 @@ export async function generatePrimaryFocusPredictions(): Promise<FocusPrediction
       return [];
     }
 
-    // Fetch user's focus preferences
+    // Fetch user's focus preferences and persona
     const { data: profile } = await supabase
       .from('profiles')
-      .select('focus_preferences')
+      .select('focus_preferences, focus_persona')
       .eq('id', user.id)
       .single();
 
@@ -342,6 +343,8 @@ export async function generatePrimaryFocusPredictions(): Promise<FocusPrediction
       typeof profile?.focus_preferences === 'object' && profile?.focus_preferences !== null
         ? (profile.focus_preferences as Record<string, number>)
         : {};
+
+    const focusPersona = profile?.focus_persona ? profile.focus_persona as any : null;
 
     // Generate candidate tasks
     const candidates = await generateCandidates(user.id);
@@ -359,13 +362,36 @@ export async function generatePrimaryFocusPredictions(): Promise<FocusPrediction
         const factors = await scoreCandidate(task, user.id, focusPreferences);
         
         // Calculate total score (0-110 points)
-  const totalScore = 
-    factors.priorityScore +
-    factors.habitScore +
-    factors.clusterScore +
-    factors.preferenceScore +
-    factors.seasonalBoost +
-    factors.cognitiveLoadScore;
+        let totalScore = 
+          factors.priorityScore +
+          factors.habitScore +
+          factors.clusterScore +
+          factors.preferenceScore +
+          factors.seasonalBoost +
+          factors.cognitiveLoadScore;
+
+        // Apply persona-based adjustments
+        if (focusPersona) {
+          // Preference domain boost
+          if (task.category && focusPersona.preference_domains?.[task.category]) {
+            totalScore += focusPersona.preference_domains[task.category] * 20;
+            factors.reasoning.push('Matches persona preference');
+          }
+
+          // Avoidance penalty
+          if (task.category && focusPersona.avoidance_profile?.[task.category]) {
+            totalScore -= focusPersona.avoidance_profile[task.category] * 15;
+            factors.reasoning.push('Persona avoidance pattern detected');
+          }
+
+          // Ambition-based complexity matching
+          const taskComplexity = (task.title?.length || 0) / 200;
+          const ambitionMatch = 1 - Math.abs((focusPersona.ambition || 0.5) - taskComplexity);
+          totalScore += ambitionMatch * 10;
+          if (ambitionMatch > 0.7) {
+            factors.reasoning.push('Matches persona ambition level');
+          }
+        }
 
         // Normalize to 0-100 and calculate confidence
         const normalizedScore = Math.min((totalScore / 110) * 100, 100);
