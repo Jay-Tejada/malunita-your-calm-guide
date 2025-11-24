@@ -41,6 +41,22 @@ const AssistantBubble = ({ onOpenChat, className = '', typing = false }: Assista
   // TODO: Connect to user profile settings
   const soundEnabled = true; // userProfile?.soundEffectsEnabled ?? true;
 
+  // Listen for focus completion celebration
+  useEffect(() => {
+    const handleFocusComplete = (event: CustomEvent) => {
+      const { message } = event.detail;
+      if (message) {
+        messageQueueRef.current.enqueue(message);
+      }
+    };
+
+    window.addEventListener('companion:focus-complete' as any, handleFocusComplete);
+    
+    return () => {
+      window.removeEventListener('companion:focus-complete' as any, handleFocusComplete);
+    };
+  }, []);
+
   // Get current user and show greeting on mount
   useEffect(() => {
     const initializeUser = async () => {
