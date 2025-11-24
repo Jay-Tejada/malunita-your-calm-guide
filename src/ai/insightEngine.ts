@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { startOfMonth, endOfMonth, format, subMonths } from "date-fns";
+import { getFocusPersona } from "@/ai/focusPersonaModel";
 
 export interface MonthlyData {
   month: string;
@@ -150,8 +151,15 @@ export async function aggregateMonthlyData(monthOffset: number = 0): Promise<Mon
 }
 
 export async function generateMonthlyInsight(data: MonthlyData): Promise<MonthlyInsight> {
+  // Get focus persona for deeper insights
+  const { data: { user } } = await supabase.auth.getUser();
+  const persona = user ? await getFocusPersona(user.id) : null;
+
   const { data: result, error } = await supabase.functions.invoke('generate-monthly-insights', {
-    body: { data }
+    body: { 
+      data,
+      focusPersona: persona
+    }
   });
 
   if (error) throw error;

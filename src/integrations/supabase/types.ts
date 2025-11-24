@@ -501,6 +501,7 @@ export type Database = {
           custom_wake_word: string | null
           emotional_memory: Json | null
           fiesta_completion_count: number | null
+          focus_persona: Json | null
           focus_preferences: Json | null
           goal_timeframe: string | null
           goal_updated_at: string | null
@@ -556,6 +557,7 @@ export type Database = {
           custom_wake_word?: string | null
           emotional_memory?: Json | null
           fiesta_completion_count?: number | null
+          focus_persona?: Json | null
           focus_preferences?: Json | null
           goal_timeframe?: string | null
           goal_updated_at?: string | null
@@ -611,6 +613,7 @@ export type Database = {
           custom_wake_word?: string | null
           emotional_memory?: Json | null
           fiesta_completion_count?: number | null
+          focus_persona?: Json | null
           focus_preferences?: Json | null
           goal_timeframe?: string | null
           goal_updated_at?: string | null
