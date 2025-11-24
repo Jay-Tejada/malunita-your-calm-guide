@@ -100,7 +100,7 @@ export function DailyPriorityPrompt() {
             <div className="flex items-center gap-3">
               <Sparkles className="w-4 h-4 text-primary/70 group-hover:text-primary transition-colors" />
               <p className="text-sm font-medium text-foreground/80 group-hover:text-foreground transition-colors">
-                What's the one thing you must get done {targetDay}?
+                What is the ONE thing you could accomplish {targetDay} that would get your head above water? Everything else is a bonus.
               </p>
             </div>
           </button>
