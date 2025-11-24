@@ -141,8 +141,29 @@ serve(async (req) => {
     const allTasks = existingTasks || [];
     console.log('Existing open tasks:', allTasks.length);
 
-    // Step 2.5: Fetch today's ONE thing (primary focus)
-    const primaryFocusTask = allTasks.find(t => t.is_focus && t.focus_date === today);
+    // Step 2.4: Calculate today's date
+    const now = new Date();
+    const today = now.toISOString().split('T')[0];
+
+    // Step 2.5: Fetch today's ONE thing (primary focus) or tomorrow's plan
+    let primaryFocusTask = allTasks.find(t => t.is_focus && t.focus_date === today);
+    
+    // If no primary focus set yet, check tomorrow_plan for suggestions
+    if (!primaryFocusTask) {
+      const { data: tomorrowPlan } = await supabase
+        .from('tomorrow_plan')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('plan_date', today)
+        .maybeSingle();
+      
+      if (tomorrowPlan && tomorrowPlan.recommended_one_thing_id) {
+        // Find the recommended task in existing tasks
+        primaryFocusTask = allTasks.find(t => t.id === tomorrowPlan.recommended_one_thing_id);
+        console.log('Using tomorrow plan recommendation:', tomorrowPlan.recommended_one_thing);
+      }
+    }
+    
     console.log('Primary focus task:', primaryFocusTask?.title || 'None set');
 
     // Step 2.6: Analyze domino effect for primary focus task
@@ -184,9 +205,6 @@ serve(async (req) => {
     const focusPreferences = profileData?.focus_preferences || {};
 
     // Step 4: Categorize tasks intelligently
-    const now = new Date();
-    const today = now.toISOString().split('T')[0];
-
     // Detect mood and tone
     const { mood, tone } = isHomeScreenMode 
       ? { mood: 'calm' as const, tone: 'direct' as const }
