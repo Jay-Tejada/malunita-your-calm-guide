@@ -2,10 +2,11 @@ import { useState } from "react";
 import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { ArrowLeft, ChevronLeft, ChevronRight, TrendingUp, Target, Clock, Calendar, Lightbulb, Zap, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight, TrendingUp, Target, Clock, Calendar, Lightbulb, Zap, CheckCircle2, Flame } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useWeeklyInsights } from "@/hooks/useWeeklyInsights";
 import { useWeeklyRecommendations } from "@/hooks/useWeeklyRecommendations";
+import { useFocusStreak } from "@/hooks/useFocusStreak";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Cell } from "recharts";
 import { ChartContainer } from "@/components/ui/chart";
 import { Badge } from "@/components/ui/badge";
@@ -14,6 +15,7 @@ const WeeklyInsights = () => {
   const navigate = useNavigate();
   const [weekOffset, setWeekOffset] = useState(0);
   const { data: insights, isLoading } = useWeeklyInsights(weekOffset);
+  const { streak, isLoading: isLoadingStreak } = useFocusStreak();
   const { data: recommendations, isLoading: isLoadingRecs } = useWeeklyRecommendations(
     insights?.weekStart || '',
     insights?.weekEnd || '',
@@ -101,6 +103,14 @@ const WeeklyInsights = () => {
             <ChevronRight className="h-4 w-4 ml-1" />
           </Button>
         </div>
+
+        {/* Focus Streak */}
+        {!isLoadingStreak && streak && (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
+            <Flame className="w-4 h-4" />
+            <span>Primary Focus Streak: <span className="font-medium text-foreground">{streak.current_streak} days</span> | Longest streak: <span className="font-medium text-foreground">{streak.longest_streak} days</span></span>
+          </div>
+        )}
 
         {/* Key Metrics */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
