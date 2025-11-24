@@ -114,17 +114,23 @@ async function processUserPersonalization(
   // Fetch focus history to track ONE thing patterns
   const { data: focusHistory, error: focusError } = await supabaseAdmin
     .from('daily_focus_history')
-    .select('cluster_label')
+    .select('cluster_label, outcome, date')
     .eq('user_id', userId)
     .gte('date', thirtyDaysAgo.toISOString().split('T')[0])
-    .not('cluster_label', 'is', null);
+    .not('cluster_label', 'is', null)
+    .order('date', { ascending: false });
 
   if (focusError) {
     console.log('Error fetching focus history:', focusError);
   }
 
-  // Calculate focus preferences based on ONE thing selections
-  const focusPreferences = calculateFocusPreferences(focusHistory || []);
+  // Calculate focus preferences with reinforcement learning
+  const focusPreferences = await calculateFocusPreferencesWithReinforcement(
+    supabaseAdmin,
+    userId,
+    focusHistory || [],
+    tasks
+  );
 
   // Generate AI insights using Lovable AI
   const insights = await generateAIInsights(analysis, tasks);
@@ -297,12 +303,17 @@ function generateFallbackInsights(analysis: TaskAnalysis): string {
   return `You're most productive in the ${timeOfDay}, focusing primarily on ${topCategory}. With a ${analysis.completionRate}% completion rate and ${analysis.avgTasksPerDay} tasks per day, you're maintaining good momentum. Consider batching similar tasks together to boost efficiency even further.`;
 }
 
-function calculateFocusPreferences(focusHistory: any[]): Record<string, number> {
+async function calculateFocusPreferencesWithReinforcement(
+  supabaseAdmin: any,
+  userId: string,
+  focusHistory: any[],
+  tasks: any[]
+): Promise<Record<string, number>> {
   if (!focusHistory || focusHistory.length === 0) {
     return {};
   }
 
-  // Count frequency of each cluster label
+  // Count frequency of each cluster label (baseline weights)
   const clusterCounts: Record<string, number> = {};
   focusHistory.forEach(entry => {
     if (entry.cluster_label) {
@@ -313,25 +324,86 @@ function calculateFocusPreferences(focusHistory: any[]): Record<string, number> 
   const totalFocusTasks = focusHistory.length;
   const weights: Record<string, number> = {};
 
-  // Calculate weights for each cluster
+  // Calculate baseline weights for each cluster
   Object.entries(clusterCounts).forEach(([cluster, count]) => {
     const frequency = count / totalFocusTasks;
     
     if (frequency > 0.3) {
-      // Frequently chosen (>30%): +0.15 boost
       weights[cluster] = 0.15;
     } else if (frequency > 0.15) {
-      // Moderately chosen (15-30%): +0.08 boost
       weights[cluster] = 0.08;
     } else if (frequency > 0.05) {
-      // Occasionally chosen (5-15%): neutral
       weights[cluster] = 0;
     } else {
-      // Rarely/never chosen (<5%): -0.05 penalty
       weights[cluster] = -0.05;
     }
   });
 
-  console.log('Calculated focus preferences:', weights);
+  // Apply reinforcement learning based on ONE-thing completion behavior
+  for (const entry of focusHistory) {
+    const cluster = entry.cluster_label;
+    const outcome = entry.outcome;
+    const date = entry.date;
+
+    // Get tasks from that day to analyze patterns
+    const { data: dayTasks } = await supabaseAdmin
+      .from('tasks')
+      .select('id, title, category, primary_focus_alignment, completed, created_at')
+      .eq('user_id', userId)
+      .gte('created_at', `${date}T00:00:00`)
+      .lt('created_at', `${date}T23:59:59`);
+
+    if (!dayTasks || dayTasks.length === 0) continue;
+
+    // Check if ONE thing was completed
+    const oneThing = dayTasks.find((t: any) => t.primary_focus_alignment === 'aligned' && t.completed);
+    const oneThingMissed = !oneThing && outcome !== 'achieved';
+
+    if (oneThing) {
+      // ONE THING COMPLETED - Reinforce success
+      console.log(`ONE thing completed on ${date}: reinforcing cluster ${cluster}`);
+      
+      // Increase weight for this cluster by +0.2
+      weights[cluster] = (weights[cluster] || 0) + 0.2;
+
+      // Reduce weight for distracting categories by -0.1
+      const distractingCategories = dayTasks
+        .filter((t: any) => t.primary_focus_alignment === 'distracting')
+        .map((t: any) => t.category)
+        .filter((c: any): c is string => typeof c === 'string');
+
+      const uniqueDistractingCategories = [...new Set(distractingCategories)];
+      for (const category of uniqueDistractingCategories) {
+        const key = String(category);
+        weights[key] = (weights[key] || 0) - 0.1;
+      }
+
+    } else if (oneThingMissed) {
+      // ONE THING AVOIDED/MISSED - Gentle correction
+      console.log(`ONE thing missed on ${date}: reducing weight for cluster ${cluster}`);
+      
+      // Lightly reduce weight for this cluster by -0.05
+      weights[cluster] = (weights[cluster] || 0) - 0.05;
+
+      // Increase weight for smaller, easier tasks by +0.05
+      // We'll use tasks completed that day as a proxy for "achievable" tasks
+      const completedTasksCategories = dayTasks
+        .filter((t: any) => t.completed && t.category)
+        .map((t: any) => String(t.category));
+
+      const uniqueCompletedCategories = [...new Set(completedTasksCategories)];
+      for (const category of uniqueCompletedCategories) {
+        const key = String(category);
+        weights[key] = (weights[key] || 0) + 0.05;
+      }
+    }
+  }
+
+  // Clamp weights to reasonable bounds (-0.3 to +0.5)
+  Object.keys(weights).forEach(key => {
+    weights[key] = Math.max(-0.3, Math.min(0.5, weights[key]));
+  });
+
+  console.log('Calculated focus preferences with reinforcement:', weights);
   return weights;
 }
