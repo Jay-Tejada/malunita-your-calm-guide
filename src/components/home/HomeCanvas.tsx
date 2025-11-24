@@ -9,18 +9,33 @@ interface HomeCanvasProps {
 
 export function HomeCanvas({ children }: HomeCanvasProps) {
   const [billboardMessage, setBillboardMessage] = useState<string | null>(null);
+  const [dailySummary, setDailySummary] = useState<string | null>(null);
+  const [quickWins, setQuickWins] = useState<Array<{ id: string; title: string }>>([]);
+  const [focusSuggestion, setFocusSuggestion] = useState<string | null>(null);
 
   // Fetch guidance message on mount
   useEffect(() => {
     const fetchGuidance = async () => {
       try {
-        const { data, error } = await supabase.functions.invoke('suggest-focus');
+        const { data, error } = await supabase.functions.invoke('daily-command-center', {
+          body: { mode: 'home_screen' }
+        });
+        
         if (error) {
           console.error('Error fetching guidance:', error);
           return;
         }
-        if (data?.message) {
-          setBillboardMessage(data.message);
+        
+        // Map response to state
+        if (data) {
+          const message = data.headline || data.focus_message;
+          if (message) {
+            setBillboardMessage(message);
+          }
+          
+          setDailySummary(data.summary_markdown || null);
+          setQuickWins(data.quick_wins || []);
+          setFocusSuggestion(data.focus_message || null);
         }
       } catch (error) {
         console.error('Failed to fetch guidance:', error);
