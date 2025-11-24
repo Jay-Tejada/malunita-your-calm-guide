@@ -12,8 +12,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { MapboxLocationPicker } from "@/components/MapboxLocationPicker";
-import { MapPin } from "lucide-react";
+import { MapPin, Lightbulb, Loader2 } from "lucide-react";
 import { useMapboxToken } from "@/hooks/useMapboxToken";
+import { useMicroSuggestions } from "@/hooks/useMicroSuggestions";
 import { Task } from "@/hooks/useTasks";
 
 interface TaskEditDialogProps {
@@ -33,6 +34,7 @@ export const TaskEditDialog = ({ open, task, onSave, onClose }: TaskEditDialogPr
   const [locationAddress, setLocationAddress] = useState<string | null>(null);
   const [showLocationPicker, setShowLocationPicker] = useState(false);
   const { token: accessToken } = useMapboxToken();
+  const { suggestions, isLoading: isSuggestionsLoading, generateSuggestions, clearSuggestions } = useMicroSuggestions();
 
   useEffect(() => {
     if (task) {
@@ -43,6 +45,13 @@ export const TaskEditDialog = ({ open, task, onSave, onClose }: TaskEditDialogPr
       setLocationLat(task.location_lat ?? null);
       setLocationLng(task.location_lng ?? null);
       setLocationAddress(task.location_address ?? null);
+
+      // Generate micro-suggestions if this is the ONE thing task
+      if (task.is_focus) {
+        generateSuggestions(task.title, task.context);
+      } else {
+        clearSuggestions();
+      }
     }
   }, [task]);
 
@@ -136,6 +145,36 @@ export const TaskEditDialog = ({ open, task, onSave, onClose }: TaskEditDialogPr
               </SelectContent>
             </Select>
           </div>
+
+          {/* Micro-suggestions for ONE thing tasks */}
+          {task?.is_focus && (
+            <div className="space-y-2 pt-2">
+              <div className="flex items-center gap-2">
+                <Lightbulb className="w-4 h-4 text-primary" />
+                <Label className="text-sm font-medium">Helpful Micro-Suggestions</Label>
+              </div>
+              {isSuggestionsLoading ? (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground py-2">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Generating suggestions...</span>
+                </div>
+              ) : suggestions.length > 0 ? (
+                <div className="space-y-2">
+                  {suggestions.map((step, index) => (
+                    <div
+                      key={index}
+                      className="flex items-start gap-2 text-sm p-2 rounded-md bg-muted/50"
+                    >
+                      <span className="flex-shrink-0 w-5 h-5 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-medium mt-0.5">
+                        {index + 1}
+                      </span>
+                      <span className="flex-1 text-foreground">{step}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label>Location</Label>
