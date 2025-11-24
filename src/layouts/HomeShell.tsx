@@ -5,6 +5,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Menu } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { HomeCanvas } from "@/components/home/HomeCanvas";
+import { CompanionSidebar } from "@/components/companion/CompanionSidebar";
 
 interface HomeShellProps {
   children?: React.ReactNode;
@@ -18,16 +19,6 @@ interface HomeShellProps {
 }
 
 
-// Placeholder CompanionSidebar component
-function CompanionSidebar() {
-  return (
-    <aside className="h-full bg-sidebar-bg border-l border-border p-6">
-      <div className="text-muted-foreground text-sm">
-        Companion Sidebar - To be implemented
-      </div>
-    </aside>
-  );
-}
 
 export function HomeShell({
   children,
