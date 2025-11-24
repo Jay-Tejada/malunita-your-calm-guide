@@ -38,6 +38,15 @@ p, span, small {
   color: var(--ink-medium);
 }
 
+/* Global Transitions - Calm Modern Motion */
+* {
+  transition:
+    color 0.2s ease,
+    background-color 0.2s ease,
+    opacity 0.2s ease,
+    transform 0.2s ease;
+}
+
 /* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
 All colors MUST be HSL.
 */
