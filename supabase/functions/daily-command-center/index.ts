@@ -91,30 +91,39 @@ serve(async (req) => {
       throw new Error('Unauthorized');
     }
 
-    const { text } = await req.json();
+    const { text, mode } = await req.json();
 
-    if (!text || typeof text !== 'string' || text.trim().length === 0) {
-      return new Response(
-        JSON.stringify({ error: 'Invalid input text' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+    // Home screen mode: no text input required
+    const isHomeScreenMode = mode === 'home_screen';
+    let extractedTasks: any[] = [];
+
+    if (!isHomeScreenMode) {
+      // Regular mode: requires text input
+      if (!text || typeof text !== 'string' || text.trim().length === 0) {
+        return new Response(
+          JSON.stringify({ error: 'Invalid input text' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      console.log('Processing Daily Command Center for user:', user.id);
+
+      // Step 1: Extract tasks from the text using Thought Engine 2.0
+      const { data: extractData, error: extractError } = await supabase.functions.invoke('extract-tasks', {
+        body: { text, userId: user.id },
+        headers: { Authorization: authHeader }
+      });
+
+      if (extractError) {
+        console.error('Extract tasks error:', extractError);
+        throw new Error('Failed to extract tasks');
+      }
+
+      extractedTasks = extractData?.tasks || [];
+      console.log('Extracted tasks:', extractedTasks.length);
+    } else {
+      console.log('Processing Daily Command Center (home screen mode) for user:', user.id);
     }
-
-    console.log('Processing Daily Command Center for user:', user.id);
-
-    // Step 1: Extract tasks from the text using Thought Engine 2.0
-    const { data: extractData, error: extractError } = await supabase.functions.invoke('extract-tasks', {
-      body: { text, userId: user.id },
-      headers: { Authorization: authHeader }
-    });
-
-    if (extractError) {
-      console.error('Extract tasks error:', extractError);
-      throw new Error('Failed to extract tasks');
-    }
-
-    const extractedTasks = extractData?.tasks || [];
-    console.log('Extracted tasks:', extractedTasks.length);
 
     // Step 2: Fetch existing open tasks
     const { data: existingTasks, error: tasksError } = await supabase
@@ -147,7 +156,9 @@ serve(async (req) => {
     const today = now.toISOString().split('T')[0];
 
     // Detect mood and tone
-    const { mood, tone } = detectMood(text, allTasks.length + extractedTasks.length);
+    const { mood, tone } = isHomeScreenMode 
+      ? { mood: 'calm' as const, tone: 'direct' as const }
+      : detectMood(text, allTasks.length + extractedTasks.length);
 
     // Priority Tasks: High-impact, focus items, or urgent
     const priorityTasks = allTasks
@@ -200,7 +211,10 @@ serve(async (req) => {
     }).length;
 
     // Extract context notes (non-actionable information from user's text)
-    const contextPrompt = `Extract any non-actionable contextual notes from this text. These are pieces of information that don't need to be turned into tasks but are important context.
+    let contextNotes: string[] = [];
+    
+    if (!isHomeScreenMode && text) {
+      const contextPrompt = `Extract any non-actionable contextual notes from this text. These are pieces of information that don't need to be turned into tasks but are important context.
 
 User's input: "${text}"
 
@@ -212,31 +226,57 @@ Examples of context notes:
 
 Return ONLY bullet points of context notes found, or return "No context notes" if there are none. Keep each note under 10 words.`;
 
-    const contextResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${lovableApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
-        messages: [
-          { role: 'system', content: 'You extract contextual notes from user input.' },
-          { role: 'user', content: contextPrompt }
-        ],
-      }),
-    });
+      const contextResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${lovableApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'google/gemini-2.5-flash',
+          messages: [
+            { role: 'system', content: 'You extract contextual notes from user input.' },
+            { role: 'user', content: contextPrompt }
+          ],
+        }),
+      });
 
-    const contextData = await contextResponse.json();
-    const contextText = contextData.choices?.[0]?.message?.content || 'No context notes';
-    const contextNotes = contextText === 'No context notes' ? [] : contextText
-      .split('\n')
-      .filter((line: string) => line.trim().startsWith('-') || line.trim().startsWith('•'))
-      .map((line: string) => line.replace(/^[-•]\s*/, '').trim())
-      .filter((line: string) => line.length > 0);
+      const contextData = await contextResponse.json();
+      const contextText = contextData.choices?.[0]?.message?.content || 'No context notes';
+      contextNotes = contextText === 'No context notes' ? [] : contextText
+        .split('\n')
+        .filter((line: string) => line.trim().startsWith('-') || line.trim().startsWith('•'))
+        .map((line: string) => line.replace(/^[-•]\s*/, '').trim())
+        .filter((line: string) => line.length > 0);
+    }
 
     // Generate Executive Insight with mood-aware, companion-aware tone
-    const insightPrompt = `You are an Executive Assistant with these attributes: clean, direct, minimalist, slightly dry humor, mood-aware, companion-aware.
+    const insightPrompt = isHomeScreenMode 
+      ? `You are an Executive Assistant with these attributes: clean, direct, minimalist, slightly dry humor, companion-aware.
+
+Companion personality: ${companionPersonality}
+Companion stage: ${companionStage}
+
+Task summary:
+- Priority tasks: ${priorityTasks.length}
+- Today's schedule: ${todaysSchedule.length}
+- Quick wins: ${quickWins.length}
+- Tiny tasks: ${tinyTaskCount}
+- Total open tasks: ${allTasks.length}
+
+Generate ONE welcoming headline for the home screen. Keep it clean, direct, and motivating.
+
+Tone rules:
+- Clean, direct, minimalist
+- Welcoming but not overly enthusiastic
+- Should feel like: "Ready to make today count?"
+
+Companion context (use subtly if natural):
+- Personality: ${companionPersonality} (zen=calm/grounded, spark=energetic/quick, cosmo=thoughtful/deep)
+- Stage: ${companionStage} (1=seedling, 2=sprout, 3=bloom, 4=radiant)
+
+Return ONLY the headline. No extra text.`
+      : `You are an Executive Assistant with these attributes: clean, direct, minimalist, slightly dry humor, mood-aware, companion-aware.
 
 User's input: "${text}"
 User's mood: ${mood}
@@ -294,21 +334,41 @@ Return ONLY the insight sentence. No extra text.`;
     const insightData = await insightResponse.json();
     const executiveInsight = insightData.choices?.[0]?.message?.content?.trim() || "Here is what actually matters today.";
 
-    const summary: DailySummary = {
-      priorityTasks: priorityTasks.length > 0 ? priorityTasks : [],
-      todaysSchedule: todaysSchedule.length > 0 ? todaysSchedule : [],
-      quickWins: quickWins.length > 0 ? quickWins : [],
-      tinyTaskCount,
-      contextNotes,
-      executiveInsight,
-      tone,
-      mood,
-    };
+    // Format response based on mode
+    if (isHomeScreenMode) {
+      // Home screen expects: headline, summary_markdown, quick_wins, focus_message
+      const quickWinsData = quickWins.slice(0, 3).map((title, index) => ({
+        id: `quick-win-${index}`,
+        title
+      }));
 
-    return new Response(
-      JSON.stringify({ summary, extractedTasks }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+      return new Response(
+        JSON.stringify({
+          headline: executiveInsight,
+          summary_markdown: `You have ${allTasks.length} open tasks. ${priorityTasks.length > 0 ? `${priorityTasks.length} priority items need attention.` : ''}`,
+          quick_wins: quickWinsData,
+          focus_message: priorityTasks.length > 0 ? `Focus on: ${priorityTasks[0]}` : "Clear slate — ready to plan your day?"
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    } else {
+      // Regular mode: return full summary
+      const summary: DailySummary = {
+        priorityTasks: priorityTasks.length > 0 ? priorityTasks : [],
+        todaysSchedule: todaysSchedule.length > 0 ? todaysSchedule : [],
+        quickWins: quickWins.length > 0 ? quickWins : [],
+        tinyTaskCount,
+        contextNotes,
+        executiveInsight,
+        tone,
+        mood,
+      };
+
+      return new Response(
+        JSON.stringify({ summary, extractedTasks }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
   } catch (error) {
     console.error('Daily Command Center error:', error);
