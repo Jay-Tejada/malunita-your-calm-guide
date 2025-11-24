@@ -11,6 +11,7 @@ import { useSeasonalEvent } from "./useSeasonalEvent";
 import { useCustomizationStore } from "@/features/customization/useCustomizationStore";
 import { useOneThingAvoidance } from "./useOneThingAvoidance";
 import { updateBurnoutStatus } from "@/ai/burnoutDetector";
+import { updatePriorityStorms } from "@/ai/priorityStormPredictor";
 
 export interface Task {
   id: string;
@@ -85,12 +86,18 @@ export const useTasks = () => {
       if (error) throw error;
       return data;
     },
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
       queryClient.invalidateQueries({ queryKey: ['profile'] });
       
       // Record task additions for cognitive load tracking
       data.forEach(() => recordTaskAdded());
+      
+      // Update priority storm predictions when new tasks are added
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user?.id) {
+        updatePriorityStorms(user.id);
+      }
       
       toast({
         title: "Tasks saved",
@@ -246,8 +253,15 @@ export const useTasks = () => {
 
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      
+      // Update priority storm predictions when tasks are deleted
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user?.id) {
+        updatePriorityStorms(user.id);
+      }
+      
       toast({
         title: "Task deleted",
       });

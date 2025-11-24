@@ -242,6 +242,25 @@ serve(async (req) => {
       return tinyWords.some(word => title.includes(word)) && title.split(' ').length <= 5;
     }).length;
 
+    // Check for upcoming priority storms (tomorrow)
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowStr = tomorrow.toISOString().split('T')[0];
+    
+    const { data: tomorrowStorm } = await supabase
+      .from('priority_storms')
+      .select('*')
+      .eq('user_id', user.id)
+      .eq('date', tomorrowStr)
+      .gte('expected_load_score', 60)
+      .maybeSingle();
+
+    let stormWarning = '';
+    if (tomorrowStorm) {
+      const loadLevel = tomorrowStorm.expected_load_score >= 80 ? 'very heavy' : 'heavy';
+      stormWarning = `Tomorrow may be a ${loadLevel} day — ${tomorrowStorm.task_count} tasks expected. ${tomorrowStorm.recommended_focus_task || 'Want to prepare for it?'}`;
+    }
+
     // Extract context notes (non-actionable information from user's text)
     let contextNotes: string[] = [];
     
@@ -446,7 +465,8 @@ Return ONLY the reasoning sentence starting with "Chosen because...". No extra t
           quick_wins: quickWinsData,
           focus_message: priorityTasks.length > 0 ? `Focus on: ${priorityTasks[0]}` : "Clear slate — ready to plan your day?",
           one_thing_summary: oneThingSummary,
-          one_thing_reasoning: oneThingReasoning
+          one_thing_reasoning: oneThingReasoning,
+          storm_warning: stormWarning || null
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
@@ -468,7 +488,8 @@ Return ONLY the reasoning sentence starting with "Chosen because...". No extra t
           summary, 
           extractedTasks,
           one_thing_summary: oneThingSummary,
-          one_thing_reasoning: oneThingReasoning
+          one_thing_reasoning: oneThingReasoning,
+          storm_warning: stormWarning || null
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
