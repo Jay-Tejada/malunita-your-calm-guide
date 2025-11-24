@@ -32,17 +32,10 @@ export function HomeCanvas({ children }: HomeCanvasProps) {
           const message = data.headline || data.focus_message;
           if (message) {
             setBillboardMessage(message);
-            // Trigger ping for new daily brief
-            window.dispatchEvent(new CustomEvent('companion:ping'));
           }
           
           setDailySummary(data.summary_markdown || null);
           setQuickWins(data.quick_wins || []);
-          
-          // Trigger ping if focus suggestion changes
-          if (data.focus_message && data.focus_message !== focusSuggestion) {
-            window.dispatchEvent(new CustomEvent('companion:ping'));
-          }
           setFocusSuggestion(data.focus_message || null);
         }
       } catch (error) {
@@ -65,15 +58,21 @@ export function HomeCanvas({ children }: HomeCanvasProps) {
   }, [billboardMessage]);
 
   return (
-    <div className="flex flex-col items-center px-6 py-8 gap-6 w-full max-w-screen-md mx-auto overflow-y-auto h-full">
-      {billboardMessage && <GuidanceBillboard message={billboardMessage} />}
+    <div className="w-full h-full overflow-y-auto p-6">
+      {billboardMessage && (
+        <div className="flex justify-center mb-6">
+          <GuidanceBillboard message={billboardMessage} />
+        </div>
+      )}
       
-      <DailyIntelligence
-        summary={dailySummary}
-        quickWins={quickWins}
-      />
-      
-      <TaskStream />
+      <div className="max-w-4xl mx-auto space-y-6">
+        <DailyIntelligence
+          summary={dailySummary}
+          quickWins={quickWins}
+        />
+        
+        <TaskStream />
+      </div>
       
       {children}
     </div>
