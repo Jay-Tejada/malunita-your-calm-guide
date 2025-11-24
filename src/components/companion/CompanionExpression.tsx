@@ -41,9 +41,12 @@ interface CompanionExpressionProps {
 }
 
 export function CompanionExpression({ expression }: CompanionExpressionProps) {
-  // Map expression key to filename
-  const filename = CREATURE_EXPRESSIONS[expression as keyof typeof CREATURE_EXPRESSIONS] || CREATURE_EXPRESSIONS.neutral;
+  // The expression is already the filename without extension (e.g., "base_expression")
+  // Add .png extension to match our map keys
+  const filename = `${expression}.png`;
   const imageUrl = expressionImageMap[filename] || baseExpression;
+
+  console.log('CompanionExpression:', { expression, filename, imageUrl });
 
   return (
     <motion.img
