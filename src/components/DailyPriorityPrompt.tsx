@@ -90,14 +90,9 @@ export function DailyPriorityPrompt() {
         >
           <button
             onClick={handlePromptClick}
-            className="group px-8 py-4 bg-gradient-to-br from-background/95 to-muted/30 backdrop-blur-sm rounded-2xl border border-border/40 hover:border-primary/40 transition-all duration-300 shadow-sm hover:shadow-md"
+            className="text-sm text-foreground/80 hover:text-foreground transition-colors font-medium max-w-3xl text-center"
           >
-            <div className="flex items-center gap-3">
-              <Sparkles className="w-4 h-4 text-primary/70 group-hover:text-primary transition-colors" />
-              <p className="text-sm font-medium text-foreground/80 group-hover:text-foreground transition-colors">
-                What is the ONE thing you could accomplish {targetDay} that would get your head above water? Everything else is a bonus.
-              </p>
-            </div>
+            What is the ONE thing you could accomplish today that would get your head above water? Everything else is a bonus.
           </button>
         </motion.div>
       </AnimatePresence>
