@@ -14,6 +14,7 @@ import { TaskCard } from "@/components/TaskCard";
 import { TaskCategoryFeedback } from "@/components/TaskCategoryFeedback";
 import { TaskEditDialog } from "@/components/TaskEditDialog";
 import { useToast } from "@/hooks/use-toast";
+import { checkAndHandlePrediction } from "@/utils/predictionChecker";
 import {
   Drawer,
   DrawerClose,
@@ -214,6 +215,9 @@ export const TaskList = ({ category: externalCategory }: TaskListProps = {}) => 
   };
 
   const handleAddToFocus = (taskId: string) => {
+    const task = tasks?.find(t => t.id === taskId);
+    if (!task) return;
+    
     updateTask({
       id: taskId,
       updates: {
@@ -221,6 +225,10 @@ export const TaskList = ({ category: externalCategory }: TaskListProps = {}) => 
         focus_date: new Date().toISOString().split('T')[0],
       },
     });
+    
+    // Check prediction
+    checkAndHandlePrediction(taskId, task.title);
+    
     toast({
       title: "Added to Focus",
       description: "Task moved to Today's Focus",

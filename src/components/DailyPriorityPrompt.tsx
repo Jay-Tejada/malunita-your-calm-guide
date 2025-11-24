@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useDailyPriorityPrompt } from "@/state/useDailyPriorityPrompt";
 import { useTasks } from "@/hooks/useTasks";
 import { useCompanionEvents } from "@/hooks/useCompanionEvents";
+import { checkAndHandlePrediction } from "@/utils/predictionChecker";
 import { Sparkles } from "lucide-react";
 
 export function DailyPriorityPrompt() {
@@ -55,7 +56,11 @@ export function DailyPriorityPrompt() {
       
       // Store the priority task ID
       if (createdTasks && createdTasks.length > 0) {
-        markPromptAnswered(createdTasks[0].id);
+        const selectedTask = createdTasks[0];
+        markPromptAnswered(selectedTask.id);
+        
+        // Check if this matches our prediction
+        checkAndHandlePrediction(selectedTask.id, selectedTask.title);
       }
       
       setIsDialogOpen(false);
