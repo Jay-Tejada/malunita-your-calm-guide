@@ -35,9 +35,10 @@ serve(async (req) => {
 
     console.log('✅ User ID from JWT:', userId);
 
-    // Parse request body for location context
+    // Parse request body for location and companion mood context
     const body = await req.json().catch(() => ({}));
     const locationContext = body.location || null; // { lat, lng, context: 'home' | 'work' }
+    const companionMood = body.companionMood || 'medium'; // 'ambitious' | 'medium' | 'simple' | 'low-cognitive'
 
     // Get user's profile for personalization and emotional state
     const { data: profile } = await supabase
@@ -73,7 +74,8 @@ serve(async (req) => {
       isMorning, 
       isEarlyAfternoon,
       emotionalMemory,
-      locationContext 
+      locationContext,
+      companionMood
     });
 
     // Get all incomplete tasks with context
@@ -164,39 +166,76 @@ serve(async (req) => {
       }
     }
 
+    // Apply companion mood influence to task selection
+    const applyCompanionMoodWeight = (tasks: any[]): any[] => {
+      return tasks.map(task => {
+        let moodBoost = 0;
+        const taskComplexity = task.title.split(/\s+/).length; // Word count as proxy for complexity
+        
+        switch (companionMood) {
+          case 'ambitious': // Joyful/Excited → favor challenging tasks
+            if (taskComplexity > 8 && task.category === 'today') {
+              moodBoost = 0.1;
+            }
+            break;
+          case 'medium': // Calm/Neutral → balanced tasks
+            if (taskComplexity >= 5 && taskComplexity <= 10) {
+              moodBoost = 0.1;
+            }
+            break;
+          case 'simple': // Worried → simple starter tasks
+            if (taskComplexity <= 6) {
+              moodBoost = 0.1;
+            }
+            break;
+          case 'low-cognitive': // Sleepy → very simple tasks
+            if (taskComplexity <= 5) {
+              moodBoost = 0.1;
+            }
+            break;
+        }
+        
+        return {
+          ...task,
+          moodBoost
+        };
+      });
+    };
+
     // Context-aware task filtering and suggestion
     let suggestedTasks: any[] = [];
     let contextReason = '';
 
     // Rule 1: Morning + high fatigue → tiny starter tasks
     if (isMorning && isHighFatigue) {
-      suggestedTasks = tinyTasks.slice(0, 3);
+      suggestedTasks = applyCompanionMoodWeight(tinyTasks).slice(0, 3);
       contextReason = 'morning_high_fatigue';
       console.log('🎯 Context rule: Morning + high fatigue → tiny tasks');
     }
     
     // Rule 2: Early afternoon + high joy → progress tasks
     else if (isEarlyAfternoon && isHighJoy) {
-      suggestedTasks = progressTasks.slice(0, 3);
+      suggestedTasks = applyCompanionMoodWeight(progressTasks).slice(0, 3);
       contextReason = 'afternoon_high_joy';
       console.log('🎯 Context rule: Early afternoon + high joy → progress tasks');
     }
     
     // Rule 3: Elevated cognitive load → tasks with highest unlocks_count
     else if (isElevatedCognitiveLoad && tasksWithUnlocks.length > 0) {
-      suggestedTasks = tasksWithUnlocks.slice(0, 3).map(t => t.task).filter(Boolean);
+      const highImpactTasks = tasksWithUnlocks.slice(0, 3).map(t => t.task).filter(Boolean);
+      suggestedTasks = applyCompanionMoodWeight(highImpactTasks);
       contextReason = 'high_cognitive_load';
       console.log('🎯 Context rule: Elevated cognitive load → high-impact tasks');
     }
     
     // Rule 4: Location context → location-relevant tasks
     else if (locationContext && locationRelevantTasks.length > 0) {
-      suggestedTasks = locationRelevantTasks.slice(0, 3);
+      suggestedTasks = applyCompanionMoodWeight(locationRelevantTasks).slice(0, 3);
       contextReason = `location_${locationContext.context || 'nearby'}`;
       console.log('🎯 Context rule: Location context → nearby tasks');
     }
     
-    // Default: Time-based suggestions with seasonal influence
+    // Default: Time-based suggestions with seasonal and mood influence
     else {
       // Apply seasonal patterns
       let seasonalBoost: Record<string, number> = {};
@@ -206,16 +245,21 @@ serve(async (req) => {
         seasonalBoost[seasonalWeight.weekend_family.category] = 0.2;
       }
       
-      const tasksWithBoost = (todayTasks.length > 0 ? todayTasks : upcomingTasks).map(task => ({
+      const baseTaskPool = todayTasks.length > 0 ? todayTasks : upcomingTasks;
+      const tasksWithMood = applyCompanionMoodWeight(baseTaskPool);
+      
+      const tasksWithBoost = tasksWithMood.map(task => ({
         ...task,
-        boost: seasonalBoost[task.category || ''] || 0
+        totalBoost: (seasonalBoost[task.category || ''] || 0) + (task.moodBoost || 0)
       }));
       
       suggestedTasks = tasksWithBoost
-        .sort((a, b) => b.boost - a.boost)
+        .sort((a, b) => b.totalBoost - a.totalBoost)
         .slice(0, 3);
-      contextReason = 'default_with_seasonal';
+      contextReason = 'default_with_seasonal_and_mood';
     }
+
+    console.log('🎭 Companion mood influence applied:', companionMood);
 
     // Generate contextual guidance message
     let message = '';
@@ -267,6 +311,7 @@ serve(async (req) => {
             stress: emotionalMemory.stress
           },
           cognitiveLoad: cognitiveLoadScore,
+          companionMood,
           contextReason
         }
       }),

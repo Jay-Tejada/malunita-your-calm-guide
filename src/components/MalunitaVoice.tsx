@@ -5,6 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useProfile } from "@/hooks/useProfile";
 import { useTasks } from "@/hooks/useTasks";
 import { useCompanionIdentity } from "@/hooks/useCompanionIdentity";
+import { useCompanionEmotion } from "@/hooks/useCompanionEmotion";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { MoodSelector } from "@/components/MoodSelector";
 import { TaskConfirmation } from "@/components/TaskConfirmation";
@@ -98,6 +99,9 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
   const { profile } = useProfile();
   const { tasks, updateTask, createTasks } = useTasks();
   const { companion } = useCompanionIdentity();
+  const { taskPreference } = useCompanionEmotion(
+    (profile?.companion_personality_type as any) || 'zen'
+  );
   const { recordStressedLanguage } = useCognitiveLoad();
   const { generateAndCreateSubtasks } = useAutoSplitTask();
   const { checkForRelatedTasks } = useRelatedTaskSuggestions();
@@ -563,7 +567,8 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
                       has_reminder: t.has_reminder,
                       is_time_based: t.is_time_based
                     })),
-                    userProfile: profile
+                    userProfile: profile,
+                    companionMood: taskPreference
                   }
                 });
 

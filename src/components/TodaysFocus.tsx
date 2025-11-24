@@ -11,6 +11,8 @@ import { checkAndHandlePrediction } from "@/utils/predictionChecker";
 import { useAutoSplitTask } from "@/hooks/useAutoSplitTask";
 import { useRelatedTaskSuggestions } from "@/hooks/useRelatedTaskSuggestions";
 import { RelatedTaskSuggestions } from "@/components/RelatedTaskSuggestions";
+import { useCompanionEmotion } from "@/hooks/useCompanionEmotion";
+import { useCompanionIdentity } from "@/hooks/useCompanionIdentity";
 
 interface TodaysFocusProps {
   onReflectClick?: () => void;
@@ -19,6 +21,10 @@ interface TodaysFocusProps {
 export const TodaysFocus = ({ onReflectClick }: TodaysFocusProps) => {
   const { tasks, isLoading, updateTask, deleteTask } = useTasks();
   const { profile } = useProfile();
+  const { companion } = useCompanionIdentity();
+  const { taskPreference } = useCompanionEmotion(
+    (profile?.companion_personality_type as any) || 'zen'
+  );
   const [isSuggesting, setIsSuggesting] = React.useState(false);
   const { toast } = useToast();
   const { generateAndCreateSubtasks } = useAutoSplitTask();
@@ -94,7 +100,8 @@ export const TodaysFocus = ({ onReflectClick }: TodaysFocusProps) => {
             has_reminder: t.has_reminder,
             is_time_based: t.is_time_based
           })),
-          userProfile: profile
+          userProfile: profile,
+          companionMood: taskPreference
         }
       });
 

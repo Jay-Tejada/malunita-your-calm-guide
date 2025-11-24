@@ -16,6 +16,26 @@ export type EmotionState =
   | 'inspired'
   | 'overwhelmed';
 
+export type TaskSuggestionPreference = 
+  | 'ambitious'      // Joyful/Excited → suggest challenging, impactful tasks
+  | 'medium'         // Calm/Neutral → suggest balanced tasks
+  | 'simple'         // Worried/Overwhelmed → suggest easy starter tasks
+  | 'low-cognitive'; // Sleepy → suggest low-effort tasks
+
+// Map emotions to task suggestion preferences
+export const emotionToTaskPreference: Record<EmotionState, TaskSuggestionPreference> = {
+  excited: 'ambitious',
+  proud: 'ambitious',
+  inspired: 'ambitious',
+  calm: 'medium',
+  neutral: 'medium',
+  focused: 'medium',
+  curious: 'medium',
+  encouraging: 'medium',
+  overwhelmed: 'simple',
+  sleepy: 'low-cognitive',
+};
+
 interface EmotionConfig {
   glowIntensity: number; // 0-1
   pulseSpeed: number; // ms
@@ -83,6 +103,7 @@ export interface CompanionEmotionHook {
   emotion: EmotionState;
   config: EmotionConfig;
   suggestedMotion: MotionState;
+  taskPreference: TaskSuggestionPreference;
   setEmotion: (emotion: EmotionState) => void;
   triggerEmotionFromContext: (context: EmotionContext) => void;
 }
@@ -108,6 +129,7 @@ export const useCompanionEmotion = (
 
   const config = personalityEmotionConfigs[personality][emotion];
   const suggestedMotion = emotionToMotionMap[emotion];
+  const taskPreference = emotionToTaskPreference[emotion];
 
   // Auto-detect time of day and adjust emotion baseline
   useEffect(() => {
@@ -241,6 +263,7 @@ export const useCompanionEmotion = (
     emotion,
     config,
     suggestedMotion,
+    taskPreference,
     setEmotion,
     triggerEmotionFromContext,
   };
