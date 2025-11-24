@@ -4,61 +4,6 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Breathing Surface Animation */
-@keyframes breathingSurface {
-  0%   { background-color: #F8F4EC; }
-  50%  { background-color: #F6F1E6; }
-  100% { background-color: #F8F4EC; }
-}
-
-.animate-breathing-surface {
-  animation: breathingSurface 12s ease-in-out infinite;
-}
-
-/* Global Typography - Calm Minimalism */
-:root {
-  --ink-strong: #3B352B;
-  --ink-medium: #6F6556;
-  --ink-light: #7D7467;
-  --paper: #F8F4EC;
-}
-
-body {
-  color: var(--ink-strong);
-  background: var(--paper);
-  font-family: 'IBM Plex Mono', ui-monospace, monospace;
-}
-
-h1, h2, h3 {
-  color: var(--ink-strong);
-  font-weight: 600;
-}
-
-p, span, small {
-  color: var(--ink-medium);
-}
-
-/* Global Transitions - Calm Modern Motion */
-* {
-  transition:
-    color 0.2s ease,
-    background-color 0.2s ease,
-    opacity 0.2s ease,
-    transform 0.2s ease;
-}
-
-/* Ping Animation for Companion Sidebar */
-.ping-anim {
-  box-shadow: 0 0 0 0 rgba(210, 180, 140, 0.4);
-  animation: pingPulse 1.2s ease-out forwards;
-}
-
-@keyframes pingPulse {
-  0%   { box-shadow: 0 0 0 0 rgba(210,180,140,0.4); }
-  80%  { box-shadow: 0 0 0 12px rgba(210,180,140,0); }
-  100% { box-shadow: 0 0 0 0 rgba(210,180,140,0); }
-}
-
 /* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
 All colors MUST be HSL.
 */

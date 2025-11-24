@@ -74,11 +74,6 @@ export function useCompanionEvents() {
     const affectionBoost = Math.min(count * 2, 8);
     updateEmotionalMemory(joyBoost, affectionBoost);
 
-    // Trigger ping for task streaks
-    if (count >= 2) {
-      window.dispatchEvent(new CustomEvent('companion:ping'));
-    }
-
     // Show appropriate expression
     if (count >= 3) {
       // Multiple tasks completed quickly
