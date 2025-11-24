@@ -98,6 +98,33 @@ async function generateCandidates(userId: string): Promise<CandidateTask[]> {
     previousFocusTasks?.map(f => f.cluster_label).filter(Boolean) || []
   );
 
+  // 6. Query focus memory embeddings for semantically similar tasks
+  let similarFromMemory: CandidateTask[] = [];
+  if (previousFocusTasks && previousFocusTasks.length > 0) {
+    const recentFocusText = previousFocusTasks[0].focus_task;
+    try {
+      const { data: memoryData } = await supabase.functions.invoke('focus-memory-query', {
+        body: {
+          queryText: recentFocusText,
+          limit: 5,
+          includePatterns: false
+        }
+      });
+      
+      if (memoryData?.similarTasks) {
+        const similarTaskTexts = new Set(memoryData.similarTasks.map((t: any) => t.taskText as string));
+        similarFromMemory = tasks.filter(t => 
+          Array.from(similarTaskTexts).some((text: string) => 
+            t.title.toLowerCase().includes(text.toLowerCase()) ||
+            text.toLowerCase().includes(t.title.toLowerCase())
+          )
+        );
+      }
+    } catch (error) {
+      console.log('Focus memory query skipped:', error);
+    }
+  }
+
   const clusteredTasks = tasks.filter(t => {
     if (!t.keywords || t.keywords.length === 0) return false;
     // Simple cluster matching based on keyword overlap
@@ -115,6 +142,7 @@ async function generateCandidates(userId: string): Promise<CandidateTask[]> {
     ...highPriorityTasks,
     ...recurringTasks,
     ...clusteredTasks,
+    ...similarFromMemory,
   ];
 
   const uniqueCandidates = Array.from(

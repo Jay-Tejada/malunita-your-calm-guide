@@ -132,8 +132,30 @@ async function processUserPersonalization(
     tasks
   );
 
-  // Generate AI insights using Lovable AI
-  const insights = await generateAIInsights(analysis, tasks);
+  // Query focus memory for long-term patterns
+  let focusMemoryInsights = null;
+  if (focusHistory && focusHistory.length > 0) {
+    const recentFocusText = focusHistory[0].cluster_label || 'general tasks';
+    try {
+      const { data: memoryQuery } = await supabaseAdmin.functions.invoke('focus-memory-query', {
+        body: {
+          queryText: recentFocusText,
+          limit: 20,
+          includePatterns: true
+        }
+      });
+
+      if (memoryQuery) {
+        focusMemoryInsights = memoryQuery.patterns;
+        console.log('Focus memory patterns:', focusMemoryInsights);
+      }
+    } catch (error) {
+      console.log('Focus memory query skipped:', error);
+    }
+  }
+
+  // Generate AI insights using Lovable AI with focus memory context
+  const insights = await generateAIInsights(analysis, tasks, focusMemoryInsights);
 
   // Update profile with insights and focus preferences
   const { error: updateError } = await supabaseAdmin
@@ -230,11 +252,21 @@ function getTimeOfDay(hour: number): string {
 
 async function generateAIInsights(
   analysis: TaskAnalysis,
-  tasks: any[]
+  tasks: any[],
+  focusMemoryInsights?: any
 ): Promise<string> {
   const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
   if (!LOVABLE_API_KEY) {
     throw new Error('LOVABLE_API_KEY not configured');
+  }
+
+  let memoryContext = '';
+  if (focusMemoryInsights) {
+    memoryContext = `\n\nHistorical Focus Patterns:
+- Top recurring focus areas: ${focusMemoryInsights.topClusters?.map((c: any) => c.cluster).join(', ') || 'N/A'}
+- Average task unlocks: ${focusMemoryInsights.averageUnlocks?.toFixed(1) || 0}
+- Success rate on similar tasks: ${focusMemoryInsights.successRate?.toFixed(0) || 0}%
+- Total similar historical tasks: ${focusMemoryInsights.totalSimilarTasks || 0}`;
   }
 
   const prompt = `Analyze this user's task management patterns and provide personalized insights:
@@ -250,12 +282,12 @@ Top Categories:
 ${analysis.topCategories.map(c => `- ${c.category}: ${c.count} tasks (${c.percentage}%)`).join('\n')}
 
 Recent Task Titles (sample):
-${tasks.slice(0, 10).map(t => `- ${t.title}`).join('\n')}
+${tasks.slice(0, 10).map(t => `- ${t.title}`).join('\n')}${memoryContext}
 
 Generate a brief, personalized summary (2-3 sentences) with:
 1. Their main focus areas
 2. Their productivity pattern
-3. One specific recommendation to improve their workflow
+3. One specific recommendation to improve their workflow${focusMemoryInsights ? ', incorporating their historical focus patterns' : ''}
 
 Keep it conversational and encouraging.`;
 

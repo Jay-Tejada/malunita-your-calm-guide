@@ -117,8 +117,27 @@ export const useTasks = () => {
       if (error) throw error;
       return data;
     },
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      
+      // If task is marked as ONE-thing (is_focus), store embedding
+      if (data.is_focus && !data.completed) {
+        try {
+          // Invoke focus-memory-store to create embedding
+          await supabase.functions.invoke('focus-memory-store', {
+            body: {
+              taskText: data.title,
+              clusterId: data.category || null,
+              unlocksCount: 0,
+              taskId: data.id,
+              outcome: null,
+            },
+          });
+          console.log('✅ Focus memory embedding created for ONE-thing task');
+        } catch (error) {
+          console.error('Failed to store focus memory:', error);
+        }
+      }
       
       // Log habit completion when task is marked as completed
       if (data.completed && !data.completed_at) {
@@ -168,6 +187,25 @@ export const useTasks = () => {
         if (data.is_focus) {
           console.log('Primary focus task completed:', data.title);
           recordPrimaryFocusCompleted();
+          
+          // Update focus embedding with outcome
+          try {
+            const { data: embeddingData } = await supabase
+              .from('focus_embeddings')
+              .select('id')
+              .eq('task_id', data.id)
+              .maybeSingle();
+
+            if (embeddingData) {
+              await supabase
+                .from('focus_embeddings')
+                .update({ outcome: 'achieved' })
+                .eq('id', embeddingData.id);
+              console.log('✅ Focus embedding outcome updated');
+            }
+          } catch (error) {
+            console.error('Failed to update focus embedding outcome:', error);
+          }
         }
         
         // Check for task milestone and create journal entry

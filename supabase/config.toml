@@ -118,4 +118,13 @@ verify_jwt = true
 [functions.analyze-domino-effect]
 verify_jwt = true
 
+[functions.focus-memory-store]
+verify_jwt = true
+
+[functions.focus-memory-query]
+verify_jwt = true
+
+[functions.check-priority-task]
+verify_jwt = true
+
 
