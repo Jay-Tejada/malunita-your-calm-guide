@@ -176,11 +176,11 @@ export const ProfileSettings = ({ onClose }: ProfileSettingsProps) => {
             {/* Voice Commands */}
             <VoiceCommandsManager />
 
-            {/* Voice Preferences */}
+            {/* Voice & Automation Settings */}
             <div>
               <h3 className="text-lg font-medium mb-4 flex items-center gap-2">
                 <MessageSquare className="w-5 h-5" />
-                Voice Preferences
+                Voice & Automation
               </h3>
               
               {/* Notification Permission Component */}
@@ -189,7 +189,26 @@ export const ProfileSettings = ({ onClose }: ProfileSettingsProps) => {
               </div>
               
               <div className="space-y-4">
-                <div className="flex items-center justify-between">
+                {/* Auto-Focus Day Setting */}
+                <div className="flex items-center justify-between p-4 bg-card/50 rounded-xl border border-secondary">
+                  <div className="space-y-1 flex-1">
+                    <Label className="text-base font-medium flex items-center gap-2">
+                      <Sparkles className="w-4 h-4" />
+                      AutoFocus Day
+                    </Label>
+                    <p className="text-sm text-muted-foreground">
+                      If you don't pick your ONE thing by 11 AM, Malunita will choose one for you
+                    </p>
+                  </div>
+                  <Switch
+                    checked={(profile as any).auto_focus_enabled || false}
+                    onCheckedChange={(checked) => {
+                      updateProfile({ auto_focus_enabled: checked } as any);
+                    }}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between">/
                   <div>
                     <Label htmlFor="voice-playback">Voice Playback</Label>
                     <p className="text-sm text-muted-foreground">

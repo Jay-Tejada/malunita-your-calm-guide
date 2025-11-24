@@ -18,6 +18,7 @@ import { useMidDayFocusReminder } from "@/hooks/useMidDayFocusReminder";
 import { useEndOfDayWrapUp } from "@/hooks/useEndOfDayWrapUp";
 import { usePrimaryFocusPrediction } from "@/hooks/usePrimaryFocusPrediction";
 import { useTasks, Task } from "@/hooks/useTasks";
+import { AutoFocusNotification } from "@/components/AutoFocusNotification";
 
 const Index = () => {
   const [user, setUser] = useState<any>(null);
@@ -166,6 +167,7 @@ const Index = () => {
 
   return (
     <>
+      <AutoFocusNotification />
       <HomeShell
         onSettingsClick={handleSettingsClick}
         onCategoryClick={handleCategoryClick}
