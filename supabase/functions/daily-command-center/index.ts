@@ -145,6 +145,33 @@ serve(async (req) => {
     const primaryFocusTask = allTasks.find(t => t.is_focus && t.focus_date === today);
     console.log('Primary focus task:', primaryFocusTask?.title || 'None set');
 
+    // Step 2.6: Analyze domino effect for primary focus task
+    let dominoUnlocksCount = 0;
+    if (primaryFocusTask) {
+      try {
+        // Call domino effect analyzer
+        const { data: dominoData, error: dominoError } = await supabase.functions.invoke('analyze-domino-effect', {
+          body: { 
+            task: {
+              id: primaryFocusTask.id,
+              title: primaryFocusTask.title,
+              category: primaryFocusTask.category,
+              keywords: primaryFocusTask.keywords,
+              context: primaryFocusTask.context,
+              created_at: primaryFocusTask.created_at,
+            }
+          }
+        });
+
+        if (!dominoError && dominoData?.unlocks_count) {
+          dominoUnlocksCount = dominoData.unlocks_count;
+          console.log(`Primary focus unlocks ${dominoUnlocksCount} tasks`);
+        }
+      } catch (error) {
+        console.error('Error analyzing domino effect:', error);
+      }
+    }
+
     // Step 3: Fetch companion state and focus preferences
     const { data: profileData } = await supabase
       .from('profiles')
@@ -382,6 +409,14 @@ Return ONLY the reasoning sentence starting with "Chosen because...". No extra t
         oneThingReasoning = reasoningData.choices?.[0]?.message?.content?.trim() || 'Chosen because it moves the needle.';
       } else {
         oneThingReasoning = 'Chosen because it moves the needle.';
+      }
+      
+      // Add domino effect information
+      if (dominoUnlocksCount > 0) {
+        const unlocksText = dominoUnlocksCount === 1 
+          ? 'Completing this will unlock 1 related task.'
+          : `Completing this will unlock ${dominoUnlocksCount} related tasks.`;
+        oneThingReasoning += ` ${unlocksText}`;
       }
     } else {
       // No ONE thing set - suggest a candidate
