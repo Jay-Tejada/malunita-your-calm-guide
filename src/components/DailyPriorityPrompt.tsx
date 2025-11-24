@@ -27,7 +27,7 @@ export function DailyPriorityPrompt() {
     setIsSubmitting(true);
     
     try {
-      await createTasks([{
+      const createdTasks = await createTasks([{
         title: taskInput,
         category: 'focus',
         is_focus: true,
@@ -39,7 +39,11 @@ export function DailyPriorityPrompt() {
         is_time_based: false,
       }]);
       
-      markPromptAnswered();
+      // Store the priority task ID for check-ins
+      if (createdTasks && createdTasks.length > 0) {
+        markPromptAnswered(createdTasks[0].id);
+      }
+      
       setIsDialogOpen(false);
       setTaskInput("");
       
