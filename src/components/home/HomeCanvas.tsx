@@ -58,7 +58,7 @@ export function HomeCanvas({ children }: HomeCanvasProps) {
   }, [billboardMessage]);
 
   return (
-    <div className="w-full h-full overflow-y-auto flex flex-col items-center p-6 md:p-10" style={{ gap: "24px" }}>
+    <div className="flex flex-col items-center px-6 py-8 gap-6 w-full max-w-screen-md mx-auto overflow-y-auto h-full">
       {billboardMessage && <GuidanceBillboard message={billboardMessage} />}
       
       <DailyIntelligence
