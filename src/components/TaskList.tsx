@@ -19,6 +19,8 @@ import { useAutoSplitTask } from "@/hooks/useAutoSplitTask";
 import { useRelatedTaskSuggestions } from "@/hooks/useRelatedTaskSuggestions";
 import { WorkloadBalanceSuggestions } from "@/components/WorkloadBalanceSuggestions";
 import { WorkloadSuggestion } from "@/ai/adaptiveWorkloadBalancer";
+import { usePlanTasks } from "@/hooks/usePlanTasks";
+import { TaskPlanModal } from "@/components/TaskPlanModal";
 import {
   Drawer,
   DrawerClose,
@@ -39,13 +41,17 @@ export const TaskList = ({ category: externalCategory }: TaskListProps = {}) => 
   const growth = useCompanionGrowth();
   const { generateAndCreateSubtasks } = useAutoSplitTask();
   const { checkForRelatedTasks } = useRelatedTaskSuggestions();
+  const { generatePlan, createPlanTasks, isGenerating, isCreating } = usePlanTasks();
   const [internalDomain, setInternalDomain] = useState("inbox");
   const [activeId, setActiveId] = useState<string | null>(null);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [selectedTaskIds, setSelectedTaskIds] = useState<Set<string>>(new Set());
   const [categoryDrawerOpen, setCategoryDrawerOpen] = useState(false);
   const [taskToMove, setTaskToMove] = useState<Task | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [taskToEdit, setTaskToEdit] = useState<Task | null>(null);
+  const [planModalOpen, setPlanModalOpen] = useState(false);
+  const [generatedPlan, setGeneratedPlan] = useState<any>(null);
   const { toast } = useToast();
   
   // Use external category if provided, otherwise use internal state
@@ -300,6 +306,48 @@ export const TaskList = ({ category: externalCategory }: TaskListProps = {}) => 
     return cat.charAt(0).toUpperCase() + cat.slice(1);
   };
 
+  const handleToggleTaskSelection = (taskId: string) => {
+    setSelectedTaskIds(prev => {
+      const next = new Set(prev);
+      if (next.has(taskId)) {
+        next.delete(taskId);
+      } else {
+        next.add(taskId);
+      }
+      return next;
+    });
+  };
+
+  const handleTurnIntoPlan = async () => {
+    if (selectedTaskIds.size === 0) {
+      toast({
+        title: "No tasks selected",
+        description: "Select at least one task to create a plan",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const plan = await generatePlan(Array.from(selectedTaskIds));
+      setGeneratedPlan(plan);
+      setPlanModalOpen(true);
+    } catch (error) {
+      console.error('Error generating plan:', error);
+    }
+  };
+
+  const handleConfirmPlan = async (planTitle: string, steps: any[]) => {
+    try {
+      await createPlanTasks({ planTitle, steps });
+      setSelectedTaskIds(new Set());
+      setPlanModalOpen(false);
+      setGeneratedPlan(null);
+    } catch (error) {
+      console.error('Error creating plan:', error);
+    }
+  };
+
   const handleApplySuggestion = async (suggestion: WorkloadSuggestion) => {
     const today = new Date().toISOString().split('T')[0];
     const weekFromNow = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
@@ -363,6 +411,30 @@ export const TaskList = ({ category: externalCategory }: TaskListProps = {}) => 
           </div>
         )}
         
+        {/* Multi-select actions */}
+        {selectedTaskIds.size > 0 && (
+          <div className="flex items-center gap-2 p-3 bg-primary/5 border border-primary/20 rounded-lg">
+            <span className="text-sm font-medium text-foreground">
+              {selectedTaskIds.size} task{selectedTaskIds.size > 1 ? 's' : ''} selected
+            </span>
+            <Button
+              size="sm"
+              onClick={handleTurnIntoPlan}
+              disabled={isGenerating || isCreating}
+              className="ml-auto"
+            >
+              🧩 Turn into a plan
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setSelectedTaskIds(new Set())}
+            >
+              Clear
+            </Button>
+          </div>
+        )}
+
         {/* Workload Balance Suggestions */}
         <WorkloadBalanceSuggestions 
           tasks={tasks}
@@ -387,6 +459,11 @@ export const TaskList = ({ category: externalCategory }: TaskListProps = {}) => 
               {filteredTasks.map((task) => (
                 <div key={task.id} className="space-y-0">
                   <div className="flex items-center gap-2">
+                    <Checkbox
+                      checked={selectedTaskIds.has(task.id)}
+                      onCheckedChange={() => handleToggleTaskSelection(task.id)}
+                      className="shrink-0"
+                    />
                     <TaskCard
                       id={task.id}
                       title={task.title}
@@ -494,6 +571,15 @@ export const TaskList = ({ category: externalCategory }: TaskListProps = {}) => 
           </DrawerFooter>
         </DrawerContent>
       </Drawer>
+
+      {/* Plan Tasks Modal */}
+      <TaskPlanModal
+        open={planModalOpen}
+        onOpenChange={setPlanModalOpen}
+        plan={generatedPlan}
+        isLoading={isGenerating}
+        onConfirm={handleConfirmPlan}
+      />
 
       {/* Edit Task Dialog */}
       <TaskEditDialog
