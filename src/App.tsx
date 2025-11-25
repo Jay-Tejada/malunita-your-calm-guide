@@ -7,6 +7,8 @@ import { ThemeProvider } from "next-themes";
 import { useEffect } from "react";
 import { startEmotionalMemoryMonitoring } from "@/state/emotionalMemory";
 import { initializeAILearningListeners } from "@/state/aiLearningEvents";
+import { supabase } from "@/integrations/supabase/client";
+import { useMemoryEngine } from "@/state/memoryEngine";
 import { AnimatePresence } from "framer-motion";
 import { useRitualTrigger } from "@/hooks/useRitualTrigger";
 import { MorningRitual } from "@/features/rituals/MorningRitual";
@@ -69,9 +71,77 @@ const App = () => {
     const cleanupEmotional = startEmotionalMemoryMonitoring();
     const cleanupAILearning = initializeAILearningListeners();
     
+    // Initialize memory engine from backend
+    const initializeMemoryEngine = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        // Fetch memory profile from backend
+        const { data: profile, error } = await supabase
+          .from('ai_memory_profiles')
+          .select('*')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        if (error) {
+          console.error('Error fetching memory profile:', error);
+          return;
+        }
+
+        // Load into Zustand store if profile exists
+        if (profile) {
+          const updates: any = {};
+          
+          if (profile.writing_style) updates.writingStyle = profile.writing_style;
+          if (profile.category_preferences) updates.categoryPreferences = profile.category_preferences;
+          if (profile.priority_bias) updates.priorityBias = profile.priority_bias;
+          if (profile.tiny_task_threshold) updates.tinyTaskThreshold = profile.tiny_task_threshold;
+          if (profile.energy_pattern) updates.energyPattern = profile.energy_pattern;
+          if (profile.procrastination_triggers) updates.procrastinationTriggers = profile.procrastination_triggers;
+          if (profile.emotional_triggers) updates.emotionalTriggers = profile.emotional_triggers;
+          if (profile.positive_reinforcers) updates.positiveReinforcers = profile.positive_reinforcers;
+          if (profile.streak_history) updates.streakHistory = profile.streak_history;
+          updates.lastUpdated = profile.last_updated ? new Date(profile.last_updated) : new Date();
+          
+          // Directly update store state
+          useMemoryEngine.setState(updates);
+          
+          console.log('✅ Memory profile loaded from backend');
+        }
+      } catch (err) {
+        console.error('Error initializing memory engine:', err);
+      }
+    };
+
+    initializeMemoryEngine();
+
+    // Periodic sync every 5 minutes
+    const syncInterval = setInterval(() => {
+      useMemoryEngine.getState().syncWithBackend();
+    }, 5 * 60 * 1000);
+
+    // Subscribe to store changes for real-time sync
+    const unsubscribe = useMemoryEngine.subscribe((state, prevState) => {
+      // Debounce: only sync if significant changes
+      const hasChanged = 
+        state.writingStyle !== prevState.writingStyle ||
+        JSON.stringify(state.categoryPreferences) !== JSON.stringify(prevState.categoryPreferences) ||
+        JSON.stringify(state.priorityBias) !== JSON.stringify(prevState.priorityBias);
+      
+      if (hasChanged) {
+        // Debounced sync after 2 seconds of inactivity
+        setTimeout(() => {
+          useMemoryEngine.getState().syncWithBackend();
+        }, 2000);
+      }
+    });
+    
     return () => {
       cleanupEmotional();
       cleanupAILearning();
+      clearInterval(syncInterval);
+      unsubscribe();
     };
   }, []);
 
