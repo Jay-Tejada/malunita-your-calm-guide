@@ -1,22 +1,70 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { processInput, ProcessInputResult } from "@/lib/api/processInput";
 
 interface HomeOrbProps {
   onCapture?: () => void;
   isRecording?: boolean;
   status?: 'ready' | 'listening' | 'processing' | 'speaking';
   recordingDuration?: number;
+  onAISummaryUpdate?: (summary: AISummary | null) => void;
+}
+
+interface AISummary {
+  decisions: string[];
+  ideas: string[];
+  clarifyingQuestions: string[];
+  emotion: string;
+  focus: string | null;
 }
 
 interface DailyCommandCenterResponse {
   headline?: string;
 }
 
-export const HomeOrb = ({ onCapture, isRecording = false, status = 'ready', recordingDuration = 0 }: HomeOrbProps) => {
+export const HomeOrb = ({ 
+  onCapture, 
+  isRecording = false, 
+  status = 'ready', 
+  recordingDuration = 0,
+  onAISummaryUpdate 
+}: HomeOrbProps) => {
   const [isHovered, setIsHovered] = useState(false);
   const [headline, setHeadline] = useState<string | null>(null);
   const [showBillboard, setShowBillboard] = useState(false);
+
+  // Example: Call processInput when you have text input
+  // This would typically be triggered after voice transcription or text input
+  const handleProcessInput = async (text: string) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const result = await processInput({
+        text,
+        userId: user.id,
+      });
+
+      // Extract AI summary
+      const aiSummary: AISummary = {
+        decisions: result.decisions,
+        ideas: result.ideas,
+        clarifyingQuestions: result.clarifyingQuestions,
+        emotion: result.emotion,
+        focus: result.contextSummary?.totalTasks ? `${result.contextSummary.totalTasks} tasks` : null,
+      };
+
+      // Pass it up to parent component
+      if (onAISummaryUpdate) {
+        onAISummaryUpdate(aiSummary);
+      }
+
+      // You can also use result.tasks to create tasks, result.routing for categorization, etc.
+    } catch (error) {
+      console.error('Failed to process input:', error);
+    }
+  };
 
   // Fetch daily command center data for headline only
   useEffect(() => {
