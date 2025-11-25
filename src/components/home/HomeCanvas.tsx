@@ -3,6 +3,7 @@ import { MindstreamPanel } from "@/components/intelligence/MindstreamPanel";
 import { OneThingPrompt } from "@/components/home/OneThingPrompt";
 import { useDailyPriorityPrompt } from "@/state/useDailyPriorityPrompt";
 import { useDailyIntelligence } from "@/hooks/useDailyIntelligence";
+import { useCompanionEvents } from "@/hooks/useCompanionEvents";
 
 interface HomeCanvasProps {
   children?: React.ReactNode;
@@ -12,6 +13,7 @@ interface HomeCanvasProps {
 export function HomeCanvas({ children, onOneThingClick }: HomeCanvasProps) {
   const { showPrompt } = useDailyPriorityPrompt();
   const { data, loading, error } = useDailyIntelligence();
+  const { triggerCompanionPing } = useCompanionEvents();
   const [showOneThingPrompt, setShowOneThingPrompt] = useState(true);
 
   // Check localStorage on mount to see if dismissed today
@@ -27,6 +29,13 @@ export function HomeCanvas({ children, onOneThingClick }: HomeCanvasProps) {
       setShowOneThingPrompt(true);
     }
   }, []);
+
+  // Trigger companion ping when daily intelligence loads successfully
+  useEffect(() => {
+    if (data && !loading && !error) {
+      triggerCompanionPing();
+    }
+  }, [data, loading, error, triggerCompanionPing]);
 
   const shouldShowPrompt = showPrompt && showOneThingPrompt;
 

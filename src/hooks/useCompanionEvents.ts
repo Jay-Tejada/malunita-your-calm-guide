@@ -5,6 +5,10 @@ import { supabase } from "@/integrations/supabase/client";
 export function useCompanionEvents() {
   const reactionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  const triggerCompanionPing = useCallback(() => {
+    window.dispatchEvent(new CustomEvent("companion:ping"));
+  }, []);
+
   const setTemporaryExpression = useCallback((expression: string, duration: number = 3500) => {
     // Clear any existing timeout
     if (reactionTimeoutRef.current) {
@@ -100,5 +104,6 @@ export function useCompanionEvents() {
   return {
     onTaskCompleted,
     onQuickWinCompleted,
+    triggerCompanionPing,
   };
 }
