@@ -32,6 +32,42 @@ interface AISummary {
   focus: string | null;
 }
 
+interface AIPatterns {
+  habits: string[];
+  anti_habits: string[];
+  peak_energy_times: string[];
+  avoidance_patterns: string[];
+  common_contexts: string[];
+  stress_triggers: string[];
+  opportunity_zones: string[];
+}
+
+interface AIPreferences {
+  preferred_task_length: string;
+  preferred_daily_load: number;
+  preferred_times: string[];
+  task_style: string;
+  energy_curve: string;
+  notification_style: string;
+}
+
+interface AIPredictions {
+  likely_state: string;
+  risk_of_overwhelm: number;
+  recommended_focus_window: string;
+  recommended_workload: number;
+  motivational_suggestion: string;
+}
+
+interface AIProactive {
+  headline: string;
+  suggestions: string[];
+  warnings: string[];
+  opportunities: string[];
+  energy_timing: string;
+  micro_habits: string[];
+}
+
 
 const Index = () => {
   const [user, setUser] = useState<any>(null);
@@ -41,6 +77,10 @@ const Index = () => {
   const [aiSummary, setAiSummary] = useState<AISummary | null>(null);
   const [aiPlan, setAiPlan] = useState<DailyPlan | null>(null);
   const [aiAlerts, setAiAlerts] = useState<DailyAlerts | null>(null);
+  const [aiPatterns, setAiPatterns] = useState<AIPatterns | null>(null);
+  const [aiPreferences, setAiPreferences] = useState<AIPreferences | null>(null);
+  const [aiPredictions, setAiPredictions] = useState<AIPredictions | null>(null);
+  const [aiProactive, setAiProactive] = useState<AIProactive | null>(null);
   const [voiceStatus, setVoiceStatus] = useState<{ isListening: boolean; isProcessing: boolean; isSpeaking: boolean; recordingDuration: number }>({
     isListening: false,
     isProcessing: false,
@@ -97,6 +137,59 @@ const Index = () => {
         }
       });
     }
+  }, [user]);
+
+  // Fetch AI intelligence on mount
+  useEffect(() => {
+    if (!user) return;
+
+    const fetchAIIntelligence = async () => {
+      try {
+        console.log('Fetching AI intelligence...');
+
+        // Fetch pattern recognition
+        const { data: patternsData, error: patternsError } = await supabase.functions.invoke('pattern-recognition');
+        if (!patternsError && patternsData?.insights) {
+          setAiPatterns(patternsData.insights);
+          console.log('Patterns loaded:', patternsData.insights);
+        } else if (patternsError) {
+          console.warn('Pattern recognition error:', patternsError);
+        }
+
+        // Fetch preference learner
+        const { data: preferencesData, error: preferencesError } = await supabase.functions.invoke('preference-learner');
+        if (!preferencesError && preferencesData?.preferences) {
+          setAiPreferences(preferencesData.preferences);
+          console.log('Preferences loaded:', preferencesData.preferences);
+        } else if (preferencesError) {
+          console.warn('Preference learner error:', preferencesError);
+        }
+
+        // Fetch behavior predictor
+        const { data: predictionsData, error: predictionsError } = await supabase.functions.invoke('behavior-predictor');
+        if (!predictionsError && predictionsData?.prediction) {
+          setAiPredictions(predictionsData.prediction);
+          console.log('Predictions loaded:', predictionsData.prediction);
+        } else if (predictionsError) {
+          console.warn('Behavior predictor error:', predictionsError);
+        }
+
+        // Fetch proactive suggestions
+        const { data: proactiveData, error: proactiveError } = await supabase.functions.invoke('proactive-suggestions');
+        if (!proactiveError && proactiveData?.suggestions) {
+          setAiProactive(proactiveData.suggestions);
+          console.log('Proactive suggestions loaded:', proactiveData.suggestions);
+        } else if (proactiveError) {
+          console.warn('Proactive suggestions error:', proactiveError);
+        }
+
+        console.log('AI intelligence fetch complete');
+      } catch (error) {
+        console.error('Error fetching AI intelligence:', error);
+      }
+    };
+
+    fetchAIIntelligence();
   }, [user]);
 
   const handleCompanionComplete = async (name: string, personality: PersonalityType) => {
@@ -241,7 +334,15 @@ const Index = () => {
         )}
         {aiSummary && (
           <div className="max-w-2xl mx-auto px-4 mb-8">
-            <DailyIntelligence aiSummary={aiSummary} aiPlan={aiPlan} aiAlerts={aiAlerts} />
+            <DailyIntelligence 
+              aiSummary={aiSummary} 
+              aiPlan={aiPlan} 
+              aiAlerts={aiAlerts}
+              aiPatterns={aiPatterns}
+              aiPreferences={aiPreferences}
+              aiPredictions={aiPredictions}
+              aiProactive={aiProactive}
+            />
           </div>
         )}
         <HomeOrb
