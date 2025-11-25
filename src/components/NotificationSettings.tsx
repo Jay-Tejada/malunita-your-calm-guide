@@ -4,7 +4,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Clock, Moon } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Clock, Moon, Navigation } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useProfile } from "@/hooks/useProfile";
@@ -21,6 +22,7 @@ export const NotificationSettings = () => {
   const [customDays, setCustomDays] = useState<number>(notificationPrefs.customIntervalDays || 3);
   const [quietStart, setQuietStart] = useState<string>(notificationPrefs.quietHoursStart || '22:00');
   const [quietEnd, setQuietEnd] = useState<string>(notificationPrefs.quietHoursEnd || '07:00');
+  const [travelRemindersEnabled, setTravelRemindersEnabled] = useState<boolean>(!notificationPrefs.travelRemindersDisabled);
   const [saving, setSaving] = useState(false);
 
   const handleSave = async () => {
@@ -35,6 +37,7 @@ export const NotificationSettings = () => {
         customIntervalDays: customDays,
         quietHoursStart: quietStart,
         quietHoursEnd: quietEnd,
+        travelRemindersDisabled: !travelRemindersEnabled,
       };
 
       const { error } = await supabase
@@ -142,6 +145,30 @@ export const NotificationSettings = () => {
           </p>
         </div>
 
+        {/* Travel Time Reminders */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <div className="flex items-center gap-2">
+                <Navigation className="h-4 w-4 text-muted-foreground" />
+                <Label className="text-base">Travel Time Reminders</Label>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Get notified when it's time to leave for events with locations based on real-time traffic
+              </p>
+            </div>
+            <Switch
+              checked={travelRemindersEnabled}
+              onCheckedChange={setTravelRemindersEnabled}
+            />
+          </div>
+          {travelRemindersEnabled && (
+            <p className="text-xs text-muted-foreground bg-primary/5 p-3 rounded-md">
+              💡 You'll receive a notification 10 minutes before you need to leave, accounting for current traffic + 15 min buffer
+            </p>
+          )}
+        </div>
+
         <Button 
           onClick={handleSave} 
           disabled={saving}
@@ -153,3 +180,4 @@ export const NotificationSettings = () => {
     </Card>
   );
 };
+
