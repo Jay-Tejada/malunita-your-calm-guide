@@ -4,10 +4,13 @@ import { Header } from "@/components/Header";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
+import { useTasks } from "@/hooks/useTasks";
+import { InboxActions } from "@/components/InboxActions";
 
 
 const Inbox = () => {
   const navigate = useNavigate();
+  const { tasks, isLoading } = useTasks();
 
   return (
     <div className="min-h-screen bg-background">
@@ -32,6 +35,9 @@ const Inbox = () => {
         </div>
 
         <div className="max-w-4xl mx-auto">
+          {/* Inbox Actions */}
+          {!isLoading && tasks && <InboxActions tasks={tasks} />}
+          
           <TaskList category="inbox" />
         </div>
       </main>
