@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { useEffect } from "react";
 import { startEmotionalMemoryMonitoring } from "@/state/emotionalMemory";
+import { initializeAILearningListeners } from "@/state/aiLearningEvents";
 import { AnimatePresence } from "framer-motion";
 import { useRitualTrigger } from "@/hooks/useRitualTrigger";
 import { MorningRitual } from "@/features/rituals/MorningRitual";
@@ -63,9 +64,15 @@ const App = () => {
     );
   };
 
-  // Initialize emotional memory monitoring on app start
+  // Initialize emotional memory monitoring and AI learning listeners on app start
   useEffect(() => {
-    startEmotionalMemoryMonitoring();
+    const cleanupEmotional = startEmotionalMemoryMonitoring();
+    const cleanupAILearning = initializeAILearningListeners();
+    
+    return () => {
+      cleanupEmotional();
+      cleanupAILearning();
+    };
   }, []);
 
   return (

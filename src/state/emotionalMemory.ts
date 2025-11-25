@@ -205,12 +205,18 @@ export const EMOTIONAL_EVENTS = {
 // Start inactivity checker (call once in main app)
 export const startEmotionalMemoryMonitoring = () => {
   // Check inactivity every hour
-  setInterval(() => {
+  const inactivityInterval = setInterval(() => {
     EMOTIONAL_EVENTS.INACTIVITY_CHECK();
   }, 60 * 60 * 1000);
 
   // Sync to Supabase periodically
-  setInterval(() => {
+  const syncInterval = setInterval(() => {
     useEmotionalMemory.getState().syncToSupabase();
   }, 60 * 60 * 1000);
+  
+  // Return cleanup function
+  return () => {
+    clearInterval(inactivityInterval);
+    clearInterval(syncInterval);
+  };
 };
