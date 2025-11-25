@@ -41,6 +41,7 @@ export interface Task {
   location_lng?: number | null;
   location_address?: string | null;
   parent_task_id?: string | null;
+  plan_id?: string | null;
   // Task Intelligence Fields
   priority?: 'MUST' | 'SHOULD' | 'COULD';
   effort?: 'tiny' | 'small' | 'medium' | 'large';
@@ -264,6 +265,60 @@ export const useTasks = () => {
       });
     },
   });
+
+  // Helper to update plan quest progress (only defined once)
+  const updatePlanQuestProgress = async (planId: string) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Get all tasks in this plan
+      const { data: planTasks } = await supabase
+        .from('tasks')
+        .select('id, completed')
+        .eq('plan_id', planId)
+        .eq('user_id', user.id);
+
+      if (!planTasks) return;
+
+      const completedCount = planTasks.filter(t => t.completed).length;
+      const totalCount = planTasks.length;
+
+      // Update the corresponding quest
+      const questType = `plan_${planId}`;
+      const { data: quest } = await supabase
+        .from('weekly_quests')
+        .select('*')
+        .eq('quest_type', questType)
+        .eq('user_id', user.id)
+        .single();
+
+      if (quest) {
+        const completed = completedCount >= totalCount;
+        
+        await supabase
+          .from('weekly_quests')
+          .update({
+            current_value: completedCount,
+            completed,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', quest.id);
+
+        // If quest just completed, show celebration
+        if (completed && !quest.completed) {
+          toast({
+            title: "🎉 Quest Complete!",
+            description: `You've finished all steps in your plan!`,
+          });
+        }
+
+        queryClient.invalidateQueries({ queryKey: ['weekly-quests'] });
+      }
+    } catch (error) {
+      console.error('Error updating plan quest progress:', error);
+    }
+  };
 
   const deleteTask = useMutation({
     mutationFn: async (id: string) => {

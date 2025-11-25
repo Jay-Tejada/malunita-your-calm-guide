@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { startOfWeek, format } from 'date-fns';
 
 interface PlanStep {
   title: string;
@@ -70,17 +71,40 @@ export function usePlanTasks() {
         context: step.parent_task_title ? `Part of: ${step.parent_task_title}` : null,
       }));
 
-      const { error: stepsError } = await supabase
+      const { data: createdSteps, error: stepsError } = await supabase
         .from('tasks')
-        .insert(stepTasks);
+        .insert(stepTasks)
+        .select();
 
       if (stepsError) throw stepsError;
 
-      return planTask;
+      // Create a quest for this plan
+      const weekStart = format(startOfWeek(new Date(), { weekStartsOn: 1 }), 'yyyy-MM-dd');
+      const { error: questError } = await supabase
+        .from('weekly_quests')
+        .insert({
+          user_id: user.id,
+          week_start: weekStart,
+          title: `Quest: ${planTitle}`,
+          description: `Complete all ${steps.length} steps in this plan`,
+          quest_type: `plan_${planTask.id}`,
+          target_value: steps.length,
+          current_value: 0,
+          reward_xp: Math.max(10, steps.length * 5),
+          reward_affection: Math.max(5, steps.length * 2),
+        });
+
+      if (questError) {
+        console.error('Error creating quest:', questError);
+        // Don't fail the whole operation if quest creation fails
+      }
+
+      return { planTask, stepCount: createdSteps.length };
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
-      toast.success('Plan created successfully! 🎯');
+      queryClient.invalidateQueries({ queryKey: ['weekly-quests'] });
+      toast.success(`Plan created with ${data.stepCount} steps! 🎯`);
     },
     onError: (error) => {
       console.error('Error creating plan tasks:', error);
