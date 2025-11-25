@@ -24,9 +24,6 @@ interface AISummary {
   focus: string | null;
 }
 
-interface DailyCommandCenterResponse {
-  headline?: string;
-}
 
 export const HomeOrb = ({ 
   onCapture, 
@@ -38,8 +35,6 @@ export const HomeOrb = ({
   onAIAlertsUpdate
 }: HomeOrbProps) => {
   const [isHovered, setIsHovered] = useState(false);
-  const [headline, setHeadline] = useState<string | null>(null);
-  const [showBillboard, setShowBillboard] = useState(false);
   const [interruptionAlert, setInterruptionAlert] = useState<string | null>(null);
   
   const { getMinutesAway, lastFocusedTaskId } = useAttentionTracker();
@@ -88,27 +83,6 @@ export const HomeOrb = ({
     }
   };
 
-  // Fetch daily command center data for headline only
-  useEffect(() => {
-    const fetchData = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      // Fetch daily command center data
-      const { data: commandData, error } = await supabase.functions.invoke<DailyCommandCenterResponse>(
-        'daily-command-center',
-        { body: { mode: 'home_screen' } }
-      );
-
-      if (!error && commandData?.headline) {
-        setHeadline(commandData.headline);
-        // Show billboard after 2 seconds if there's a headline
-        setTimeout(() => setShowBillboard(true), 2000);
-      }
-    };
-
-    fetchData();
-  }, []);
 
   // Check focus drift every 5 minutes
   useEffect(() => {
@@ -155,26 +129,6 @@ export const HomeOrb = ({
         )}
       </AnimatePresence>
 
-      {/* Billboard Message - Auto-hide after 5 seconds */}
-      <AnimatePresence>
-        {showBillboard && headline && !interruptionAlert && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.5 }}
-            className="mb-6 text-center"
-            onAnimationComplete={() => {
-              // Auto-hide after 5 seconds
-              setTimeout(() => setShowBillboard(false), 5000);
-            }}
-          >
-            <p className="text-sm text-muted-foreground max-w-md px-4">
-              {headline}
-            </p>
-          </motion.div>
-        )}
-      </AnimatePresence>
       {/* Main Orb */}
       <motion.button
         onClick={onCapture}
