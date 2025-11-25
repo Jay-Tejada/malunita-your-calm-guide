@@ -8,6 +8,9 @@ extra_search_path = ["public", "extensions"]
 
 [functions.pattern-recognition]
 verify_jwt = true
+
+[functions.preference-learner]
+verify_jwt = true
 max_rows = 1000
 
 [functions.transcribe-audio]
