@@ -163,4 +163,13 @@ verify_jwt = false
 [functions.learn-writing-style]
 verify_jwt = true
 
+[functions.inbox-cleanup]
+verify_jwt = true
+
+[functions.plan-tasks]
+verify_jwt = true
+
+[functions.time-blocker]
+verify_jwt = true
+
 
