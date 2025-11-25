@@ -1,5 +1,8 @@
 import { Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { runTaskPipeline } from "@/lib/intelligence/taskPipeline";
+import { useDailyIntelligence } from "@/hooks/useDailyIntelligence";
+import { useCompanionEvents } from "@/hooks/useCompanionEvents";
 import { useToast } from "@/hooks/use-toast";
 
 interface QuickWin {
@@ -14,6 +17,8 @@ interface QuickWinsProps {
 
 export function QuickWins({ data, onTaskCreated }: QuickWinsProps) {
   const { toast } = useToast();
+  const { refetch } = useDailyIntelligence();
+  const { onTaskCompleted } = useCompanionEvents();
 
   const handleConvertToTask = async (quickWin: QuickWin) => {
     try {
@@ -27,10 +32,18 @@ export function QuickWins({ data, onTaskCreated }: QuickWinsProps) {
         return;
       }
 
+      // Enrich with pipeline
+      const enriched = await runTaskPipeline(quickWin.title);
+
       const { error } = await supabase.from('tasks').insert({
         title: quickWin.title,
         user_id: user.id,
-        category: 'quick_win',
+        category: enriched.priority?.priority === 'MUST' ? 'primary_focus' : 'quick_win',
+        priority: enriched.priority?.priority,
+        effort: enriched.priority?.effort,
+        context: enriched.context?.taskContext?.[0]?.contextSummary,
+        scheduled_bucket: enriched.routing?.taskRouting?.[0]?.bucket,
+        is_tiny: enriched.isTiny,
         completed: false,
       });
 
@@ -40,6 +53,11 @@ export function QuickWins({ data, onTaskCreated }: QuickWinsProps) {
         title: "Task created",
         description: `Added "${quickWin.title}" to your tasks`,
       });
+
+      // Post-save actions
+      window.dispatchEvent(new CustomEvent('task:created'));
+      refetch();
+      onTaskCompleted(1);
 
       // Notify parent that task was created
       if (onTaskCreated) {

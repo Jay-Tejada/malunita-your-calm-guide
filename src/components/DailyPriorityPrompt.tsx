@@ -4,7 +4,9 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useDailyPriorityPrompt } from "@/state/useDailyPriorityPrompt";
 import { useTasks, Task } from "@/hooks/useTasks";
+import { useDailyIntelligence } from "@/hooks/useDailyIntelligence";
 import { useCompanionEvents } from "@/hooks/useCompanionEvents";
+import { runTaskPipeline } from "@/lib/intelligence/taskPipeline";
 import { checkAndHandlePrediction } from "@/utils/predictionChecker";
 import { useAutoSplitTask } from "@/hooks/useAutoSplitTask";
 import { useRelatedTaskSuggestions } from "@/hooks/useRelatedTaskSuggestions";
@@ -22,6 +24,7 @@ interface DailyPriorityPromptProps {
 export const DailyPriorityPrompt = forwardRef<DailyPriorityPromptRef, DailyPriorityPromptProps>(({ onTaskCreated }, ref) => {
   const { showPrompt, checkIfShouldShowPrompt, markPromptAnswered } = useDailyPriorityPrompt();
   const { createTasks } = useTasks();
+  const { refetch } = useDailyIntelligence();
   const { onTaskCompleted } = useCompanionEvents();
   const { generateAndCreateSubtasks } = useAutoSplitTask();
   const {
@@ -64,9 +67,17 @@ export const DailyPriorityPrompt = forwardRef<DailyPriorityPromptRef, DailyPrior
     setIsSubmitting(true);
     
     try {
+      // Enrich with pipeline
+      const enriched = await runTaskPipeline(taskInput);
+
       const createdTasks = await createTasks([{
         title: taskInput,
         category: 'primary_focus',
+        priority: enriched.priority?.priority,
+        effort: enriched.priority?.effort,
+        context: enriched.context?.taskContext?.[0]?.contextSummary || 'Daily primary focus task',
+        scheduled_bucket: enriched.routing?.taskRouting?.[0]?.bucket,
+        is_tiny: enriched.isTiny,
         is_focus: true,
         focus_date: getFocusDate(),
         input_method: 'text',
@@ -74,7 +85,6 @@ export const DailyPriorityPrompt = forwardRef<DailyPriorityPromptRef, DailyPrior
         has_reminder: false,
         has_person_name: false,
         is_time_based: false,
-        context: 'Daily primary focus task', // Mark it clearly
       }]);
       
       // Store the priority task ID
@@ -95,7 +105,9 @@ export const DailyPriorityPrompt = forwardRef<DailyPriorityPromptRef, DailyPrior
       setIsDialogOpen(false);
       setTaskInput("");
       
-      // Trigger excited companion expression
+      // Post-save actions
+      window.dispatchEvent(new CustomEvent('task:created'));
+      refetch();
       onTaskCompleted(1);
       
       // Notify parent that task was created

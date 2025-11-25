@@ -6,7 +6,10 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { processRawInput } from "@/lib/taskProcessing";
 import { getClarification } from "@/lib/clarificationEngine";
+import { runTaskPipeline } from "@/lib/intelligence/taskPipeline";
 import { useTasks } from "@/hooks/useTasks";
+import { useDailyIntelligence } from "@/hooks/useDailyIntelligence";
+import { useCompanionEvents } from "@/hooks/useCompanionEvents";
 import { Loader2, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -24,6 +27,8 @@ export const TaskInputBox = () => {
   
   const { createTasks } = useTasks();
   const { toast } = useToast();
+  const { refetch } = useDailyIntelligence();
+  const { onTaskCompleted } = useCompanionEvents();
 
   const handleSubmit = async (e?: React.FormEvent) => {
     e?.preventDefault();
@@ -69,27 +74,39 @@ export const TaskInputBox = () => {
         return;
       }
 
-      // Single clear task - save immediately
-      await createTasks(result.tasks.map(t => ({
-        title: t.title,
-        category: t.category,
-        custom_category_id: t.custom_category_id,
-        priority: t.priority,
-        effort: t.effort,
-        context: t.context,
-        scheduled_bucket: t.scheduled_bucket,
-        is_tiny: t.is_tiny,
-        reminder_time: t.reminder_time,
-        goal_aligned: t.goal_aligned,
-        alignment_reason: t.alignment_reason,
-        idea_metadata: t.idea_metadata,
-        input_method: 'text' as const,
-        completed: false,
-        has_reminder: !!t.reminder_time,
-        has_person_name: false,
-        is_time_based: false,
-        is_focus: false,
-      })));
+      // Single clear task - enrich with pipeline then save
+      const enrichedTasks = await Promise.all(
+        result.tasks.map(async (t) => {
+          const enriched = await runTaskPipeline(t.title);
+          return {
+            title: t.title,
+            category: t.category,
+            custom_category_id: t.custom_category_id,
+            priority: enriched.priority?.priority || t.priority,
+            effort: enriched.priority?.effort || t.effort,
+            context: enriched.context?.taskContext?.[0]?.contextSummary || t.context,
+            scheduled_bucket: enriched.routing?.taskRouting?.[0]?.bucket || t.scheduled_bucket,
+            is_tiny: enriched.isTiny || t.is_tiny,
+            reminder_time: t.reminder_time,
+            goal_aligned: t.goal_aligned,
+            alignment_reason: t.alignment_reason,
+            idea_metadata: t.idea_metadata,
+            input_method: 'text' as const,
+            completed: false,
+            has_reminder: !!t.reminder_time,
+            has_person_name: false,
+            is_time_based: false,
+            is_focus: false,
+          };
+        })
+      );
+
+      await createTasks(enrichedTasks);
+
+      // Post-save actions
+      window.dispatchEvent(new CustomEvent('task:created'));
+      refetch();
+      onTaskCompleted(1);
 
       setInput("");
       setClarificationData(null);
@@ -122,26 +139,39 @@ export const TaskInputBox = () => {
       const result = await processRawInput(input, updatedData);
       
       if (result && result.tasks.length > 0) {
-        await createTasks(result.tasks.map(t => ({
-          title: t.title,
-          category: t.category,
-          custom_category_id: t.custom_category_id,
-          priority: t.priority,
-          effort: t.effort,
-          context: t.context,
-          scheduled_bucket: t.scheduled_bucket,
-          is_tiny: t.is_tiny,
-          reminder_time: t.reminder_time,
-          goal_aligned: t.goal_aligned,
-          alignment_reason: t.alignment_reason,
-          idea_metadata: t.idea_metadata,
-          input_method: 'text' as const,
-          completed: false,
-          has_reminder: !!t.reminder_time,
-          has_person_name: false,
-          is_time_based: false,
-          is_focus: false,
-        })));
+        // Enrich with pipeline
+        const enrichedTasks = await Promise.all(
+          result.tasks.map(async (t) => {
+            const enriched = await runTaskPipeline(t.title);
+            return {
+              title: t.title,
+              category: t.category,
+              custom_category_id: t.custom_category_id,
+              priority: enriched.priority?.priority || t.priority,
+              effort: enriched.priority?.effort || t.effort,
+              context: enriched.context?.taskContext?.[0]?.contextSummary || t.context,
+              scheduled_bucket: enriched.routing?.taskRouting?.[0]?.bucket || t.scheduled_bucket,
+              is_tiny: enriched.isTiny || t.is_tiny,
+              reminder_time: t.reminder_time,
+              goal_aligned: t.goal_aligned,
+              alignment_reason: t.alignment_reason,
+              idea_metadata: t.idea_metadata,
+              input_method: 'text' as const,
+              completed: false,
+              has_reminder: !!t.reminder_time,
+              has_person_name: false,
+              is_time_based: false,
+              is_focus: false,
+            };
+          })
+        );
+
+        await createTasks(enrichedTasks);
+
+        // Post-save actions
+        window.dispatchEvent(new CustomEvent('task:created'));
+        refetch();
+        onTaskCompleted(enrichedTasks.length);
 
         setInput("");
         setClarificationData(null);
@@ -169,26 +199,39 @@ export const TaskInputBox = () => {
 
     setIsProcessing(true);
     try {
-      await createTasks(tasksToCreate.map(t => ({
-        title: t.title,
-        category: t.category,
-        custom_category_id: t.custom_category_id,
-        priority: t.priority,
-        effort: t.effort,
-        context: t.context,
-        scheduled_bucket: t.scheduled_bucket,
-        is_tiny: t.is_tiny,
-        reminder_time: t.reminder_time,
-        goal_aligned: t.goal_aligned,
-        alignment_reason: t.alignment_reason,
-        idea_metadata: t.idea_metadata,
-        input_method: 'text' as const,
-        completed: false,
-        has_reminder: !!t.reminder_time,
-        has_person_name: false,
-        is_time_based: false,
-        is_focus: false,
-      })));
+      // Enrich with pipeline
+      const enrichedTasks = await Promise.all(
+        tasksToCreate.map(async (t) => {
+          const enriched = await runTaskPipeline(t.title);
+          return {
+            title: t.title,
+            category: t.category,
+            custom_category_id: t.custom_category_id,
+            priority: enriched.priority?.priority || t.priority,
+            effort: enriched.priority?.effort || t.effort,
+            context: enriched.context?.taskContext?.[0]?.contextSummary || t.context,
+            scheduled_bucket: enriched.routing?.taskRouting?.[0]?.bucket || t.scheduled_bucket,
+            is_tiny: enriched.isTiny || t.is_tiny,
+            reminder_time: t.reminder_time,
+            goal_aligned: t.goal_aligned,
+            alignment_reason: t.alignment_reason,
+            idea_metadata: t.idea_metadata,
+            input_method: 'text' as const,
+            completed: false,
+            has_reminder: !!t.reminder_time,
+            has_person_name: false,
+            is_time_based: false,
+            is_focus: false,
+          };
+        })
+      );
+
+      await createTasks(enrichedTasks);
+
+      // Post-save actions
+      window.dispatchEvent(new CustomEvent('task:created'));
+      refetch();
+      onTaskCompleted(enrichedTasks.length);
 
       setInput("");
       setMultiTaskMode(false);
