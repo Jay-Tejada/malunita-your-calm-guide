@@ -125,6 +125,20 @@ export function useDailyIntelligence(): UseDailyIntelligenceReturn {
     return () => clearTimeout(timer);
   }, [fetchData]);
 
+  // Listen for task changes
+  useEffect(() => {
+    const handleTaskCreated = () => fetchData();
+    const handleTaskUpdated = () => fetchData();
+
+    window.addEventListener("task:created", handleTaskCreated);
+    window.addEventListener("task:updated", handleTaskUpdated);
+
+    return () => {
+      window.removeEventListener("task:created", handleTaskCreated);
+      window.removeEventListener("task:updated", handleTaskUpdated);
+    };
+  }, [fetchData]);
+
   return {
     data,
     loading,
