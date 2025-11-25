@@ -50,52 +50,35 @@ export function useDailyMindstream(): MindstreamData {
           return;
         }
 
-        // Call all edge functions in parallel
+        // Call only the edge functions that work without specific user input
         const [
           commandCenterResult,
           suggestFocusResult,
-          habitPredictorResult,
-          clusterTasksResult,
-          ideaAnalyzerResult,
-          processRitualResult,
           personalizationResult,
         ] = await Promise.allSettled([
           supabase.functions.invoke('daily-command-center', {
             body: { mode: 'home_screen' }
           }),
           supabase.functions.invoke('suggest-focus'),
-          supabase.functions.invoke('habit-predictor'),
-          supabase.functions.invoke('cluster-tasks'),
-          supabase.functions.invoke('idea-analyzer', {
-            body: { mode: 'daily' }
-          }),
-          supabase.functions.invoke('process-ritual', {
-            body: { mode: 'morning' }
-          }),
           supabase.functions.invoke('personalization-agent').catch(() => ({ data: null })),
         ]);
 
         // Extract data from results
         const commandCenter = commandCenterResult.status === 'fulfilled' ? commandCenterResult.value.data : null;
         const suggestFocus = suggestFocusResult.status === 'fulfilled' ? suggestFocusResult.value.data : null;
-        const habitPredictor = habitPredictorResult.status === 'fulfilled' ? habitPredictorResult.value.data : null;
-        const clusterTasks = clusterTasksResult.status === 'fulfilled' ? clusterTasksResult.value.data : null;
-        const ideaAnalyzer = ideaAnalyzerResult.status === 'fulfilled' ? ideaAnalyzerResult.value.data : null;
-        const processRitual = processRitualResult.status === 'fulfilled' ? processRitualResult.value.data : null;
         const personalization = personalizationResult.status === 'fulfilled' ? personalizationResult.value.data : null;
 
         setData({
           oneThing: commandCenter?.oneThing || null,
           aiFocus: suggestFocus?.focusTask || commandCenter?.focusMessage || null,
           quickWins: commandCenter?.quickWins || [],
-          predictedHabits: habitPredictor?.predictions || [],
-          clusters: clusterTasks?.clusters || [],
+          predictedHabits: [],
+          clusters: [],
           nudges: [
             ...(personalization?.recommendations || []),
-            ...(processRitual?.nudges || []),
             ...(cognitiveLoadState.recommendations || []),
           ],
-          summaryMarkdown: ideaAnalyzer?.summary_markdown || commandCenter?.dailySummary || null,
+          summaryMarkdown: commandCenter?.dailySummary || null,
         });
       } catch (error) {
         console.error('Failed to fetch mindstream data:', error);
