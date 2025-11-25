@@ -10,7 +10,9 @@ export interface ProcessedTask {
   cleaned: string;
   priority: 'must' | 'should' | 'could';
   isTiny: boolean;
+  category?: string | null;
   due?: string | null;
+  reminder_time?: string | null;
   project?: string | null;
   people: string[];
   contextMarkers: string[];
