@@ -219,6 +219,24 @@ Capture Meta (for tracking rambles → structured inbox):
 - Detect intent_tags: array of ["work", "family", "finance", "health", "creative", etc.] based on the content
 - Set inbox_bucket: always "today_inbox" for now
 
+Task Enrichment Requirements:
+For EACH task, provide:
+1. **summary**: One sentence summary of what the task involves (max 20 words)
+2. **task_type**: Classify as one of: admin, communication, errand, focus, physical, creative, delivery, follow_up
+3. **tiny_task**: Boolean - can be done in under 5 minutes?
+4. **heavy_task**: Boolean - requires significant mental/physical energy?
+5. **emotional_weight**: Number 0-10 (0=neutral, 10=high stress/anxiety)
+6. **priority_score**: Number 0-100 based on urgency, impact, dependencies
+7. **ideal_time**: Suggest when to do it: "morning", "afternoon", "evening", "anytime"
+8. **ideal_day**: Suggest which day: "today", "tomorrow", "this_week", "later"
+9. **is_one_thing**: Boolean - detect if user is signaling this as their main priority using phrases like:
+   - "if I just get this one thing done"
+   - "this is the main item"
+   - "this will get my head above water"
+   - "most important thing is"
+   - "key thing is"
+   - "only thing I need to do is"
+
 Return valid JSON in this exact format:
 {
   "raw_summary": "Brief 1-2 sentence summary of the ramble",
@@ -227,12 +245,21 @@ Return valid JSON in this exact format:
   "tasks": [
     {
       "title": "Clear task title",
+      "summary": "One sentence description of the task",
       "suggested_category": "work",
       "custom_category_id": "<id if custom category>",
       "suggested_timeframe": "today",
       "confidence": 0.85,
       "reminder_time": "2024-11-10T10:00:00Z (complete ISO 8601 with date + time, or null if no reminder)",
-      "confirmation_prompt": "Should I add this to Work for today?"${userProfile?.current_goal ? `,
+      "confirmation_prompt": "Should I add this to Work for today?",
+      "task_type": "focus",
+      "tiny_task": false,
+      "heavy_task": true,
+      "emotional_weight": 7,
+      "priority_score": 85,
+      "ideal_time": "morning",
+      "ideal_day": "today",
+      "is_one_thing": true${userProfile?.current_goal ? `,
       "goal_aligned": true,
       "alignment_reason": "This directly supports your goal by..."` : ''}
     }

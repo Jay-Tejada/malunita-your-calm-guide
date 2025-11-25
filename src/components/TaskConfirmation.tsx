@@ -15,11 +15,23 @@ import { CategorySuggestions } from "@/components/CategorySuggestions";
 
 interface SuggestedTask {
   title: string;
+  summary?: string;
   suggested_category: string;
   custom_category_id?: string;
   suggested_timeframe: string;
   confidence: number;
   confirmation_prompt: string;
+  // Virtual enrichment fields
+  task_type?: 'admin' | 'communication' | 'errand' | 'focus' | 'physical' | 'creative' | 'delivery' | 'follow_up';
+  tiny_task?: boolean;
+  heavy_task?: boolean;
+  emotional_weight?: number;
+  priority_score?: number;
+  ideal_time?: 'morning' | 'afternoon' | 'evening' | 'anytime';
+  ideal_day?: 'today' | 'tomorrow' | 'this_week' | 'later';
+  is_one_thing?: boolean;
+  goal_aligned?: boolean;
+  alignment_reason?: string;
 }
 
 interface TaskConfirmationProps {

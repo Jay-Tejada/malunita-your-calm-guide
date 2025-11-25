@@ -5,12 +5,22 @@ import { Volume2 } from 'lucide-react';
 
 interface ExtractedTask {
   title: string;
+  summary?: string;
   suggested_category: string;
   suggested_timeframe: string;
   reminder_time?: string | null;
   confidence: number;
   goal_aligned?: boolean;
   alignment_reason?: string;
+  // Virtual enrichment fields
+  task_type?: 'admin' | 'communication' | 'errand' | 'focus' | 'physical' | 'creative' | 'delivery' | 'follow_up';
+  tiny_task?: boolean;
+  heavy_task?: boolean;
+  emotional_weight?: number;
+  priority_score?: number;
+  ideal_time?: 'morning' | 'afternoon' | 'evening' | 'anytime';
+  ideal_day?: 'today' | 'tomorrow' | 'this_week' | 'later';
+  is_one_thing?: boolean;
 }
 
 interface ConversationalTaskFlowProps {
@@ -129,11 +139,40 @@ export const ConversationalTaskFlow: React.FC<ConversationalTaskFlowProps> = ({
 
   const generateTaskSummary = (): string => {
     if (tasks.length === 1) {
-      return `I heard you say: "${tasks[0].title}". Let me help you organize this.`;
+      const task = tasks[0];
+      let summary = `I heard you say: "${task.title}".`;
+      
+      // Add enriched metadata
+      if (task.is_one_thing) {
+        summary += ` This sounds like your ONE-thing priority.`;
+      } else if (task.priority_score && task.priority_score > 80) {
+        summary += ` This looks important.`;
+      } else if (task.tiny_task) {
+        summary += ` This should be quick.`;
+      }
+      
+      if (task.ideal_time) {
+        summary += ` Best done in the ${task.ideal_time}.`;
+      }
+      
+      summary += ` Let me help you organize this.`;
+      return summary;
     }
     
     const taskList = tasks.map((t, i) => `${i + 1}. ${t.title}`).join(', ');
-    return `I extracted ${tasks.length} tasks from what you said: ${taskList}. Let me help you organize these.`;
+    const oneThingTasks = tasks.filter(t => t.is_one_thing);
+    const highPriorityTasks = tasks.filter(t => t.priority_score && t.priority_score > 80);
+    
+    let summary = `I extracted ${tasks.length} tasks from what you said: ${taskList}.`;
+    
+    if (oneThingTasks.length > 0) {
+      summary += ` I noticed "${oneThingTasks[0].title}" seems to be your main priority.`;
+    } else if (highPriorityTasks.length > 0) {
+      summary += ` ${highPriorityTasks.length} of these look high priority.`;
+    }
+    
+    summary += ` Let me help you organize these.`;
+    return summary;
   };
 
   const askAboutNextTask = async () => {

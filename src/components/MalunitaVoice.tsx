@@ -38,6 +38,7 @@ interface Message {
 
 interface SuggestedTask {
   title: string;
+  summary?: string;
   suggested_category: string;
   custom_category_id?: string;
   suggested_timeframe: string;
@@ -48,6 +49,15 @@ interface SuggestedTask {
   alignment_reason?: string;
   hidden_intent?: string | null;
   ai_metadata?: any;
+  // Virtual enrichment fields
+  task_type?: 'admin' | 'communication' | 'errand' | 'focus' | 'physical' | 'creative' | 'delivery' | 'follow_up';
+  tiny_task?: boolean;
+  heavy_task?: boolean;
+  emotional_weight?: number;
+  priority_score?: number;
+  ideal_time?: 'morning' | 'afternoon' | 'evening' | 'anytime';
+  ideal_day?: 'today' | 'tomorrow' | 'this_week' | 'later';
+  is_one_thing?: boolean;
 }
 
 interface MalunitaVoiceProps {
@@ -1089,19 +1099,40 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
     try {
       const { data: { user } } = await supabase.auth.getUser();
       const today = new Date().toISOString().split('T')[0];
-      const tasksToCreate = confirmedTasks.map(task => ({
-        title: task.title,
-        category: task.category,
-        custom_category_id: task.custom_category_id,
-        input_method: 'voice' as const,
-        is_focus: task.is_focus,
-        focus_date: task.is_focus ? today : null,
-        reminder_time: task.reminder_time || null,
-        has_reminder: !!task.reminder_time,
-        recurrence_pattern: task.recurrence_pattern || 'none',
-        recurrence_day: task.recurrence_day,
-        completed: false,
-      }));
+      const tasksToCreate = confirmedTasks.map((task, index) => {
+        // Get original enriched metadata from pendingTasks
+        const originalTask = pendingTasks[index];
+        
+        return {
+          title: task.title,
+          category: task.category,
+          custom_category_id: task.custom_category_id,
+          input_method: 'voice' as const,
+          is_focus: task.is_focus || originalTask?.is_one_thing,
+          focus_date: (task.is_focus || originalTask?.is_one_thing) ? today : null,
+          reminder_time: task.reminder_time || null,
+          has_reminder: !!task.reminder_time,
+          recurrence_pattern: task.recurrence_pattern || 'none',
+          recurrence_day: task.recurrence_day,
+          completed: false,
+          // Store enriched metadata as Json
+          ai_metadata: {
+            summary: originalTask?.summary,
+            task_type: originalTask?.task_type,
+            tiny_task: originalTask?.tiny_task,
+            heavy_task: originalTask?.heavy_task,
+            emotional_weight: originalTask?.emotional_weight,
+            priority_score: originalTask?.priority_score,
+            ideal_time: originalTask?.ideal_time,
+            ideal_day: originalTask?.ideal_day,
+            is_one_thing: originalTask?.is_one_thing,
+            confidence: originalTask?.confidence,
+            goal_aligned: originalTask?.goal_aligned,
+            alignment_reason: originalTask?.alignment_reason,
+            hidden_intent: originalTask?.hidden_intent,
+          } as any,
+        };
+      });
 
       const createdTasks = await createTasks(tasksToCreate);
       
