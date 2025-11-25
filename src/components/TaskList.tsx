@@ -37,7 +37,7 @@ interface TaskListProps {
 }
 
 export const TaskList = ({ category: externalCategory }: TaskListProps = {}) => {
-  const { tasks, isLoading, updateTask, deleteTask } = useTasks();
+  const { tasks, isLoading, updateTask, deleteTask, createTasks } = useTasks();
   const { categories, createCategory } = useCustomCategories();
   const growth = useCompanionGrowth();
   const { generateAndCreateSubtasks } = useAutoSplitTask();
@@ -377,6 +377,10 @@ export const TaskList = ({ category: externalCategory }: TaskListProps = {}) => 
     });
   };
 
+  const handleCreateSubtasks = async (subtasks: any[]) => {
+    await createTasks(subtasks);
+  };
+
   const allCategories = [
     { id: 'inbox', label: 'Inbox', icon: '📥' },
     { id: 'home', label: 'Home', icon: '🏠' },
@@ -507,21 +511,24 @@ export const TaskList = ({ category: externalCategory }: TaskListProps = {}) => 
                                   onCheckedChange={() => handleToggleTaskSelection(task.id)}
                                   className="shrink-0"
                                 />
-                                <TaskCard
-                                  id={task.id}
-                                  title={task.title}
-                                  context={task.context || undefined}
-                                  completed={task.completed || false}
-                                  selected={selectedTaskId === task.id}
-                                  onToggle={() => handleToggleComplete(task)}
-                                  onSelect={() => setSelectedTaskId(task.id)}
-                                  onLongPress={() => handleLongPress(task)}
-                                  onEdit={() => handleEditTask(task)}
-                                  goalAligned={task.goal_aligned}
-                                  alignmentReason={task.alignment_reason}
-                                  priority={task.future_priority_score}
-                                  cluster={task.cluster}
-                                />
+                                 <TaskCard
+                                   id={task.id}
+                                   title={task.title}
+                                   context={task.context || undefined}
+                                   completed={task.completed || false}
+                                   selected={selectedTaskId === task.id}
+                                   onToggle={() => handleToggleComplete(task)}
+                                   onSelect={() => setSelectedTaskId(task.id)}
+                                   onLongPress={() => handleLongPress(task)}
+                                   onEdit={() => handleEditTask(task)}
+                                   goalAligned={task.goal_aligned}
+                                   alignmentReason={task.alignment_reason}
+                                   priority={task.future_priority_score}
+                                   cluster={task.cluster}
+                                   fullTask={task}
+                                   onTaskUpdate={(updates) => updateTask({ id: task.id, updates })}
+                                   onCreateTasks={handleCreateSubtasks}
+                                 />
                                 <Button
                                   variant="ghost"
                                   size="icon"
@@ -546,21 +553,24 @@ export const TaskList = ({ category: externalCategory }: TaskListProps = {}) => 
                              onCheckedChange={() => handleToggleTaskSelection(task.id)}
                              className="shrink-0"
                            />
-                           <TaskCard
-                             id={task.id}
-                             title={task.title}
-                             context={task.context || undefined}
-                             completed={task.completed || false}
-                             selected={selectedTaskId === task.id}
-                             onToggle={() => handleToggleComplete(task)}
-                             onSelect={() => setSelectedTaskId(task.id)}
-                             onLongPress={() => handleLongPress(task)}
-                             onEdit={() => handleEditTask(task)}
-                             goalAligned={task.goal_aligned}
-                             alignmentReason={task.alignment_reason}
-                             priority={task.future_priority_score}
-                             cluster={task.cluster}
-                           />
+                            <TaskCard
+                              id={task.id}
+                              title={task.title}
+                              context={task.context || undefined}
+                              completed={task.completed || false}
+                              selected={selectedTaskId === task.id}
+                              onToggle={() => handleToggleComplete(task)}
+                              onSelect={() => setSelectedTaskId(task.id)}
+                              onLongPress={() => handleLongPress(task)}
+                              onEdit={() => handleEditTask(task)}
+                              goalAligned={task.goal_aligned}
+                              alignmentReason={task.alignment_reason}
+                              priority={task.future_priority_score}
+                              cluster={task.cluster}
+                              fullTask={task}
+                              onTaskUpdate={(updates) => updateTask({ id: task.id, updates })}
+                              onCreateTasks={handleCreateSubtasks}
+                            />
                            <Button
                              variant="ghost"
                              size="icon"
