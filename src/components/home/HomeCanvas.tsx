@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { MindstreamPanel } from "@/components/intelligence/MindstreamPanel";
 import { OneThingPrompt } from "@/components/home/OneThingPrompt";
 import { useDailyPriorityPrompt } from "@/state/useDailyPriorityPrompt";
-import { useDailyMindstream } from "@/hooks/useDailyMindstream";
+import { useDailyIntelligence } from "@/hooks/useDailyIntelligence";
 
 interface HomeCanvasProps {
   children?: React.ReactNode;
@@ -11,7 +11,7 @@ interface HomeCanvasProps {
 
 export function HomeCanvas({ children, onOneThingClick }: HomeCanvasProps) {
   const { showPrompt } = useDailyPriorityPrompt();
-  const { headline } = useDailyMindstream();
+  const { data, loading, error } = useDailyIntelligence();
   const [showOneThingPrompt, setShowOneThingPrompt] = useState(true);
 
   // Check localStorage on mount to see if dismissed today
@@ -50,12 +50,16 @@ export function HomeCanvas({ children, onOneThingClick }: HomeCanvasProps) {
       
       {/* One Thing Prompt - positioned above the orb */}
       <div className="flex flex-col items-center justify-center" style={{ marginTop: '32px' }}>
-        {shouldShowPrompt && (
+        {shouldShowPrompt && !loading && (
           <div className="mb-4 w-full">
             <OneThingPrompt
-              questionText={headline || "What is the ONE task that would make today a success?"}
+              questionText={
+                data?.primary_focus || 
+                data?.headline || 
+                "What is the ONE task that would make today a success?"
+              }
               onClick={handlePromptClick}
-              subtle={!headline}
+              subtle={!data?.primary_focus && !data?.headline}
             />
           </div>
         )}
