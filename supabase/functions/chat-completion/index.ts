@@ -194,6 +194,8 @@ serve(async (req) => {
     let systemContent = `You are Malunita — a calm, warm, minimalist thinking partner who helps people think clearly.
 ${archetypePrompt}
 
+**Tone Guidance:** {{TONE_DESCRIPTION}}
+
 **CRITICAL RULES:**
 1. NEVER repeat the user's raw input back to them
 2. NEVER act like dictation software

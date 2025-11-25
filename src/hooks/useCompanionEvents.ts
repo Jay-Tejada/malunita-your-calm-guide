@@ -74,6 +74,15 @@ export function useCompanionEvents() {
   }, []);
 
   const onTaskCompleted = useCallback((count: number = 1) => {
+    // Import and trigger emotional events
+    import('@/state/emotionalMemory').then(({ EMOTIONAL_EVENTS }) => {
+      if (count >= 3) {
+        EMOTIONAL_EVENTS.TASK_STREAK(count);
+      } else {
+        EMOTIONAL_EVENTS.TASK_COMPLETED();
+      }
+    });
+
     // Boost emotional memory
     const joyBoost = Math.min(count * 3, 10); // Cap joy boost
     const affectionBoost = Math.min(count * 2, 8);
@@ -133,6 +142,13 @@ export function useCompanionEvents() {
 
   const onTaskCreated = useCallback((taskInfo?: { priority?: number; isTiny?: boolean; bucket?: string }) => {
     const memoryEngine = useMemoryEngine.getState();
+    
+    // Trigger emotional event for overwhelm
+    if (taskInfo?.priority && taskInfo.priority >= 0.85) {
+      import('@/state/emotionalMemory').then(({ EMOTIONAL_EVENTS }) => {
+        EMOTIONAL_EVENTS.TASK_ADDED_OVERWHELMING();
+      });
+    }
     
     // Tiny tasks trigger happiness
     if (taskInfo?.isTiny) {

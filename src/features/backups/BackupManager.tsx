@@ -230,8 +230,18 @@ export const BackupManager = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      // Restore emotional memory
-      emotionalMemory.loadFromProfile(backupData.emotionalMemory);
+      // Restore emotional memory with defaults for new properties
+      const fullEmotionalMemory = {
+        joy: backupData.emotionalMemory?.joy ?? 50,
+        stress: backupData.emotionalMemory?.stress ?? 50,
+        affection: backupData.emotionalMemory?.affection ?? 50,
+        fatigue: backupData.emotionalMemory?.fatigue ?? 50,
+        momentum: (backupData.emotionalMemory as any)?.momentum ?? 50,
+        overwhelm: (backupData.emotionalMemory as any)?.overwhelm ?? 50,
+        resilience: (backupData.emotionalMemory as any)?.resilience ?? 50,
+        encouragement_need: (backupData.emotionalMemory as any)?.encouragement_need ?? 50,
+      };
+      emotionalMemory.loadFromProfile(fullEmotionalMemory);
       await emotionalMemory.syncToSupabase(user.id);
 
       // Restore level system
