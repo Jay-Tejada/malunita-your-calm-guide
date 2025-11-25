@@ -33,3 +33,14 @@ export interface Routing {
   someday: string[];
   projects: string[];
 }
+
+export interface ProcessInputResult {
+  tasks: Task[];
+  ideas: string[];
+  decisions: string[];
+  contextSummary: Record<string, any>;
+  emotion: 'stressed' | 'ok' | 'motivated' | string;
+  clarifyingQuestions: string[];
+  aiResponse?: string;
+  routing: Routing;
+}

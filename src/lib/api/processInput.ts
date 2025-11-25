@@ -26,6 +26,7 @@ export interface ProcessInputResult {
   contextSummary: Record<string, any>;
   emotion: 'stressed' | 'ok' | 'motivated' | string;
   clarifyingQuestions: string[];
+  aiResponse?: string;
   routing: {
     today: ProcessedTask[];
     upcoming: ProcessedTask[];
