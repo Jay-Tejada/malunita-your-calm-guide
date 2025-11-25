@@ -350,6 +350,49 @@ Return 3-7 suggestions that are specific, actionable, and genuinely helpful.`;
     const result = JSON.parse(toolCall.function.arguments);
     console.log('Generated suggestions:', result.suggestions.length);
 
+    // Apply DEEP REASONING to explain WHY suggestions were made
+    try {
+      const { createClient: createSupabaseClient } = await import('https://esm.sh/@supabase/supabase-js@2.80.0');
+      const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+      const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+      const deepSupabase = createSupabaseClient(supabaseUrl, supabaseKey);
+
+      const reasoningInput = `Analyze these task suggestions and explain the underlying strategy:
+
+Suggestions made:
+${result.suggestions.map((s: any, i: number) => `${i + 1}. ${s.title} (${s.priority}, ${s.suggestion_type})`).join('\n')}
+
+Context:
+- Domain: ${domain}
+- Total tasks in system: ${tasks.length}
+- High priority tasks: ${highPriorityTasks.length}
+${primaryFocusTask ? `- Today's ONE thing: ${primaryFocusTask}` : ''}
+${burnoutRecovery ? '- User is in burnout recovery mode' : ''}
+
+What is the deeper strategic reasoning behind these suggestions?`;
+
+      const { data: deepData, error: deepError } = await deepSupabase.functions.invoke('long-reasoning', {
+        body: {
+          input: reasoningInput,
+          context: {
+            domain,
+            taskCount: tasks.length,
+            suggestionCount: result.suggestions.length,
+            primaryFocusTask,
+            burnoutRecovery
+          }
+        }
+      });
+
+      if (!deepError && deepData?.final_answer) {
+        result.strategic_reasoning = deepData.final_answer;
+        result.reasoning_steps = deepData.steps || [];
+        console.log('✨ Deep reasoning applied to task suggestions');
+      }
+    } catch (error) {
+      console.error('Error applying deep reasoning to suggestions:', error);
+    }
+
     // Log API usage for admin tracking
     if (userId) {
       try {

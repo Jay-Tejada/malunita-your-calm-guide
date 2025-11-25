@@ -319,97 +319,73 @@ Return ONLY bullet points of context notes found, or return "No context notes" i
         .filter((line: string) => line.length > 0);
     }
 
-    // Generate Executive Insight with mood-aware, companion-aware tone
+    // Use DEEP REASONING for executive insights
     const preferredCategories = Object.entries(focusPreferences)
       .filter(([_, weight]) => (weight as number) > 0.1)
       .map(([category]) => category);
     
     const focusPreferenceContext = preferredCategories.length > 0
-      ? `\n\nUser tends to focus well on: ${preferredCategories.join(', ')}`
+      ? `User tends to focus well on: ${preferredCategories.join(', ')}`
       : '';
 
-    const insightPrompt = isHomeScreenMode
-      ? `You are an Executive Assistant with these attributes: clean, direct, minimalist, slightly dry humor, companion-aware.
-
-Companion personality: ${companionPersonality}
-Companion stage: ${companionStage}${focusPreferenceContext}
-
-Task summary:
+    // Call long-reasoning for deeper insights
+    let executiveInsight = "Here is what actually matters today.";
+    
+    try {
+      const deepReasoningInput = isHomeScreenMode
+        ? `Generate a welcoming headline for the home screen given this context:
+- Companion: ${companionPersonality} (stage ${companionStage})
 - Priority tasks: ${priorityTasks.length}
 - Today's schedule: ${todaysSchedule.length}
 - Quick wins: ${quickWins.length}
 - Tiny tasks: ${tinyTaskCount}
 - Total open tasks: ${allTasks.length}
+${focusPreferenceContext ? `\n- ${focusPreferenceContext}` : ''}
 
-Generate ONE welcoming headline for the home screen. Keep it clean, direct, and motivating.
-
-Tone rules:
-- Clean, direct, minimalist
-- Welcoming but not overly enthusiastic
-- Should feel like: "Ready to make today count?"
-
-Companion context (use subtly if natural):
-- Personality: ${companionPersonality} (zen=calm/grounded, spark=energetic/quick, cosmo=thoughtful/deep)
-- Stage: ${companionStage} (1=seedling, 2=sprout, 3=bloom, 4=radiant)
-
-Return ONLY the headline. No extra text.`
-      : `You are an Executive Assistant with these attributes: clean, direct, minimalist, slightly dry humor, mood-aware, companion-aware.
-
+Generate ONE welcoming headline that is clean, direct, and motivating.`
+        : `Analyze the user's day and generate an executive insight:
 User's input: "${text}"
 User's mood: ${mood}
-Companion personality: ${companionPersonality}
-Companion stage: ${companionStage}${focusPreferenceContext}
-
+Companion: ${companionPersonality} (stage ${companionStage})
 Task summary:
-- Priority tasks: ${priorityTasks.length}
-- Today's schedule: ${todaysSchedule.length}
+- Priority: ${priorityTasks.length}
+- Schedule: ${todaysSchedule.length}
 - Quick wins: ${quickWins.length}
 - Tiny tasks: ${tinyTaskCount}
-- Total open tasks: ${allTasks.length}
+- Total: ${allTasks.length}
+${focusPreferenceContext ? `\n${focusPreferenceContext}` : ''}
 
-Generate ONE direct sentence shaped by the user's mood. Optionally include a subtle companion reference ONLY if it fits naturally.
+What is the ONE most important insight for the user today?`;
 
-Tone rules:
-- Clean, direct, minimalist
-- Use dry humor ONLY when natural (e.g., "Let's not let this one become a roommate.")
-- No corporate tone. No forced enthusiasm.
-- Should feel like: "Here's what actually matters today. Let's move smart."
+      const { data: deepData, error: deepError } = await supabase.functions.invoke('long-reasoning', {
+        body: {
+          input: deepReasoningInput,
+          context: {
+            mood,
+            companionPersonality,
+            companionStage,
+            taskCounts: {
+              priority: priorityTasks.length,
+              schedule: todaysSchedule.length,
+              quickWins: quickWins.length,
+              tiny: tinyTaskCount,
+              total: allTasks.length
+            },
+            isHomeScreenMode
+          }
+        }
+      });
 
-Mood-based adjustments:
-- ${mood === 'overwhelmed' ? 'Calming, grounded. Focus on one thing at a time.' : ''}
-- ${mood === 'rushed' ? 'Direct, efficient. Cut to what matters now.' : ''}
-- ${mood === 'focused' ? 'Strategic, sharp. Reinforce their momentum.' : ''}
-- ${mood === 'calm' ? 'Steady, clear. Match their composed energy.' : ''}
-
-Companion context (use subtly if natural):
-- Personality: ${companionPersonality} (zen=calm/grounded, spark=energetic/quick, cosmo=thoughtful/deep)
-- Stage: ${companionStage} (1=seedling, 2=sprout, 3=bloom, 4=radiant)
-- Example subtle reference: "Your companion is calm this morning — match that pace."
-
-Return ONLY the insight sentence. No extra text.`;
-
-    const insightResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${lovableApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
-        messages: [
-          { role: 'system', content: 'You are a productivity insight generator. Return only the insight.' },
-          { role: 'user', content: insightPrompt }
-        ],
-      }),
-    });
-
-    if (!insightResponse.ok) {
-      console.error('Insight generation failed:', await insightResponse.text());
-      throw new Error('Failed to generate insight');
+      if (!deepError && deepData?.final_answer) {
+        executiveInsight = deepData.final_answer.trim();
+        console.log('✨ Deep reasoning applied to executive insight');
+      } else {
+        console.warn('Deep reasoning failed, using fallback');
+      }
+    } catch (error) {
+      console.error('Error calling long-reasoning:', error);
+      // Fallback to simple insight
     }
-
-    const insightData = await insightResponse.json();
-    const executiveInsight = insightData.choices?.[0]?.message?.content?.trim() || "Here is what actually matters today.";
 
     // Generate ONE-thing summary and reasoning
     let oneThingSummary = '';

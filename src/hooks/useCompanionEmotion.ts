@@ -209,7 +209,7 @@ export const useCompanionEmotion = (
   const suggestedMotion = emotionToMotionMap[emotion];
   const taskPreference = emotionToTaskPreference[emotion];
 
-  // Check burnout, storms, and streaks to adjust emotion intelligently
+  // Check burnout, storms, and streaks to adjust emotion intelligently with DEEP REASONING
   useEffect(() => {
     const checkIntelligentContext = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -303,7 +303,51 @@ export const useCompanionEmotion = (
       else if (hour >= 17 && hour < 21) timeOfDay = 'evening';
       else timeOfDay = 'night';
 
-      // Subtle baseline adjustment based on time
+      // Use DEEP REASONING to determine optimal emotion transition
+      try {
+        const reasoningInput = `Given this companion context, what emotion should Malunita express?
+
+Current state:
+- Time: ${timeOfDay}
+- Burnout risk: ${profile?.burnout_risk || 0}
+- Focus streak: ${currentStreak}
+- Storm tomorrow: ${stormData ? 'yes, load ' + stormData.expected_load_score : 'no'}
+- Current emotion: ${emotion}
+${focusTasks ? `- ONE thing: ${focusTasks.title}` : '- No ONE thing set'}
+
+Available emotions: neutral, curious, focused, proud, calm, sleepy, excited, encouraging, inspired, overwhelmed
+
+What is the most supportive emotion for Malunita to express right now?`;
+
+        const { data: deepData, error: deepError } = await supabase.functions.invoke('long-reasoning', {
+          body: {
+            input: reasoningInput,
+            context: {
+              timeOfDay,
+              burnoutRisk: profile?.burnout_risk || 0,
+              focusStreak: currentStreak,
+              hasStorm: !!stormData,
+              currentEmotion: emotion
+            }
+          }
+        });
+
+        if (!deepError && deepData?.final_answer) {
+          const suggestedEmotion = deepData.final_answer.toLowerCase();
+          const emotionMatch = suggestedEmotion.match(/\b(neutral|curious|focused|proud|calm|sleepy|excited|encouraging|inspired|overwhelmed)\b/);
+          
+          if (emotionMatch) {
+            const newEmotion = emotionMatch[0] as EmotionState;
+            console.log('✨ Deep reasoning suggested emotion:', newEmotion);
+            setEmotion(newEmotion);
+            return;
+          }
+        }
+      } catch (error) {
+        console.error('Error applying deep reasoning to emotion:', error);
+      }
+
+      // Fallback: Subtle baseline adjustment based on time
       if (timeOfDay === 'night' && emotion === 'neutral') {
         setEmotion('calm');
       }
