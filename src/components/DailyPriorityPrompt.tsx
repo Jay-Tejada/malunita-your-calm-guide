@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, forwardRef, useImperativeHandle } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,11 @@ import { useRelatedTaskSuggestions } from "@/hooks/useRelatedTaskSuggestions";
 import { RelatedTaskSuggestions } from "@/components/RelatedTaskSuggestions";
 import { Sparkles } from "lucide-react";
 
-export function DailyPriorityPrompt() {
+export interface DailyPriorityPromptRef {
+  openDialog: () => void;
+}
+
+export const DailyPriorityPrompt = forwardRef<DailyPriorityPromptRef>((props, ref) => {
   const { showPrompt, checkIfShouldShowPrompt, markPromptAnswered } = useDailyPriorityPrompt();
   const { createTasks } = useTasks();
   const { onTaskCompleted } = useCompanionEvents();
@@ -27,6 +31,11 @@ export function DailyPriorityPrompt() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [taskInput, setTaskInput] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Expose method to open dialog programmatically
+  useImperativeHandle(ref, () => ({
+    openDialog: () => setIsDialogOpen(true),
+  }));
 
   // Check if prompt should show on mount
   useEffect(() => {
@@ -163,4 +172,6 @@ export function DailyPriorityPrompt() {
       </Dialog>
     </>
   );
-}
+});
+
+DailyPriorityPrompt.displayName = "DailyPriorityPrompt";
