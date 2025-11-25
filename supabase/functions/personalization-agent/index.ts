@@ -27,7 +27,17 @@ serve(async (req) => {
     );
 
     // Check if specific user was requested
-    const body = req.method === 'POST' ? await req.json() : {};
+    let body: { userId?: string } = {};
+    try {
+      const text = await req.text();
+      if (text && text.trim().length > 0) {
+        body = JSON.parse(text);
+      }
+    } catch (error) {
+      console.log('No valid JSON body, processing all users');
+      body = {};
+    }
+    
     const targetUserId = body.userId;
 
     if (targetUserId) {
