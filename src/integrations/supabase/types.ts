@@ -572,6 +572,36 @@ export type Database = {
         }
         Relationships: []
       }
+      inbox_cleanup_log: {
+        Row: {
+          archived_count: number
+          completed_count: number
+          created_at: string
+          id: string
+          snoozed_count: number
+          total_tasks: number
+          user_id: string
+        }
+        Insert: {
+          archived_count?: number
+          completed_count?: number
+          created_at?: string
+          id?: string
+          snoozed_count?: number
+          total_tasks?: number
+          user_id: string
+        }
+        Update: {
+          archived_count?: number
+          completed_count?: number
+          created_at?: string
+          id?: string
+          snoozed_count?: number
+          total_tasks?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       learning_trends: {
         Row: {
           analysis_date: string
