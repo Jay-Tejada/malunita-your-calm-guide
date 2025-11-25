@@ -70,6 +70,48 @@ export type Database = {
           },
         ]
       }
+      ai_memory_profiles: {
+        Row: {
+          category_preferences: Json | null
+          emotional_triggers: Json | null
+          energy_pattern: Json | null
+          last_updated: string | null
+          positive_reinforcers: Json | null
+          priority_bias: Json | null
+          procrastination_triggers: Json | null
+          streak_history: Json | null
+          tiny_task_threshold: number | null
+          user_id: string
+          writing_style: string | null
+        }
+        Insert: {
+          category_preferences?: Json | null
+          emotional_triggers?: Json | null
+          energy_pattern?: Json | null
+          last_updated?: string | null
+          positive_reinforcers?: Json | null
+          priority_bias?: Json | null
+          procrastination_triggers?: Json | null
+          streak_history?: Json | null
+          tiny_task_threshold?: number | null
+          user_id: string
+          writing_style?: string | null
+        }
+        Update: {
+          category_preferences?: Json | null
+          emotional_triggers?: Json | null
+          energy_pattern?: Json | null
+          last_updated?: string | null
+          positive_reinforcers?: Json | null
+          priority_bias?: Json | null
+          procrastination_triggers?: Json | null
+          streak_history?: Json | null
+          tiny_task_threshold?: number | null
+          user_id?: string
+          writing_style?: string | null
+        }
+        Relationships: []
+      }
       api_usage_logs: {
         Row: {
           created_at: string
