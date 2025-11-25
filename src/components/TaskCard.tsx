@@ -6,6 +6,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { getClusterDomain } from "@/lib/knowledgeClusters";
 import { useEffect, useRef, useState } from "react";
 import { TaskCorrectionPanel } from "./tasks/TaskCorrectionPanel";
+import { TaskActionSheet } from "./tasks/TaskActionSheet";
 import { Task } from "@/hooks/useTasks";
 import { useTaskStreak } from "@/hooks/useTaskStreak";
 import { useCompanionEvents } from "@/hooks/useCompanionEvents";
@@ -328,6 +329,16 @@ export const TaskCard = ({ id, title, time, context, completed, selected, onTogg
               >
                 <Settings className="w-4 h-4 text-muted-foreground hover:text-accent" />
               </button>
+            )}
+            
+            {/* Action Sheet Menu */}
+            {fullTask && (
+              <TaskActionSheet
+                task={fullTask}
+                onUpdate={() => onTaskUpdate?.({})}
+                onDelete={() => window.location.reload()}
+                onBreakDown={isBigTask && onCreateTasks ? handleBreakDown : undefined}
+              />
             )}
           </div>
         </div>
