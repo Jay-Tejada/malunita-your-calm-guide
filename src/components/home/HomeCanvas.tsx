@@ -51,7 +51,7 @@ export function HomeCanvas({ children, onOneThingClick }: HomeCanvasProps) {
       {/* One Thing Prompt - positioned above the orb */}
       <div className="flex flex-col items-center justify-center" style={{ marginTop: '32px' }}>
         {shouldShowPrompt && (
-          <div className="mb-8">
+          <div className="mb-4 w-full">
             <OneThingPrompt
               questionText={headline || "What is the ONE task that would make today a success?"}
               onClick={handlePromptClick}

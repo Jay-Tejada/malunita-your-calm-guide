@@ -9,10 +9,10 @@ export const OneThingPrompt = ({ questionText, onClick, subtle }: OneThingPrompt
     <div
       onClick={onClick}
       className={`
-        w-full text-center px-4 py-2
-        font-mono text-sm
+        w-[90%] md:w-full max-w-2xl mx-auto text-center px-4 py-2
+        font-mono text-sm md:text-base
         transition-opacity duration-200
-        ${onClick ? 'cursor-pointer' : ''}
+        ${onClick ? 'cursor-pointer hover:opacity-100' : ''}
         ${subtle ? 'opacity-60' : 'opacity-90'}
       `}
       style={{
