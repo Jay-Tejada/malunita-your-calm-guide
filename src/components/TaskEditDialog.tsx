@@ -17,6 +17,7 @@ import { useMapboxToken } from "@/hooks/useMapboxToken";
 import { useMicroSuggestions } from "@/hooks/useMicroSuggestions";
 import { Task, useTasks } from "@/hooks/useTasks";
 import { useQueryClient } from "@tanstack/react-query";
+import { getClusterDomain } from "@/lib/knowledgeClusters";
 
 interface TaskEditDialogProps {
   open: boolean;
@@ -95,6 +96,8 @@ export const TaskEditDialog = ({ open, task, onSave, onClose }: TaskEditDialogPr
 
   if (!task) return null;
 
+  const clusterDomain = getClusterDomain(task.cluster?.domain);
+
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent>
@@ -106,6 +109,18 @@ export const TaskEditDialog = ({ open, task, onSave, onClose }: TaskEditDialogPr
         </DialogHeader>
         
         <div className="space-y-4 py-4">
+          {task.cluster?.domain && (
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">Cluster:</span>
+              <span 
+                className="inline-block rounded-full px-2 py-0.5 bg-neutral-100 text-neutral-500 font-mono"
+                style={{ fontSize: '10px' }}
+              >
+                {task.cluster.label || clusterDomain.label}
+              </span>
+            </div>
+          )}
+          
           <div className="space-y-2">
             <Label htmlFor="title">Task Title</Label>
             <Input

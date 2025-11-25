@@ -47,6 +47,10 @@ export interface Task {
   scheduled_bucket?: 'today' | 'tomorrow' | 'this_week' | 'upcoming' | 'someday';
   is_tiny?: boolean;
   future_priority_score?: number | null;
+  cluster?: {
+    domain?: string | null;
+    label?: string | null;
+  } | null;
   idea_metadata?: any;
 }
 
