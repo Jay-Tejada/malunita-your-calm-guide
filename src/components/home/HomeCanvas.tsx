@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { MindstreamPanel } from "@/components/intelligence/MindstreamPanel";
 import { OneThingPrompt } from "@/components/home/OneThingPrompt";
 import { useDailyPriorityPrompt } from "@/state/useDailyPriorityPrompt";
@@ -10,15 +10,34 @@ interface HomeCanvasProps {
 
 export function HomeCanvas({ children, onOneThingClick }: HomeCanvasProps) {
   const { showPrompt } = useDailyPriorityPrompt();
-  const [isDismissed, setIsDismissed] = useState(false);
+  const [showOneThingPrompt, setShowOneThingPrompt] = useState(true);
 
-  const shouldShowPrompt = showPrompt && !isDismissed;
+  // Check localStorage on mount to see if dismissed today
+  useEffect(() => {
+    const today = new Date().toISOString().split('T')[0];
+    const dismissedDate = localStorage.getItem('malunita_one_thing_dismissed');
+    
+    if (dismissedDate === today) {
+      setShowOneThingPrompt(false);
+    } else {
+      // Clear old dismissal if it's a new day
+      localStorage.removeItem('malunita_one_thing_dismissed');
+      setShowOneThingPrompt(true);
+    }
+  }, []);
+
+  const shouldShowPrompt = showPrompt && showOneThingPrompt;
 
   const handlePromptClick = () => {
+    // Open the task creation dialog
     if (onOneThingClick) {
       onOneThingClick();
     }
-    setIsDismissed(true);
+    
+    // Hide prompt for current session and store in localStorage
+    const today = new Date().toISOString().split('T')[0];
+    localStorage.setItem('malunita_one_thing_dismissed', today);
+    setShowOneThingPrompt(false);
   };
 
   return (
