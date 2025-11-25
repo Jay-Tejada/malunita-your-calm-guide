@@ -181,6 +181,36 @@ export type Database = {
         }
         Relationships: []
       }
+      capture_sessions: {
+        Row: {
+          created_at: string
+          id: string
+          intent_tags: string[]
+          raw_text: string
+          summary: string | null
+          task_ids: string[]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          intent_tags?: string[]
+          raw_text: string
+          summary?: string | null
+          task_ids?: string[]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          intent_tags?: string[]
+          raw_text?: string
+          summary?: string | null
+          task_ids?: string[]
+          user_id?: string
+        }
+        Relationships: []
+      }
       category_keywords: {
         Row: {
           created_at: string
