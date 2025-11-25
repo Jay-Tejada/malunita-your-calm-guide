@@ -1,3 +1,4 @@
+import React, { memo } from "react";
 import { TodaysBriefing } from "./TodaysBriefing";
 import { OneThingPromptBubble } from "../OneThingPromptBubble";
 
@@ -19,7 +20,7 @@ interface HomeCanvasProps {
   onSetFocus?: () => void;
 }
 
-export function HomeCanvas({ 
+export const HomeCanvas = memo(function HomeCanvas({
   children, 
   oneThingFocus, 
   quickWins = [], 
@@ -63,6 +64,6 @@ export function HomeCanvas({
       </div>
     </div>
   );
-}
+});
 
 

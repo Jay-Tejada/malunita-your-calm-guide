@@ -35,19 +35,23 @@ export function CompanionSidebar() {
   }
 
   return (
-    <div className="h-full flex flex-col p-6">
-      <div className="flex-1 flex flex-col items-center justify-center gap-6">
-        <CompanionExpression expression={currentExpression} />
+    <div className="h-full w-full flex flex-col p-6">
+      <div className="flex-1 flex flex-col items-center justify-center gap-6 will-change-contents">
+        <div className="w-full max-w-[200px]">
+          <CompanionExpression expression={currentExpression} />
+        </div>
         
         {/* Think With Me Button */}
-        <ThinkWithMe
-          trigger={
-            <Button variant="outline" className="gap-2 w-full">
-              <Brain className="w-4 h-4" />
-              <span>Think With Me</span>
-            </Button>
-          }
-        />
+        <div className="w-full">
+          <ThinkWithMe
+            trigger={
+              <Button variant="outline" className="gap-2 w-full">
+                <Brain className="w-4 h-4" />
+                <span>Think With Me</span>
+              </Button>
+            }
+          />
+        </div>
       </div>
     </div>
   );

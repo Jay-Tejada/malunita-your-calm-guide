@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { memo, useMemo } from "react";
 import { CREATURE_EXPRESSIONS } from "@/constants/expressions";
 
 // Import all companion expression images
@@ -40,27 +41,30 @@ interface CompanionExpressionProps {
   expression: string;
 }
 
-export function CompanionExpression({ expression }: CompanionExpressionProps) {
-  // The expression is already the filename without extension (e.g., "base_expression")
-  // Add .png extension to match our map keys
-  const filename = `${expression}.png`;
-  const imageUrl = expressionImageMap[filename] || baseExpression;
-
-  console.log('CompanionExpression:', { expression, filename, imageUrl });
+export const CompanionExpression = memo(function CompanionExpression({ expression }: CompanionExpressionProps) {
+  // Memoize the image URL computation
+  const imageUrl = useMemo(() => {
+    const filename = `${expression}.png`;
+    return expressionImageMap[filename] || baseExpression;
+  }, [expression]);
 
   return (
     <motion.img
+      key={expression}
       src={imageUrl}
       alt={`Companion ${expression} expression`}
-      initial={{ y: 0 }}
-      animate={{ y: [-2, 2, -2] }}
+      initial={{ opacity: 0, y: 0 }}
+      animate={{ opacity: 1, y: [-2, 2, -2] }}
       transition={{
-        duration: 3,
-        repeat: Infinity,
-        repeatType: "mirror",
-        ease: "easeInOut"
+        opacity: { duration: 0.3 },
+        y: {
+          duration: 3,
+          repeat: Infinity,
+          repeatType: "mirror",
+          ease: "easeInOut"
+        }
       }}
       className="w-40 h-auto select-none"
     />
   );
-}
+});
