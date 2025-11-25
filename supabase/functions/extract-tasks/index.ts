@@ -53,7 +53,7 @@ serve(async (req) => {
       )
     }
 
-    const { text, userProfile, userId, currentDate } = await req.json();
+    const { text, userProfile, userId, currentDate, conversationHistory = [] } = await req.json();
     
     // Get current date for time calculations
     const now = currentDate ? new Date(currentDate) : new Date();
@@ -173,9 +173,20 @@ serve(async (req) => {
       throw new Error('OPENAI_API_KEY not configured');
     }
 
+    // Build conversation context
+    let conversationContext = '';
+    if (conversationHistory && conversationHistory.length > 0) {
+      conversationContext = '\n\nRecent conversation:\n' + 
+        conversationHistory.slice(-5).map((msg: any) => 
+          `${msg.role === 'user' ? 'User' : 'Malunita'}: ${msg.content.substring(0, 80)}...`
+        ).join('\n');
+    }
+
     const systemPrompt = `You are Malunita, a goal-aware productivity coach for solo creators. Your job is to extract actionable tasks from natural, unfiltered voice input and evaluate their alignment with the user's stated goal.
 
 ${userProfile?.current_goal ? `🎯 USER'S CURRENT GOAL: "${userProfile.current_goal}" (${userProfile.goal_timeframe || 'this_week'})` : ''}
+
+${conversationContext}
 
 Guidelines:
 - Extract 1-3 clear, actionable tasks maximum
