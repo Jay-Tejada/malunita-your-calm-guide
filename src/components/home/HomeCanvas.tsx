@@ -60,7 +60,8 @@ export function HomeCanvas({ children, onOneThingClick }: HomeCanvasProps) {
       
       {/* One Thing Prompt - positioned above the orb */}
       <div className="flex flex-col items-center justify-center" style={{ marginTop: '32px' }}>
-        {loading && (
+        {/* Only show ONE of these: loading skeleton, error message, or prompt */}
+        {loading ? (
           <div 
             className="mb-4"
             style={{
@@ -71,9 +72,7 @@ export function HomeCanvas({ children, onOneThingClick }: HomeCanvasProps) {
               margin: '24px auto 32px auto',
             }}
           />
-        )}
-        
-        {error && (
+        ) : error ? (
           <div 
             className="mb-4 text-center font-mono"
             style={{
@@ -83,9 +82,7 @@ export function HomeCanvas({ children, onOneThingClick }: HomeCanvasProps) {
           >
             AI is still waking up. Try again in a few seconds.
           </div>
-        )}
-        
-        {shouldShowPrompt && !loading && !error && (
+        ) : shouldShowPrompt ? (
           <div className="mb-4 w-full">
             <OneThingPrompt
               questionText={
@@ -96,7 +93,7 @@ export function HomeCanvas({ children, onOneThingClick }: HomeCanvasProps) {
               subtle={!data?.primary_focus}
             />
           </div>
-        )}
+        ) : null}
         
         {/* Quick Wins */}
         {data?.quick_wins && Array.isArray(data.quick_wins) && data.quick_wins.length > 0 && (
