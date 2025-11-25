@@ -270,6 +270,113 @@ Examples for reminder_time (using current date ${currentDateStr}):
 
     console.log('Extracted tasks:', result);
 
+    // ===========================================================
+    // DEEP REASONING: Analyze extracted tasks for hidden intent
+    // ===========================================================
+    if (result.tasks && result.tasks.length > 0 && userId) {
+      console.log('🧠 Running deep reasoning analysis on extracted tasks...');
+      try {
+        const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2.80.0');
+        const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+        const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+        const reasoningSupabase = createClient(supabaseUrl, supabaseKey);
+
+        // Call long-reasoning function
+        const { data: deepResult, error: deepError } = await reasoningSupabase.functions.invoke('long-reasoning', {
+          body: {
+            input: "Analyze these tasks and tell me the underlying goal and the real obstacle. What is the user actually trying to accomplish? What hidden dependencies or themes exist?",
+            context: {
+              tasks: result.tasks.map((t: any) => ({
+                title: t.title,
+                category: t.suggested_category,
+                timeframe: t.suggested_timeframe,
+                goal_aligned: t.goal_aligned
+              })),
+              userGoal: userProfile?.current_goal,
+              extractedText: text,
+            }
+          }
+        });
+
+        if (!deepError && deepResult) {
+          console.log('✅ Deep reasoning complete:', deepResult);
+          
+          // Parse structured insights from the answer
+          const answer = deepResult.final_answer || '';
+          const steps = deepResult.steps || [];
+          
+          // Extract themes and patterns from the reasoning
+          let commonTheme = '';
+          let hiddenObstacle = '';
+          let suggestedPriority: Record<string, number> = {};
+          
+          // Analyze the answer for themes
+          if (answer.toLowerCase().includes('underlying goal') || answer.toLowerCase().includes('real objective')) {
+            const themeMatch = answer.match(/(?:underlying goal|real objective|actually trying to)[:\s]+([^.!?\n]+)/i);
+            if (themeMatch) {
+              commonTheme = themeMatch[1].trim();
+            }
+          }
+          
+          if (answer.toLowerCase().includes('obstacle') || answer.toLowerCase().includes('blocker')) {
+            const obstacleMatch = answer.match(/(?:obstacle|blocker|challenge)[:\s]+([^.!?\n]+)/i);
+            if (obstacleMatch) {
+              hiddenObstacle = obstacleMatch[1].trim();
+            }
+          }
+          
+          // Use reasoning steps to improve task metadata
+          result.tasks = result.tasks.map((task: any, index: number) => {
+            // Build hidden intent summary
+            let hiddenIntent = '';
+            if (commonTheme) {
+              hiddenIntent += `Theme: ${commonTheme}`;
+            }
+            if (hiddenObstacle) {
+              hiddenIntent += hiddenIntent ? ` | Obstacle: ${hiddenObstacle}` : `Obstacle: ${hiddenObstacle}`;
+            }
+            
+            // Check if any step mentions this specific task
+            const taskMentioned = steps.some((step: string) => 
+              step.toLowerCase().includes(task.title.toLowerCase().substring(0, 20))
+            );
+            
+            // Boost confidence if deep reasoning validates the task
+            let adjustedConfidence = task.confidence || 0.7;
+            if (taskMentioned) {
+              adjustedConfidence = Math.min(1.0, adjustedConfidence + 0.1);
+            }
+            
+            // Detect if this task unlocks others (hidden dependency)
+            const isFoundational = answer.toLowerCase().includes('first') || 
+                                    answer.toLowerCase().includes('prerequisite') ||
+                                    steps.some((s: string) => s.toLowerCase().includes('start') && 
+                                              s.toLowerCase().includes(task.title.toLowerCase().substring(0, 15)));
+            
+            return {
+              ...task,
+              confidence: adjustedConfidence,
+              hidden_intent: hiddenIntent || null,
+              ai_metadata: {
+                ...(task.ai_metadata || {}),
+                deep_reasoning: {
+                  theme_detected: !!commonTheme,
+                  is_foundational: isFoundational,
+                  reasoning_steps: steps.length,
+                  analysis_summary: answer.substring(0, 200)
+                }
+              }
+            };
+          });
+          
+          console.log('📊 Tasks enriched with deep reasoning insights');
+        }
+      } catch (deepReasoningError) {
+        console.error('Deep reasoning failed, continuing with standard extraction:', deepReasoningError);
+        // Don't fail the entire request if deep reasoning fails
+      }
+    }
+
     // Log API usage for admin tracking
     if (userId) {
       try {
