@@ -2,6 +2,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { processInput, ProcessInputResult } from "@/lib/api/processInput";
+import { fetchDailyPlan, DailyPlan } from "@/lib/ai/fetchDailyPlan";
 
 interface HomeOrbProps {
   onCapture?: () => void;
@@ -9,6 +10,7 @@ interface HomeOrbProps {
   status?: 'ready' | 'listening' | 'processing' | 'speaking';
   recordingDuration?: number;
   onAISummaryUpdate?: (summary: AISummary | null) => void;
+  onAIPlanUpdate?: (plan: DailyPlan | null) => void;
 }
 
 interface AISummary {
@@ -28,7 +30,8 @@ export const HomeOrb = ({
   isRecording = false, 
   status = 'ready', 
   recordingDuration = 0,
-  onAISummaryUpdate 
+  onAISummaryUpdate,
+  onAIPlanUpdate
 }: HomeOrbProps) => {
   const [isHovered, setIsHovered] = useState(false);
   const [headline, setHeadline] = useState<string | null>(null);
@@ -58,6 +61,12 @@ export const HomeOrb = ({
       // Pass it up to parent component
       if (onAISummaryUpdate) {
         onAISummaryUpdate(aiSummary);
+      }
+
+      // Refresh daily plan after processing input
+      const updatedPlan = await fetchDailyPlan(user.id);
+      if (onAIPlanUpdate) {
+        onAIPlanUpdate(updatedPlan);
       }
 
       // You can also use result.tasks to create tasks, result.routing for categorization, etc.

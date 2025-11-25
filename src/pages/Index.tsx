@@ -242,6 +242,7 @@ const Index = () => {
           status={getOrbStatus()}
           recordingDuration={voiceStatus.recordingDuration}
           onAISummaryUpdate={setAiSummary}
+          onAIPlanUpdate={setAiPlan}
         />
       </HomeShell>
       
