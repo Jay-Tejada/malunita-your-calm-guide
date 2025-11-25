@@ -17,11 +17,16 @@ export interface ProcessedTask {
   people: string[];
   contextMarkers: string[];
   subtasks: string[];
-  // Virtual flags (computed, not stored)
+  // Virtual enrichment fields
+  summary?: string;
   task_type?: 'admin' | 'communication' | 'errand' | 'focus' | 'physical' | 'creative' | 'delivery' | 'follow_up';
   tiny_task?: boolean;
   heavy_task?: boolean;
   emotional_weight?: number;
+  priority_score?: number;
+  ideal_time?: 'morning' | 'afternoon' | 'evening' | 'anytime';
+  ideal_day?: 'today' | 'tomorrow' | 'this_week' | 'later';
+  is_one_thing?: boolean;
 }
 
 export interface ProcessInputResult {
