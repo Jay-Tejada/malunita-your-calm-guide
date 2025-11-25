@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import { persona } from './persona';
 
 interface LongReasoningResult {
   answer: string;
@@ -21,7 +22,10 @@ export async function runLongReasoning(
     const { data, error } = await supabase.functions.invoke('long-reasoning', {
       body: {
         input,
-        context,
+        context: {
+          ...context,
+          persona,
+        },
       },
     });
 
