@@ -142,4 +142,7 @@ verify_jwt = false
 [functions.process-input]
 verify_jwt = true
 
+[functions.daily-prioritization]
+verify_jwt = true
+
 
