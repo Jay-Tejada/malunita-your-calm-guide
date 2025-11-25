@@ -11,6 +11,9 @@ verify_jwt = true
 
 [functions.preference-learner]
 verify_jwt = true
+
+[functions.behavior-predictor]
+verify_jwt = true
 max_rows = 1000
 
 [functions.transcribe-audio]
