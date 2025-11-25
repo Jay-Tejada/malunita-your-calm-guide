@@ -1,4 +1,4 @@
-import { CheckCircle2, Circle, Clock, GripVertical, Target, Settings } from "lucide-react";
+import { CheckCircle2, Circle, Clock, GripVertical, Target, Settings, Split, CalendarPlus, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -7,6 +7,10 @@ import { getClusterDomain } from "@/lib/knowledgeClusters";
 import { useEffect, useRef, useState } from "react";
 import { TaskCorrectionPanel } from "./tasks/TaskCorrectionPanel";
 import { Task } from "@/hooks/useTasks";
+import { useTaskStreak } from "@/hooks/useTaskStreak";
+import { useCompanionEvents } from "@/hooks/useCompanionEvents";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface TaskCardProps {
   id: string;
@@ -28,9 +32,13 @@ interface TaskCardProps {
   } | null;
   fullTask?: Task;
   onTaskUpdate?: (updates: any) => void;
+  onCreateTasks?: (tasks: any[]) => Promise<void>;
 }
 
-export const TaskCard = ({ id, title, time, context, completed, selected, onToggle, onEdit, onSelect, onLongPress, goalAligned, alignmentReason, priority, cluster, fullTask, onTaskUpdate }: TaskCardProps) => {
+export const TaskCard = ({ id, title, time, context, completed, selected, onToggle, onEdit, onSelect, onLongPress, goalAligned, alignmentReason, priority, cluster, fullTask, onTaskUpdate, onCreateTasks }: TaskCardProps) => {
+  const { registerCompletion } = useTaskStreak();
+  const { onTaskCompleted, onQuickWinCompleted } = useCompanionEvents();
+  const { toast } = useToast();
   const {
     attributes,
     listeners,
@@ -41,6 +49,8 @@ export const TaskCard = ({ id, title, time, context, completed, selected, onTogg
   } = useSortable({ id });
 
   const [showCorrectionPanel, setShowCorrectionPanel] = useState(false);
+  const [isSplitting, setIsSplitting] = useState(false);
+  const [isMovingToToday, setIsMovingToToday] = useState(false);
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -79,7 +89,124 @@ export const TaskCard = ({ id, title, time, context, completed, selected, onTogg
     };
   }, []);
 
+  // Enhanced toggle handler with streak tracking
+  const handleToggle = () => {
+    if (!completed && onToggle) {
+      // Register completion for streak tracking
+      const currentStreak = registerCompletion(id);
+      
+      // Trigger companion events
+      const isQuickWin = title.split(' ').length <= 5;
+      if (currentStreak >= 2) {
+        // Streak detected!
+        onTaskCompleted(currentStreak);
+        toast({
+          title: `${currentStreak} task streak! 🔥`,
+          description: "You're on fire!",
+        });
+      } else if (isQuickWin) {
+        onQuickWinCompleted();
+      } else {
+        onTaskCompleted(1);
+      }
+    }
+    
+    onToggle?.();
+  };
+
+  const handleBreakDown = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    if (isSplitting || !fullTask || !onCreateTasks) return;
+    
+    setIsSplitting(true);
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('split-tasks', {
+        body: { text: fullTask.title }
+      });
+      
+      if (error) throw error;
+      
+      if (data?.tasks && data.tasks.length > 1) {
+        // Create subtasks
+        const subtasks = data.tasks.map((t: any) => ({
+          title: t.title,
+          parent_task_id: fullTask.id,
+          category: fullTask.category,
+          is_time_based: t.is_time_based,
+          has_reminder: t.has_reminder,
+          keywords: t.keywords,
+        }));
+        
+        await onCreateTasks(subtasks);
+        
+        toast({
+          title: "Task broken down",
+          description: `Created ${subtasks.length} subtasks`,
+        });
+      } else {
+        toast({
+          title: "Task is already simple",
+          description: "This task doesn't need breaking down",
+        });
+      }
+    } catch (error) {
+      console.error('Failed to break down task:', error);
+      toast({
+        title: "Failed to break down task",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSplitting(false);
+    }
+  };
+
+  const handleMoveToToday = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    if (isMovingToToday || !fullTask || !onTaskUpdate) return;
+    
+    setIsMovingToToday(true);
+    
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      
+      await onTaskUpdate({
+        is_focus: true,
+        focus_date: today,
+        scheduled_bucket: 'today',
+      });
+      
+      toast({
+        title: "Moved to Today",
+        description: "Task added to today's focus",
+      });
+    } catch (error) {
+      console.error('Failed to move task to today:', error);
+      toast({
+        title: "Failed to move task",
+        variant: "destructive",
+      });
+    } finally {
+      setIsMovingToToday(false);
+    }
+  };
+
   const clusterDomain = getClusterDomain(cluster?.domain);
+  
+  // Determine if task is "big" (heavy task or has emotional weight)
+  const isBigTask = fullTask && (
+    (fullTask.ai_metadata as any)?.heavy_task ||
+    (fullTask.ai_metadata as any)?.emotional_weight > 5 ||
+    fullTask.title.split(' ').length > 8
+  );
+  
+  // Check if task is already in Today
+  const isInToday = fullTask?.is_focus || fullTask?.scheduled_bucket === 'today';
+  
+  // Check if task is tiny
+  const isTinyTask = fullTask?.is_tiny || fullTask?.is_tiny_task || (fullTask?.ai_metadata as any)?.tiny_task;
 
   return (
     <div
@@ -111,7 +238,7 @@ export const TaskCard = ({ id, title, time, context, completed, selected, onTogg
       <button
         onClick={(e) => {
           e.stopPropagation();
-          onToggle?.();
+          handleToggle();
         }}
         className="flex-shrink-0 mt-0.5 transition-transform hover:scale-110"
       >
@@ -136,6 +263,21 @@ export const TaskCard = ({ id, title, time, context, completed, selected, onTogg
           >
             {title}
           </h3>
+          
+          {/* Tiny task indicator */}
+          {isTinyTask && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Zap className="w-3 h-3 text-amber-500 flex-shrink-0 mt-1" />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="text-xs">Quick task</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
+          
           {goalAligned === true && (
             <TooltipProvider>
               <Tooltip>
@@ -148,18 +290,46 @@ export const TaskCard = ({ id, title, time, context, completed, selected, onTogg
               </Tooltip>
             </TooltipProvider>
           )}
-          {fullTask?.ai_metadata && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowCorrectionPanel(true);
-              }}
-              className="opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
-              title="Fix AI Output"
-            >
-              <Settings className="w-4 h-4 text-muted-foreground hover:text-accent" />
-            </button>
-          )}
+          
+          {/* Action buttons group */}
+          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            {/* Break Down Button (for big tasks) */}
+            {isBigTask && onCreateTasks && (
+              <button
+                onClick={handleBreakDown}
+                disabled={isSplitting}
+                className="flex-shrink-0"
+                title="Break down into smaller tasks"
+              >
+                <Split className="w-4 h-4 text-muted-foreground hover:text-accent" />
+              </button>
+            )}
+
+            {/* Move to Today Button */}
+            {!isInToday && onTaskUpdate && (
+              <button
+                onClick={handleMoveToToday}
+                disabled={isMovingToToday}
+                className="flex-shrink-0"
+                title="Move to Today"
+              >
+                <CalendarPlus className="w-4 h-4 text-muted-foreground hover:text-accent" />
+              </button>
+            )}
+            
+            {fullTask?.ai_metadata && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowCorrectionPanel(true);
+                }}
+                className="flex-shrink-0"
+                title="Fix AI Output"
+              >
+                <Settings className="w-4 h-4 text-muted-foreground hover:text-accent" />
+              </button>
+            )}
+          </div>
         </div>
         {priority !== null && priority !== undefined && (
           <div 
