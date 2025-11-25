@@ -720,6 +720,7 @@ export type Database = {
           last_interaction_at: string | null
           last_lore_shown_at: string | null
           last_personalization_run: string | null
+          learning_profile: Json | null
           likes_routine_nudges: boolean | null
           lore_moments_seen: number | null
           notification_preferences: Json | null
@@ -780,6 +781,7 @@ export type Database = {
           last_interaction_at?: string | null
           last_lore_shown_at?: string | null
           last_personalization_run?: string | null
+          learning_profile?: Json | null
           likes_routine_nudges?: boolean | null
           lore_moments_seen?: number | null
           notification_preferences?: Json | null
@@ -840,6 +842,7 @@ export type Database = {
           last_interaction_at?: string | null
           last_lore_shown_at?: string | null
           last_personalization_run?: string | null
+          learning_profile?: Json | null
           likes_routine_nudges?: boolean | null
           lore_moments_seen?: number | null
           notification_preferences?: Json | null
