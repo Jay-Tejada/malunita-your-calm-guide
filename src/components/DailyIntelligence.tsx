@@ -7,6 +7,14 @@ interface Task {
   category?: string;
 }
 
+interface AISummary {
+  decisions: string[];
+  ideas: string[];
+  clarifyingQuestions: string[];
+  emotion: string;
+  focus: string | null;
+}
+
 interface DailyIntelligenceProps {
   topPriorities?: Task[];
   followUps?: Task[];
@@ -15,6 +23,7 @@ interface DailyIntelligenceProps {
   overloadWarning?: boolean;
   taskPatterns?: string[];
   emotionalTone?: string;
+  aiSummary?: AISummary | null;
 }
 
 export function DailyIntelligence({
@@ -24,8 +33,18 @@ export function DailyIntelligence({
   clarificationsNeeded = [],
   overloadWarning = false,
   taskPatterns = [],
-  emotionalTone
+  emotionalTone,
+  aiSummary
 }: DailyIntelligenceProps) {
+  
+  const getEmotionLabel = (emotion: string) => {
+    const labels: Record<string, string> = {
+      stressed: "You sound stressed",
+      ok: "You sound calm",
+      motivated: "You sound optimistic"
+    };
+    return labels[emotion] || `You sound ${emotion}`;
+  };
   
   return (
     <Card className="p-6 mb-6 border border-border rounded-[10px] shadow-[0px_1px_3px_rgba(0,0,0,0.04)]">
@@ -147,6 +166,59 @@ export function DailyIntelligence({
             </div>
             <p className="text-sm text-muted-foreground">{emotionalTone}</p>
           </div>
+        )}
+
+        {/* AI Summary from process-input */}
+        {aiSummary && (
+          <>
+            {aiSummary.emotion && (
+              <div className="pt-2 border-t border-border">
+                <p className="text-xs text-muted-foreground">{getEmotionLabel(aiSummary.emotion)}</p>
+              </div>
+            )}
+
+            {aiSummary.decisions.length > 0 && (
+              <div className="pt-2 border-t border-border">
+                <h3 className="text-sm font-medium font-mono mb-2">Decisions You May Need to Make</h3>
+                <ul className="space-y-1">
+                  {aiSummary.decisions.map((decision, idx) => (
+                    <li key={idx} className="text-sm text-muted-foreground flex items-start gap-2">
+                      <span className="text-muted-foreground">•</span>
+                      <span>{decision}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {aiSummary.ideas.length > 0 && (
+              <div className="pt-2 border-t border-border">
+                <h3 className="text-sm font-medium font-mono mb-2">Ideas You Mentioned</h3>
+                <ul className="space-y-1">
+                  {aiSummary.ideas.map((idea, idx) => (
+                    <li key={idx} className="text-sm text-muted-foreground flex items-start gap-2">
+                      <span className="text-muted-foreground">•</span>
+                      <span>{idea}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {aiSummary.clarifyingQuestions.length > 0 && (
+              <div className="pt-2 border-t border-border">
+                <h3 className="text-sm font-medium font-mono mb-2">Malunita Wants to Clarify</h3>
+                <ul className="space-y-1">
+                  {aiSummary.clarifyingQuestions.map((question, idx) => (
+                    <li key={idx} className="text-sm text-muted-foreground flex items-start gap-2">
+                      <span className="text-muted-foreground">•</span>
+                      <span>{question}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </>
         )}
       </div>
     </Card>

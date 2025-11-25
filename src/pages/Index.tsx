@@ -12,6 +12,7 @@ import { DailyPriorityPrompt } from "@/components/DailyPriorityPrompt";
 import { FocusReflectionPrompt } from "@/components/FocusReflectionPrompt";
 import { MidDayFocusReminder } from "@/components/MidDayFocusReminder";
 import { EndOfDayWrapUp } from "@/components/EndOfDayWrapUp";
+import { DailyIntelligence } from "@/components/DailyIntelligence";
 import { useDailyPriorityPrompt } from "@/state/useDailyPriorityPrompt";
 import { useFocusReflection } from "@/hooks/useFocusReflection";
 import { useMidDayFocusReminder } from "@/hooks/useMidDayFocusReminder";
@@ -21,12 +22,21 @@ import { useTasks, Task } from "@/hooks/useTasks";
 import { AutoFocusNotification } from "@/components/AutoFocusNotification";
 import { CompanionContextMessage } from "@/components/CompanionContextMessage";
 
+interface AISummary {
+  decisions: string[];
+  ideas: string[];
+  clarifyingQuestions: string[];
+  emotion: string;
+  focus: string | null;
+}
+
 
 const Index = () => {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isRecording, setIsRecording] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string | null>("today");
+  const [aiSummary, setAiSummary] = useState<AISummary | null>(null);
   const [voiceStatus, setVoiceStatus] = useState<{ isListening: boolean; isProcessing: boolean; isSpeaking: boolean; recordingDuration: number }>({
     isListening: false,
     isProcessing: false,
@@ -208,11 +218,17 @@ const Index = () => {
             <EndOfDayWrapUp completed={wrapUpCompleted} />
           </div>
         )}
+        {aiSummary && (
+          <div className="max-w-2xl mx-auto px-4 mb-8">
+            <DailyIntelligence aiSummary={aiSummary} />
+          </div>
+        )}
         <HomeOrb
           onCapture={handleOrbClick} 
           isRecording={isRecording} 
           status={getOrbStatus()}
           recordingDuration={voiceStatus.recordingDuration}
+          onAISummaryUpdate={setAiSummary}
         />
       </HomeShell>
       
