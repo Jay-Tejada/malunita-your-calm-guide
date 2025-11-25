@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, ListTodo, ChevronLeft, Circle, Check, Globe } from "lucide-react";
+import { Plus, ChevronLeft, Circle, Check } from "lucide-react";
 import { useSwipeable } from "react-swipeable";
 import { cn } from "@/lib/utils";
 import { useTasks } from "@/hooks/useTasks";
+import { useProjectTasks } from "@/hooks/useProjectTasks";
 import { hapticLight, hapticMedium, hapticSuccess, hapticSwipe } from "@/utils/haptics";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -17,12 +18,11 @@ import { EventTitleAutocomplete } from "@/components/EventTitleAutocomplete";
 import { useRecentEventTitles } from "@/hooks/useRecentEventTitles";
 import { MapboxLocationPicker } from "@/components/MapboxLocationPicker";
 import { MapFullScreen } from "@/components/MapFullScreen";
-import { TaskGlobe } from "@/components/TaskGlobe";
 import { useMapboxToken } from "@/hooks/useMapboxToken";
 import { MapPin } from "lucide-react";
 import { TodaySection } from "@/components/drawer/TodaySection";
 
-type DrawerMode = "root" | "today" | "inbox" | "someday" | "projects" | "work" | "home" | "gym" | "calendar";
+type DrawerMode = "root" | "today" | "inbox" | "someday" | "work" | "home" | "gym" | "calendar" | `project-${string}`;
 
 interface LeftDrawerProps {
   isOpen: boolean;
@@ -30,20 +30,24 @@ interface LeftDrawerProps {
   onNavigate: (path: string) => void;
 }
 
-const categories = [
-  { id: "today", label: "Today", filter: (task: any) => true }, // Special view
+const coreCategories = [
+  { id: "today", label: "Today" },
   { id: "inbox", label: "Inbox", filter: (task: any) => !task.category || task.category === "inbox" },
   { id: "someday", label: "Someday", filter: (task: any) => task.scheduled_bucket === "someday" },
-  { id: "projects", label: "Projects", filter: (task: any) => task.category === "project" },
+];
+
+const spaceCategories = [
   { id: "work", label: "Work", filter: (task: any) => task.category === "work" },
   { id: "home", label: "Home", filter: (task: any) => task.category === "home" },
   { id: "gym", label: "Gym", filter: (task: any) => task.category === "gym" },
-  { id: "calendar", label: "Calendar", filter: (task: any) => task.reminder_time !== null },
 ];
+
+const calendarCategory = { id: "calendar", label: "Calendar", filter: (task: any) => task.reminder_time !== null };
 
 export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => {
   const [drawerMode, setDrawerMode] = useState<DrawerMode>("root");
   const { tasks, updateTask, createTasks, deleteTask } = useTasks();
+  const { data: projectTasks } = useProjectTasks();
   const { toast } = useToast();
   const { recordEventTitle } = useRecentEventTitles();
   const { token: mapboxToken } = useMapboxToken();
@@ -63,7 +67,6 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
   const [isLocationPickerOpen, setIsLocationPickerOpen] = useState(false);
   const [isMapFullScreenOpen, setIsMapFullScreenOpen] = useState(false);
-  const [isGlobeOpen, setIsGlobeOpen] = useState(false);
 
   const handleCategoryClick = (categoryId: DrawerMode) => {
     hapticLight();
@@ -321,9 +324,23 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
 
   // Filter tasks for current category
   const getCurrentCategoryTasks = () => {
-    if (drawerMode === "root") return [];
-    const category = categories.find(c => c.id === drawerMode);
-    if (!category) return [];
+    if (drawerMode === "root" || drawerMode === "today") return [];
+    
+    // Handle project-specific views
+    if (drawerMode.startsWith("project-")) {
+      const projectId = drawerMode.replace("project-", "");
+      return tasks?.filter(t => !t.completed && t.plan_id === projectId) || [];
+    }
+    
+    // Handle calendar
+    if (drawerMode === "calendar") {
+      return tasks?.filter(t => !t.completed && calendarCategory.filter(t)) || [];
+    }
+    
+    // Handle other categories
+    const allCategories = [...coreCategories, ...spaceCategories];
+    const category = allCategories.find(c => c.id === drawerMode);
+    if (!category || !category.filter) return [];
     return tasks?.filter(t => !t.completed && category.filter(t)) || [];
   };
 
@@ -350,7 +367,18 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
   const hasEvents = Object.keys(groupedEvents).length > 0;
 
   const categoryTasks = getCurrentCategoryTasks();
-  const currentCategory = categories.find(c => c.id === drawerMode);
+  
+  const getCurrentCategoryLabel = () => {
+    if (drawerMode.startsWith("project-")) {
+      const projectId = drawerMode.replace("project-", "");
+      const project = projectTasks?.find(p => p.id === projectId);
+      return project?.title || "Project";
+    }
+    const allCategories = [...coreCategories, ...spaceCategories, calendarCategory];
+    return allCategories.find(c => c.id === drawerMode)?.label || "";
+  };
+  
+  const currentCategoryLabel = getCurrentCategoryLabel();
 
   // Swipe handlers
   const drawerSwipeHandlers = useSwipeable({
@@ -429,51 +457,112 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
                         onNavigate("/");
                         onClose();
                       }}
-                      className="w-full h-14 rounded-full bg-[#111111] hover:bg-[#1a1a1a] text-white font-mono text-[15px] flex items-center justify-center gap-2 transition-all hover:-translate-y-0.5 mb-5"
+                      className="w-full h-14 rounded-full bg-[#111111] hover:bg-[#1a1a1a] text-white font-mono text-[15px] flex items-center justify-center gap-2 transition-all hover:-translate-y-0.5 mb-8"
                     >
                       <Plus className="w-4 h-4" />
                       Add new task
                     </button>
 
-                    {/* View All Tasks Button */}
-                    <button
-                      onClick={() => {
-                        hapticMedium();
-                        onNavigate("/");
-                        onClose();
-                      }}
-                      className="w-full h-14 rounded-full bg-transparent border border-border hover:border-foreground/30 hover:bg-muted/20 text-foreground font-mono text-[15px] flex items-center justify-center gap-2 transition-all mb-8"
-                    >
-                      <ListTodo className="w-4 h-4" />
-                      View All Tasks
-                    </button>
+                    {/* CORE Section */}
+                    <div className="mb-6">
+                      <h3 className="font-['IBM_Plex_Mono'] text-[11px] uppercase tracking-wider mb-3" style={{ color: '#777' }}>
+                        Core
+                      </h3>
+                      <div className="flex flex-col gap-1">
+                        {coreCategories.map((category) => (
+                          <button
+                            key={category.id}
+                            onClick={() => handleCategoryClick(category.id as DrawerMode)}
+                            className="text-left py-2 px-3 font-mono text-[14px] hover:bg-muted/30 rounded-md transition-colors"
+                            style={{ color: '#666' }}
+                          >
+                            {category.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
 
-                    {/* Category Links */}
-                    <div className="flex flex-col gap-1">
-                      {categories.map((category) => (
+                    <div className="h-px mb-6" style={{ backgroundColor: 'rgba(0,0,0,0.1)' }} />
+
+                    {/* SPACES Section */}
+                    <div className="mb-6">
+                      <h3 className="font-['IBM_Plex_Mono'] text-[11px] uppercase tracking-wider mb-3" style={{ color: '#777' }}>
+                        Spaces
+                      </h3>
+                      <div className="flex flex-col gap-1">
+                        {spaceCategories.map((category) => (
+                          <button
+                            key={category.id}
+                            onClick={() => handleCategoryClick(category.id as DrawerMode)}
+                            className="text-left py-2 px-3 font-mono text-[14px] hover:bg-muted/30 rounded-md transition-colors"
+                            style={{ color: '#666' }}
+                          >
+                            {category.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="h-px mb-6" style={{ backgroundColor: 'rgba(0,0,0,0.1)' }} />
+
+                    {/* PROJECTS Section */}
+                    <div className="mb-6">
+                      <div className="flex items-center justify-between mb-3">
+                        <h3 className="font-['IBM_Plex_Mono'] text-[11px] uppercase tracking-wider" style={{ color: '#777' }}>
+                          Projects
+                        </h3>
                         <button
-                          key={category.id}
-                          onClick={() => handleCategoryClick(category.id as DrawerMode)}
-                          className="text-left py-2 px-3 font-mono text-[14px] text-foreground/60 hover:text-foreground/90 hover:bg-muted/30 rounded-md transition-colors"
+                          onClick={() => {
+                            hapticLight();
+                            // TODO: Add project creation flow
+                            toast({
+                              title: "Coming soon",
+                              description: "Project creation will be available soon.",
+                            });
+                          }}
+                          className="p-1 hover:bg-muted/30 rounded transition-colors"
+                          title="Create new project"
                         >
-                          {category.label}
+                          <Plus className="w-3.5 h-3.5" style={{ color: '#777' }} />
                         </button>
-                      ))}
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        {!projectTasks || projectTasks.length === 0 ? (
+                          <p className="text-left py-2 px-3 font-mono text-[13px]" style={{ color: '#999' }}>
+                            No projects yet
+                          </p>
+                        ) : (
+                          projectTasks.map((project) => (
+                            <button
+                              key={project.id}
+                              onClick={() => handleCategoryClick(`project-${project.id}` as DrawerMode)}
+                              className="text-left py-2 px-3 font-mono text-[14px] hover:bg-muted/30 rounded-md transition-colors"
+                              style={{ color: '#666' }}
+                            >
+                              {project.title}
+                            </button>
+                          ))
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="h-px mb-6" style={{ backgroundColor: 'rgba(0,0,0,0.1)' }} />
+
+                    {/* CALENDAR Section */}
+                    <div className="mb-6">
+                      <h3 className="font-['IBM_Plex_Mono'] text-[11px] uppercase tracking-wider mb-3" style={{ color: '#777' }}>
+                        Calendar
+                      </h3>
+                      <button
+                        onClick={() => handleCategoryClick("calendar")}
+                        className="text-left py-2 px-3 font-mono text-[14px] hover:bg-muted/30 rounded-md transition-colors w-full"
+                        style={{ color: '#666' }}
+                      >
+                        Calendar
+                      </button>
                     </div>
 
                     <div className="flex-1" />
-
-                    {/* Globe button at bottom */}
-                    <button
-                      onClick={() => {
-                        hapticLight();
-                        setIsGlobeOpen(true);
-                      }}
-                      className="flex items-center justify-center w-10 h-10 rounded-full hover:bg-muted/30 text-muted-foreground hover:text-foreground transition-colors mb-4 self-center"
-                      title="Task Globe"
-                    >
-                      <Globe className="w-5 h-5" />
-                    </button>
                   </motion.div>
                 ) : drawerMode === "today" ? (
                   <motion.div
@@ -522,7 +611,7 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
                     {/* Category Title */}
                     <div className="flex items-center justify-between mb-8">
                       <h2 className="font-mono text-[16px] font-medium" style={{ color: '#111' }}>
-                        {currentCategory?.label}
+                        {currentCategoryLabel}
                       </h2>
                       {drawerMode === 'calendar' && (
                         <button
@@ -622,7 +711,7 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
                       <div className="flex-1 space-y-2">
                         {categoryTasks.length === 0 ? (
                           <p className="font-mono text-[14px] text-foreground/40 text-center py-8">
-                            No tasks in {currentCategory?.label}
+                            No tasks in {currentCategoryLabel}
                           </p>
                         ) : (
                           categoryTasks.map((task) => {
@@ -966,13 +1055,6 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
           accessToken={mapboxToken}
         />
       )}
-
-      {/* Globe Dialog */}
-      <Dialog open={isGlobeOpen} onOpenChange={setIsGlobeOpen}>
-        <DialogContent className="sm:max-w-[90vw] sm:max-h-[90vh] h-[90vh] p-0 overflow-hidden">
-          <TaskGlobe />
-        </DialogContent>
-      </Dialog>
     </>
   );
 };
