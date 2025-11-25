@@ -3,10 +3,14 @@ import { supabase } from '@/integrations/supabase/client';
 import { useMoodStore } from './moodMachine';
 
 export interface EmotionalMemory {
-  joy: number;        // 0-100, increases when tasks completed, voice notes added
-  stress: number;     // 0-100, increases when tasks pile up
-  affection: number;  // 0-100, increases with positive interactions
-  fatigue: number;    // 0-100, increases with long inactivity or overwhelm
+  joy: number;                  // 0-100, increases when tasks completed, voice notes added
+  stress: number;               // 0-100, increases when tasks pile up
+  affection: number;            // 0-100, increases with positive interactions
+  fatigue: number;              // 0-100, increases with long inactivity or overwhelm
+  momentum: number;             // 0-100, increases with streaks and consistent completion
+  overwhelm: number;            // 0-100, increases with high task count and deadlines
+  resilience: number;           // 0-100, builds over time with consistent progress
+  encouragement_need: number;   // 0-100, increases with stress and fatigue
 }
 
 interface EmotionalMemoryState extends EmotionalMemory {
@@ -19,12 +23,19 @@ interface EmotionalMemoryActions {
   adjustStress: (amount: number) => void;
   adjustAffection: (amount: number) => void;
   adjustFatigue: (amount: number) => void;
+  applyStress: (amount: number) => void;
+  applyFatigue: (amount: number) => void;
+  applyMomentum: (amount: number) => void;
+  applyOverwhelm: (amount: number) => void;
+  recover: () => void;
+  snapshot: () => EmotionalMemory;
   recordActivity: () => void;
   syncToSupabase: (userId?: string) => Promise<void>;
   maybeSyncToSupabase: () => void;
   loadFromProfile: (memory: EmotionalMemory) => void;
   calculateMoodInfluence: () => void;
   checkInactivity: () => void;
+  dailyReset: () => void;
 }
 
 const clamp = (value: number, min = 0, max = 100) => Math.max(min, Math.min(max, value));
@@ -34,6 +45,10 @@ export const useEmotionalMemory = create<EmotionalMemoryState & EmotionalMemoryA
   stress: 50,
   affection: 50,
   fatigue: 50,
+  momentum: 50,
+  overwhelm: 50,
+  resilience: 50,
+  encouragement_need: 50,
   lastSyncedAt: Date.now(),
   lastActivityAt: Date.now(),
 
@@ -94,12 +109,74 @@ export const useEmotionalMemory = create<EmotionalMemoryState & EmotionalMemoryA
     }
   },
 
+  applyStress: (amount) => {
+    set((state) => ({ stress: clamp(state.stress + amount) }));
+    get().calculateMoodInfluence();
+    get().maybeSyncToSupabase();
+  },
+
+  applyFatigue: (amount) => {
+    set((state) => ({ fatigue: clamp(state.fatigue + amount) }));
+    get().calculateMoodInfluence();
+    get().maybeSyncToSupabase();
+  },
+
+  applyMomentum: (amount) => {
+    set((state) => ({ momentum: clamp(state.momentum + amount) }));
+    get().calculateMoodInfluence();
+    get().maybeSyncToSupabase();
+  },
+
+  applyOverwhelm: (amount) => {
+    set((state) => ({ overwhelm: clamp(state.overwhelm + amount) }));
+    get().calculateMoodInfluence();
+    get().maybeSyncToSupabase();
+  },
+
+  recover: () => {
+    set((state) => ({
+      stress: clamp(state.stress - 2),
+      fatigue: clamp(state.fatigue - 1),
+      overwhelm: clamp(state.overwhelm - 1.5),
+      resilience: clamp(state.resilience + 0.5),
+    }));
+    get().calculateMoodInfluence();
+  },
+
+  snapshot: () => {
+    const state = get();
+    return {
+      joy: state.joy,
+      stress: state.stress,
+      affection: state.affection,
+      fatigue: state.fatigue,
+      momentum: state.momentum,
+      overwhelm: state.overwhelm,
+      resilience: state.resilience,
+      encouragement_need: state.encouragement_need,
+    };
+  },
+
+  dailyReset: () => {
+    set((state) => ({
+      momentum: clamp(state.momentum * 0.6), // 40% decay
+      stress: clamp(state.stress * 0.8),     // 20% reduction
+      fatigue: clamp(state.fatigue * 0.75),  // 25% reduction
+      resilience: clamp(state.resilience + 10), // +10 resilience
+    }));
+    get().syncToSupabase();
+  },
+
   loadFromProfile: (memory) => {
     set({
       joy: memory.joy || 50,
       stress: memory.stress || 50,
       affection: memory.affection || 50,
       fatigue: memory.fatigue || 50,
+      momentum: memory.momentum || 50,
+      overwhelm: memory.overwhelm || 50,
+      resilience: memory.resilience || 50,
+      encouragement_need: memory.encouragement_need || 50,
     });
   },
 
@@ -149,6 +226,10 @@ export const useEmotionalMemory = create<EmotionalMemoryState & EmotionalMemoryA
       stress: state.stress,
       affection: state.affection,
       fatigue: state.fatigue,
+      momentum: state.momentum,
+      overwhelm: state.overwhelm,
+      resilience: state.resilience,
+      encouragement_need: state.encouragement_need,
     };
 
     try {
@@ -185,12 +266,36 @@ export const useEmotionalMemory = create<EmotionalMemoryState & EmotionalMemoryA
 // Emotional memory events
 export const EMOTIONAL_EVENTS = {
   TASK_COMPLETED: () => {
-    useEmotionalMemory.getState().adjustJoy(2);
-    useEmotionalMemory.getState().adjustStress(-1);
+    const state = useEmotionalMemory.getState();
+    state.adjustJoy(2);
+    state.adjustStress(-1);
+    state.applyMomentum(3);
+    state.applyOverwhelm(-2);
+    
+    // Build resilience on completion
+    if (state.snapshot().stress > 60) {
+      state.applyStress(-2); // Extra stress reduction
+      state.recover();
+    }
   },
   
   TASK_ADDED_OVERWHELMING: () => {
-    useEmotionalMemory.getState().adjustStress(3);
+    const state = useEmotionalMemory.getState();
+    state.adjustStress(3);
+    state.applyOverwhelm(2);
+    
+    // Check if user needs encouragement
+    const snapshot = state.snapshot();
+    if (snapshot.overwhelm > 70 || snapshot.stress > 70) {
+      state.applyStress(5); // Increase encouragement need via state method
+    }
+  },
+  
+  TASK_STREAK: (count: number) => {
+    const state = useEmotionalMemory.getState();
+    state.adjustJoy(count * 2);
+    state.applyMomentum(count * 3);
+    state.applyOverwhelm(-count);
   },
   
   POSITIVE_INTERACTION: () => {
@@ -199,6 +304,10 @@ export const EMOTIONAL_EVENTS = {
   
   INACTIVITY_CHECK: () => {
     useEmotionalMemory.getState().checkInactivity();
+  },
+  
+  RECOVER: () => {
+    useEmotionalMemory.getState().recover();
   },
 } as const;
 

@@ -18,6 +18,7 @@ import { useDailyPriorityPrompt } from "@/state/useDailyPriorityPrompt";
 import { useFocusReflection } from "@/hooks/useFocusReflection";
 import { useMidDayFocusReminder } from "@/hooks/useMidDayFocusReminder";
 import { useEndOfDayWrapUp } from "@/hooks/useEndOfDayWrapUp";
+import { useDailyReset } from "@/hooks/useDailyReset";
 import { usePrimaryFocusPrediction } from "@/hooks/usePrimaryFocusPrediction";
 import { useTasks, Task } from "@/hooks/useTasks";
 import { AutoFocusNotification } from "@/components/AutoFocusNotification";
@@ -74,6 +75,9 @@ interface AIProactive {
 
 
 const Index = () => {
+  // Initialize daily reset monitoring
+  useDailyReset();
+  
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isRecording, setIsRecording] = useState(false);

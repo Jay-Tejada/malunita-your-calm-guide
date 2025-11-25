@@ -15,7 +15,12 @@ export type EmotionState =
   | 'excited' 
   | 'encouraging'
   | 'inspired'
-  | 'overwhelmed';
+  | 'overwhelmed'
+  | 'gentle'
+  | 'supportive'
+  | 'concerned'
+  | 'calming'
+  | 'energetic';
 
 export type TaskSuggestionPreference = 
   | 'ambitious'      // Joyful/Excited → suggest challenging, impactful tasks
@@ -28,12 +33,17 @@ export const emotionToTaskPreference: Record<EmotionState, TaskSuggestionPrefere
   excited: 'ambitious',
   proud: 'ambitious',
   inspired: 'ambitious',
+  energetic: 'ambitious',
   calm: 'medium',
   neutral: 'medium',
   focused: 'medium',
   curious: 'medium',
   encouraging: 'medium',
+  supportive: 'medium',
+  gentle: 'simple',
   overwhelmed: 'simple',
+  concerned: 'simple',
+  calming: 'simple',
   sleepy: 'low-cognitive',
 };
 
@@ -59,6 +69,11 @@ const personalityEmotionConfigs: Record<
     encouraging: { glowIntensity: 0.7, pulseSpeed: 2800, colorShift: 0.2, motionIntensity: 0.6 },
     inspired: { glowIntensity: 0.85, pulseSpeed: 2600, colorShift: 0.35, motionIntensity: 0.65 },
     overwhelmed: { glowIntensity: 0.35, pulseSpeed: 5500, colorShift: -0.15, motionIntensity: 0.25 },
+    gentle: { glowIntensity: 0.45, pulseSpeed: 4500, colorShift: 0.05, motionIntensity: 0.35 },
+    supportive: { glowIntensity: 0.65, pulseSpeed: 3200, colorShift: 0.15, motionIntensity: 0.55 },
+    concerned: { glowIntensity: 0.4, pulseSpeed: 4800, colorShift: -0.1, motionIntensity: 0.3 },
+    calming: { glowIntensity: 0.3, pulseSpeed: 5500, colorShift: -0.05, motionIntensity: 0.25 },
+    energetic: { glowIntensity: 0.95, pulseSpeed: 1800, colorShift: 0.45, motionIntensity: 0.9 },
   },
   spark: {
     neutral: { glowIntensity: 0.6, pulseSpeed: 2500, colorShift: 0, motionIntensity: 0.6 },
@@ -71,6 +86,11 @@ const personalityEmotionConfigs: Record<
     encouraging: { glowIntensity: 0.85, pulseSpeed: 1600, colorShift: 0.3, motionIntensity: 0.8 },
     inspired: { glowIntensity: 0.95, pulseSpeed: 1700, colorShift: 0.45, motionIntensity: 0.75 },
     overwhelmed: { glowIntensity: 0.4, pulseSpeed: 4500, colorShift: -0.2, motionIntensity: 0.3 },
+    gentle: { glowIntensity: 0.5, pulseSpeed: 3500, colorShift: 0.1, motionIntensity: 0.4 },
+    supportive: { glowIntensity: 0.75, pulseSpeed: 2200, colorShift: 0.25, motionIntensity: 0.65 },
+    concerned: { glowIntensity: 0.45, pulseSpeed: 3800, colorShift: -0.15, motionIntensity: 0.35 },
+    calming: { glowIntensity: 0.35, pulseSpeed: 4200, colorShift: -0.05, motionIntensity: 0.3 },
+    energetic: { glowIntensity: 1, pulseSpeed: 1400, colorShift: 0.5, motionIntensity: 0.95 },
   },
   cosmo: {
     neutral: { glowIntensity: 0.55, pulseSpeed: 3500, colorShift: 0, motionIntensity: 0.55 },
@@ -83,6 +103,11 @@ const personalityEmotionConfigs: Record<
     encouraging: { glowIntensity: 0.8, pulseSpeed: 2400, colorShift: 0.25, motionIntensity: 0.7 },
     inspired: { glowIntensity: 0.88, pulseSpeed: 2300, colorShift: 0.4, motionIntensity: 0.7 },
     overwhelmed: { glowIntensity: 0.38, pulseSpeed: 5000, colorShift: -0.18, motionIntensity: 0.28 },
+    gentle: { glowIntensity: 0.48, pulseSpeed: 4000, colorShift: 0.08, motionIntensity: 0.38 },
+    supportive: { glowIntensity: 0.72, pulseSpeed: 2800, colorShift: 0.2, motionIntensity: 0.6 },
+    concerned: { glowIntensity: 0.42, pulseSpeed: 4300, colorShift: -0.12, motionIntensity: 0.32 },
+    calming: { glowIntensity: 0.32, pulseSpeed: 4800, colorShift: -0.08, motionIntensity: 0.27 },
+    energetic: { glowIntensity: 0.97, pulseSpeed: 1600, colorShift: 0.48, motionIntensity: 0.92 },
   },
 };
 
@@ -98,6 +123,11 @@ const emotionToMotionMap: Record<EmotionState, MotionState> = {
   encouraging: 'curious',
   inspired: 'curious',
   overwhelmed: 'calm',
+  gentle: 'calm',
+  supportive: 'curious',
+  concerned: 'calm',
+  calming: 'calm',
+  energetic: 'excited',
 };
 
 export interface CompanionEmotionHook {
@@ -364,7 +394,7 @@ What is the most supportive emotion for Malunita to express right now?`;
   const triggerTemporaryEmotion = (newEmotion: EmotionState, duration: number = 5000) => {
     // Apply personality archetype weighting to emotion selection
     if (archetype) {
-      const emotionExpressionMap: Record<EmotionState, CreatureExpression> = {
+       const emotionExpressionMap: Record<EmotionState, CreatureExpression> = {
         neutral: 'neutral',
         curious: 'surprised',
         focused: 'neutral',
@@ -375,6 +405,11 @@ What is the most supportive emotion for Malunita to express right now?`;
         encouraging: 'welcoming',
         inspired: 'overjoyed',
         overwhelmed: 'worried',
+        gentle: 'neutral',
+        supportive: 'welcoming',
+        concerned: 'concerned',
+        calming: 'neutral',
+        energetic: 'excited',
       };
       
       const expressionForEmotion = emotionExpressionMap[newEmotion];
