@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { processInput, ProcessInputResult } from "@/lib/api/processInput";
 import { fetchDailyPlan, DailyPlan } from "@/lib/ai/fetchDailyPlan";
+import { useAttentionTracker } from "@/state/attentionTracker";
 
 interface HomeOrbProps {
   onCapture?: () => void;
@@ -36,6 +37,9 @@ export const HomeOrb = ({
   const [isHovered, setIsHovered] = useState(false);
   const [headline, setHeadline] = useState<string | null>(null);
   const [showBillboard, setShowBillboard] = useState(false);
+  const [interruptionAlert, setInterruptionAlert] = useState<string | null>(null);
+  
+  const { getMinutesAway, lastFocusedTaskId } = useAttentionTracker();
 
   // Example: Call processInput when you have text input
   // This would typically be triggered after voice transcription or text input
@@ -97,15 +101,54 @@ export const HomeOrb = ({
     fetchData();
   }, []);
 
+  // Check focus drift every 5 minutes
+  useEffect(() => {
+    if (!lastFocusedTaskId) return;
+
+    const checkFocusDrift = () => {
+      const minutesAway = getMinutesAway();
+      if (minutesAway > 30) {
+        setInterruptionAlert("You drifted away from your top priority. Want to resume?");
+      } else {
+        setInterruptionAlert(null);
+      }
+    };
+
+    // Initial check
+    checkFocusDrift();
+
+    // Check every 5 minutes
+    const interval = setInterval(checkFocusDrift, 5 * 60 * 1000);
+
+    return () => clearInterval(interval);
+  }, [lastFocusedTaskId, getMinutesAway]);
+
   // All states use warm golden palette - only animation intensity changes
   const orbGradient = "radial-gradient(circle at 30% 30%, rgba(255, 248, 220, 0.9), rgba(247, 217, 141, 0.8) 50%, rgba(237, 197, 101, 0.7))";
   const orbGlow = "rgba(247, 217, 141, 0.5)";
 
   return (
     <div className="fixed bottom-24 left-0 right-0 flex flex-col items-center">
+      {/* Interruption Alert */}
+      <AnimatePresence>
+        {interruptionAlert && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.5 }}
+            className="mb-6 text-center"
+          >
+            <p className="text-sm text-foreground/80 max-w-md px-4">
+              {interruptionAlert}
+            </p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Billboard Message - Auto-hide after 5 seconds */}
       <AnimatePresence>
-        {showBillboard && headline && (
+        {showBillboard && headline && !interruptionAlert && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
