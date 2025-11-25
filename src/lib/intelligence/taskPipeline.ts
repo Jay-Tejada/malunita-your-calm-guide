@@ -13,6 +13,7 @@ interface TaskIntelligence {
   cluster: string | null;
   isTiny: boolean;
   followUp?: string;
+  subtasks?: string[];
 }
 
 /**
@@ -90,6 +91,24 @@ export async function runTaskPipeline(
     followUp = `Follow up with ${personName} about this.`;
   }
 
+  // Step 7: Split long tasks into subtasks
+  let subtasks: string[] | undefined;
+  const wordCount = extractedTaskText.split(/\s+/).length;
+  if (wordCount > 15) {
+    try {
+      const { data: splitData } = await supabase.functions.invoke('split-tasks', {
+        body: { task: extractedTaskText },
+      });
+      
+      if (splitData?.tasks && Array.isArray(splitData.tasks)) {
+        subtasks = splitData.tasks;
+      }
+    } catch (error) {
+      console.error('Error splitting task:', error);
+      // Continue without subtasks
+    }
+  }
+
   // Return unified intelligence object
   return {
     original: extractedTaskText,
@@ -99,5 +118,6 @@ export async function runTaskPipeline(
     cluster: clusterLabel,
     isTiny,
     followUp,
+    subtasks,
   };
 }
