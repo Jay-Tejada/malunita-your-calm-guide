@@ -3,6 +3,13 @@ import { supabase } from '@/integrations/supabase/client';
 import { useCognitiveLoad } from '@/state/cognitiveLoad';
 import { useEmotionalMemory } from '@/state/emotionalMemory';
 
+interface OneThingFocus {
+  id: string;
+  title: string;
+  reason: string;
+  relief_score: number;
+}
+
 interface MindstreamData {
   oneThing: string | null;
   aiFocus: string | null;
@@ -12,6 +19,10 @@ interface MindstreamData {
   nudges: string[];
   summaryMarkdown: string | null;
   headline: string | null;
+  oneThingFocus?: OneThingFocus;
+  followUps: string[];
+  yesterdayDone: string[];
+  carryOverSuggestions: string[];
   emotionalState: {
     joy: number;
     stress: number;
@@ -35,6 +46,10 @@ export function useDailyMindstream(): MindstreamData {
     nudges: [],
     summaryMarkdown: null,
     headline: null,
+    oneThingFocus: undefined,
+    followUps: [],
+    yesterdayDone: [],
+    carryOverSuggestions: [],
   });
   const [isLoading, setIsLoading] = useState(true);
 
@@ -73,15 +88,19 @@ export function useDailyMindstream(): MindstreamData {
         setData({
           oneThing: commandCenter?.oneThing || null,
           aiFocus: suggestFocus?.focusTask || commandCenter?.focusMessage || null,
-          quickWins: commandCenter?.quickWins || [],
+          quickWins: commandCenter?.quick_wins || [],
           predictedHabits: [],
           clusters: [],
           nudges: [
             ...(personalization?.recommendations || []),
             ...(cognitiveLoadState.recommendations || []),
           ],
-          summaryMarkdown: commandCenter?.dailySummary || null,
+          summaryMarkdown: commandCenter?.summary_markdown || null,
           headline: commandCenter?.headline || commandCenter?.primary_focus || null,
+          oneThingFocus: commandCenter?.one_thing_focus,
+          followUps: commandCenter?.follow_ups || [],
+          yesterdayDone: commandCenter?.yesterday_done || [],
+          carryOverSuggestions: commandCenter?.carry_over_suggestions || [],
         });
       } catch (error) {
         console.error('Failed to fetch mindstream data:', error);
@@ -94,7 +113,22 @@ export function useDailyMindstream(): MindstreamData {
     
     // Refresh every 5 minutes
     const interval = setInterval(fetchMindstreamData, 5 * 60 * 1000);
-    return () => clearInterval(interval);
+    
+    // Listen for task created/updated events to refresh
+    const handleTaskEvent = () => {
+      fetchMindstreamData();
+    };
+    
+    window.addEventListener('task:created', handleTaskEvent);
+    window.addEventListener('task:updated', handleTaskEvent);
+    window.addEventListener('task:completed', handleTaskEvent);
+    
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('task:created', handleTaskEvent);
+      window.removeEventListener('task:updated', handleTaskEvent);
+      window.removeEventListener('task:completed', handleTaskEvent);
+    };
   }, []);
 
   return {

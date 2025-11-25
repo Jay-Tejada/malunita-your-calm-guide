@@ -19,6 +19,7 @@ import { fetchDailyAlerts, DailyAlerts } from "@/lib/ai/fetchDailyAlerts";
 import { useCaptureSessions } from "@/hooks/useCaptureSessions";
 import { LastCapturePreview } from "@/components/LastCapturePreview";
 import { CaptureHistoryModal } from "@/components/CaptureHistoryModal";
+import { useDailyMindstream } from "@/hooks/useDailyMindstream";
 
 interface AISummary {
   decisions: string[];
@@ -94,6 +95,7 @@ const Index = () => {
   const dailyPriorityRef = useRef<DailyPriorityPromptRef>(null);
   const { sessions, lastSession } = useCaptureSessions();
   const [showCaptureHistory, setShowCaptureHistory] = useState(false);
+  const mindstreamData = useDailyMindstream();
   
   // Initialize prediction system (runs silently in background)
   usePrimaryFocusPrediction();
@@ -277,7 +279,13 @@ const Index = () => {
         {/* Modals and prompts - not visible on main canvas */}
         <DailyPriorityPrompt ref={dailyPriorityRef} onTaskCreated={handleTaskCreated} />
         
-        <HomeCanvas>
+        <HomeCanvas
+          oneThingFocus={mindstreamData.oneThingFocus}
+          quickWins={mindstreamData.quickWins}
+          followUps={mindstreamData.followUps}
+          yesterdayDone={mindstreamData.yesterdayDone}
+          isLoading={mindstreamData.isLoading}
+        >
           <HomeOrb
             onCapture={handleOrbClick} 
             isRecording={isRecording} 
