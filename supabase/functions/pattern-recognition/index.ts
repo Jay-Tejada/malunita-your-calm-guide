@@ -144,7 +144,12 @@ Be specific and actionable in your insights. Each insight should be a clear, con
     }
 
     const aiResponse = await response.json();
-    const insights = JSON.parse(aiResponse.choices[0].message.content);
+    let content = aiResponse.choices[0].message.content;
+    
+    // Clean markdown code blocks if present
+    content = content.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+    
+    const insights = JSON.parse(content);
 
     console.log('Patterns identified:', insights);
 

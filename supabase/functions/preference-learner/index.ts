@@ -157,7 +157,12 @@ Base your analysis on actual data patterns, not assumptions.`;
     }
 
     const aiResponse = await response.json();
-    const preferences = JSON.parse(aiResponse.choices[0].message.content);
+    let content = aiResponse.choices[0].message.content;
+    
+    // Clean markdown code blocks if present
+    content = content.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+    
+    const preferences = JSON.parse(content);
 
     console.log('Preferences learned:', preferences);
 

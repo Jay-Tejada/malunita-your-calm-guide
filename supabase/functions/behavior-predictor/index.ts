@@ -170,7 +170,12 @@ Base predictions on actual data patterns. Be specific and helpful.`;
     }
 
     const aiResponse = await response.json();
-    const prediction = JSON.parse(aiResponse.choices[0].message.content);
+    let content = aiResponse.choices[0].message.content;
+    
+    // Clean markdown code blocks if present
+    content = content.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+    
+    const prediction = JSON.parse(content);
 
     console.log('Prediction generated:', prediction);
 
