@@ -46,7 +46,9 @@ export interface Task {
   effort?: 'tiny' | 'small' | 'medium' | 'large';
   scheduled_bucket?: 'today' | 'tomorrow' | 'this_week' | 'upcoming' | 'someday';
   is_tiny?: boolean;
+  is_tiny_task?: boolean;
   future_priority_score?: number | null;
+  follow_up?: string | null;
   cluster?: {
     domain?: string | null;
     label?: string | null;
