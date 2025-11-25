@@ -1,9 +1,24 @@
 import { useTasks, Task } from "@/hooks/useTasks";
 import { TaskCardMinimal } from "@/components/tasks/TaskCardMinimal";
-import { Flame, MessageCircle, Zap, Calendar, Clock, Inbox } from "lucide-react";
+import { Flame, MessageCircle, Zap, Calendar, Clock, Inbox, Sparkles } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useState } from "react";
+import { useInboxCleanup } from "@/hooks/useInboxCleanup";
+import { InboxCleanupModal } from "@/components/InboxCleanupModal";
 
 export function TasksByIntelligence() {
   const { tasks } = useTasks();
+  const [showCleanup, setShowCleanup] = useState(false);
+  const {
+    analyzeInbox,
+    completeGroup,
+    snoozeGroup,
+    archiveGroup,
+    logCleanup,
+    isAnalyzing,
+    analysis,
+    inboxCount,
+  } = useInboxCleanup();
 
   if (!tasks || tasks.length === 0) {
     return null;
@@ -78,8 +93,31 @@ export function TasksByIntelligence() {
     );
   };
 
+  const handleCleanupClick = async () => {
+    const result = await analyzeInbox();
+    if (result) {
+      setShowCleanup(true);
+    }
+  };
+
   return (
     <div className="w-full max-w-2xl mx-auto pb-32">
+      {/* Inbox Cleanup Button - only show if there are inbox tasks */}
+      {inboxCount > 0 && (
+        <div className="mb-6 px-4">
+          <Button
+            onClick={handleCleanupClick}
+            disabled={isAnalyzing}
+            variant="outline"
+            size="sm"
+            className="w-full gap-2"
+          >
+            <Sparkles className="h-4 w-4" />
+            {isAnalyzing ? 'Analyzing inbox...' : `🧹 Clean up inbox (${inboxCount} tasks)`}
+          </Button>
+        </div>
+      )}
+
       {renderSection(
         "Today's Musts",
         todaysMusts,
@@ -115,6 +153,16 @@ export function TasksByIntelligence() {
         someday,
         <Inbox className="w-4 h-4" />
       )}
+
+      <InboxCleanupModal
+        open={showCleanup}
+        onOpenChange={setShowCleanup}
+        analysis={analysis}
+        onCompleteGroup={completeGroup}
+        onSnoozeGroup={snoozeGroup}
+        onArchiveGroup={archiveGroup}
+        onLogCleanup={logCleanup}
+      />
     </div>
   );
 }
