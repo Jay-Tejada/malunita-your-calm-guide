@@ -8,6 +8,7 @@ import { useCustomCategories } from "@/hooks/useCustomCategories";
 import { useCompanionGrowth } from "@/hooks/useCompanionGrowth";
 import { DomainTabs } from "@/components/DomainTabs";
 import { CategoryManager } from "@/components/CategoryManager";
+import { sortTasksByIntelligentPriority } from "@/lib/taskSorting";
 import { DndContext, DragEndEvent, DragOverlay, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { TaskCard } from "@/components/TaskCard";
@@ -473,6 +474,14 @@ export const TaskList = ({ category: externalCategory }: TaskListProps = {}) => 
                   }
                 });
 
+                // Apply intelligent sorting to regular tasks
+                const sortedRegularTasks = sortTasksByIntelligentPriority(regularTasks);
+
+                // Sort tasks within each plan group
+                planGroups.forEach((planTasks, planId) => {
+                  planGroups.set(planId, sortTasksByIntelligentPriority(planTasks));
+                });
+
                 return (
                   <>
                     {/* Render plan groups */}
@@ -529,7 +538,7 @@ export const TaskList = ({ category: externalCategory }: TaskListProps = {}) => 
                     })}
 
                      {/* Render regular tasks */}
-                     {regularTasks.map((task) => (
+                     {sortedRegularTasks.map((task) => (
                        <div key={task.id} className="space-y-0">
                          <div className="flex items-center gap-2">
                            <Checkbox

@@ -6,6 +6,7 @@ import { agendaRouter } from "@/lib/agendaRouter";
 import { TaskCardMinimal } from "../tasks/TaskCardMinimal";
 import { useTaskStorylines } from "@/hooks/useTaskStorylines";
 import { TaskStorylinesPanel } from "../storylines/TaskStorylinesPanel";
+import { sortTaskIdsByPriority } from "@/lib/taskSorting";
 
 export function TaskStream() {
   const { tasks, isLoading } = useTasks();
@@ -44,41 +45,11 @@ export function TaskStream() {
   // Create task lookup map
   const taskMap = new Map(incompleteTasks.map(t => [t.id, t]));
 
-  // Sort function: MUST → SHOULD → COULD, with tiny tasks at bottom of each group
-  const sortTasksByPriority = (taskIds: string[]) => {
-    const tasksWithData = taskIds
-      .map(id => {
-        const task = taskMap.get(id);
-        return task ? { id, task } : null;
-      })
-      .filter(Boolean) as Array<{ id: string; task: Task }>;
-
-    return tasksWithData
-      .sort((a, b) => {
-        // Priority order
-        const priorityOrder = { 'MUST': 0, 'SHOULD': 1, 'COULD': 2 };
-        const aPriority = priorityOrder[a.task.priority || 'SHOULD'];
-        const bPriority = priorityOrder[b.task.priority || 'SHOULD'];
-        
-        if (aPriority !== bPriority) {
-          return aPriority - bPriority;
-        }
-
-        // Within same priority, non-tiny tasks first
-        if (a.task.is_tiny !== b.task.is_tiny) {
-          return a.task.is_tiny ? 1 : -1;
-        }
-
-        return 0;
-      })
-      .map(item => item.id);
-  };
-
-  // Apply sorting to each bucket
-  const sortedToday = sortTasksByPriority(routing.today);
-  const sortedThisWeek = sortTasksByPriority(routing.this_week);
+  // Apply intelligent sorting to each bucket
+  const sortedToday = sortTaskIdsByPriority(routing.today, taskMap);
+  const sortedThisWeek = sortTaskIdsByPriority(routing.this_week, taskMap);
   const laterTaskIds = [...routing.upcoming, ...routing.someday];
-  const sortedLater = sortTasksByPriority(laterTaskIds);
+  const sortedLater = sortTaskIdsByPriority(laterTaskIds, taskMap);
 
   // Check if we have any tasks at all
   const hasAnyTasks = incompleteTasks.length > 0;
