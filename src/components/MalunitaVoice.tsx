@@ -11,6 +11,7 @@ import { MoodSelector } from "@/components/MoodSelector";
 import { TaskConfirmation } from "@/components/TaskConfirmation";
 import { ConversationalTaskFlow } from "@/components/ConversationalTaskFlow";
 import { TaskFeedbackDialog } from "@/components/TaskFeedbackDialog";
+import { TaskCorrectionPanel } from "@/components/tasks/TaskCorrectionPanel";
 import { VoiceOrb } from "@/components/VoiceOrb";
 import { CompanionAvatar, CompanionMode } from "@/components/companion/CompanionAvatar";
 import { processRawInput } from "@/lib/taskProcessing";
@@ -55,6 +56,7 @@ interface MalunitaVoiceProps {
 
 export interface MalunitaVoiceRef {
   startRecording: () => void;
+  triggerMisunderstanding: () => void;
 }
 
 export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({ 
@@ -96,6 +98,11 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
   const [isSleeping, setIsSleeping] = useState(false);
   const lastActivityRef = useRef<number>(Date.now());
   const sleepTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const [showCorrectionPanel, setShowCorrectionPanel] = useState(false);
+  const [correctionContext, setCorrectionContext] = useState<{
+    transcript: string;
+    aiOutput: any;
+  } | null>(null);
   
   const { profile } = useProfile();
   const { tasks, updateTask, createTasks } = useTasks();
@@ -1299,8 +1306,65 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
       // Always delegate to handleVoiceLoop; it decides whether to start or stop
       console.log('✅ Delegating to handleVoiceLoop');
       handleVoiceLoop();
+    },
+    triggerMisunderstanding: () => {
+      handleMisunderstood();
     }
   }));
+
+  const handleMisunderstood = () => {
+    if (!transcribedText) return;
+    
+    // Emit ai:misunderstood event
+    window.dispatchEvent(new CustomEvent('ai:misunderstood', {
+      detail: {
+        transcript: transcribedText,
+        response: gptResponse,
+      }
+    }));
+    
+    // Prepare correction context
+    setCorrectionContext({
+      transcript: transcribedText,
+      aiOutput: {
+        category: 'inbox',
+        priority: 'SHOULD',
+      }
+    });
+    
+    setShowCorrectionPanel(true);
+  };
+
+  const handleCorrectionSubmit = async (correctedData: any) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Invoke thought-engine-trainer with correction
+      await supabase.functions.invoke('thought-engine-trainer', {
+        body: {
+          userId: user.id,
+          taskId: null, // No task ID for voice misunderstandings
+          correction: {
+            aiOutput: correctionContext?.aiOutput || {},
+            userCorrection: correctedData,
+            taskTitle: transcribedText,
+            originalText: transcribedText,
+          }
+        }
+      });
+
+      toast({
+        title: "Thanks for teaching me!",
+        description: "I'll learn from this correction.",
+      });
+    } catch (error) {
+      console.error('Error submitting voice correction:', error);
+    } finally {
+      setShowCorrectionPanel(false);
+      setCorrectionContext(null);
+    }
+  };
 
   return (
     <div className="hidden">
@@ -1332,6 +1396,29 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
           originalText={feedbackTaskData.originalText}
           suggestedCategory={feedbackTaskData.suggestedCategory}
           actualCategory={feedbackTaskData.actualCategory}
+        />
+      )}
+
+      {/* Task Correction Panel for Voice Misunderstandings */}
+      {showCorrectionPanel && correctionContext && (
+        <TaskCorrectionPanel
+          task={{
+            id: 'voice-transcript',
+            title: correctionContext.transcript,
+            context: correctionContext.transcript,
+            category: 'inbox',
+            completed: false,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            user_id: '',
+          } as any}
+          initialAIOutput={correctionContext.aiOutput}
+          onSubmitCorrection={handleCorrectionSubmit}
+          open={showCorrectionPanel}
+          onClose={() => {
+            setShowCorrectionPanel(false);
+            setCorrectionContext(null);
+          }}
         />
       )}
     </div>
