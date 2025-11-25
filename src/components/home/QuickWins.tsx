@@ -18,7 +18,7 @@ interface QuickWinsProps {
 export function QuickWins({ data, onTaskCreated }: QuickWinsProps) {
   const { toast } = useToast();
   const { refetch } = useDailyIntelligence();
-  const { onTaskCompleted } = useCompanionEvents();
+  const { onTaskCreated: onTaskCreatedEvent } = useCompanionEvents();
 
   const handleConvertToTask = async (quickWin: QuickWin) => {
     try {
@@ -59,7 +59,13 @@ export function QuickWins({ data, onTaskCreated }: QuickWinsProps) {
       // Post-save actions
       window.dispatchEvent(new CustomEvent('task:created'));
       refetch();
-      onTaskCompleted(1);
+      
+      // Trigger companion reaction
+      onTaskCreatedEvent({
+        priority: enriched.priority?.score,
+        isTiny: enriched.isTiny,
+        bucket: enriched.routing?.taskRouting?.[0]?.bucket,
+      });
 
       // Notify parent that task was created
       if (onTaskCreated) {

@@ -25,7 +25,7 @@ export const DailyPriorityPrompt = forwardRef<DailyPriorityPromptRef, DailyPrior
   const { showPrompt, checkIfShouldShowPrompt, markPromptAnswered } = useDailyPriorityPrompt();
   const { createTasks } = useTasks();
   const { refetch } = useDailyIntelligence();
-  const { onTaskCompleted } = useCompanionEvents();
+  const { onTaskCreated: onTaskCreatedEvent } = useCompanionEvents();
   const { generateAndCreateSubtasks } = useAutoSplitTask();
   const {
     suggestions,
@@ -110,7 +110,13 @@ export const DailyPriorityPrompt = forwardRef<DailyPriorityPromptRef, DailyPrior
       // Post-save actions
       window.dispatchEvent(new CustomEvent('task:created'));
       refetch();
-      onTaskCompleted(1);
+      
+      // Trigger companion reaction
+      onTaskCreatedEvent({
+        priority: enriched.priority?.score,
+        isTiny: enriched.isTiny,
+        bucket: 'today', // Daily priority prompt always targets today
+      });
       
       // Notify parent that task was created
       if (onTaskCreated) {
