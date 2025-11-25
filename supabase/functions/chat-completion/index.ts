@@ -149,7 +149,7 @@ serve(async (req) => {
       )
     }
 
-    const { messages, userProfile, currentMood, analysis, personalityArchetype } = await req.json();
+    const { messages, userProfile, currentMood, analysis, personalityArchetype, conversationHistory = [] } = await req.json();
     
     // Input validation
     if (!messages || !Array.isArray(messages) || messages.length === 0) {
@@ -190,11 +190,22 @@ serve(async (req) => {
     // Get personality archetype prompt modifier
     const archetypePrompt = personalityArchetype ? getArchetypeSystemPrompt(personalityArchetype) : '';
     
+    // Build conversation context summary
+    let conversationSummary = '';
+    if (conversationHistory && conversationHistory.length > 0) {
+      conversationSummary = '\n\nRecent conversation context:\n' + 
+        conversationHistory.slice(-5).map((msg: any) => 
+          `${msg.role === 'user' ? 'User' : 'Assistant'}: ${msg.content.substring(0, 100)}...`
+        ).join('\n');
+    }
+    
     // Build personalized system message based on user profile and analysis
     let systemContent = `You are Malunita — a calm, warm, minimalist thinking partner who helps people think clearly.
 ${archetypePrompt}
 
 **Tone Guidance:** {{TONE_DESCRIPTION}}
+
+${conversationSummary}
 
 **CRITICAL RULES:**
 1. NEVER repeat the user's raw input back to them
@@ -202,6 +213,7 @@ ${archetypePrompt}
 3. Always respond with structured insights and clarity
 4. Always acknowledge their emotional tone
 5. Focus on what matters most RIGHT NOW
+6. Reference recent conversation context naturally when relevant
 
 **You receive FULL STRUCTURED ANALYSIS from the Thought Engine:**
 ${analysis ? `

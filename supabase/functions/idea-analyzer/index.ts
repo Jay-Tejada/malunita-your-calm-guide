@@ -75,7 +75,7 @@ serve(async (req) => {
     }
 
     // Get request body
-    const { text, extractedTasks } = await req.json();
+    const { text, extractedTasks, conversationHistory = [] } = await req.json();
     
     if (!text || typeof text !== 'string') {
       return new Response(
@@ -98,7 +98,18 @@ serve(async (req) => {
       throw new Error('OpenAI API key not configured');
     }
 
+    // Build conversation context
+    let conversationContext = '';
+    if (conversationHistory && conversationHistory.length > 0) {
+      conversationContext = '\n\nRecent conversation:\n' + 
+        conversationHistory.slice(-5).map((msg: any) => 
+          `${msg.role === 'user' ? 'User' : 'Assistant'}: ${msg.content.substring(0, 80)}...`
+        ).join('\n');
+    }
+
     const systemPrompt = `You are an expert at analyzing raw user input and extracting structured meaning.
+
+${conversationContext}
 
 Your job is to analyze the user's input and return a JSON object with the following structure:
 {

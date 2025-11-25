@@ -7,6 +7,7 @@ import { useTasks } from "@/hooks/useTasks";
 import { useCompanionIdentity } from "@/hooks/useCompanionIdentity";
 import { useCompanionEmotion } from "@/hooks/useCompanionEmotion";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useAssistantMemory } from "@/hooks/useAssistantMemory";
 import { MoodSelector } from "@/components/MoodSelector";
 import { TaskConfirmation } from "@/components/TaskConfirmation";
 import { ConversationalTaskFlow } from "@/components/ConversationalTaskFlow";
@@ -122,6 +123,7 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
   const audioEnabled = profile?.wants_voice_playback ?? true;
   const isMobile = useIsMobile();
   const { createSession } = useCaptureSessions();
+  const { addMessage, getRecentContext } = useAssistantMemory();
   
   // Store extract-tasks metadata for capture session
   const [extractMetadata, setExtractMetadata] = useState<{
@@ -846,10 +848,20 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
             console.log('🚀 Running unified voice pipeline...');
             const { data: { user } } = await supabase.auth.getUser();
             
+            // Get conversation context for memory
+            const conversationHistory = getRecentContext(10);
+            
+            // Add user message to memory
+            addMessage('user', transcribed);
+            
             const { data: pipelineData, error: pipelineError } = await supabase.functions.invoke('process-voice-input', {
               body: { 
                 text: transcribed,
                 userProfile: profile,
+                conversationHistory: conversationHistory.map(m => ({
+                  role: m.role,
+                  content: m.content
+                }))
               }
             });
 
@@ -884,9 +896,19 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
               setOriginalVoiceText(transcribed);
               setShowConfirmation(true);
               setGptResponse(reply_text || `Found ${extractedTasks.length} task${extractedTasks.length > 1 ? 's' : ''}`);
+              
+              // Add reply to memory
+              if (reply_text) {
+                addMessage('assistant', reply_text);
+              }
             } else {
               // For all other modes, show the AI's reply
               setGptResponse(reply_text);
+              
+              // Add reply to memory
+              if (reply_text) {
+                addMessage('assistant', reply_text);
+              }
               
               // Play audio response if enabled
               if (audioEnabled && reply_text) {

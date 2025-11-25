@@ -60,7 +60,7 @@ serve(async (req) => {
       )
     }
 
-    const { text, userProfile } = await req.json();
+    const { text, userProfile, conversationHistory = [] } = await req.json();
     
     // Input validation
     if (!text || typeof text !== 'string') {
@@ -87,6 +87,13 @@ serve(async (req) => {
       throw new Error('OpenAI API key not configured');
     }
 
+    // Build conversation context for intent detection
+    let conversationContext = '';
+    if (conversationHistory.length > 0) {
+      conversationContext = '\n\nRecent conversation:\n' + 
+        conversationHistory.map((msg: any) => `${msg.role}: ${msg.content}`).join('\n');
+    }
+
     const intentSystemPrompt = `You are an intent classifier for voice input. Analyze the user's message and determine what they're trying to do.
 
 Possible modes:
@@ -96,6 +103,8 @@ Possible modes:
 - "request_help": User needs assistance with something specific
 - "think_aloud": User is thinking out loud, no specific action needed
 - "request_suggestions": User wants task suggestions or recommendations
+
+${conversationContext}
 
 Return JSON in this format:
 {
@@ -148,6 +157,7 @@ Return JSON in this format:
           userProfile,
           userId,
           currentDate: new Date().toISOString(),
+          conversationHistory,
         }
       });
 
@@ -176,6 +186,7 @@ Return JSON in this format:
         body: {
           text,
           extractedTasks: [],
+          conversationHistory,
         }
       });
 
@@ -183,12 +194,15 @@ Return JSON in this format:
         insights = analysisResult.analysis;
       }
 
-      // Generate appropriate reply based on mode
+      // Generate appropriate reply based on mode with conversation history
+      const messagesWithHistory = [
+        ...conversationHistory,
+        { role: 'user', content: text }
+      ];
+
       const { data: chatResult, error: chatError } = await supabase.functions.invoke('chat-completion', {
         body: {
-          messages: [
-            { role: 'user', content: text }
-          ],
+          messages: messagesWithHistory,
           userProfile,
           analysis: insights,
           personalityArchetype: userProfile?.companion_personality_type,
