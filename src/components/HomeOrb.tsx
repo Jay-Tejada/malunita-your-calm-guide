@@ -5,6 +5,9 @@ import { processInput, ProcessInputResult } from "@/lib/api/processInput";
 import { fetchDailyPlan, DailyPlan } from "@/lib/ai/fetchDailyPlan";
 import { fetchDailyAlerts, DailyAlerts } from "@/lib/ai/fetchDailyAlerts";
 import { useAttentionTracker } from "@/state/attentionTracker";
+import { ThinkWithMe } from "@/components/ThinkWithMe";
+import { Button } from "@/components/ui/button";
+import { Brain } from "lucide-react";
 
 interface HomeOrbProps {
   onCapture?: () => void;
@@ -211,7 +214,7 @@ export const HomeOrb = ({
       </motion.button>
 
       {/* Status and timer text */}
-      <div className="mt-12 flex flex-col items-center gap-2">
+      <div className="mt-12 flex flex-col items-center gap-4">
         <motion.p
           className="text-xl font-mono tracking-wide"
           style={{ color: "rgba(128, 128, 128, 0.7)" }}
@@ -246,6 +249,22 @@ export const HomeOrb = ({
             {Math.floor(recordingDuration / 1000)}s
           </motion.p>
         )}
+
+        {/* Think With Me Button */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.8 }}
+        >
+          <ThinkWithMe
+            trigger={
+              <Button variant="outline" size="sm" className="gap-2 bg-background/80 backdrop-blur-sm hover:bg-background">
+                <Brain className="w-4 h-4" />
+                <span>Think With Me</span>
+              </Button>
+            }
+          />
+        </motion.div>
       </div>
     </div>
   );
