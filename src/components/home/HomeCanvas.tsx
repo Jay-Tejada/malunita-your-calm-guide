@@ -72,31 +72,33 @@ export function HomeCanvas({ children, onOneThingClick, taskCreatedTrigger }: Ho
       </div>
       
       {/* One Thing Prompt - positioned above the orb */}
-      <div className="flex flex-col items-center justify-center" style={{ marginTop: '32px' }}>
+      <div className="flex flex-col items-center justify-center mt-5 md:mt-8">
         {/* Only show ONE of these: loading skeleton, error message, or prompt */}
         {loading ? (
           <div 
-            className="mb-4"
             style={{
               height: '16px',
               width: '280px',
+              maxWidth: '90%',
               background: 'rgba(0,0,0,0.05)',
               borderRadius: '8px',
-              margin: '24px auto 32px auto',
+              margin: '20px auto',
             }}
           />
         ) : error ? (
           <div 
-            className="mb-4 text-center font-mono"
+            className="text-center font-mono"
             style={{
               fontSize: '11px',
               opacity: 0.5,
+              margin: '20px auto',
+              maxWidth: '90%',
             }}
           >
             AI is still waking up. Try again in a few seconds.
           </div>
         ) : shouldShowPrompt ? (
-          <div className="mb-4 w-full">
+          <div style={{ margin: '20px auto', maxWidth: '90%', width: '100%' }}>
             <OneThingPrompt
               questionText={
                 data?.primary_focus || 
