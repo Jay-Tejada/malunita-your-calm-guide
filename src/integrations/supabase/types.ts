@@ -468,6 +468,30 @@ export type Database = {
         }
         Relationships: []
       }
+      memory_events: {
+        Row: {
+          created_at: string
+          event_type: string
+          id: string
+          payload: Json
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          id?: string
+          payload?: Json
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          id?: string
+          payload?: Json
+          user_id?: string
+        }
+        Relationships: []
+      }
       memory_journal: {
         Row: {
           ai_summary: string | null
@@ -506,6 +530,30 @@ export type Database = {
           tasks_completed?: number | null
           tasks_created?: number | null
           timestamp?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      pattern_insights: {
+        Row: {
+          created_at: string
+          id: string
+          insight: Json
+          insight_type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          insight?: Json
+          insight_type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          insight?: Json
+          insight_type?: string
           user_id?: string
         }
         Relationships: []
@@ -1139,6 +1187,24 @@ export type Database = {
           supporting_tasks?: Json
           tiny_task?: string | null
           tiny_task_id?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_preferences: {
+        Row: {
+          preferences: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          preferences?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          preferences?: Json
+          updated_at?: string
           user_id?: string
         }
         Relationships: []
