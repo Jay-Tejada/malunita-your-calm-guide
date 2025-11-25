@@ -59,6 +59,19 @@ export function HomeCanvas({ children, onOneThingClick }: HomeCanvasProps) {
       
       {/* One Thing Prompt - positioned above the orb */}
       <div className="flex flex-col items-center justify-center" style={{ marginTop: '32px' }}>
+        {loading && (
+          <div 
+            className="mb-4"
+            style={{
+              height: '16px',
+              width: '280px',
+              background: 'rgba(0,0,0,0.05)',
+              borderRadius: '8px',
+              margin: '24px auto 32px auto',
+            }}
+          />
+        )}
+        
         {shouldShowPrompt && !loading && (
           <div className="mb-4 w-full">
             <OneThingPrompt
