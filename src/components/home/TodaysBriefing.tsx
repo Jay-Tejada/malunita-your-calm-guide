@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, memo, useMemo } from "react";
 import { ChevronDown, Target, Zap, Bell, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
@@ -19,7 +19,7 @@ interface TodaysBriefingProps {
   isLoading?: boolean;
 }
 
-export function TodaysBriefing({ 
+export const TodaysBriefing = memo(function TodaysBriefing({
   oneThingFocus, 
   quickWins, 
   followUps,
@@ -29,11 +29,15 @@ export function TodaysBriefing({
 }: TodaysBriefingProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
+  // Memoize content checks to prevent unnecessary re-renders
+  const hasContent = useMemo(
+    () => oneThingFocus || quickWins.length > 0 || followUps.length > 0,
+    [oneThingFocus, quickWins.length, followUps.length]
+  );
+
   if (isLoading) {
     return null;
   }
-
-  const hasContent = oneThingFocus || quickWins.length > 0 || followUps.length > 0;
 
   if (!hasContent) {
     return null;
@@ -176,4 +180,15 @@ export function TodaysBriefing({
       </AnimatePresence>
     </div>
   );
-}
+}, (prevProps, nextProps) => {
+  // Custom comparison: only re-render if data actually changes
+  return (
+    prevProps.oneThingFocus?.id === nextProps.oneThingFocus?.id &&
+    prevProps.oneThingFocus?.title === nextProps.oneThingFocus?.title &&
+    prevProps.quickWins.length === nextProps.quickWins.length &&
+    prevProps.followUps.length === nextProps.followUps.length &&
+    prevProps.yesterdayDone?.length === nextProps.yesterdayDone?.length &&
+    prevProps.carryOverSuggestions?.length === nextProps.carryOverSuggestions?.length &&
+    prevProps.isLoading === nextProps.isLoading
+  );
+});

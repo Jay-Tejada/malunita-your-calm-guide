@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, memo } from 'react';
 import { useCompanionIdleBehavior } from '@/lib/companion/useCompanionIdleBehavior';
 import { CreatureSprite } from '@/components/CreatureSprite';
 import { useMoodStore, type Mood } from '@/state/moodMachine';
@@ -19,12 +19,12 @@ interface CompanionAvatarProps {
   onSpecialAnimationEnd?: () => void;
 }
 
-export const CompanionAvatar = ({
+export const CompanionAvatar = memo(function CompanionAvatar({
   mode = 'idle',
   lastEvent = null,
   specialAnimation = null,
   onSpecialAnimationEnd,
-}: CompanionAvatarProps) => {
+}: CompanionAvatarProps) {
   const [isPlayingSpecial, setIsPlayingSpecial] = useState(false);
   
   // Get current mood from store
@@ -149,4 +149,4 @@ export const CompanionAvatar = ({
       />
     </div>
   );
-};
+});

@@ -1,4 +1,5 @@
 import { motion, AnimatePresence } from "framer-motion";
+import { memo } from "react";
 import { CompanionAvatar } from "@/components/companion/CompanionAvatar";
 import { useCompanionGrowth } from "@/hooks/useCompanionGrowth";
 import { Button } from "@/components/ui/button";
@@ -10,7 +11,7 @@ interface RightDrawerProps {
   onClose: () => void;
 }
 
-export const RightDrawer = ({ isOpen, onClose }: RightDrawerProps) => {
+export const RightDrawer = memo(function RightDrawer({ isOpen, onClose }: RightDrawerProps) {
   const { xp, stage, stageConfig, progressToNextStage, addXp } = useCompanionGrowth();
   const navigate = useNavigate();
 
@@ -126,4 +127,4 @@ export const RightDrawer = ({ isOpen, onClose }: RightDrawerProps) => {
       )}
     </AnimatePresence>
   );
-};
+});

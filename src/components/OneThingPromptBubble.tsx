@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, memo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Target, X } from 'lucide-react';
 import { Card } from '@/components/ui/card';
@@ -9,7 +9,7 @@ interface OneThingPromptBubbleProps {
   onSetFocus: () => void;
 }
 
-export function OneThingPromptBubble({ hasOneThing, onSetFocus }: OneThingPromptBubbleProps) {
+export const OneThingPromptBubble = memo(function OneThingPromptBubble({ hasOneThing, onSetFocus }: OneThingPromptBubbleProps) {
   const [isDismissed, setIsDismissed] = useState(false);
 
   useEffect(() => {
@@ -72,4 +72,4 @@ export function OneThingPromptBubble({ hasOneThing, onSetFocus }: OneThingPrompt
       </motion.div>
     </AnimatePresence>
   );
-}
+});
