@@ -310,6 +310,49 @@ serve(async (req) => {
     console.log('💬 Generated message:', message);
     console.log('🎯 Suggested tasks:', suggestedTasks.map(t => t?.title));
 
+    // Apply DEEP REASONING for "The One Thing" selection
+    let deepFocusReasoning = '';
+    
+    if (suggestedTasks.length > 0) {
+      try {
+        const topTask = suggestedTasks[0];
+        const reasoningInput = `Why should "${topTask?.title}" be the ONE thing to focus on right now?
+
+Context:
+- Time: ${isMorning ? 'morning' : isEarlyAfternoon ? 'early afternoon' : isLateAfternoon ? 'late afternoon' : isEvening ? 'evening' : 'other'}
+- Day: ${dayOfWeek === 0 ? 'Sunday' : dayOfWeek === 1 ? 'Monday' : dayOfWeek === 2 ? 'Tuesday' : dayOfWeek === 3 ? 'Wednesday' : dayOfWeek === 4 ? 'Thursday' : dayOfWeek === 5 ? 'Friday' : 'Saturday'}
+- Emotional state: fatigue ${emotionalMemory.fatigue}%, joy ${emotionalMemory.joy}%, stress ${emotionalMemory.stress}%
+- Cognitive load: ${cognitiveLoadScore}/100
+- Companion mood: ${companionMood}
+${locationContext ? `- Location: ${locationContext.context}` : ''}
+- Total tasks: ${allTasks?.length || 0}
+- Context reason: ${contextReason}
+
+What makes this the most strategic focus right now?`;
+
+        const { data: deepData, error: deepError } = await supabase.functions.invoke('long-reasoning', {
+          body: {
+            input: reasoningInput,
+            context: {
+              task: topTask,
+              timeOfDay: isMorning ? 'morning' : isEarlyAfternoon ? 'early_afternoon' : 'other',
+              emotionalState: emotionalMemory,
+              cognitiveLoad: cognitiveLoadScore,
+              companionMood,
+              contextReason
+            }
+          }
+        });
+
+        if (!deepError && deepData?.final_answer) {
+          deepFocusReasoning = deepData.final_answer;
+          console.log('✨ Deep reasoning applied to focus selection');
+        }
+      } catch (error) {
+        console.error('Error applying deep reasoning to focus:', error);
+      }
+    }
+
     return new Response(
       JSON.stringify({ 
         message,
@@ -318,6 +361,7 @@ serve(async (req) => {
           title: t?.title,
           category: t?.category
         })),
+        deepFocusReasoning,
         context: {
           timeOfDay: isMorning ? 'morning' : isEarlyAfternoon ? 'early_afternoon' : isLateAfternoon ? 'late_afternoon' : isEvening ? 'evening' : 'other',
           dayOfWeek,

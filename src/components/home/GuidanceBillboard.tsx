@@ -1,20 +1,68 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { supabase } from "@/integrations/supabase/client";
 
 type GuidanceBillboardProps = {
   message: string;
   subtitle?: string;
   ctaLabel?: string;
   onCtaClick?: () => void;
+  useDeepReasoning?: boolean; // Enable deep reasoning for morning guidance
 };
 
 export function GuidanceBillboard({ 
   message, 
   subtitle, 
   ctaLabel, 
-  onCtaClick 
+  onCtaClick,
+  useDeepReasoning = false
 }: GuidanceBillboardProps) {
   const [isVisible, setIsVisible] = useState(true);
+  const [enhancedMessage, setEnhancedMessage] = useState(message);
+
+  useEffect(() => {
+    // Apply DEEP REASONING on mornings if enabled
+    const applyDeepReasoning = async () => {
+      if (!useDeepReasoning) return;
+      
+      const hour = new Date().getHours();
+      const isMorning = hour >= 6 && hour < 12;
+      
+      if (!isMorning) return;
+
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const reasoningInput = `Generate a deep, thoughtful morning guidance message.
+
+Current message: "${message}"
+${subtitle ? `Subtitle: "${subtitle}"` : ''}
+
+What is a more insightful, strategic version that helps the user start their day with clarity?`;
+
+        const { data: deepData, error: deepError } = await supabase.functions.invoke('long-reasoning', {
+          body: {
+            input: reasoningInput,
+            context: {
+              timeOfDay: 'morning',
+              currentMessage: message,
+              hasSubtitle: !!subtitle
+            }
+          }
+        });
+
+        if (!deepError && deepData?.final_answer) {
+          setEnhancedMessage(deepData.final_answer);
+          console.log('✨ Deep reasoning applied to guidance billboard');
+        }
+      } catch (error) {
+        console.error('Error applying deep reasoning to guidance:', error);
+      }
+    };
+
+    applyDeepReasoning();
+  }, [message, subtitle, useDeepReasoning]);
 
   useEffect(() => {
     // Auto-hide after 4 seconds
@@ -48,7 +96,7 @@ export function GuidanceBillboard({
             className={`px-6 py-4 ${hasRichContent ? 'flex items-center justify-between gap-4' : 'text-center'}`}
           >
             <div className={hasRichContent ? 'flex-1' : ''}>
-              <p className="text-sm font-semibold">{message}</p>
+              <p className="text-sm font-semibold">{enhancedMessage}</p>
               {subtitle && (
                 <p 
                   style={{ 
