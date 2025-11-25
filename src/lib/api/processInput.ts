@@ -21,19 +21,14 @@ export interface ProcessInputResult {
   tasks: ProcessedTask[];
   ideas: string[];
   decisions: string[];
-  contextSummary: {
-    totalTasks: number;
-    tinyTasks: number;
-    highPriority: number;
-    hasDueDates: number;
-  };
-  emotion: 'stressed' | 'ok' | 'motivated';
+  contextSummary: Record<string, any>;
+  emotion: 'stressed' | 'ok' | 'motivated' | string;
   clarifyingQuestions: string[];
   routing: {
-    today: string[];
-    upcoming: string[];
-    someday: string[];
-    projects: string[];
+    today: ProcessedTask[];
+    upcoming: ProcessedTask[];
+    someday: ProcessedTask[];
+    projects: ProcessedTask[];
   };
 }
 
