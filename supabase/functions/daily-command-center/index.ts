@@ -35,7 +35,10 @@ interface DailySummary {
   };
   yesterday_done?: string[];
   yesterday_missed?: string[];
+  yesterday_summary_text?: string;
+  missed_tasks_count?: number;
   carry_over_suggestions?: string[];
+  optional_carry_over?: string[];
   follow_ups?: string[];
   summary_markdown?: string;
 }
@@ -256,6 +259,24 @@ serve(async (req) => {
       })
       .slice(0, 3)
       .map(t => t.title) || [];
+
+    // Generate yesterday summary text
+    const missedTasksCount = yesterdayMissed.length;
+    let yesterdaySummaryText = '';
+    
+    if (yesterdayDone.length > 0 && missedTasksCount > 0) {
+      yesterdaySummaryText = `Yesterday you completed ${yesterdayDone.length} task${yesterdayDone.length > 1 ? 's' : ''}, with ${missedTasksCount} still pending.`;
+    } else if (yesterdayDone.length > 0) {
+      yesterdaySummaryText = `Great work yesterday — ${yesterdayDone.length} task${yesterdayDone.length > 1 ? 's' : ''} completed!`;
+    } else if (missedTasksCount > 0) {
+      yesterdaySummaryText = `You have ${missedTasksCount} task${missedTasksCount > 1 ? 's' : ''} from yesterday to review.`;
+    } else {
+      yesterdaySummaryText = 'Fresh start today.';
+    }
+
+    const optionalCarryOver = carryOverSuggestions.length > 0 
+      ? carryOverSuggestions 
+      : [];
 
     // Step 5: Categorize tasks intelligently
     // Detect mood and tone
@@ -596,7 +617,10 @@ ${quickWins.length > 0 ? `⚡ ${quickWins.length} quick wins ready.` : ''}
           one_thing_focus: oneThingFocus,
           follow_ups: followUpTasks.slice(0, 3),
           yesterday_done: yesterdayDone.slice(0, 3),
-          carry_over_suggestions: carryOverSuggestions
+          yesterday_summary_text: yesterdaySummaryText,
+          missed_tasks_count: missedTasksCount,
+          carry_over_suggestions: carryOverSuggestions,
+          optional_carry_over: optionalCarryOver
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
@@ -635,7 +659,10 @@ You've got this. Start with one thing, and the rest will follow.
         one_thing_focus: oneThingFocus,
         yesterday_done: yesterdayDone,
         yesterday_missed: yesterdayMissed,
+        yesterday_summary_text: yesterdaySummaryText,
+        missed_tasks_count: missedTasksCount,
         carry_over_suggestions: carryOverSuggestions,
+        optional_carry_over: optionalCarryOver,
         follow_ups: followUpTasks,
         summary_markdown: summaryMarkdown,
       };
