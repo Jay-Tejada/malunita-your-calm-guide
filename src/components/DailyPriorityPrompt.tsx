@@ -81,7 +81,6 @@ export const DailyPriorityPrompt = forwardRef<DailyPriorityPromptRef, DailyPrior
         is_tiny: enriched.isTiny,
         is_tiny_task: enriched.isTiny,
         follow_up: enriched.followUp || null,
-        cluster: enriched.cluster ? { domain: enriched.cluster, label: enriched.cluster } : null,
         is_focus: true,
         focus_date: getFocusDate(),
         input_method: 'text',

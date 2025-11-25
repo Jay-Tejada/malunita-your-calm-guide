@@ -47,7 +47,6 @@ export function QuickWins({ data, onTaskCreated }: QuickWinsProps) {
         is_tiny: enriched.isTiny,
         is_tiny_task: enriched.isTiny,
         follow_up: enriched.followUp || null,
-        cluster: enriched.cluster ? { domain: enriched.cluster, label: enriched.cluster } : null,
         completed: false,
       });
 
