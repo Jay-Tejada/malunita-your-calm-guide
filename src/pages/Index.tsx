@@ -12,7 +12,6 @@ import { DailyPriorityPrompt } from "@/components/DailyPriorityPrompt";
 import { FocusReflectionPrompt } from "@/components/FocusReflectionPrompt";
 import { MidDayFocusReminder } from "@/components/MidDayFocusReminder";
 import { EndOfDayWrapUp } from "@/components/EndOfDayWrapUp";
-import { DailyIntelligence } from "@/components/home/DailyIntelligence";
 import { useDailyPriorityPrompt } from "@/state/useDailyPriorityPrompt";
 import { useFocusReflection } from "@/hooks/useFocusReflection";
 import { useMidDayFocusReminder } from "@/hooks/useMidDayFocusReminder";
@@ -28,17 +27,6 @@ const Index = () => {
   const [loading, setLoading] = useState(true);
   const [isRecording, setIsRecording] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string | null>("today");
-  const [dailyIntelligenceData, setDailyIntelligenceData] = useState<{
-    oneThing: string | null;
-    quickWins: Array<{ id: string; title: string }>;
-    focusMessage: string | null;
-    dailySummary: string | null;
-  }>({
-    oneThing: null,
-    quickWins: [],
-    focusMessage: null,
-    dailySummary: null,
-  });
   const [voiceStatus, setVoiceStatus] = useState<{ isListening: boolean; isProcessing: boolean; isSpeaking: boolean; recordingDuration: number }>({
     isListening: false,
     isProcessing: false,
@@ -220,20 +208,11 @@ const Index = () => {
             <EndOfDayWrapUp completed={wrapUpCompleted} />
           </div>
         )}
-        <div className="max-w-2xl mx-auto px-4 mb-8">
-          <DailyIntelligence
-            oneThing={dailyIntelligenceData.oneThing}
-            quickWins={dailyIntelligenceData.quickWins}
-            focusMessage={dailyIntelligenceData.focusMessage}
-            summary={dailyIntelligenceData.dailySummary}
-          />
-        </div>
         <HomeOrb
           onCapture={handleOrbClick} 
           isRecording={isRecording} 
           status={getOrbStatus()}
           recordingDuration={voiceStatus.recordingDuration}
-          onDataLoaded={setDailyIntelligenceData}
         />
       </HomeShell>
       
