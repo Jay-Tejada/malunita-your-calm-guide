@@ -155,12 +155,17 @@ serve(async (req) => {
     const allTasks = existingTasks || [];
     console.log('Existing open tasks:', allTasks.length);
 
+    // Step 2.4a: Enrich tasks with virtual flags
+    const { enrichTasksWithVirtualFlags } = await import('./taskEnricher.ts');
+    const enrichedTasks = enrichTasksWithVirtualFlags(allTasks);
+    console.log('Tasks enriched with virtual flags');
+
     // Step 2.4: Calculate today's date
     const now = new Date();
     const today = now.toISOString().split('T')[0];
 
     // Step 2.5: Fetch today's ONE thing (primary focus) or tomorrow's plan
-    let primaryFocusTask = allTasks.find(t => t.is_focus && t.focus_date === today);
+    let primaryFocusTask = enrichedTasks.find(t => t.is_focus && t.focus_date === today);
     
     // If no primary focus set yet, check tomorrow_plan for suggestions
     if (!primaryFocusTask) {
@@ -172,8 +177,8 @@ serve(async (req) => {
         .maybeSingle();
       
       if (tomorrowPlan && tomorrowPlan.recommended_one_thing_id) {
-        // Find the recommended task in existing tasks
-        primaryFocusTask = allTasks.find(t => t.id === tomorrowPlan.recommended_one_thing_id);
+        // Find the recommended task in enriched tasks
+        primaryFocusTask = enrichedTasks.find(t => t.id === tomorrowPlan.recommended_one_thing_id);
         console.log('Using tomorrow plan recommendation:', tomorrowPlan.recommended_one_thing);
       }
     }
@@ -282,16 +287,24 @@ serve(async (req) => {
     // Detect mood and tone
     const { mood, tone } = isHomeScreenMode 
       ? { mood: 'calm' as const, tone: 'direct' as const }
-      : detectMood(text || '', allTasks.length + extractedTasks.length);
+      : detectMood(text || '', enrichedTasks.length + extractedTasks.length);
 
-    // Priority Tasks: High-impact, focus items, or urgent
-    const priorityTasks = allTasks
-      .filter(t => t.is_focus || t.category === 'urgent' || t.category === 'primary_focus')
+    // Priority Tasks: High-impact, focus items, or urgent (using virtual flags)
+    const priorityTasks = enrichedTasks
+      .filter(t => {
+        // Prioritize heavy tasks with high emotional weight
+        const isHighPriority = t.is_focus || 
+                               t.category === 'urgent' || 
+                               t.category === 'primary_focus' ||
+                               (t.heavy_task && (t.emotional_weight || 0) > 5) ||
+                               t.task_type === 'focus';
+        return isHighPriority;
+      })
       .slice(0, 5)
       .map(t => t.title);
 
     // Today's Schedule: Time-sensitive or deadline-linked items
-    const todaysSchedule = allTasks
+    const todaysSchedule = enrichedTasks
       .filter(t => {
         if (t.reminder_time) {
           const reminderDate = new Date(t.reminder_time).toISOString().split('T')[0];
@@ -302,15 +315,16 @@ serve(async (req) => {
       .slice(0, 5)
       .map(t => t.title);
 
-    // Quick Wins: Tasks < 5 min using heuristics
-    const quickWinKeywords = ['email', 'call', 'fix', 'upload', 'send', 'reply', 'text', 'message', 'check', 'review', 'schedule', 'book'];
-    const quickWins = allTasks
+    // Quick Wins: Tiny tasks and communication tasks
+    const quickWins = enrichedTasks
       .filter(t => {
-        const title = t.title.toLowerCase();
-        const hasKeyword = quickWinKeywords.some(kw => title.includes(kw));
-        const isShort = t.title.split(' ').length <= 6;
         const notInOtherCategories = !priorityTasks.includes(t.title) && !todaysSchedule.includes(t.title);
-        return notInOtherCategories && (hasKeyword || isShort);
+        // Use virtual flags for better detection
+        return notInOtherCategories && (
+          t.tiny_task || 
+          t.task_type === 'communication' || 
+          t.task_type === 'admin'
+        );
       })
       .slice(0, 5)
       .map(t => t.title);
@@ -320,7 +334,7 @@ serve(async (req) => {
     const twoDaysAgo = new Date();
     twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
 
-    const followUpTasks = allTasks
+    const followUpTasks = enrichedTasks
       .filter(t => {
         const title = t.title.toLowerCase();
         const hasKeyword = followUpKeywords.some(kw => title.includes(kw));
@@ -328,48 +342,67 @@ serve(async (req) => {
         const notInOtherCategories = !priorityTasks.includes(t.title) && 
                                       !todaysSchedule.includes(t.title) && 
                                       !quickWins.includes(t.title);
-        return notInOtherCategories && (hasKeyword || notTouchedRecently);
+        // Also check task_type for follow_up
+        return notInOtherCategories && (hasKeyword || notTouchedRecently || t.task_type === 'follow_up');
       })
       .slice(0, 5)
       .map(t => t.title);
 
-    // Tiny tasks: check both extracted and existing tasks
+    // Tiny tasks: use virtual flags
     let tinyTaskCount = 0;
-    const tinyWords = ['buy', 'call', 'email', 'text', 'check', 'send', 'reply', 'look up', 'find', 'book', 'schedule'];
     
     // Count from extracted tasks
     if (extractedTasks.length > 0) {
       tinyTaskCount += extractedTasks.filter((t: any) => {
         const title = t.title.toLowerCase();
+        const tinyWords = ['buy', 'call', 'email', 'text', 'check', 'send', 'reply', 'look up', 'find', 'book', 'schedule'];
         return tinyWords.some(word => title.includes(word)) && title.split(' ').length <= 5;
       }).length;
     }
     
-    // Count from existing tasks not already categorized
-    tinyTaskCount += allTasks.filter(t => {
+    // Count from enriched existing tasks using virtual flags
+    tinyTaskCount += enrichedTasks.filter(t => {
       if (priorityTasks.includes(t.title) || todaysSchedule.includes(t.title) || quickWins.includes(t.title)) {
         return false;
       }
-      const title = t.title.toLowerCase();
-      return tinyWords.some(word => title.includes(word)) && title.split(' ').length <= 5;
+      return t.tiny_task; // Use virtual flag
     }).length;
 
     // Step 6: ONE Thing Logic - Find the task that creates the biggest relief
-    // Score each task based on urgency, overdue, emotional weight, dependencies, complexity
+    // Score each task based on urgency, emotional weight, heavy work, and domino effect
     const scoreTask = (task: any) => {
       let score = 0;
       const title = task.title.toLowerCase();
       const createdDate = new Date(task.created_at);
       const daysSinceCreated = Math.floor((Date.now() - createdDate.getTime()) / (1000 * 60 * 60 * 24));
 
-      // Urgency (keywords)
-      if (title.includes('urgent') || title.includes('asap') || title.includes('critical')) score += 30;
+      // Use virtual flags for better scoring
+      // Emotional weight (0-10 scale)
+      if (task.emotional_weight) {
+        score += task.emotional_weight * 10; // Weight emotional impact heavily
+      }
+
+      // Heavy tasks get priority (they unlock the most relief)
+      if (task.heavy_task) {
+        score += 50;
+      }
+
+      // Focus tasks are prioritized
+      if (task.task_type === 'focus') {
+        score += 30;
+      }
+
+      // Urgency (legacy keywords for compatibility)
+      const urgentWords = ['urgent', 'asap', 'important', 'critical', 'deadline', 'overdue'];
+      if (urgentWords.some(word => title.includes(word))) {
+        score += 40;
+      }
       
       // Overdue (created more than 3 days ago)
       if (daysSinceCreated > 3) score += 20;
       if (daysSinceCreated > 7) score += 15; // bonus for very old tasks
 
-      // Emotional weight (blocking keywords)
+      // Emotional weight keywords (legacy for compatibility)
       if (title.includes('blocked') || title.includes('stuck') || title.includes('waiting')) score += 25;
       
       // High-impact categories
@@ -387,8 +420,8 @@ serve(async (req) => {
       return score;
     };
 
-    // Get top candidate for ONE thing
-    const scoredTasks = allTasks
+    // Get top candidate for ONE thing (use enriched tasks with virtual flags)
+    const scoredTasks = enrichedTasks
       .filter(t => !t.completed)
       .map(t => ({ task: t, score: scoreTask(t) }))
       .sort((a, b) => b.score - a.score);
@@ -397,10 +430,12 @@ serve(async (req) => {
       ? {
           id: scoredTasks[0].task.id,
           title: scoredTasks[0].task.title,
-          reason: `This task creates the biggest relief because it's ${
-            scoredTasks[0].score > 60 ? 'urgent and high-impact' :
-            scoredTasks[0].score > 40 ? 'important and actionable' :
-            'a solid starting point'
+          reason: `This task creates the biggest relief because ${
+            scoredTasks[0].task.heavy_task ? "it's a major undertaking that unlocks momentum" :
+            (scoredTasks[0].task.emotional_weight || 0) > 5 ? "it's weighing on you emotionally" :
+            scoredTasks[0].score > 60 ? 'it\'s urgent and high-impact' :
+            scoredTasks[0].score > 40 ? 'it\'s important and actionable' :
+            'it\'s a solid starting point'
           }.`,
           relief_score: scoredTasks[0].score
         }

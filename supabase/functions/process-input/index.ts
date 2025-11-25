@@ -73,27 +73,42 @@ serve(async (req) => {
     console.log('Step 4: Inferring context...');
     const contextualized = await inferContext(scored, text);
 
-    // STEP 5: Route tasks to buckets
-    console.log('Step 5: Routing tasks...');
-    const routing = await routeTasks(contextualized, userContext);
+    // STEP 5: Compute virtual flags
+    console.log('Step 5: Computing virtual task flags...');
+    const { computeVirtualFlags } = await import('../_shared/taskTypeClassifier.ts');
+    
+    const enrichedWithFlags = contextualized.map(task => {
+      const virtualFlags = computeVirtualFlags(task.cleaned);
+      return {
+        ...task,
+        task_type: virtualFlags.task_type,
+        tiny_task: virtualFlags.tiny_task,
+        heavy_task: virtualFlags.heavy_task,
+        emotional_weight: virtualFlags.emotional_weight
+      };
+    });
 
-    // STEP 6: Generate contextual AI response
-    console.log('Step 6: Generating response...');
+    // STEP 6: Route tasks to buckets
+    console.log('Step 6: Routing tasks...');
+    const routing = await routeTasks(enrichedWithFlags, userContext);
+
+    // STEP 7: Generate contextual AI response
+    console.log('Step 7: Generating response...');
     const aiResponse = generateResponse({
       emotion: extracted.emotion || 'ok',
-      taskCount: contextualized.length,
-      hasLargeTasks: contextualized.some(t => t.cleaned.length > 50),
-      tasks: contextualized.map(t => ({
+      taskCount: enrichedWithFlags.length,
+      hasLargeTasks: enrichedWithFlags.some(t => t.heavy_task || t.cleaned.length > 50),
+      tasks: enrichedWithFlags.map(t => ({
         title: t.raw,
         cleaned: t.cleaned,
-        isTiny: t.isTiny
+        isTiny: t.tiny_task || t.isTiny
       })),
       originalText: text
     });
 
     // Prepare final output
     const output = {
-      tasks: contextualized.map(task => ({
+      tasks: enrichedWithFlags.map(task => ({
         raw: task.raw,
         cleaned: task.cleaned,
         priority: task.priority,
@@ -105,14 +120,21 @@ serve(async (req) => {
         people: task.people,
         contextMarkers: task.contextMarkers,
         subtasks: task.subtasks || [],
+        // Virtual flags
+        task_type: task.task_type,
+        tiny_task: task.tiny_task,
+        heavy_task: task.heavy_task,
+        emotional_weight: task.emotional_weight
       })),
       ideas: extracted.ideas,
       decisions: extracted.decisions,
       contextSummary: {
-        totalTasks: contextualized.length,
-        tinyTasks: contextualized.filter(t => t.isTiny).length,
-        highPriority: contextualized.filter(t => t.priority === 'must').length,
-        hasDueDates: contextualized.filter(t => t.due).length,
+        totalTasks: enrichedWithFlags.length,
+        tinyTasks: enrichedWithFlags.filter(t => t.tiny_task).length,
+        heavyTasks: enrichedWithFlags.filter(t => t.heavy_task).length,
+        highPriority: enrichedWithFlags.filter(t => t.priority === 'must').length,
+        hasDueDates: enrichedWithFlags.filter(t => t.due).length,
+        highEmotionalWeight: enrichedWithFlags.filter(t => (t.emotional_weight || 0) > 5).length,
       },
       emotion: extracted.emotion,
       clarifyingQuestions: extracted.clarifyingQuestions,
