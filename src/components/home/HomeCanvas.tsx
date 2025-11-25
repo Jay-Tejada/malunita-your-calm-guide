@@ -1,4 +1,5 @@
 import { TodaysBriefing } from "./TodaysBriefing";
+import { OneThingPromptBubble } from "../OneThingPromptBubble";
 
 interface OneThingFocus {
   id: string;
@@ -14,6 +15,7 @@ interface HomeCanvasProps {
   followUps?: string[];
   yesterdayDone?: string[];
   isLoading?: boolean;
+  onSetFocus?: () => void;
 }
 
 export function HomeCanvas({ 
@@ -22,12 +24,21 @@ export function HomeCanvas({
   quickWins = [], 
   followUps = [],
   yesterdayDone,
-  isLoading 
+  isLoading,
+  onSetFocus,
 }: HomeCanvasProps) {
   return (
     <div className="min-h-screen w-full relative flex flex-col items-center justify-center px-4">
       {/* Clean minimal home - briefing above, orb below */}
-      <div className="flex flex-col items-center justify-center gap-16 w-full">
+      <div className="flex flex-col items-center justify-center gap-8 w-full">
+        {/* ONE Thing Prompt - dismissible bubble at top */}
+        {onSetFocus && (
+          <OneThingPromptBubble
+            hasOneThing={!!oneThingFocus}
+            onSetFocus={onSetFocus}
+          />
+        )}
+        
         {/* Today's Briefing - collapsed by default, above orb */}
         <TodaysBriefing
           oneThingFocus={oneThingFocus}

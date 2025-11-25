@@ -285,6 +285,7 @@ const Index = () => {
           followUps={mindstreamData.followUps}
           yesterdayDone={mindstreamData.yesterdayDone}
           isLoading={mindstreamData.isLoading}
+          onSetFocus={() => dailyPriorityRef.current?.openDialog()}
         >
           <HomeOrb
             onCapture={handleOrbClick} 
