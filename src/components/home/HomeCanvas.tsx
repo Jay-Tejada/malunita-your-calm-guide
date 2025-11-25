@@ -72,7 +72,19 @@ export function HomeCanvas({ children, onOneThingClick }: HomeCanvasProps) {
           />
         )}
         
-        {shouldShowPrompt && !loading && (
+        {error && (
+          <div 
+            className="mb-4 text-center font-mono"
+            style={{
+              fontSize: '11px',
+              opacity: 0.5,
+            }}
+          >
+            AI is still waking up. Try again in a few seconds.
+          </div>
+        )}
+        
+        {shouldShowPrompt && !loading && !error && (
           <div className="mb-4 w-full">
             <OneThingPrompt
               questionText={
