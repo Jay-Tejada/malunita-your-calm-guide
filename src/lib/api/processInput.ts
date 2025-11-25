@@ -2,7 +2,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 export interface ProcessInputPayload {
   text: string;
-  user_id: string;
+  userId: string;
 }
 
 export interface ProcessedTask {
@@ -34,7 +34,10 @@ export interface ProcessInputResult {
 
 export async function processInput(payload: ProcessInputPayload): Promise<ProcessInputResult> {
   const { data, error } = await supabase.functions.invoke('process-input', {
-    body: payload,
+    body: {
+      text: payload.text,
+      user_id: payload.userId, // Transform to snake_case for edge function
+    },
   });
 
   if (error) {
