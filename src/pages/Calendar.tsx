@@ -15,6 +15,8 @@ import { format, addDays, startOfWeek, isSameDay, parseISO } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useTasks } from "@/hooks/useTasks";
 import { useToast } from "@/hooks/use-toast";
+import { MapboxLocationPicker } from "@/components/MapboxLocationPicker";
+import { useMapboxToken } from "@/hooks/useMapboxToken";
 
 interface CalendarEvent {
   id: string;
@@ -39,11 +41,16 @@ const Calendar = () => {
   const [newEventTitle, setNewEventTitle] = useState("");
   const [newEventDate, setNewEventDate] = useState("");
   const [newEventTime, setNewEventTime] = useState("");
+  const [newEventLocation, setNewEventLocation] = useState("");
+  const [newEventLocationLat, setNewEventLocationLat] = useState<number | null>(null);
+  const [newEventLocationLng, setNewEventLocationLng] = useState<number | null>(null);
   const [newEventDescription, setNewEventDescription] = useState("");
   const [recurrencePattern, setRecurrencePattern] = useState<'none' | 'daily' | 'weekly' | 'monthly'>('none');
   const [recurrenceDay, setRecurrenceDay] = useState<number>(0);
   const [recurrenceEndDate, setRecurrenceEndDate] = useState("");
+  const [isLocationPickerOpen, setIsLocationPickerOpen] = useState(false);
   const { tasks, isLoading, updateTask, createTasks, deleteTask } = useTasks();
+  const { token: mapboxToken } = useMapboxToken();
   
   // Convert tasks with reminder times to calendar events
   const events = useMemo(() => {
@@ -105,6 +112,9 @@ const Calendar = () => {
         reminder_time: reminderDateTime.toISOString(),
         context: newEventDescription || undefined,
         has_reminder: true,
+        location_address: newEventLocation || undefined,
+        location_lat: newEventLocationLat,
+        location_lng: newEventLocationLng,
         recurrence_pattern: recurrencePattern,
         recurrence_day: recurrencePattern === 'weekly' ? recurrenceDay : undefined,
         recurrence_end_date: recurrenceEndDate ? new Date(recurrenceEndDate).toISOString() : undefined,
@@ -122,6 +132,9 @@ const Calendar = () => {
       setNewEventTitle("");
       setNewEventDate("");
       setNewEventTime("");
+      setNewEventLocation("");
+      setNewEventLocationLat(null);
+      setNewEventLocationLng(null);
       setNewEventDescription("");
       setRecurrencePattern('none');
       setRecurrenceDay(0);
@@ -144,6 +157,9 @@ const Calendar = () => {
     setNewEventTitle(event.title);
     setNewEventDate(format(event.date, "yyyy-MM-dd"));
     setNewEventTime(format(event.date, "HH:mm"));
+    setNewEventLocation(task?.location_address || "");
+    setNewEventLocationLat(task?.location_lat || null);
+    setNewEventLocationLng(task?.location_lng || null);
     setNewEventDescription(event.description || "");
     setRecurrencePattern(task?.recurrence_pattern || 'none');
     setRecurrenceDay(task?.recurrence_day || 0);
@@ -170,6 +186,9 @@ const Calendar = () => {
           title: newEventTitle,
           reminder_time: reminderDateTime.toISOString(),
           context: newEventDescription || undefined,
+          location_address: newEventLocation || undefined,
+          location_lat: newEventLocationLat,
+          location_lng: newEventLocationLng,
           recurrence_pattern: recurrencePattern,
           recurrence_day: recurrencePattern === 'weekly' ? recurrenceDay : undefined,
           recurrence_end_date: recurrenceEndDate ? new Date(recurrenceEndDate).toISOString() : undefined,
@@ -186,6 +205,9 @@ const Calendar = () => {
       setNewEventTitle("");
       setNewEventDate("");
       setNewEventTime("");
+      setNewEventLocation("");
+      setNewEventLocationLat(null);
+      setNewEventLocationLng(null);
       setNewEventDescription("");
       setRecurrencePattern('none');
       setRecurrenceDay(0);
@@ -218,6 +240,9 @@ const Calendar = () => {
       setNewEventTitle("");
       setNewEventDate("");
       setNewEventTime("");
+      setNewEventLocation("");
+      setNewEventLocationLat(null);
+      setNewEventLocationLng(null);
       setNewEventDescription("");
       setRecurrencePattern('none');
       setRecurrenceDay(0);
@@ -470,10 +495,34 @@ const Calendar = () => {
             </div>
 
             <div className="space-y-2">
+              <Label htmlFor="location">Location (optional)</Label>
+              <div className="flex gap-2">
+                <Input
+                  id="location"
+                  placeholder="660 white plains"
+                  value={newEventLocation}
+                  onChange={(e) => setNewEventLocation(e.target.value)}
+                  className="flex-1"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  onClick={() => {
+                    hapticLight();
+                    setIsLocationPickerOpen(true);
+                  }}
+                >
+                  <MapPin className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+
+            <div className="space-y-2">
               <Label htmlFor="description">Description (optional)</Label>
               <Textarea
                 id="description"
-                placeholder="Add notes or location..."
+                placeholder="Add notes..."
                 value={newEventDescription}
                 onChange={(e) => setNewEventDescription(e.target.value)}
                 rows={3}
@@ -589,10 +638,34 @@ const Calendar = () => {
             </div>
 
             <div className="space-y-2">
+              <Label htmlFor="edit-location">Location (optional)</Label>
+              <div className="flex gap-2">
+                <Input
+                  id="edit-location"
+                  placeholder="660 white plains"
+                  value={newEventLocation}
+                  onChange={(e) => setNewEventLocation(e.target.value)}
+                  className="flex-1"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  onClick={() => {
+                    hapticLight();
+                    setIsLocationPickerOpen(true);
+                  }}
+                >
+                  <MapPin className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+
+            <div className="space-y-2">
               <Label htmlFor="edit-description">Description (optional)</Label>
               <Textarea
                 id="edit-description"
-                placeholder="Add notes or location..."
+                placeholder="Add notes..."
                 value={newEventDescription}
                 onChange={(e) => setNewEventDescription(e.target.value)}
                 rows={3}
@@ -698,6 +771,19 @@ const Calendar = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Location Picker */}
+      <MapboxLocationPicker
+        open={isLocationPickerOpen}
+        onOpenChange={setIsLocationPickerOpen}
+        accessToken={mapboxToken}
+        onConfirm={(location) => {
+          setNewEventLocation(location.address);
+          setNewEventLocationLat(location.lat);
+          setNewEventLocationLng(location.lng);
+          hapticSuccess();
+        }}
+      />
     </div>
   );
 };
