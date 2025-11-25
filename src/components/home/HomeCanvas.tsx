@@ -14,6 +14,7 @@ interface HomeCanvasProps {
   quickWins?: Array<{ id: string; title: string }>;
   followUps?: string[];
   yesterdayDone?: string[];
+  carryOverSuggestions?: string[];
   isLoading?: boolean;
   onSetFocus?: () => void;
 }
@@ -24,6 +25,7 @@ export function HomeCanvas({
   quickWins = [], 
   followUps = [],
   yesterdayDone,
+  carryOverSuggestions = [],
   isLoading,
   onSetFocus,
 }: HomeCanvasProps) {
@@ -45,6 +47,7 @@ export function HomeCanvas({
           quickWins={quickWins}
           followUps={followUps}
           yesterdayDone={yesterdayDone}
+          carryOverSuggestions={carryOverSuggestions}
           isLoading={isLoading}
         />
         

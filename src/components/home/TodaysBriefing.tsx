@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ChevronDown, Target, Zap, Bell } from "lucide-react";
+import { ChevronDown, Target, Zap, Bell, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -15,6 +15,7 @@ interface TodaysBriefingProps {
   quickWins: Array<{ id: string; title: string }>;
   followUps: string[];
   yesterdayDone?: string[];
+  carryOverSuggestions?: string[];
   isLoading?: boolean;
 }
 
@@ -23,6 +24,7 @@ export function TodaysBriefing({
   quickWins, 
   followUps,
   yesterdayDone,
+  carryOverSuggestions = [],
   isLoading 
 }: TodaysBriefingProps) {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -142,6 +144,25 @@ export function TodaysBriefing({
                   </div>
                   <ul className="pl-6 space-y-1">
                     {followUps.slice(0, 3).map((task, idx) => (
+                      <li key={idx} className="text-xs text-muted-foreground">
+                        • {task}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Carry-over Suggestions */}
+              {carryOverSuggestions.length > 0 && (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <ArrowRight className="w-4 h-4 text-purple-500" />
+                    <h3 className="text-sm font-semibold text-foreground">
+                      Carry Over ({carryOverSuggestions.length})
+                    </h3>
+                  </div>
+                  <ul className="pl-6 space-y-1">
+                    {carryOverSuggestions.slice(0, 3).map((task, idx) => (
                       <li key={idx} className="text-xs text-muted-foreground">
                         • {task}
                       </li>
