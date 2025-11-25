@@ -101,10 +101,12 @@ export const TaskCorrectionPanel = ({
       supabase.functions.invoke('thought-engine-trainer', {
         body: { 
           userId: user.id,
+          taskId: task.id,
           correction: {
-            taskId: task.id,
             aiOutput: initialAIOutput,
             userCorrection: correctedData,
+            taskTitle: task.title,
+            originalText: task.context || task.title,
           }
         }
       }).catch(err => {

@@ -14,6 +14,62 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_corrections: {
+        Row: {
+          ai_guess: Json
+          confidence_score: number | null
+          context_snapshot: Json | null
+          corrected_output: Json
+          correction_type: string | null
+          created_at: string
+          id: string
+          is_not_task: boolean | null
+          original_text: string | null
+          processed_at: string | null
+          task_id: string | null
+          task_title: string
+          user_id: string
+        }
+        Insert: {
+          ai_guess?: Json
+          confidence_score?: number | null
+          context_snapshot?: Json | null
+          corrected_output?: Json
+          correction_type?: string | null
+          created_at?: string
+          id?: string
+          is_not_task?: boolean | null
+          original_text?: string | null
+          processed_at?: string | null
+          task_id?: string | null
+          task_title: string
+          user_id: string
+        }
+        Update: {
+          ai_guess?: Json
+          confidence_score?: number | null
+          context_snapshot?: Json | null
+          corrected_output?: Json
+          correction_type?: string | null
+          created_at?: string
+          id?: string
+          is_not_task?: boolean | null
+          original_text?: string | null
+          processed_at?: string | null
+          task_id?: string | null
+          task_title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_corrections_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       api_usage_logs: {
         Row: {
           created_at: string
@@ -531,6 +587,39 @@ export type Database = {
           tasks_created?: number | null
           timestamp?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      model_confusion_matrix: {
+        Row: {
+          actual_category: string | null
+          actual_priority: string | null
+          common_phrases: string[] | null
+          id: string
+          last_seen_at: string
+          occurrence_count: number | null
+          predicted_category: string | null
+          predicted_priority: string | null
+        }
+        Insert: {
+          actual_category?: string | null
+          actual_priority?: string | null
+          common_phrases?: string[] | null
+          id?: string
+          last_seen_at?: string
+          occurrence_count?: number | null
+          predicted_category?: string | null
+          predicted_priority?: string | null
+        }
+        Update: {
+          actual_category?: string | null
+          actual_priority?: string | null
+          common_phrases?: string[] | null
+          id?: string
+          last_seen_at?: string
+          occurrence_count?: number | null
+          predicted_category?: string | null
+          predicted_priority?: string | null
         }
         Relationships: []
       }
@@ -1199,6 +1288,81 @@ export type Database = {
           supporting_tasks?: Json
           tiny_task?: string | null
           tiny_task_id?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      training_queue: {
+        Row: {
+          completed_at: string | null
+          corrections_since_last: number | null
+          created_at: string
+          error_log: string | null
+          id: string
+          improvements: Json | null
+          scheduled_for: string
+          started_at: string | null
+          status: string
+          training_type: string
+        }
+        Insert: {
+          completed_at?: string | null
+          corrections_since_last?: number | null
+          created_at?: string
+          error_log?: string | null
+          id?: string
+          improvements?: Json | null
+          scheduled_for?: string
+          started_at?: string | null
+          status?: string
+          training_type?: string
+        }
+        Update: {
+          completed_at?: string | null
+          corrections_since_last?: number | null
+          created_at?: string
+          error_log?: string | null
+          id?: string
+          improvements?: Json | null
+          scheduled_for?: string
+          started_at?: string | null
+          status?: string
+          training_type?: string
+        }
+        Relationships: []
+      }
+      user_bias_patterns: {
+        Row: {
+          confidence: number | null
+          first_observed_at: string
+          id: string
+          last_updated_at: string
+          pattern_data: Json
+          pattern_key: string
+          pattern_type: string
+          sample_size: number | null
+          user_id: string
+        }
+        Insert: {
+          confidence?: number | null
+          first_observed_at?: string
+          id?: string
+          last_updated_at?: string
+          pattern_data?: Json
+          pattern_key: string
+          pattern_type: string
+          sample_size?: number | null
+          user_id: string
+        }
+        Update: {
+          confidence?: number | null
+          first_observed_at?: string
+          id?: string
+          last_updated_at?: string
+          pattern_data?: Json
+          pattern_key?: string
+          pattern_type?: string
+          sample_size?: number | null
           user_id?: string
         }
         Relationships: []
