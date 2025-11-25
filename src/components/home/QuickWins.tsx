@@ -9,9 +9,10 @@ interface QuickWin {
 
 interface QuickWinsProps {
   data: QuickWin[];
+  onTaskCreated?: () => void;
 }
 
-export function QuickWins({ data }: QuickWinsProps) {
+export function QuickWins({ data, onTaskCreated }: QuickWinsProps) {
   const { toast } = useToast();
 
   const handleConvertToTask = async (quickWin: QuickWin) => {
@@ -39,6 +40,11 @@ export function QuickWins({ data }: QuickWinsProps) {
         title: "Task created",
         description: `Added "${quickWin.title}" to your tasks`,
       });
+
+      // Notify parent that task was created
+      if (onTaskCreated) {
+        onTaskCreated();
+      }
     } catch (error) {
       console.error('Error creating task:', error);
       toast({

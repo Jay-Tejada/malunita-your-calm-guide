@@ -15,7 +15,11 @@ export interface DailyPriorityPromptRef {
   openDialog: () => void;
 }
 
-export const DailyPriorityPrompt = forwardRef<DailyPriorityPromptRef>((props, ref) => {
+interface DailyPriorityPromptProps {
+  onTaskCreated?: () => void;
+}
+
+export const DailyPriorityPrompt = forwardRef<DailyPriorityPromptRef, DailyPriorityPromptProps>(({ onTaskCreated }, ref) => {
   const { showPrompt, checkIfShouldShowPrompt, markPromptAnswered } = useDailyPriorityPrompt();
   const { createTasks } = useTasks();
   const { onTaskCompleted } = useCompanionEvents();
@@ -93,6 +97,11 @@ export const DailyPriorityPrompt = forwardRef<DailyPriorityPromptRef>((props, re
       
       // Trigger excited companion expression
       onTaskCompleted(1);
+      
+      // Notify parent that task was created
+      if (onTaskCreated) {
+        onTaskCreated();
+      }
     } catch (error) {
       console.error("Error creating priority task:", error);
     } finally {
