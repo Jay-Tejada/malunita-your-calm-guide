@@ -20,6 +20,7 @@ import {
   Moon,
   Focus,
   ChevronRight,
+  Lightbulb,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAdmin } from "@/hooks/useAdmin";
@@ -40,6 +41,7 @@ import {
 } from "@/components/ui/sidebar";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Separator } from "@/components/ui/separator";
+import { TeachMalunitaModal } from "@/components/TeachMalunitaModal";
 
 interface AppSidebarProps {
   onSettingsClick: () => void;
@@ -70,6 +72,7 @@ export function AppSidebar({
   const [companionHubOpen, setCompanionHubOpen] = React.useState(false);
   const [insightsHubOpen, setInsightsHubOpen] = React.useState(false);
   const [feelingsHubOpen, setFeelingsHubOpen] = React.useState(false);
+  const [teachMalunitaOpen, setTeachMalunitaOpen] = React.useState(false);
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -264,10 +267,16 @@ export function AppSidebar({
                           <span>Monthly Insights</span>
                         </SidebarMenuButton>
                       </SidebarMenuItem>
-                      <SidebarMenuItem>
+                       <SidebarMenuItem>
                         <SidebarMenuButton onClick={() => navigate('/clusters')} className="hover:bg-sidebar-active/50">
                           <Network className="w-4 h-4" />
                           <span>Knowledge Clusters</span>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                      <SidebarMenuItem>
+                        <SidebarMenuButton onClick={() => setTeachMalunitaOpen(true)} className="hover:bg-sidebar-active/50">
+                          <Lightbulb className="w-4 h-4" />
+                          <span>Teach Malunita</span>
                         </SidebarMenuButton>
                       </SidebarMenuItem>
                     </SidebarMenu>
@@ -344,6 +353,11 @@ export function AppSidebar({
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+
+      <TeachMalunitaModal 
+        open={teachMalunitaOpen} 
+        onOpenChange={setTeachMalunitaOpen} 
+      />
     </Sidebar>
   );
 }
