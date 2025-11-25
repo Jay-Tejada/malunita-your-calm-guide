@@ -21,6 +21,7 @@ import { usePrimaryFocusPrediction } from "@/hooks/usePrimaryFocusPrediction";
 import { useTasks, Task } from "@/hooks/useTasks";
 import { AutoFocusNotification } from "@/components/AutoFocusNotification";
 import { CompanionContextMessage } from "@/components/CompanionContextMessage";
+import { fetchDailyPlan, DailyPlan } from "@/lib/ai/fetchDailyPlan";
 
 interface AISummary {
   decisions: string[];
@@ -37,6 +38,7 @@ const Index = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string | null>("today");
   const [aiSummary, setAiSummary] = useState<AISummary | null>(null);
+  const [aiPlan, setAiPlan] = useState<DailyPlan | null>(null);
   const [voiceStatus, setVoiceStatus] = useState<{ isListening: boolean; isProcessing: boolean; isSpeaking: boolean; recordingDuration: number }>({
     isListening: false,
     isProcessing: false,
@@ -77,6 +79,17 @@ const Index = () => {
       checkIfShouldShowPrompt();
     }
   }, [user, needsOnboarding, checkIfShouldShowPrompt]);
+
+  // Fetch daily plan on mount
+  useEffect(() => {
+    if (user) {
+      fetchDailyPlan(user.id).then((plan) => {
+        if (plan) {
+          setAiPlan(plan);
+        }
+      });
+    }
+  }, [user]);
 
   const handleCompanionComplete = async (name: string, personality: PersonalityType) => {
     const colorwayMap = {
@@ -220,7 +233,7 @@ const Index = () => {
         )}
         {aiSummary && (
           <div className="max-w-2xl mx-auto px-4 mb-8">
-            <DailyIntelligence aiSummary={aiSummary} />
+            <DailyIntelligence aiSummary={aiSummary} aiPlan={aiPlan} />
           </div>
         )}
         <HomeOrb
