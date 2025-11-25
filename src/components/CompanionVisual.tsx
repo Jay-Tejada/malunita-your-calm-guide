@@ -1,4 +1,6 @@
+import { useState, useEffect } from 'react';
 import { companionAssets, emotionToVisualState, motionToVisualState } from '@/lib/companionAssets';
+import { supabase } from '@/integrations/supabase/client';
 import type { EmotionState } from '@/hooks/useCompanionEmotion';
 import type { MotionState } from '@/hooks/useCompanionMotion';
 
@@ -15,6 +17,27 @@ export const CompanionVisual = ({
   size = 'md',
   className = '' 
 }: CompanionVisualProps) => {
+  const [memoryProfile, setMemoryProfile] = useState<any>(null);
+
+  // Fetch memory profile to shape personality
+  useEffect(() => {
+    const fetchMemoryProfile = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data } = await supabase
+        .from('ai_memory_profiles')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (data) {
+        setMemoryProfile(data);
+      }
+    };
+
+    fetchMemoryProfile();
+  }, []);
   
   const sizeClasses = {
     sm: 'w-16 h-16',
@@ -30,20 +53,58 @@ export const CompanionVisual = ({
 
   const assetSrc = companionAssets[visualState];
 
-  // Animation class based on motion state
+  // Animation class based on motion state and memory profile
   const getAnimationClass = () => {
+    let baseAnimation = '';
+    
     switch (motion) {
       case 'excited':
       case 'fiesta':
-        return 'animate-bounce-excited';
+        baseAnimation = 'animate-bounce-excited';
+        break;
       case 'curious':
-        return 'animate-sway-curious';
+        baseAnimation = 'animate-sway-curious';
+        break;
       case 'sleepy':
-        return 'animate-float-sleepy';
+        baseAnimation = 'animate-float-sleepy';
+        break;
       case 'idle':
       default:
-        return 'animate-float-idle';
+        baseAnimation = 'animate-float-idle';
     }
+
+    // Adjust animation intensity based on memory profile
+    if (memoryProfile) {
+      const positiveReinforcers = memoryProfile.positive_reinforcers || [];
+      const emotionalTriggers = memoryProfile.emotional_triggers || [];
+      const energyPattern = memoryProfile.energy_pattern || {};
+
+      // If user likes positive reinforcement → more expressive animations
+      const hasPositivePreference = positiveReinforcers.length > 5;
+      const isPositiveEmotion = ['excited', 'proud', 'inspired', 'encouraging'].includes(emotion);
+      
+      if (hasPositivePreference && isPositiveEmotion && motion === 'excited') {
+        return `${baseAnimation} brightness-110`;
+      }
+
+      // If user avoids sad cues → subdued animations for negative emotions
+      const avoidsSadness = emotionalTriggers.some((t: any) => 
+        t.trigger?.includes('stress') || t.trigger?.includes('overwhelm')
+      );
+      
+      if (avoidsSadness && ['overwhelmed', 'sleepy'].includes(emotion)) {
+        return `${baseAnimation} opacity-80`;
+      }
+
+      // If user prefers calm → reduce jittery motions
+      const prefersCalm = energyPattern.night > 0.6 || energyPattern.evening > 0.6;
+      
+      if (prefersCalm && ['excited', 'curious'].includes(motion)) {
+        return 'animate-float-idle'; // Use calmer animation
+      }
+    }
+
+    return baseAnimation;
   };
 
   const animationClass = getAnimationClass();

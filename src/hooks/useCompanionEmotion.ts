@@ -130,10 +130,82 @@ export const useCompanionEmotion = (
   archetype?: PersonalityArchetype
 ): CompanionEmotionHook => {
   const [emotion, setEmotion] = useState<EmotionState>('neutral');
+  const [memoryProfile, setMemoryProfile] = useState<any>(null);
   const emotionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const lastActivityRef = useRef<Date>(new Date());
 
-  const config = personalityEmotionConfigs[personality][emotion];
+  // Fetch memory profile on mount
+  useEffect(() => {
+    const fetchMemoryProfile = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data } = await supabase
+        .from('ai_memory_profiles')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (data) {
+        setMemoryProfile(data);
+      }
+    };
+
+    fetchMemoryProfile();
+  }, []);
+
+  // Adjust emotion config based on memory profile
+  const getAdjustedConfig = (): EmotionConfig => {
+    const baseConfig = personalityEmotionConfigs[personality][emotion];
+    if (!memoryProfile) return baseConfig;
+
+    const adjustedConfig = { ...baseConfig };
+
+    // If user likes positive reinforcement → increase cheerful animations
+    const positiveReinforcers = memoryProfile.positive_reinforcers || [];
+    const hasPositivePreference = positiveReinforcers.length > 5;
+    
+    if (hasPositivePreference && ['proud', 'excited', 'inspired', 'encouraging'].includes(emotion)) {
+      adjustedConfig.glowIntensity = Math.min(1, adjustedConfig.glowIntensity * 1.2);
+      adjustedConfig.motionIntensity = Math.min(1, adjustedConfig.motionIntensity * 1.15);
+      adjustedConfig.pulseSpeed = Math.max(1000, adjustedConfig.pulseSpeed * 0.85);
+    }
+
+    // If user avoids sad cues → reduce sad expressions
+    const emotionalTriggers = memoryProfile.emotional_triggers || [];
+    const avoidsSadness = emotionalTriggers.some((t: any) => 
+      t.trigger?.includes('stress') || t.trigger?.includes('overwhelm')
+    );
+    
+    if (avoidsSadness && ['overwhelmed', 'sleepy'].includes(emotion)) {
+      adjustedConfig.motionIntensity = Math.max(0.1, adjustedConfig.motionIntensity * 0.7);
+      adjustedConfig.glowIntensity = Math.max(0.2, adjustedConfig.glowIntensity * 0.8);
+    }
+
+    // If user interacts often → increase expressiveness
+    const lastUpdated = memoryProfile.last_updated ? new Date(memoryProfile.last_updated) : null;
+    const daysSinceUpdate = lastUpdated 
+      ? (Date.now() - lastUpdated.getTime()) / (1000 * 60 * 60 * 24) 
+      : 30;
+    
+    if (daysSinceUpdate < 2) { // Updated recently = high interaction
+      adjustedConfig.glowIntensity = Math.min(1, adjustedConfig.glowIntensity * 1.1);
+      adjustedConfig.motionIntensity = Math.min(1, adjustedConfig.motionIntensity * 1.1);
+    }
+
+    // If user prefers calm → reduce jittery motions
+    const energyPattern = memoryProfile.energy_pattern || {};
+    const prefersCalm = energyPattern.night > 0.6 || energyPattern.evening > 0.6;
+    
+    if (prefersCalm) {
+      adjustedConfig.motionIntensity = Math.max(0.2, adjustedConfig.motionIntensity * 0.8);
+      adjustedConfig.pulseSpeed = Math.max(3000, adjustedConfig.pulseSpeed * 1.2);
+    }
+
+    return adjustedConfig;
+  };
+
+  const config = getAdjustedConfig();
   const suggestedMotion = emotionToMotionMap[emotion];
   const taskPreference = emotionToTaskPreference[emotion];
 
