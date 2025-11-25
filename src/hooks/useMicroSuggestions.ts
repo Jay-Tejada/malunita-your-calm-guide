@@ -16,6 +16,17 @@ export const useMicroSuggestions = () => {
     setSuggestions([]);
 
     try {
+      // Check if user is authenticated
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast({
+          title: "Authentication required",
+          description: "Please log in to generate suggestions.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       const { data, error } = await supabase.functions.invoke<MicroSuggestionsResult>(
         'suggest-micro-steps',
         {
