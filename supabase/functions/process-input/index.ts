@@ -6,6 +6,7 @@ import { classifyTasks } from "./classify.ts";
 import { inferContext } from "./context.ts";
 import { routeTasks } from "./route.ts";
 import { scorePriority } from "./score.ts";
+import { generateResponse } from "./respond.ts";
 import type { Task, UserContext } from "./types.ts";
 
 const corsHeaders = {
@@ -76,6 +77,20 @@ serve(async (req) => {
     console.log('Step 5: Routing tasks...');
     const routing = await routeTasks(contextualized, userContext);
 
+    // STEP 6: Generate contextual AI response
+    console.log('Step 6: Generating response...');
+    const aiResponse = generateResponse({
+      emotion: extracted.emotion || 'ok',
+      taskCount: contextualized.length,
+      hasLargeTasks: contextualized.some(t => t.cleaned.length > 50),
+      tasks: contextualized.map(t => ({
+        title: t.raw,
+        cleaned: t.cleaned,
+        isTiny: t.isTiny
+      })),
+      originalText: text
+    });
+
     // Prepare final output
     const output = {
       tasks: contextualized.map(task => ({
@@ -101,6 +116,7 @@ serve(async (req) => {
       },
       emotion: extracted.emotion,
       clarifyingQuestions: extracted.clarifyingQuestions,
+      aiResponse,
       routing,
     };
 
