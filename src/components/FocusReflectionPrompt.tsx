@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface FocusReflectionPromptProps {
   focusTask: string;
@@ -22,10 +23,12 @@ export const FocusReflectionPrompt = ({
   onSubmit, 
   onDismiss 
 }: FocusReflectionPromptProps) => {
+  const isMobile = useIsMobile();
   const [showModal, setShowModal] = useState(false);
   const [selectedOutcome, setSelectedOutcome] = useState<'done' | 'partial' | 'missed' | null>(null);
   const [note, setNote] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showInitialPrompt, setShowInitialPrompt] = useState(true);
 
   const handleOutcomeClick = (outcome: 'done' | 'partial' | 'missed') => {
     setSelectedOutcome(outcome);
@@ -46,43 +49,98 @@ export const FocusReflectionPrompt = ({
 
   return (
     <>
-      {/* Minimal prompt */}
-      <div className="flex items-start gap-2 mb-6 group">
-        <button
-          onClick={onDismiss}
-          className="mt-0.5 p-1 hover:bg-muted/30 rounded-full transition-colors opacity-0 group-hover:opacity-100"
-          title="Dismiss"
-        >
-          <X className="w-3 h-3 text-muted-foreground" />
-        </button>
-        <div className="flex-1 space-y-2">
-          <p className="text-sm text-muted-foreground">
-            Yesterday's focus: <span className="text-foreground font-medium">{focusTask}</span>
-          </p>
-          <div className="flex flex-wrap gap-2">
-            <button
-              onClick={() => handleOutcomeClick('done')}
-              className="text-xs px-3 py-1.5 bg-muted hover:bg-muted/80 rounded-full transition-colors"
-            >
-              Done
-            </button>
-            <button
-              onClick={() => handleOutcomeClick('partial')}
-              className="text-xs px-3 py-1.5 bg-muted hover:bg-muted/80 rounded-full transition-colors"
-            >
-              Made progress
-            </button>
-            <button
-              onClick={() => handleOutcomeClick('missed')}
-              className="text-xs px-3 py-1.5 bg-muted hover:bg-muted/80 rounded-full transition-colors"
-            >
-              Didn't get to it
-            </button>
+      {/* Initial prompt - as dialog on mobile, banner on desktop */}
+      {isMobile ? (
+        <Dialog open={showInitialPrompt} onOpenChange={(open) => !open && onDismiss()}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="font-mono text-base">Yesterday's focus</DialogTitle>
+              <DialogDescription className="font-mono text-sm">
+                {focusTask}
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-3 py-4">
+              <p className="text-sm text-muted-foreground font-mono">How did it go?</p>
+              <div className="flex flex-col gap-2">
+                <Button
+                  onClick={() => {
+                    setShowInitialPrompt(false);
+                    handleOutcomeClick('done');
+                  }}
+                  variant="outline"
+                  className="w-full justify-start"
+                >
+                  Done
+                </Button>
+                <Button
+                  onClick={() => {
+                    setShowInitialPrompt(false);
+                    handleOutcomeClick('partial');
+                  }}
+                  variant="outline"
+                  className="w-full justify-start"
+                >
+                  Made progress
+                </Button>
+                <Button
+                  onClick={() => {
+                    setShowInitialPrompt(false);
+                    handleOutcomeClick('missed');
+                  }}
+                  variant="outline"
+                  className="w-full justify-start"
+                >
+                  Didn't get to it
+                </Button>
+              </div>
+            </div>
+
+            <DialogFooter>
+              <Button variant="ghost" onClick={onDismiss} className="w-full">
+                Skip for now
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      ) : (
+        <div className="flex items-start gap-2 mb-6 group">
+          <button
+            onClick={onDismiss}
+            className="mt-0.5 p-1 hover:bg-muted/30 rounded-full transition-colors opacity-0 group-hover:opacity-100"
+            title="Dismiss"
+          >
+            <X className="w-3 h-3 text-muted-foreground" />
+          </button>
+          <div className="flex-1 space-y-2">
+            <p className="text-sm text-muted-foreground">
+              Yesterday's focus: <span className="text-foreground font-medium">{focusTask}</span>
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => handleOutcomeClick('done')}
+                className="text-xs px-3 py-1.5 bg-muted hover:bg-muted/80 rounded-full transition-colors"
+              >
+                Done
+              </button>
+              <button
+                onClick={() => handleOutcomeClick('partial')}
+                className="text-xs px-3 py-1.5 bg-muted hover:bg-muted/80 rounded-full transition-colors"
+              >
+                Made progress
+              </button>
+              <button
+                onClick={() => handleOutcomeClick('missed')}
+                className="text-xs px-3 py-1.5 bg-muted hover:bg-muted/80 rounded-full transition-colors"
+              >
+                Didn't get to it
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
-      {/* Modal */}
+      {/* Notes modal */}
       <Dialog open={showModal} onOpenChange={setShowModal}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
