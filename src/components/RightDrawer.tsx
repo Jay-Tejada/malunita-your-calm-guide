@@ -2,7 +2,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { CompanionAvatar } from "@/components/companion/CompanionAvatar";
 import { useCompanionGrowth } from "@/hooks/useCompanionGrowth";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Palette, Globe, Settings } from "lucide-react";
+import { Sparkles, Palette, Globe, Settings, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 interface RightDrawerProps {
@@ -29,8 +29,9 @@ export const RightDrawer = ({ isOpen, onClose }: RightDrawerProps) => {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 bg-black/10 backdrop-blur-sm z-40"
+            className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 cursor-pointer"
             onClick={onClose}
+            aria-label="Close drawer"
           />
 
           {/* Drawer */}
@@ -42,6 +43,14 @@ export const RightDrawer = ({ isOpen, onClose }: RightDrawerProps) => {
             className="fixed right-0 top-0 bottom-0 w-80 bg-background/95 backdrop-blur-md border-l border-border/50 shadow-2xl z-50"
           >
             <div className="h-full flex flex-col py-8 px-6">
+              {/* Close Button */}
+              <button
+                onClick={onClose}
+                className="absolute top-4 right-4 p-2 rounded-full hover:bg-muted/50 transition-colors"
+                aria-label="Close"
+              >
+                <X className="w-5 h-5 text-foreground/60" />
+              </button>
               {/* Companion Visual */}
               <div className="flex-shrink-0 flex justify-center mb-6">
                 <CompanionAvatar mode="idle" />
