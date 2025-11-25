@@ -22,6 +22,7 @@ import { useTasks, Task } from "@/hooks/useTasks";
 import { AutoFocusNotification } from "@/components/AutoFocusNotification";
 import { CompanionContextMessage } from "@/components/CompanionContextMessage";
 import { fetchDailyPlan, DailyPlan } from "@/lib/ai/fetchDailyPlan";
+import { fetchDailyAlerts, DailyAlerts } from "@/lib/ai/fetchDailyAlerts";
 
 interface AISummary {
   decisions: string[];
@@ -39,6 +40,7 @@ const Index = () => {
   const [activeCategory, setActiveCategory] = useState<string | null>("today");
   const [aiSummary, setAiSummary] = useState<AISummary | null>(null);
   const [aiPlan, setAiPlan] = useState<DailyPlan | null>(null);
+  const [aiAlerts, setAiAlerts] = useState<DailyAlerts | null>(null);
   const [voiceStatus, setVoiceStatus] = useState<{ isListening: boolean; isProcessing: boolean; isSpeaking: boolean; recordingDuration: number }>({
     isListening: false,
     isProcessing: false,
@@ -86,6 +88,12 @@ const Index = () => {
       fetchDailyPlan(user.id).then((plan) => {
         if (plan) {
           setAiPlan(plan);
+        }
+      });
+      
+      fetchDailyAlerts().then((alerts) => {
+        if (alerts) {
+          setAiAlerts(alerts);
         }
       });
     }
@@ -233,7 +241,7 @@ const Index = () => {
         )}
         {aiSummary && (
           <div className="max-w-2xl mx-auto px-4 mb-8">
-            <DailyIntelligence aiSummary={aiSummary} aiPlan={aiPlan} />
+            <DailyIntelligence aiSummary={aiSummary} aiPlan={aiPlan} aiAlerts={aiAlerts} />
           </div>
         )}
         <HomeOrb
@@ -243,6 +251,7 @@ const Index = () => {
           recordingDuration={voiceStatus.recordingDuration}
           onAISummaryUpdate={setAiSummary}
           onAIPlanUpdate={setAiPlan}
+          onAIAlertsUpdate={setAiAlerts}
         />
       </HomeShell>
       
