@@ -9,13 +9,21 @@ import { useCompanionEvents } from "@/hooks/useCompanionEvents";
 interface HomeCanvasProps {
   children?: React.ReactNode;
   onOneThingClick?: () => void;
+  taskCreatedTrigger?: number;
 }
 
-export function HomeCanvas({ children, onOneThingClick }: HomeCanvasProps) {
+export function HomeCanvas({ children, onOneThingClick, taskCreatedTrigger }: HomeCanvasProps) {
   const { showPrompt } = useDailyPriorityPrompt();
-  const { data, loading, error } = useDailyIntelligence();
+  const { data, loading, error, refetch } = useDailyIntelligence();
   const { triggerCompanionPing } = useCompanionEvents();
   const [showOneThingPrompt, setShowOneThingPrompt] = useState(true);
+
+  // Refetch when taskCreatedTrigger changes
+  useEffect(() => {
+    if (taskCreatedTrigger && taskCreatedTrigger > 0) {
+      refetch();
+    }
+  }, [taskCreatedTrigger, refetch]);
 
   // Check localStorage on mount to see if dismissed today
   useEffect(() => {
@@ -50,6 +58,11 @@ export function HomeCanvas({ children, onOneThingClick }: HomeCanvasProps) {
     const today = new Date().toISOString().split('T')[0];
     localStorage.setItem('malunita_one_thing_dismissed', today);
     setShowOneThingPrompt(false);
+  };
+
+  const handleTaskCreated = () => {
+    // Trigger refetch when QuickWins creates a task
+    refetch();
   };
 
   return (
@@ -97,7 +110,7 @@ export function HomeCanvas({ children, onOneThingClick }: HomeCanvasProps) {
         
         {/* Quick Wins */}
         {data?.quick_wins && Array.isArray(data.quick_wins) && data.quick_wins.length > 0 && (
-          <QuickWins data={data.quick_wins} />
+          <QuickWins data={data.quick_wins} onTaskCreated={handleTaskCreated} />
         )}
         
         {/* Orb and other content */}

@@ -88,6 +88,7 @@ const Index = () => {
     isSpeaking: false,
     recordingDuration: 0,
   });
+  const [taskCreatedTrigger, setTaskCreatedTrigger] = useState(0);
   const { profile } = useProfile();
   const { companion, needsOnboarding, updateCompanion } = useCompanionIdentity();
   const { toast } = useToast();
@@ -293,6 +294,11 @@ const Index = () => {
     }
   };
 
+  const handleTaskCreated = () => {
+    // Trigger refetch in HomeCanvas
+    setTaskCreatedTrigger(prev => prev + 1);
+  };
+
   return (
     <>
       <AutoFocusNotification />
@@ -328,7 +334,7 @@ const Index = () => {
             </div>
           </div>
         )}
-        <DailyPriorityPrompt ref={dailyPriorityRef} />
+        <DailyPriorityPrompt ref={dailyPriorityRef} onTaskCreated={handleTaskCreated} />
         {showWrapUp && (
           <div className="mb-6">
             <EndOfDayWrapUp completed={wrapUpCompleted} />
@@ -347,7 +353,10 @@ const Index = () => {
             />
           </div>
         )}
-        <HomeCanvas onOneThingClick={() => dailyPriorityRef.current?.openDialog()}>
+        <HomeCanvas 
+          onOneThingClick={() => dailyPriorityRef.current?.openDialog()}
+          taskCreatedTrigger={taskCreatedTrigger}
+        >
           <HomeOrb
             onCapture={handleOrbClick} 
             isRecording={isRecording} 
