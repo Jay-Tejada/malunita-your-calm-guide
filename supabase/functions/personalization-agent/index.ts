@@ -6,15 +6,6 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-interface TaskAnalysis {
-  topCategories: Array<{ category: string; count: number; percentage: number }>;
-  preferredInputTime: string;
-  totalTasks: number;
-  completionRate: number;
-  avgTasksPerDay: number;
-  voiceVsTextRatio: { voice: number; text: number };
-}
-
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -35,6 +26,24 @@ serve(async (req) => {
       }
     );
 
+    // Check if specific user was requested
+    const body = req.method === 'POST' ? await req.json() : {};
+    const targetUserId = body.userId;
+
+    if (targetUserId) {
+      // Process single user
+      console.log(`Processing single user: ${targetUserId}`);
+      const result = await processUserPersonalization(supabaseAdmin, targetUserId);
+      
+      return new Response(
+        JSON.stringify(result),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200 
+        }
+      );
+    }
+
     // Get all users
     const { data: profiles, error: profilesError } = await supabaseAdmin
       .from('profiles')
@@ -48,14 +57,21 @@ serve(async (req) => {
 
     let processedCount = 0;
     let errorCount = 0;
+    const results: any[] = [];
 
     for (const profile of profiles) {
       try {
-        await processUserPersonalization(supabaseAdmin, profile.id);
+        const result = await processUserPersonalization(supabaseAdmin, profile.id);
+        results.push({ userId: profile.id, ...result });
         processedCount++;
       } catch (error) {
         console.error(`Error processing user ${profile.id}:`, error);
         errorCount++;
+        results.push({ 
+          userId: profile.id, 
+          success: false, 
+          error: error instanceof Error ? error.message : 'Unknown error' 
+        });
       }
     }
 
@@ -65,7 +81,8 @@ serve(async (req) => {
       JSON.stringify({ 
         success: true, 
         processed: processedCount,
-        errors: errorCount 
+        errors: errorCount,
+        results: results
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -89,353 +106,386 @@ async function processUserPersonalization(
   supabaseAdmin: any,
   userId: string
 ) {
-  // Fetch user's tasks from the last 30 days
-  const thirtyDaysAgo = new Date();
-  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-
-  const { data: tasks, error: tasksError } = await supabaseAdmin
+  console.log(`Processing memory profile for user ${userId}`);
+  
+  const sevenDaysAgo = new Date();
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+  
+  // 1. PULL ALL DATA SOURCES
+  console.log('Fetching data sources...');
+  
+  // AI Corrections
+  const { data: corrections } = await supabaseAdmin
+    .from('ai_corrections')
+    .select('*')
+    .eq('user_id', userId)
+    .gte('created_at', sevenDaysAgo.toISOString());
+  
+  // Task History
+  const { data: tasks } = await supabaseAdmin
     .from('tasks')
     .select('*')
     .eq('user_id', userId)
-    .gte('created_at', thirtyDaysAgo.toISOString());
-
-  if (tasksError) {
-    throw tasksError;
-  }
-
-  if (!tasks || tasks.length === 0) {
-    console.log(`No tasks found for user ${userId} in last 30 days`);
-    return;
-  }
-
-  // Analyze task patterns
-  const analysis = analyzeTaskPatterns(tasks);
-
-  // Fetch focus history to track ONE thing patterns
-  const { data: focusHistory, error: focusError } = await supabaseAdmin
-    .from('daily_focus_history')
-    .select('cluster_label, outcome, date')
+    .gte('created_at', sevenDaysAgo.toISOString());
+  
+  // Daily Summaries
+  const { data: dailySessions } = await supabaseAdmin
+    .from('daily_sessions')
+    .select('*')
     .eq('user_id', userId)
-    .gte('date', thirtyDaysAgo.toISOString().split('T')[0])
-    .not('cluster_label', 'is', null)
-    .order('date', { ascending: false });
-
-  if (focusError) {
-    console.log('Error fetching focus history:', focusError);
-  }
-
-  // Calculate focus preferences with reinforcement learning
-  const focusPreferences = await calculateFocusPreferencesWithReinforcement(
-    supabaseAdmin,
-    userId,
-    focusHistory || [],
-    tasks
+    .gte('date', sevenDaysAgo.toISOString().split('T')[0]);
+  
+  // Emotional History
+  const { data: emotionalHistory } = await supabaseAdmin
+    .from('memory_journal')
+    .select('*')
+    .eq('user_id', userId)
+    .gte('date', sevenDaysAgo.toISOString().split('T')[0]);
+  
+  // Companion Interactions
+  const { data: companionEvents } = await supabaseAdmin
+    .from('memory_events')
+    .select('*')
+    .eq('user_id', userId)
+    .gte('created_at', sevenDaysAgo.toISOString());
+  
+  console.log(`Loaded: ${corrections?.length || 0} corrections, ${tasks?.length || 0} tasks, ${dailySessions?.length || 0} sessions, ${emotionalHistory?.length || 0} journal entries, ${companionEvents?.length || 0} events`);
+  
+  // 2. COMPUTE MEMORY PROFILE
+  console.log('Computing memory profile...');
+  
+  // Category Preference Weights
+  const categoryPreferences = computeCategoryPreferences(corrections || [], tasks || []);
+  
+  // Priority Patterns
+  const priorityBias = computePriorityBias(corrections || [], tasks || []);
+  
+  // Writing Style
+  const writingStyle = inferWritingStyle(tasks || []);
+  
+  // Tiny Task Threshold
+  const tinyTaskThreshold = computeTinyTaskThreshold(tasks || []);
+  
+  // Energy/Usage Heatmaps
+  const energyPattern = computeEnergyPattern(tasks || []);
+  
+  // Procrastination Patterns
+  const procrastinationTriggers = detectProcrastinationPatterns(tasks || []);
+  
+  // Emotional Reward Triggers
+  const { emotionalTriggers, positiveReinforcers } = extractEmotionalTriggers(
+    emotionalHistory || [],
+    companionEvents || []
   );
-
-  // Query focus memory for long-term patterns
-  let focusMemoryInsights = null;
-  if (focusHistory && focusHistory.length > 0) {
-    const recentFocusText = focusHistory[0].cluster_label || 'general tasks';
-    try {
-      const { data: memoryQuery } = await supabaseAdmin.functions.invoke('focus-memory-query', {
-        body: {
-          queryText: recentFocusText,
-          limit: 20,
-          includePatterns: true
-        }
-      });
-
-      if (memoryQuery) {
-        focusMemoryInsights = memoryQuery.patterns;
-        console.log('Focus memory patterns:', focusMemoryInsights);
-      }
-    } catch (error) {
-      console.log('Focus memory query skipped:', error);
-    }
-  }
-
-  // Generate AI insights using Lovable AI with focus memory context
-  const insights = await generateAIInsights(analysis, tasks, focusMemoryInsights);
-
-  // Update profile with insights and focus preferences
-  const { error: updateError } = await supabaseAdmin
-    .from('profiles')
-    .update({
-      insights: {
-        topCategories: analysis.topCategories,
-        preferredInputTime: analysis.preferredInputTime,
-        completionRate: analysis.completionRate,
-        avgTasksPerDay: analysis.avgTasksPerDay,
-        voiceVsTextRatio: analysis.voiceVsTextRatio,
-        lastAnalyzed: new Date().toISOString(),
-      },
-      preferences_summary: insights,
-      focus_preferences: focusPreferences,
-      last_personalization_run: new Date().toISOString(),
+  
+  // Streak History
+  const streakHistory = buildStreakHistory(dailySessions || [], tasks || []);
+  
+  const memoryProfile = {
+    writing_style: writingStyle,
+    category_preferences: categoryPreferences,
+    priority_bias: priorityBias,
+    tiny_task_threshold: tinyTaskThreshold,
+    energy_pattern: energyPattern,
+    procrastination_triggers: procrastinationTriggers,
+    emotional_triggers: emotionalTriggers,
+    positive_reinforcers: positiveReinforcers,
+    streak_history: streakHistory,
+    last_updated: new Date().toISOString(),
+  };
+  
+  console.log('Memory profile computed:', memoryProfile);
+  
+  // 3. UPDATE AI_MEMORY_PROFILES
+  const { data: updatedProfile, error: upsertError } = await supabaseAdmin
+    .from('ai_memory_profiles')
+    .upsert({
+      user_id: userId,
+      ...memoryProfile
+    }, {
+      onConflict: 'user_id'
     })
-    .eq('id', userId);
-
-  if (updateError) {
-    throw updateError;
+    .select()
+    .single();
+  
+  if (upsertError) {
+    throw upsertError;
   }
-
-  console.log(`Updated personalization for user ${userId}`);
-}
-
-function analyzeTaskPatterns(tasks: any[]): TaskAnalysis {
-  // Count tasks by category
-  const categoryCount: Record<string, number> = {};
-  const hourCounts: Record<number, number> = {};
-  let completedCount = 0;
-  let voiceCount = 0;
-  let textCount = 0;
-
-  tasks.forEach(task => {
-    // Count categories
-    const category = task.category || task.custom_category_id || 'inbox';
-    categoryCount[category] = (categoryCount[category] || 0) + 1;
-
-    // Track creation hour
-    const hour = new Date(task.created_at).getHours();
-    hourCounts[hour] = (hourCounts[hour] || 0) + 1;
-
-    // Count completed tasks
-    if (task.completed) {
-      completedCount++;
-    }
-
-    // Count input methods
-    if (task.input_method === 'voice') {
-      voiceCount++;
-    } else {
-      textCount++;
-    }
-  });
-
-  // Get top 3 categories
-  const sortedCategories = Object.entries(categoryCount)
-    .map(([category, count]) => ({
-      category,
-      count,
-      percentage: Math.round((count / tasks.length) * 100),
-    }))
-    .sort((a, b) => b.count - a.count)
-    .slice(0, 3);
-
-  // Determine preferred input time
-  const peakHour = Object.entries(hourCounts)
-    .sort((a, b) => b[1] - a[1])[0];
-
-  const preferredTime = peakHour 
-    ? getTimeOfDay(parseInt(peakHour[0]))
-    : 'morning';
-
+  
+  console.log(`Updated memory profile for user ${userId}`);
+  
   return {
-    topCategories: sortedCategories,
-    preferredInputTime: preferredTime,
-    totalTasks: tasks.length,
-    completionRate: Math.round((completedCount / tasks.length) * 100),
-    avgTasksPerDay: Math.round((tasks.length / 30) * 10) / 10,
-    voiceVsTextRatio: {
-      voice: Math.round((voiceCount / tasks.length) * 100),
-      text: Math.round((textCount / tasks.length) * 100),
-    },
+    success: true,
+    updated_profile: updatedProfile
   };
 }
 
-function getTimeOfDay(hour: number): string {
-  if (hour >= 5 && hour < 12) return 'morning';
-  if (hour >= 12 && hour < 17) return 'afternoon';
-  if (hour >= 17 && hour < 21) return 'evening';
-  return 'night';
-}
+// COMPUTATION FUNCTIONS
 
-async function generateAIInsights(
-  analysis: TaskAnalysis,
-  tasks: any[],
-  focusMemoryInsights?: any
-): Promise<string> {
-  const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-  if (!LOVABLE_API_KEY) {
-    throw new Error('LOVABLE_API_KEY not configured');
-  }
-
-  let memoryContext = '';
-  if (focusMemoryInsights) {
-    memoryContext = `\n\nHistorical Focus Patterns:
-- Top recurring focus areas: ${focusMemoryInsights.topClusters?.map((c: any) => c.cluster).join(', ') || 'N/A'}
-- Average task unlocks: ${focusMemoryInsights.averageUnlocks?.toFixed(1) || 0}
-- Success rate on similar tasks: ${focusMemoryInsights.successRate?.toFixed(0) || 0}%
-- Total similar historical tasks: ${focusMemoryInsights.totalSimilarTasks || 0}`;
-  }
-
-  const prompt = `Analyze this user's task management patterns and provide personalized insights:
-
-Task Statistics:
-- Total tasks in last 30 days: ${analysis.totalTasks}
-- Completion rate: ${analysis.completionRate}%
-- Average tasks per day: ${analysis.avgTasksPerDay}
-- Preferred input time: ${analysis.preferredInputTime}
-- Input method: ${analysis.voiceVsTextRatio.voice}% voice, ${analysis.voiceVsTextRatio.text}% text
-
-Top Categories:
-${analysis.topCategories.map(c => `- ${c.category}: ${c.count} tasks (${c.percentage}%)`).join('\n')}
-
-Recent Task Titles (sample):
-${tasks.slice(0, 10).map(t => `- ${t.title}`).join('\n')}${memoryContext}
-
-Generate a brief, personalized summary (2-3 sentences) with:
-1. Their main focus areas
-2. Their productivity pattern
-3. One specific recommendation to improve their workflow${focusMemoryInsights ? ', incorporating their historical focus patterns' : ''}
-
-Keep it conversational and encouraging.`;
-
-  try {
-    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
-        messages: [
-          {
-            role: 'system',
-            content: 'You are a helpful productivity coach analyzing task patterns to provide personalized insights.',
-          },
-          {
-            role: 'user',
-            content: prompt,
-          },
-        ],
-        max_tokens: 200,
-      }),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('AI API error:', response.status, errorText);
-      return generateFallbackInsights(analysis);
-    }
-
-    const data = await response.json();
-    return data.choices[0].message.content;
-  } catch (error) {
-    console.error('Error generating AI insights:', error);
-    return generateFallbackInsights(analysis);
-  }
-}
-
-function generateFallbackInsights(analysis: TaskAnalysis): string {
-  const topCategory = analysis.topCategories[0]?.category || 'various areas';
-  const timeOfDay = analysis.preferredInputTime;
+function computeCategoryPreferences(corrections: any[], tasks: any[]): Record<string, number> {
+  const preferences: Record<string, number> = {};
   
-  return `You're most productive in the ${timeOfDay}, focusing primarily on ${topCategory}. With a ${analysis.completionRate}% completion rate and ${analysis.avgTasksPerDay} tasks per day, you're maintaining good momentum. Consider batching similar tasks together to boost efficiency even further.`;
+  // Learn from corrections
+  corrections.forEach(correction => {
+    const correctedCategory = correction.corrected_output?.category;
+    if (correctedCategory) {
+      preferences[correctedCategory] = (preferences[correctedCategory] || 0) + 0.15;
+    }
+  });
+  
+  // Learn from completed tasks
+  tasks.forEach(task => {
+    if (task.completed && task.category) {
+      preferences[task.category] = (preferences[task.category] || 0) + 0.05;
+    }
+  });
+  
+  // Normalize to 0-1 range
+  const maxWeight = Math.max(...Object.values(preferences), 1);
+  Object.keys(preferences).forEach(key => {
+    preferences[key] = Math.min(1, preferences[key] / maxWeight);
+  });
+  
+  return preferences;
 }
 
-async function calculateFocusPreferencesWithReinforcement(
-  supabaseAdmin: any,
-  userId: string,
-  focusHistory: any[],
-  tasks: any[]
-): Promise<Record<string, number>> {
-  if (!focusHistory || focusHistory.length === 0) {
-    return {};
-  }
-
-  // Count frequency of each cluster label (baseline weights)
-  const clusterCounts: Record<string, number> = {};
-  focusHistory.forEach(entry => {
-    if (entry.cluster_label) {
-      clusterCounts[entry.cluster_label] = (clusterCounts[entry.cluster_label] || 0) + 1;
+function computePriorityBias(corrections: any[], tasks: any[]): Record<string, number> {
+  const bias = { must: 0.5, should: 0.5, could: 0.5 };
+  
+  // Learn from corrections
+  corrections.forEach(correction => {
+    const correctedPriority = correction.corrected_output?.priority?.toLowerCase();
+    if (correctedPriority && correctedPriority in bias) {
+      bias[correctedPriority as keyof typeof bias] += 0.08;
     }
   });
+  
+  // Learn from task completion patterns
+  const priorityCounts = { must: 0, should: 0, could: 0 };
+  const priorityCompleted = { must: 0, should: 0, could: 0 };
+  
+  tasks.forEach(task => {
+    const priority = task.scheduled_bucket?.toLowerCase();
+    if (priority && priority in priorityCounts) {
+      priorityCounts[priority as keyof typeof priorityCounts]++;
+      if (task.completed) {
+        priorityCompleted[priority as keyof typeof priorityCompleted]++;
+      }
+    }
+  });
+  
+  // Adjust bias based on completion rates
+  Object.keys(priorityCounts).forEach(priority => {
+    const key = priority as keyof typeof priorityCounts;
+    const completionRate = priorityCounts[key] > 0 
+      ? priorityCompleted[key] / priorityCounts[key]
+      : 0.5;
+    bias[key] = Math.min(1, bias[key] + (completionRate - 0.5) * 0.2);
+  });
+  
+  return bias;
+}
 
-  const totalFocusTasks = focusHistory.length;
-  const weights: Record<string, number> = {};
+function inferWritingStyle(tasks: any[]): string | null {
+  if (tasks.length === 0) return null;
+  
+  const titles = tasks.map(t => t.title || '').filter(t => t.length > 0);
+  if (titles.length === 0) return null;
+  
+  let casualCount = 0;
+  let formalCount = 0;
+  
+  titles.forEach(title => {
+    const lower = title.toLowerCase();
+    if (/\b(like|just|maybe|kinda|sorta|gonna|wanna)\b/.test(lower)) {
+      casualCount++;
+    }
+    if (/\b(please|kindly|would appreciate|regarding|pursuant)\b/.test(lower)) {
+      formalCount++;
+    }
+  });
+  
+  if (formalCount > casualCount * 1.5) return 'formal';
+  if (casualCount > formalCount * 1.5) return 'casual';
+  return 'neutral';
+}
 
-  // Calculate baseline weights for each cluster
-  Object.entries(clusterCounts).forEach(([cluster, count]) => {
-    const frequency = count / totalFocusTasks;
+function computeTinyTaskThreshold(tasks: any[]): number {
+  const tinyTasks = tasks.filter(t => t.is_tiny_task);
+  
+  if (tinyTasks.length === 0) return 5; // default
+  
+  const titleLengths = tinyTasks
+    .map(t => (t.title || '').length)
+    .filter(len => len > 0);
+  
+  if (titleLengths.length === 0) return 5;
+  
+  const avgLength = titleLengths.reduce((sum, len) => sum + len, 0) / titleLengths.length;
+  return Math.round(avgLength);
+}
+
+function computeEnergyPattern(tasks: any[]): Record<string, number> {
+  const pattern = { morning: 0, afternoon: 0, night: 0 };
+  const counts = { morning: 0, afternoon: 0, night: 0 };
+  
+  tasks.forEach(task => {
+    const hour = new Date(task.created_at).getHours();
+    let timeOfDay: 'morning' | 'afternoon' | 'night';
     
-    if (frequency > 0.3) {
-      weights[cluster] = 0.15;
-    } else if (frequency > 0.15) {
-      weights[cluster] = 0.08;
-    } else if (frequency > 0.05) {
-      weights[cluster] = 0;
+    if (hour >= 6 && hour < 12) timeOfDay = 'morning';
+    else if (hour >= 12 && hour < 18) timeOfDay = 'afternoon';
+    else timeOfDay = 'night';
+    
+    counts[timeOfDay]++;
+    
+    // Weight completed tasks higher
+    if (task.completed) {
+      pattern[timeOfDay] += 0.1;
     } else {
-      weights[cluster] = -0.05;
+      pattern[timeOfDay] += 0.03;
     }
   });
+  
+  // Normalize to 0-1 range
+  const maxEnergy = Math.max(...Object.values(pattern), 1);
+  Object.keys(pattern).forEach(key => {
+    pattern[key as keyof typeof pattern] = Math.min(1, pattern[key as keyof typeof pattern] / maxEnergy);
+  });
+  
+  return pattern;
+}
 
-  // Apply reinforcement learning based on ONE-thing completion behavior
-  for (const entry of focusHistory) {
-    const cluster = entry.cluster_label;
-    const outcome = entry.outcome;
-    const date = entry.date;
-
-    // Get tasks from that day to analyze patterns
-    const { data: dayTasks } = await supabaseAdmin
-      .from('tasks')
-      .select('id, title, category, primary_focus_alignment, completed, created_at')
-      .eq('user_id', userId)
-      .gte('created_at', `${date}T00:00:00`)
-      .lt('created_at', `${date}T23:59:59`);
-
-    if (!dayTasks || dayTasks.length === 0) continue;
-
-    // Check if ONE thing was completed
-    const oneThing = dayTasks.find((t: any) => t.primary_focus_alignment === 'aligned' && t.completed);
-    const oneThingMissed = !oneThing && outcome !== 'achieved';
-
-    if (oneThing) {
-      // ONE THING COMPLETED - Reinforce success
-      console.log(`ONE thing completed on ${date}: reinforcing cluster ${cluster}`);
+function detectProcrastinationPatterns(tasks: any[]): string[] {
+  const triggers: string[] = [];
+  const seen = new Set<string>();
+  
+  // Find tasks with long completion times
+  tasks.forEach(task => {
+    if (task.completed && task.completed_at) {
+      const createdAt = new Date(task.created_at).getTime();
+      const completedAt = new Date(task.completed_at).getTime();
+      const daysToComplete = (completedAt - createdAt) / (1000 * 60 * 60 * 24);
       
-      // Increase weight for this cluster by +0.2
-      weights[cluster] = (weights[cluster] || 0) + 0.2;
-
-      // Reduce weight for distracting categories by -0.1
-      const distractingCategories = dayTasks
-        .filter((t: any) => t.primary_focus_alignment === 'distracting')
-        .map((t: any) => t.category)
-        .filter((c: any): c is string => typeof c === 'string');
-
-      const uniqueDistractingCategories = [...new Set(distractingCategories)];
-      for (const category of uniqueDistractingCategories) {
-        const key = String(category);
-        weights[key] = (weights[key] || 0) - 0.1;
-      }
-
-    } else if (oneThingMissed) {
-      // ONE THING AVOIDED/MISSED - Gentle correction
-      console.log(`ONE thing missed on ${date}: reducing weight for cluster ${cluster}`);
-      
-      // Lightly reduce weight for this cluster by -0.05
-      weights[cluster] = (weights[cluster] || 0) - 0.05;
-
-      // Increase weight for smaller, easier tasks by +0.05
-      // We'll use tasks completed that day as a proxy for "achievable" tasks
-      const completedTasksCategories = dayTasks
-        .filter((t: any) => t.completed && t.category)
-        .map((t: any) => String(t.category));
-
-      const uniqueCompletedCategories = [...new Set(completedTasksCategories)];
-      for (const category of uniqueCompletedCategories) {
-        const key = String(category);
-        weights[key] = (weights[key] || 0) + 0.05;
+      if (daysToComplete > 7) {
+        const category = task.category || 'uncategorized';
+        if (!seen.has(category)) {
+          triggers.push(category);
+          seen.add(category);
+        }
       }
     }
+  });
+  
+  return triggers.slice(0, 10); // Max 10 triggers
+}
+
+function extractEmotionalTriggers(
+  emotionalHistory: any[],
+  companionEvents: any[]
+): { emotionalTriggers: string[]; positiveReinforcers: string[] } {
+  const emotionalTriggers: string[] = [];
+  const positiveReinforcers: string[] = [];
+  const seenEmotional = new Set<string>();
+  const seenPositive = new Set<string>();
+  
+  // From journal entries
+  emotionalHistory.forEach(entry => {
+    const mood = entry.mood;
+    const state = entry.emotional_state;
+    
+    if (mood === 'stressed' || mood === 'overwhelmed') {
+      const trigger = `${mood}_day`;
+      if (!seenEmotional.has(trigger)) {
+        emotionalTriggers.push(trigger);
+        seenEmotional.add(trigger);
+      }
+    }
+    
+    if (mood === 'happy' || mood === 'excited') {
+      const reinforcer = `${mood}_moment`;
+      if (!seenPositive.has(reinforcer)) {
+        positiveReinforcers.push(reinforcer);
+        seenPositive.add(reinforcer);
+      }
+    }
+  });
+  
+  // From companion events
+  companionEvents.forEach(event => {
+    const eventType = event.event_type;
+    const payload = event.payload || {};
+    
+    if (eventType === 'task_completed' && !seenPositive.has('task_completion')) {
+      positiveReinforcers.push('task_completion');
+      seenPositive.add('task_completion');
+    }
+    
+    if (eventType === 'streak_achieved' && !seenPositive.has('streak_milestone')) {
+      positiveReinforcers.push('streak_milestone');
+      seenPositive.add('streak_milestone');
+    }
+  });
+  
+  return {
+    emotionalTriggers: emotionalTriggers.slice(0, 15),
+    positiveReinforcers: positiveReinforcers.slice(0, 20)
+  };
+}
+
+function buildStreakHistory(dailySessions: any[], tasks: any[]): any[] {
+  const history: any[] = [];
+  
+  dailySessions.forEach(session => {
+    if (session.reflection_wins || session.top_focus) {
+      history.push({
+        date: session.date,
+        type: 'daily_session',
+        value: 1
+      });
+    }
+  });
+  
+  // Count consecutive completion days
+  const completionDates = new Set(
+    tasks
+      .filter(t => t.completed && t.completed_at)
+      .map(t => new Date(t.completed_at).toISOString().split('T')[0])
+  );
+  
+  const sortedDates = Array.from(completionDates).sort();
+  let currentStreak = 0;
+  
+  sortedDates.forEach((date, index) => {
+    if (index === 0 || isConsecutiveDay(sortedDates[index - 1], date)) {
+      currentStreak++;
+    } else {
+      if (currentStreak >= 3) {
+        history.push({
+          date: sortedDates[index - 1],
+          type: 'completion_streak',
+          value: currentStreak
+        });
+      }
+      currentStreak = 1;
+    }
+  });
+  
+  if (currentStreak >= 3) {
+    history.push({
+      date: sortedDates[sortedDates.length - 1],
+      type: 'completion_streak',
+      value: currentStreak
+    });
   }
+  
+  return history.slice(-50); // Keep last 50 entries
+}
 
-  // Clamp weights to reasonable bounds (-0.3 to +0.5)
-  Object.keys(weights).forEach(key => {
-    weights[key] = Math.max(-0.3, Math.min(0.5, weights[key]));
-  });
-
-  console.log('Calculated focus preferences with reinforcement:', weights);
-  return weights;
+function isConsecutiveDay(date1: string, date2: string): boolean {
+  const d1 = new Date(date1);
+  const d2 = new Date(date2);
+  const diffTime = Math.abs(d2.getTime() - d1.getTime());
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  return diffDays === 1;
 }
