@@ -10,17 +10,8 @@ import { useToast } from "@/hooks/use-toast";
 import { HomeShell } from "@/layouts/HomeShell";
 import { HomeCanvas } from "@/components/home/HomeCanvas";
 import { DailyPriorityPrompt, DailyPriorityPromptRef } from "@/components/DailyPriorityPrompt";
-import { FocusReflectionPrompt } from "@/components/FocusReflectionPrompt";
-import { MidDayFocusReminder } from "@/components/MidDayFocusReminder";
-import { EndOfDayWrapUp } from "@/components/EndOfDayWrapUp";
-import { DailyIntelligence } from "@/components/DailyIntelligence";
-import { useDailyPriorityPrompt } from "@/state/useDailyPriorityPrompt";
-import { useFocusReflection } from "@/hooks/useFocusReflection";
-import { useMidDayFocusReminder } from "@/hooks/useMidDayFocusReminder";
-import { useEndOfDayWrapUp } from "@/hooks/useEndOfDayWrapUp";
 import { useDailyReset } from "@/hooks/useDailyReset";
 import { usePrimaryFocusPrediction } from "@/hooks/usePrimaryFocusPrediction";
-import { useTasks, Task } from "@/hooks/useTasks";
 import { AutoFocusNotification } from "@/components/AutoFocusNotification";
 import { CompanionContextMessage } from "@/components/CompanionContextMessage";
 import { fetchDailyPlan, DailyPlan } from "@/lib/ai/fetchDailyPlan";
@@ -101,11 +92,6 @@ const Index = () => {
   const { toast } = useToast();
   const voiceRef = useRef<MalunitaVoiceRef>(null);
   const dailyPriorityRef = useRef<DailyPriorityPromptRef>(null);
-  const { checkIfShouldShowPrompt } = useDailyPriorityPrompt();
-  const { yesterdaysFocusTask, showPrompt: showReflection, saveReflection, dismissPrompt } = useFocusReflection();
-  const { showReminder: showMidDayReminder, focusTask: midDayFocusTask, dismissReminder } = useMidDayFocusReminder();
-  const { showWrapUp, completed: wrapUpCompleted } = useEndOfDayWrapUp();
-  const { updateTask } = useTasks();
   const { sessions, lastSession } = useCaptureSessions();
   const [showCaptureHistory, setShowCaptureHistory] = useState(false);
   
@@ -126,13 +112,6 @@ const Index = () => {
 
     return () => subscription.unsubscribe();
   }, []);
-
-  // Check if we should show the daily priority prompt
-  useEffect(() => {
-    if (user && !needsOnboarding) {
-      checkIfShouldShowPrompt();
-    }
-  }, [user, needsOnboarding, checkIfShouldShowPrompt]);
 
   // Fetch daily plan on mount
   useEffect(() => {
@@ -277,32 +256,6 @@ const Index = () => {
     console.log("Dream mode clicked");
   };
 
-  const handleReflectionSubmit = async (outcome: 'done' | 'partial' | 'missed', note?: string) => {
-    const { error } = await saveReflection({ outcome, note });
-    if (!error) {
-      toast({
-        title: "Reflection saved",
-        description: "Keep up the great work!",
-      });
-    }
-  };
-
-  const handleMidDayTaskSave = async (taskId: string, updates: Partial<Task>) => {
-    try {
-      await updateTask({ id: taskId, updates });
-      toast({
-        title: "Task updated",
-        description: "Your ONE thing has been updated.",
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to update task.",
-        variant: "destructive",
-      });
-    }
-  };
-
   const handleTaskCreated = () => {
     // Trigger refetch in HomeCanvas
     setTaskCreatedTrigger(prev => prev + 1);
@@ -321,51 +274,10 @@ const Index = () => {
         onDreamModeClick={handleDreamModeClick}
         activeCategory={activeCategory}
       >
-        {showReflection && yesterdaysFocusTask && (
-          <div className="absolute top-12 sm:top-10 md:top-8 left-0 right-0 flex justify-center z-20 px-4">
-            <div className="max-w-xl w-full">
-              <FocusReflectionPrompt
-                focusTask={yesterdaysFocusTask}
-                onSubmit={handleReflectionSubmit}
-                onDismiss={dismissPrompt}
-              />
-            </div>
-          </div>
-        )}
-        {showMidDayReminder && midDayFocusTask && (
-          <div className="absolute top-32 sm:top-28 md:top-24 left-0 right-0 flex justify-center z-20 px-4">
-            <div className="max-w-xl w-full">
-              <MidDayFocusReminder
-                focusTask={midDayFocusTask}
-                onDismiss={dismissReminder}
-                onSave={handleMidDayTaskSave}
-              />
-            </div>
-          </div>
-        )}
+        {/* Modals and prompts - not visible on main canvas */}
         <DailyPriorityPrompt ref={dailyPriorityRef} onTaskCreated={handleTaskCreated} />
-        {showWrapUp && (
-          <div className="mb-6">
-            <EndOfDayWrapUp completed={wrapUpCompleted} />
-          </div>
-        )}
-        {aiSummary && (
-          <div className="max-w-2xl mx-auto px-4 mb-8">
-            <DailyIntelligence 
-              aiSummary={aiSummary} 
-              aiPlan={aiPlan} 
-              aiAlerts={aiAlerts}
-              aiPatterns={aiPatterns}
-              aiPreferences={aiPreferences}
-              aiPredictions={aiPredictions}
-              aiProactive={aiProactive}
-            />
-          </div>
-        )}
-        <HomeCanvas 
-          onOneThingClick={() => dailyPriorityRef.current?.openDialog()}
-          taskCreatedTrigger={taskCreatedTrigger}
-        >
+        
+        <HomeCanvas>
           <HomeOrb
             onCapture={handleOrbClick} 
             isRecording={isRecording} 

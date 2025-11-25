@@ -20,8 +20,9 @@ import { MapFullScreen } from "@/components/MapFullScreen";
 import { TaskGlobe } from "@/components/TaskGlobe";
 import { useMapboxToken } from "@/hooks/useMapboxToken";
 import { MapPin } from "lucide-react";
+import { TodaySection } from "@/components/drawer/TodaySection";
 
-type DrawerMode = "root" | "inbox" | "projects" | "work" | "home" | "gym" | "calendar";
+type DrawerMode = "root" | "today" | "inbox" | "someday" | "projects" | "work" | "home" | "gym" | "calendar";
 
 interface LeftDrawerProps {
   isOpen: boolean;
@@ -30,7 +31,9 @@ interface LeftDrawerProps {
 }
 
 const categories = [
+  { id: "today", label: "Today", filter: (task: any) => true }, // Special view
   { id: "inbox", label: "Inbox", filter: (task: any) => !task.category || task.category === "inbox" },
+  { id: "someday", label: "Someday", filter: (task: any) => task.scheduled_bucket === "someday" },
   { id: "projects", label: "Projects", filter: (task: any) => task.category === "project" },
   { id: "work", label: "Work", filter: (task: any) => task.category === "work" },
   { id: "home", label: "Home", filter: (task: any) => task.category === "home" },
@@ -471,6 +474,31 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
                     >
                       <Globe className="w-5 h-5" />
                     </button>
+                  </motion.div>
+                ) : drawerMode === "today" ? (
+                  <motion.div
+                    {...categorySwipeHandlers}
+                    key="today"
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 20 }}
+                    transition={{ duration: 0.14 }}
+                    className="h-full flex flex-col pt-16"
+                  >
+                    {/* Back Button */}
+                    <button
+                      onClick={handleBack}
+                      className="flex items-center gap-2 mb-6 px-6 text-foreground/70 hover:text-foreground font-mono text-[14px] transition-colors"
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                      Back
+                    </button>
+
+                    {/* Today Section */}
+                    <TodaySection onOneThingClick={() => {
+                      onNavigate("/");
+                      onClose();
+                    }} />
                   </motion.div>
                 ) : (
                   <motion.div
