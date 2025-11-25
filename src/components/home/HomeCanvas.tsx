@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { MindstreamPanel } from "@/components/intelligence/MindstreamPanel";
 import { OneThingPrompt } from "@/components/home/OneThingPrompt";
+import { QuickWins } from "@/components/home/QuickWins";
 import { useDailyPriorityPrompt } from "@/state/useDailyPriorityPrompt";
 import { useDailyIntelligence } from "@/hooks/useDailyIntelligence";
 import { useCompanionEvents } from "@/hooks/useCompanionEvents";
@@ -95,6 +96,11 @@ export function HomeCanvas({ children, onOneThingClick }: HomeCanvasProps) {
               subtle={!data?.primary_focus}
             />
           </div>
+        )}
+        
+        {/* Quick Wins */}
+        {data?.quick_wins && Array.isArray(data.quick_wins) && data.quick_wins.length > 0 && (
+          <QuickWins data={data.quick_wins} />
         )}
         
         {/* Orb and other content */}
