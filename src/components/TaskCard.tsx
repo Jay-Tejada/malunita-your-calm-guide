@@ -1,10 +1,12 @@
-import { CheckCircle2, Circle, Clock, GripVertical, Target } from "lucide-react";
+import { CheckCircle2, Circle, Clock, GripVertical, Target, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { getClusterDomain } from "@/lib/knowledgeClusters";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { TaskCorrectionPanel } from "./tasks/TaskCorrectionPanel";
+import { Task } from "@/hooks/useTasks";
 
 interface TaskCardProps {
   id: string;
@@ -24,9 +26,11 @@ interface TaskCardProps {
     domain?: string | null;
     label?: string | null;
   } | null;
+  fullTask?: Task;
+  onTaskUpdate?: (updates: any) => void;
 }
 
-export const TaskCard = ({ id, title, time, context, completed, selected, onToggle, onEdit, onSelect, onLongPress, goalAligned, alignmentReason, priority, cluster }: TaskCardProps) => {
+export const TaskCard = ({ id, title, time, context, completed, selected, onToggle, onEdit, onSelect, onLongPress, goalAligned, alignmentReason, priority, cluster, fullTask, onTaskUpdate }: TaskCardProps) => {
   const {
     attributes,
     listeners,
@@ -35,6 +39,8 @@ export const TaskCard = ({ id, title, time, context, completed, selected, onTogg
     transition,
     isDragging,
   } = useSortable({ id });
+
+  const [showCorrectionPanel, setShowCorrectionPanel] = useState(false);
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -142,6 +148,18 @@ export const TaskCard = ({ id, title, time, context, completed, selected, onTogg
               </Tooltip>
             </TooltipProvider>
           )}
+          {fullTask?.ai_metadata && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowCorrectionPanel(true);
+              }}
+              className="opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
+              title="Fix AI Output"
+            >
+              <Settings className="w-4 h-4 text-muted-foreground hover:text-accent" />
+            </button>
+          )}
         </div>
         {priority !== null && priority !== undefined && (
           <div 
@@ -173,6 +191,40 @@ export const TaskCard = ({ id, title, time, context, completed, selected, onTogg
           </div>
         )}
       </div>
+
+      {/* Correction Panel */}
+      {fullTask?.ai_metadata && (
+        <TaskCorrectionPanel
+          task={fullTask}
+          initialAIOutput={fullTask.ai_metadata}
+          open={showCorrectionPanel}
+          onClose={() => setShowCorrectionPanel(false)}
+          onSubmitCorrection={async (correctedData) => {
+            try {
+              // Update task with corrected data
+              if (onTaskUpdate) {
+                await onTaskUpdate({
+                  category: correctedData.category,
+                  priority: correctedData.priority,
+                  scheduled_bucket: correctedData.deadline || fullTask.scheduled_bucket,
+                });
+              }
+
+              // Dispatch custom event
+              window.dispatchEvent(new CustomEvent("ai:corrected", {
+                detail: {
+                  taskId: fullTask.id,
+                  correctedData,
+                }
+              }));
+
+              setShowCorrectionPanel(false);
+            } catch (error) {
+              console.error('Failed to apply corrections:', error);
+            }
+          }}
+        />
+      )}
     </div>
   );
 };

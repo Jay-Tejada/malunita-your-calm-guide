@@ -81,6 +81,12 @@ export const DailyPriorityPrompt = forwardRef<DailyPriorityPromptRef, DailyPrior
         is_tiny: enriched.isTiny,
         is_tiny_task: enriched.isTiny,
         follow_up: enriched.followUp || null,
+        ai_metadata: {
+          category: 'primary_focus',
+          priority: enriched.priority?.priority,
+          scheduled_bucket: enriched.routing?.taskRouting?.[0]?.bucket,
+          subtasks: enriched.subtasks,
+        },
         is_focus: true,
         focus_date: getFocusDate(),
         input_method: 'text',

@@ -985,6 +985,7 @@ export type Database = {
       }
       tasks: {
         Row: {
+          ai_metadata: Json | null
           alignment_reason: string | null
           category: string | null
           completed: boolean | null
@@ -1022,6 +1023,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          ai_metadata?: Json | null
           alignment_reason?: string | null
           category?: string | null
           completed?: boolean | null
@@ -1059,6 +1061,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          ai_metadata?: Json | null
           alignment_reason?: string | null
           category?: string | null
           completed?: boolean | null
