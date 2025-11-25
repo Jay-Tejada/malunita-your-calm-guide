@@ -55,6 +55,7 @@ export function HomeCanvas({ children, onOneThingClick }: HomeCanvasProps) {
             <OneThingPrompt
               questionText={headline || "What is the ONE task that would make today a success?"}
               onClick={handlePromptClick}
+              subtle={!headline}
             />
           </div>
         )}
