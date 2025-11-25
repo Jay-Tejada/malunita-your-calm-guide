@@ -6,6 +6,10 @@ import { TasksByIntelligence } from "@/components/home/TasksByIntelligence";
 import { useDailyPriorityPrompt } from "@/state/useDailyPriorityPrompt";
 import { useDailyIntelligence } from "@/hooks/useDailyIntelligence";
 import { useCompanionEvents } from "@/hooks/useCompanionEvents";
+import { Button } from "@/components/ui/button";
+import { Clock } from "lucide-react";
+import { useTimeBlocker } from "@/hooks/useTimeBlocker";
+import { TimeBlockList } from "@/components/TimeBlockList";
 
 interface HomeCanvasProps {
   children?: React.ReactNode;
@@ -17,7 +21,9 @@ export function HomeCanvas({ children, onOneThingClick, taskCreatedTrigger }: Ho
   const { showPrompt } = useDailyPriorityPrompt();
   const { data, loading, error, refetch } = useDailyIntelligence();
   const { triggerCompanionPing } = useCompanionEvents();
+  const { blocks, isLoading: isLoadingBlocks, generateTimeBlocks } = useTimeBlocker();
   const [showOneThingPrompt, setShowOneThingPrompt] = useState(true);
+  const [showTimeBlocks, setShowTimeBlocks] = useState(false);
 
   // Refetch when taskCreatedTrigger changes
   useEffect(() => {
@@ -64,6 +70,11 @@ export function HomeCanvas({ children, onOneThingClick, taskCreatedTrigger }: Ho
   const handleTaskCreated = () => {
     // Trigger refetch when QuickWins creates a task
     refetch();
+  };
+
+  const handleGenerateTimeBlocks = async () => {
+    await generateTimeBlocks();
+    setShowTimeBlocks(true);
   };
 
   return (
@@ -114,6 +125,35 @@ export function HomeCanvas({ children, onOneThingClick, taskCreatedTrigger }: Ho
         {/* Quick Wins */}
         {data?.quick_wins && Array.isArray(data.quick_wins) && data.quick_wins.length > 0 && (
           <QuickWins data={data.quick_wins} onTaskCreated={handleTaskCreated} />
+        )}
+        
+        {/* Time Blocker Button */}
+        {!loading && !error && (
+          <div className="mt-4 w-full max-w-md px-4">
+            <Button
+              onClick={handleGenerateTimeBlocks}
+              disabled={isLoadingBlocks}
+              variant="ghost"
+              size="sm"
+              className="w-full gap-2 text-muted-foreground hover:text-foreground"
+            >
+              <Clock className="w-4 h-4" />
+              🧭 Build a simple day plan
+            </Button>
+          </div>
+        )}
+
+        {/* Time Blocks List */}
+        {showTimeBlocks && blocks.length > 0 && (
+          <div className="mt-6 w-full max-w-md px-4">
+            <TimeBlockList 
+              blocks={blocks}
+              onTaskClick={(taskId) => {
+                const taskElement = document.querySelector(`[data-task-id="${taskId}"]`);
+                taskElement?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              }}
+            />
+          </div>
         )}
         
         {/* Orb */}
