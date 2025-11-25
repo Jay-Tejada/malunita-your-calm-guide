@@ -21,6 +21,7 @@ import {
   Focus,
   ChevronRight,
   Lightbulb,
+  Brain,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAdmin } from "@/hooks/useAdmin";
@@ -271,6 +272,12 @@ export function AppSidebar({
                         <SidebarMenuButton onClick={() => navigate('/clusters')} className="hover:bg-sidebar-active/50">
                           <Network className="w-4 h-4" />
                           <span>Knowledge Clusters</span>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                      <SidebarMenuItem>
+                        <SidebarMenuButton onClick={() => navigate('/learning')} className="hover:bg-sidebar-active/50">
+                          <Brain className="w-4 h-4" />
+                          <span>Learning Profile</span>
                         </SidebarMenuButton>
                       </SidebarMenuItem>
                       <SidebarMenuItem>

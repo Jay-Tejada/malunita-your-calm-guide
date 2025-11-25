@@ -39,6 +39,7 @@ import Quests from "./pages/Quests";
 import AmbientWorlds from "./pages/AmbientWorlds";
 import Clusters from "./pages/Clusters";
 import TimeTravel from "./pages/TimeTravel";
+import Learning from "./pages/Learning";
 import { useCutsceneManager } from "./features/cutscenes/useCutsceneManager";
 import { JOURNAL_EVENTS } from "./features/journal/journalEvents";
 import { bondingMeter, BONDING_INCREMENTS } from "./state/bondingMeter";
@@ -188,6 +189,7 @@ const App = () => {
                 <Route path="/clusters" element={<Clusters />} />
                 <Route path="/timetravel" element={<TimeTravel />} />
                 <Route path="/reminders" element={<Reminders />} />
+                <Route path="/learning" element={<Learning />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Route>
