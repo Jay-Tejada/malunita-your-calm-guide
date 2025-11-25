@@ -9,6 +9,7 @@ import { useCompanionGrowth } from "@/hooks/useCompanionGrowth";
 import { DomainTabs } from "@/components/DomainTabs";
 import { CategoryManager } from "@/components/CategoryManager";
 import { sortTasksByIntelligentPriority } from "@/lib/taskSorting";
+import { QuickSendButton } from "@/components/QuickSendButton";
 import { DndContext, DragEndEvent, DragOverlay, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { TaskCard } from "@/components/TaskCard";
@@ -503,56 +504,59 @@ export const TaskList = ({ category: externalCategory }: TaskListProps = {}) => 
                               ({planTasks.filter(t => t.completed).length}/{planTasks.length} done)
                             </span>
                           </div>
-                          {planTasks.map((task) => (
-                            <div key={task.id} className="space-y-0 pl-4 border-l-2 border-primary/20">
-                              <div className="flex items-center gap-2">
-                                <Checkbox
-                                  checked={selectedTaskIds.has(task.id)}
-                                  onCheckedChange={() => handleToggleTaskSelection(task.id)}
-                                  className="shrink-0"
-                                />
-                                 <TaskCard
-                                   id={task.id}
-                                   title={task.title}
-                                   context={task.context || undefined}
-                                   completed={task.completed || false}
-                                   selected={selectedTaskId === task.id}
-                                   onToggle={() => handleToggleComplete(task)}
-                                   onSelect={() => setSelectedTaskId(task.id)}
-                                   onLongPress={() => handleLongPress(task)}
-                                   onEdit={() => handleEditTask(task)}
-                                   goalAligned={task.goal_aligned}
-                                   alignmentReason={task.alignment_reason}
-                                   priority={task.future_priority_score}
-                                   cluster={task.cluster}
-                                   fullTask={task}
-                                   onTaskUpdate={(updates) => updateTask({ id: task.id, updates })}
-                                   onCreateTasks={handleCreateSubtasks}
-                                 />
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => handleDelete(task.id)}
-                                  className="shrink-0 text-muted-foreground hover:text-destructive"
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </Button>
-                              </div>
-                            </div>
-                          ))}
+                       {planTasks.map((task) => (
+                         <div key={task.id} className="space-y-0 pl-4 border-l-2 border-primary/20">
+                           <div className="flex items-center gap-2 group">
+                             <Checkbox
+                               checked={selectedTaskIds.has(task.id)}
+                               onCheckedChange={() => handleToggleTaskSelection(task.id)}
+                               className="shrink-0"
+                             />
+                             <TaskCard
+                               id={task.id}
+                               title={task.title}
+                               context={task.context || undefined}
+                               completed={task.completed || false}
+                               selected={selectedTaskId === task.id}
+                               onToggle={() => handleToggleComplete(task)}
+                               onSelect={() => setSelectedTaskId(task.id)}
+                               onLongPress={() => handleLongPress(task)}
+                               onEdit={() => handleEditTask(task)}
+                               goalAligned={task.goal_aligned}
+                               alignmentReason={task.alignment_reason}
+                               priority={task.future_priority_score}
+                               cluster={task.cluster}
+                               fullTask={task}
+                               onTaskUpdate={(updates) => updateTask({ id: task.id, updates })}
+                               onCreateTasks={handleCreateSubtasks}
+                             />
+                             {selectedDomain === "inbox" && (
+                               <QuickSendButton taskId={task.id} taskTitle={task.title} />
+                             )}
+                             <Button
+                               variant="ghost"
+                               size="icon"
+                               onClick={() => handleDelete(task.id)}
+                               className="shrink-0 text-muted-foreground hover:text-destructive"
+                             >
+                               <Trash2 className="w-4 h-4" />
+                             </Button>
+                           </div>
+                         </div>
+                       ))}
                         </div>
                       );
                     })}
 
                      {/* Render regular tasks */}
-                     {sortedRegularTasks.map((task) => (
-                       <div key={task.id} className="space-y-0">
-                         <div className="flex items-center gap-2">
-                           <Checkbox
-                             checked={selectedTaskIds.has(task.id)}
-                             onCheckedChange={() => handleToggleTaskSelection(task.id)}
-                             className="shrink-0"
-                           />
+                      {sortedRegularTasks.map((task) => (
+                        <div key={task.id} className="space-y-0">
+                          <div className="flex items-center gap-2 group">
+                            <Checkbox
+                              checked={selectedTaskIds.has(task.id)}
+                              onCheckedChange={() => handleToggleTaskSelection(task.id)}
+                              className="shrink-0"
+                            />
                             <TaskCard
                               id={task.id}
                               title={task.title}
@@ -571,45 +575,48 @@ export const TaskList = ({ category: externalCategory }: TaskListProps = {}) => 
                               onTaskUpdate={(updates) => updateTask({ id: task.id, updates })}
                               onCreateTasks={handleCreateSubtasks}
                             />
-                           <Button
-                             variant="ghost"
-                             size="icon"
-                             onClick={() => handleEditTask(task)}
-                             className="shrink-0 text-muted-foreground hover:text-foreground"
-                             title="Edit task & add location"
-                           >
-                             <MapPin className="w-4 h-4" />
-                           </Button>
-                           <Button
-                             variant="ghost"
-                             size="icon"
-                             onClick={() => handleAddToFocus(task.id)}
-                             className="shrink-0 text-muted-foreground hover:text-foreground"
-                             title="Add to Today's Focus"
-                           >
-                             <Star className="w-4 h-4" />
-                           </Button>
-                           <Button
-                             variant="ghost"
-                             size="icon"
-                             onClick={() => handleDelete(task.id)}
-                             className="shrink-0 text-muted-foreground hover:text-destructive"
-                           >
-                             <Trash2 className="w-4 h-4" />
-                           </Button>
-                         </div>
-                         
-                         {/* Show feedback component for voice-created tasks */}
-                         {task.input_method === 'voice' && !task.completed && (
-                           <TaskCategoryFeedback
-                             taskId={task.id}
-                             taskTitle={task.title}
-                             currentCategory={task.category || 'inbox'}
-                             originalText={task.title}
-                           />
-                         )}
-                       </div>
-                     ))}
+                            {selectedDomain === "inbox" && (
+                              <QuickSendButton taskId={task.id} taskTitle={task.title} />
+                            )}
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleEditTask(task)}
+                              className="shrink-0 text-muted-foreground hover:text-foreground"
+                              title="Edit task & add location"
+                            >
+                              <MapPin className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleAddToFocus(task.id)}
+                              className="shrink-0 text-muted-foreground hover:text-foreground"
+                              title="Add to Today's Focus"
+                            >
+                              <Star className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleDelete(task.id)}
+                              className="shrink-0 text-muted-foreground hover:text-destructive"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                          
+                          {/* Show feedback component for voice-created tasks */}
+                          {task.input_method === 'voice' && !task.completed && (
+                            <TaskCategoryFeedback
+                              taskId={task.id}
+                              taskTitle={task.title}
+                              currentCategory={task.category || 'inbox'}
+                              originalText={task.title}
+                            />
+                          )}
+                        </div>
+                      ))}
                    </>
                  );
                })()}
