@@ -841,414 +841,104 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
             recordStressedLanguage(transcribed);
 
             // ===========================================================
-            // REASONING ROUTER: Detect if deep reasoning is needed
+            // NEW UNIFIED VOICE PIPELINE
             // ===========================================================
-            const hour = new Date().getHours();
-            const recentTasks = tasks?.slice(-10) || [];
-            const userCurrentMood = useMoodStore.getState().mood; // Get mood for routing
-            const mode = routeReasoning(transcribed, { 
-              hour, 
-              mood: userCurrentMood,
-              recentTasks: recentTasks.map(t => t.title)
-            });
+            console.log('🚀 Running unified voice pipeline...');
+            const { data: { user } } = await supabase.auth.getUser();
             
-            console.log(`🧠 Reasoning mode detected: ${mode.toUpperCase()}`);
-
-            // If DEEP mode is detected, use long reasoning
-            if (mode === "deep") {
-              console.log('🔬 DEEP MODE: Running long reasoning...');
-              const startTime = Date.now();
-              
-              try {
-                const memoryEngine = useMemoryEngine.getState();
-                const result = await runLongReasoning(transcribed, {
-                  tasks: tasks?.filter(t => !t.completed).map(t => ({
-                    id: t.id,
-                    title: t.title,
-                    category: t.category,
-                    is_focus: t.is_focus
-                  })) || [],
-                  goals: profile?.current_goal || null,
-                  mood: userCurrentMood,
-                  memory: {
-                    writingStyle: memoryEngine.writingStyle,
-                    positiveReinforcers: memoryEngine.positiveReinforcers.slice(-10)
-                  }
-                });
-                
-                const timeTaken = Date.now() - startTime;
-                
-                // Display only the answer to the user
-                setGptResponse(result.answer);
-                console.log('💡 Deep reasoning answer:', result.answer);
-                console.log('📊 Steps taken:', result.steps.length);
-                console.log('⏱️ Time taken:', timeTaken, 'ms');
-                
-                // Save reasoning metadata to database
-                const { data: { user } } = await supabase.auth.getUser();
-                if (user) {
-                  await supabase.from('ai_reasoning_log').insert({
-                    user_id: user.id,
-                    transcript: transcribed,
-                    mode: 'deep',
-                    answer: result.answer,
-                    steps: result.steps,
-                    reasoning_metadata: {
-                      chain_of_thought: result.reasoning,
-                      steps_count: result.steps.length
-                    },
-                    time_taken_ms: timeTaken,
-                    context_snapshot: {
-                      hour,
-                      mood: userCurrentMood,
-                      task_count: tasks?.length || 0,
-                      goals: profile?.current_goal
-                    }
-                  });
-                }
-                
-                // Update conversation history
-                setConversationHistory(prev => [
-                  ...prev,
-                  { role: 'user', content: transcribed },
-                  { role: 'assistant', content: result.answer }
-                ]);
-                
-                // Save to database
-                if (user) {
-                  await supabase.from('conversation_history').insert([
-                    {
-                      user_id: user.id,
-                      session_id: sessionId,
-                      role: 'user',
-                      content: transcribed,
-                    },
-                    {
-                      user_id: user.id,
-                      session_id: sessionId,
-                      role: 'assistant',
-                      content: result.answer,
-                      audio_played: audioEnabled,
-                    }
-                  ]);
-                }
-                
-                // Play audio response
-                if (audioEnabled) {
-                  try {
-                    const { data: ttsData, error: ttsError } = await supabase.functions.invoke('text-to-speech', {
-                      body: { text: result.answer, voice: 'nova' }
-                    });
-
-                    if (!ttsError && ttsData?.audioContent) {
-                      await playAudioResponse(ttsData.audioContent);
-                    }
-                  } catch (ttsError) {
-                    console.error('TTS error:', ttsError);
-                  }
-                }
-                
-                setIsProcessing(false);
-                setShowMoodSelector(true);
-                return; // Exit early, skip fast pipeline
-                
-              } catch (error: any) {
-                console.error('Deep reasoning error:', error);
-                toast({
-                  title: "Reasoning error",
-                  description: error.message || "Failed to process deep reasoning",
-                  variant: "destructive",
-                });
-                // Fall back to fast mode on error
-              }
-            }
-            
-            // ===========================================================
-            // FAST MODE: Standard THOUGHT ENGINE 2.0 PIPELINE
-            // ===========================================================
-            console.log('⚡ FAST MODE: Using standard pipeline');
-
-            // Step 2: Split into multiple tasks
-            console.log('✂️ STEP 2: Splitting tasks...');
-            const { data: splitData, error: splitError } = await supabase.functions.invoke('split-tasks', {
-              body: { text: transcribed }
-            });
-
-            if (splitError) {
-              console.error('❌ Split tasks error:', splitError);
-            }
-
-            const taskTexts = splitData?.tasks || [transcribed];
-            console.log('✅ Split into', taskTexts.length, 'item(s)');
-
-            // Step 3: Extract tasks
-            console.log('🔍 STEP 3: Extracting tasks...');
-            const extractUserId = profile?.id; // Use profile ID to avoid redeclaring user
-            
-            const { data: extractData, error: extractError } = await supabase.functions.invoke('extract-tasks', {
+            const { data: pipelineData, error: pipelineError } = await supabase.functions.invoke('process-voice-input', {
               body: { 
                 text: transcribed,
                 userProfile: profile,
-                userId: extractUserId,
-                currentDate: new Date().toISOString()
               }
             });
 
-            if (extractError) {
-              console.error('❌ Extract tasks error:', extractError);
+            if (pipelineError) {
+              console.error('❌ Pipeline error:', pipelineError);
+              throw pipelineError;
             }
 
-            const extractedTasks = extractData?.tasks || [];
-            console.log('✅ Extracted', extractedTasks.length, 'task(s)');
-
-            // Step 4: Deep idea analysis using GPT-4-turbo
-            console.log('🧠 STEP 4: Idea analysis (GPT-4)...');
-            const { data: ideaData, error: ideaError } = await supabase.functions.invoke('idea-analyzer', {
-              body: { 
-                text: transcribed,
-                extractedTasks: extractedTasks
-              }
-            });
-
-            if (ideaError) {
-              console.error('❌ Idea analyzer error:', ideaError);
-            }
-
-            const ideaAnalysis = ideaData?.analysis || {
-              summary: '',
-              topics: [],
-              insights: [],
-              decisions: [],
-              ideas: [],
-              followups: [],
-              questions: [],
-              emotional_tone: 'neutral'
-            };
-            console.log('💡 Idea analysis:', ideaAnalysis);
-
-            // Step 5: Context mapping
-            console.log('🗺️ STEP 5: Context mapping...');
-            const contextMap = contextMapper(extractedTasks, ideaAnalysis);
-            console.log('📍 Context map:', contextMap);
-
-            // Step 6: Priority scoring
-            console.log('⭐ STEP 6: Priority scoring...');
-            const prioritizedTasks = priorityScorer(extractedTasks, ideaAnalysis, contextMap);
-            console.log('🎯 Prioritized tasks:', prioritizedTasks);
-
-            // Step 7: Agenda routing
-            console.log('📅 STEP 7: Agenda routing...');
-            const routedTasks = agendaRouter(extractedTasks, contextMap, prioritizedTasks);
-            console.log('🗓️ Routed tasks:', routedTasks);
-
-            // Step 8: Clarification prompting
-            console.log('❓ STEP 8: Clarification prompting...');
-            const clarifications = clarificationPrompter(extractedTasks, contextMap, prioritizedTasks, ideaAnalysis);
-            console.log('💬 Clarifications needed:', clarifications);
-
-            // Step 9: Summary composition
-            console.log('📝 STEP 9: Summary composition...');
-            const notebookSummary = summaryComposer(
-              extractedTasks,
-              ideaAnalysis,
-              contextMap,
-              prioritizedTasks,
-              routedTasks,
-              clarifications
-            );
-            console.log('📊 Notebook summary generated');
-            console.log('📝 Summary sections:', Object.keys(notebookSummary.sections));
-
-            // Step 10: Get user profile
-            console.log('👤 STEP 10: Getting user profile...');
-            const { data: { user: currentUser } } = await supabase.auth.getUser();
-            let userProfileData = null;
+            const { mode, tasks: extractedTasks, insights, reply_text } = pipelineData;
             
-            if (currentUser) {
-              const { data: profileData } = await supabase
-                .from('profiles')
-                .select('*')
-                .eq('id', currentUser.id)
-                .single();
-              
-              userProfileData = profileData;
+            console.log('✅ Pipeline complete:', {
+              mode,
+              taskCount: extractedTasks?.length || 0,
+              hasReply: !!reply_text
+            });
 
-              // Save structured summary to conversation history
-              // Save notebook summary to conversation history
-              await supabase.from('conversation_history').insert({
-                user_id: currentUser.id,
-                session_id: sessionId,
-                role: 'assistant_summary',
-                content: JSON.stringify({
-                  notebookMarkdown: notebookSummary.markdown,
-                  ideaAnalysis,
-                  contextMap,
-                  priorityScores: prioritizedTasks,
-                  agendaRouting: routedTasks,
-                  clarifications
-                }),
+            // Store metadata for capture session
+            if (insights?.raw_summary || insights?.intent_tags) {
+              setExtractMetadata({
+                raw_summary: insights.raw_summary || null,
+                intent_tags: insights.intent_tags || [],
               });
             }
 
-            // Step 10.5: Detect and update mood from user message
-            console.log('🎭 STEP 10.5: Detecting mood from user message...');
-            const detectedMood = detectMoodFromMessage(transcribed);
-            console.log('Detected mood:', detectedMood);
+            // ===========================================================
+            // HANDLE RESPONSE BASED ON MODE
+            // ===========================================================
             
-            // Update mood state
-            useMoodStore.getState().updateMood(detectedMood);
-            
-            // Adjust energy based on sentiment
-            const positiveWords = ['great', 'good', 'happy', 'excited', 'love', 'awesome', 'amazing', 'wonderful'];
-            const negativeWords = ['bad', 'sad', 'stressed', 'worried', 'anxious', 'overwhelmed', 'tired', 'exhausted'];
-            const msgLower = transcribed.toLowerCase();
-            
-            if (positiveWords.some(word => msgLower.includes(word))) {
-              useMoodStore.getState().increaseEnergy(5);
-              console.log('Energy increased (positive sentiment)');
-            } else if (negativeWords.some(word => msgLower.includes(word))) {
-              useMoodStore.getState().decreaseEnergy(5);
-              console.log('Energy decreased (negative sentiment)');
-            }
-            
-            // Record interaction to prevent idle state
-            useMoodStore.getState().recordInteraction();
-            
-            // Step 11: Send to chat-completion with FULL STRUCTURED CONTEXT
-            console.log('🤖 STEP 11: Chat completion with structured context...');
-            
-            const messages: Message[] = [
-              ...conversationHistory,
-              { role: 'user', content: transcribed }
-            ];
-            
-            // Get current mood for AI context
-            const { mood: currentMood } = useMoodStore.getState();
-
-            // Send full structured analysis to chat-completion
-            const fullAnalysis = {
-              notebookSummary: notebookSummary.markdown,
-              summary: ideaAnalysis.summary,
-              extractedTasks: extractedTasks.length,
-              tasks: routedTasks,
-              insights: ideaAnalysis.insights || [],
-              topics: ideaAnalysis.topics || [],
-              decisions: ideaAnalysis.decisions || [],
-              ideas: ideaAnalysis.ideas || [],
-              questions: ideaAnalysis.questions || [],
-              followups: ideaAnalysis.followups || [],
-              emotionalTone: ideaAnalysis.emotional_tone,
-              contextMap,
-              priorityScores: prioritizedTasks,
-              clarifications,
-              agenda: {
-                today: routedTasks.today.length,
-                tomorrow: routedTasks.tomorrow.length,
-                thisWeek: routedTasks.this_week.length,
-                upcoming: routedTasks.upcoming.length,
-                someday: routedTasks.someday.length,
-              }
-            };
-
-            const { data: chatData, error: chatError } = await supabase.functions.invoke('chat-completion', {
-              body: { 
-                messages,
-                userProfile: userProfileData,
-                currentMood: currentMood,
-                personalityArchetype: userProfileData?.companion_personality_type || 'zen-guide',
-                analysis: fullAnalysis
-              }
-            });
-
-            if (chatError) {
-              console.error('❌ Chat completion error:', chatError);
-              throw chatError;
-            }
-            console.log('✅ Chat completion successful');
-
-            const response = chatData.reply;
-            setGptResponse(response);
-            console.log('💬 GPT Response:', response);
-
-            // Show mood selector after response
-            setShowMoodSelector(true);
-
-            // Update conversation history and save to database
-            const { data: { user } } = await supabase.auth.getUser();
-            
-            setConversationHistory(prev => [
-              ...prev,
-              { role: 'user', content: transcribed },
-              { role: 'assistant', content: response }
-            ]);
-
-            // Save conversation to database
-            if (user) {
-              await supabase.from('conversation_history').insert([
-                {
-                  user_id: user.id,
-                  session_id: sessionId,
-                  role: 'user',
-                  content: transcribed,
-                },
-                {
-                  user_id: user.id,
-                  session_id: sessionId,
-                  role: 'assistant',
-                  content: response,
-                  audio_played: audioEnabled,
-                }
-              ]);
-            }
-
-            // Step 3: Convert to speech and play
-            console.log('🔊 STEP 3: Text-to-Speech');
-            console.log('Audio enabled:', audioEnabled);
-            if (audioEnabled) {
-              console.log('🎵 Generating speech for response:', response);
-              try {
-                const { data: ttsData, error: ttsError } = await supabase.functions.invoke('text-to-speech', {
-                  body: { text: response, voice: 'nova' }
-                });
-
-                console.log('TTS response received:', { hasData: !!ttsData, hasError: !!ttsError });
-
-                if (ttsError) {
-                  console.error('TTS Error:', ttsError);
-                  throw ttsError;
-                }
-
-                if (!ttsData?.audioContent) {
-                  console.error('No audio content in TTS response');
-                  throw new Error('No audio content received from TTS');
-                }
-
-                console.log('🔊 Playing audio response...');
-                await playAudioResponse(ttsData.audioContent);
-                console.log('✅ Audio playback complete');
-              } catch (ttsError: any) {
-                console.error('TTS processing failed:', ttsError);
-                toast({
-                  title: "Audio generation failed",
-                  description: ttsError.message || "Could not generate audio response",
-                  variant: "destructive",
-                });
-              }
+            if (mode === 'add_tasks' && extractedTasks && extractedTasks.length > 0) {
+              // Show task confirmation dialog
+              setPendingTasks(extractedTasks);
+              setOriginalVoiceText(transcribed);
+              setShowConfirmation(true);
+              setGptResponse(reply_text || `Found ${extractedTasks.length} task${extractedTasks.length > 1 ? 's' : ''}`);
             } else {
-              console.log('🔇 Audio playback disabled by user settings');
-              console.log('Profile wants_voice_playback:', profile?.wants_voice_playback);
+              // For all other modes, show the AI's reply
+              setGptResponse(reply_text);
+              
+              // Play audio response if enabled
+              if (audioEnabled && reply_text) {
+                try {
+                  const { data: ttsData, error: ttsError } = await supabase.functions.invoke('text-to-speech', {
+                    body: { text: reply_text, voice: 'nova' }
+                  });
+
+                  if (!ttsError && ttsData?.audioContent) {
+                    await playAudioResponse(ttsData.audioContent);
+                  }
+                } catch (ttsError) {
+                  console.error('TTS error:', ttsError);
+                }
+              }
+              
+              // Update conversation history
+              setConversationHistory(prev => [
+                ...prev,
+                { role: 'user', content: transcribed },
+                { role: 'assistant', content: reply_text }
+              ]);
+              
+              // Save to database
+              if (user) {
+                await supabase.from('conversation_history').insert([
+                  {
+                    user_id: user.id,
+                    session_id: sessionId,
+                    role: 'user',
+                    content: transcribed,
+                  },
+                  {
+                    user_id: user.id,
+                    session_id: sessionId,
+                    role: 'assistant',
+                    content: reply_text,
+                    audio_played: audioEnabled,
+                  }
+                ]);
+              }
+              
+              // Show mood selector for feedback
+              setShowMoodSelector(true);
             }
-
+            
             setIsProcessing(false);
-
-            // Step 4: Automatically save tasks
-            await autoSaveTasks(transcribed, response, user);
-
-          } catch (error) {
-            console.error('Voice loop error:', error);
+          } catch (error: any) {
+            console.error('Error processing voice input:', error);
             toast({
               title: "Error",
-              description: error.message || "Failed to process voice input",
+              description: error.message || "Failed to process input",
               variant: "destructive",
             });
             setIsProcessing(false);
