@@ -22,12 +22,12 @@ serve(async (req) => {
     }
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
-    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
-    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-      global: { headers: { Authorization: authHeader } }
-    });
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    const { data: { user }, error: userError } = await supabase.auth.getUser(
+      authHeader.replace('Bearer ', '')
+    );
     if (userError || !user) {
       return new Response(
         JSON.stringify({ error: 'Invalid authentication' }),
@@ -35,94 +35,161 @@ serve(async (req) => {
       );
     }
 
-    const { tasks } = await req.json();
+    console.log(`Fetching inbox tasks for user: ${user.id}`);
 
-    if (!tasks || !Array.isArray(tasks)) {
+    // Fetch inbox tasks
+    const { data: inboxTasks, error: tasksError } = await supabase
+      .from('tasks')
+      .select('*')
+      .eq('user_id', user.id)
+      .eq('completed', false)
+      .or('category.eq.inbox,category.is.null')
+      .order('created_at', { ascending: false });
+
+    if (tasksError) {
+      console.error('Error fetching tasks:', tasksError);
+      throw new Error('Failed to fetch inbox tasks');
+    }
+
+    if (!inboxTasks || inboxTasks.length === 0) {
       return new Response(
-        JSON.stringify({ error: 'Invalid tasks input' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({
+          grouped_tasks: [],
+          quick_wins: [],
+          archive_suggestions: [],
+          questions: []
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
-    if (!openaiApiKey) {
-      throw new Error('OPENAI_API_KEY not configured');
+    console.log(`Analyzing ${inboxTasks.length} inbox tasks...`);
+
+    // Step 1: Call idea-analyzer to understand themes and context
+    const { data: ideaAnalysis, error: ideaError } = await supabase.functions.invoke(
+      'idea-analyzer',
+      {
+        body: {
+          text: inboxTasks.map(t => t.title).join('\n'),
+          user_id: user.id
+        }
+      }
+    );
+
+    if (ideaError) {
+      console.error('idea-analyzer error:', ideaError);
     }
 
-    // Build prompt for intelligent grouping
-    const systemPrompt = `You are Malunita's inbox cleanup assistant. Analyze these inbox tasks and help the user batch-process them efficiently.
+    // Step 2: Call categorize-task to help with grouping
+    const taskContexts = await Promise.all(
+      inboxTasks.slice(0, 20).map(async (task) => {
+        const { data } = await supabase.functions.invoke('categorize-task', {
+          body: { task_title: task.title, user_id: user.id }
+        });
+        return { task_id: task.id, category: data?.category, context: data?.context };
+      })
+    );
 
-Your job:
-1. Group similar tasks together (e.g., all errands, all emails, all planning tasks)
-2. Identify quick wins (tasks that take < 5 minutes)
-3. Suggest tasks that seem outdated or could be archived
-4. Ask clarifying questions for ambiguous tasks
+    // Step 3: Detect tiny tasks
+    const tinyTaskResults = await Promise.all(
+      inboxTasks.slice(0, 20).map(async (task) => {
+        const { data } = await supabase.functions.invoke('classify-tiny-task', {
+          body: { task_title: task.title, user_id: user.id }
+        });
+        return { task_id: task.id, is_tiny: data?.is_tiny, estimated_minutes: data?.estimated_minutes };
+      })
+    );
 
-Return JSON in this format:
-{
-  "grouped_tasks": [
-    {
-      "group_title": "Short descriptive title",
-      "reason": "Why these tasks are grouped together",
-      "task_ids": ["id1", "id2"]
-    }
-  ],
-  "quick_wins": [
-    {
-      "task_id": "id",
-      "reason": "Why this is a quick win"
-    }
-  ],
-  "archive_suggestions": [
-    {
-      "task_id": "id",
-      "reason": "Why this could be archived (outdated, no longer relevant, etc.)"
-    }
-  ],
-  "questions": [
-    {
-      "task_id": "id",
-      "question": "Clarifying question about this task"
-    }
-  ]
-}`;
+    // Build analysis using existing AI outputs
+    const grouped_tasks: Array<{
+      group_title: string;
+      reason: string;
+      task_ids: string[];
+    }> = [];
+    
+    const quick_wins: Array<{
+      task_id: string;
+      reason: string;
+    }> = [];
+    
+    const archive_suggestions: Array<{
+      task_id: string;
+      reason: string;
+    }> = [];
+    
+    const questions: Array<{
+      task_id: string;
+      question: string;
+    }> = [];
 
-    const taskList = tasks.map((t: any) => 
-      `ID: ${t.id}\nTitle: ${t.title}\nCreated: ${t.created_at}\nCategory: ${t.category || 'inbox'}`
-    ).join('\n\n');
-
-    console.log(`Analyzing ${tasks.length} inbox tasks...`);
-
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${openaiApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: `Analyze these inbox tasks:\n\n${taskList}` }
-        ],
-        temperature: 0.3,
-        response_format: { type: "json_object" }
-      }),
+    // Group by category from categorize-task
+    const categoryGroups = new Map<string, string[]>();
+    taskContexts.forEach(tc => {
+      const cat = tc.category || 'uncategorized';
+      if (!categoryGroups.has(cat)) {
+        categoryGroups.set(cat, []);
+      }
+      categoryGroups.get(cat)?.push(tc.task_id);
     });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('OpenAI API error:', response.status, errorText);
-      throw new Error(`OpenAI API error: ${response.status}`);
-    }
+    categoryGroups.forEach((task_ids, category) => {
+      if (task_ids.length > 1 && category !== 'uncategorized') {
+        grouped_tasks.push({
+          group_title: `${category.charAt(0).toUpperCase() + category.slice(1)} Tasks`,
+          reason: `All related to ${category}`,
+          task_ids
+        });
+      }
+    });
 
-    const data = await response.json();
-    const result = JSON.parse(data.choices[0].message.content);
+    // Identify quick wins from tiny task detection
+    tinyTaskResults.forEach(ttr => {
+      if (ttr.is_tiny && ttr.estimated_minutes && ttr.estimated_minutes < 5) {
+        quick_wins.push({
+          task_id: ttr.task_id,
+          reason: `Estimated ${ttr.estimated_minutes} minutes`
+        });
+      }
+    });
+
+    // Suggest archiving old tasks (>30 days old)
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    
+    inboxTasks.forEach(task => {
+      const createdDate = new Date(task.created_at);
+      if (createdDate < thirtyDaysAgo) {
+        archive_suggestions.push({
+          task_id: task.id,
+          reason: 'Created over 30 days ago and still in inbox'
+        });
+      }
+    });
+
+    // Add questions for ambiguous tasks
+    const uncategorizedTasks = taskContexts.filter(tc => 
+      tc.category === 'uncategorized' || !tc.category
+    ).slice(0, 3);
+
+    uncategorizedTasks.forEach(ut => {
+      const task = inboxTasks.find(t => t.id === ut.task_id);
+      if (task) {
+        questions.push({
+          task_id: ut.task_id,
+          question: `Is "${task.title}" still relevant? What category does it belong to?`
+        });
+      }
+    });
 
     console.log('Inbox cleanup analysis complete');
 
     return new Response(
-      JSON.stringify(result),
+      JSON.stringify({
+        grouped_tasks,
+        quick_wins,
+        archive_suggestions,
+        questions
+      }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 

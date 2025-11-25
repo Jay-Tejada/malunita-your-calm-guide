@@ -1,13 +1,19 @@
 import { motion } from 'framer-motion';
 import { Clock } from 'lucide-react';
-import { TimeBlock } from '@/hooks/useTimeBlocker';
 
-interface TimeBlockListProps {
+interface TimeBlock {
+  start_time: string;
+  end_time: string;
+  label: string;
+  tasks: { id: string; title: string }[];
+}
+
+interface TimeBlockPanelProps {
   blocks: TimeBlock[];
   onTaskClick?: (taskId: string) => void;
 }
 
-export const TimeBlockList = ({ blocks, onTaskClick }: TimeBlockListProps) => {
+export const TimeBlockPanel = ({ blocks, onTaskClick }: TimeBlockPanelProps) => {
   if (blocks.length === 0) {
     return null;
   }
@@ -16,13 +22,15 @@ export const TimeBlockList = ({ blocks, onTaskClick }: TimeBlockListProps) => {
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="space-y-2"
+      className="w-full max-w-md mx-auto px-4 space-y-3"
     >
-      <div className="flex items-center gap-2 mb-4">
+      {/* Header */}
+      <div className="flex items-center gap-2">
         <Clock className="w-4 h-4 text-muted-foreground" />
         <h3 className="text-sm font-medium text-foreground">Today's Flow</h3>
       </div>
       
+      {/* Time blocks list */}
       <div className="space-y-1">
         {blocks.map((block, index) => (
           <motion.div
@@ -33,6 +41,7 @@ export const TimeBlockList = ({ blocks, onTaskClick }: TimeBlockListProps) => {
             className="group p-3 rounded-lg bg-secondary/50 hover:bg-secondary/80 transition-colors cursor-pointer"
             onClick={() => block.tasks[0] && onTaskClick?.(block.tasks[0].id)}
           >
+            {/* Time and label */}
             <div className="flex items-baseline gap-2 mb-1">
               <span className="text-xs font-mono text-muted-foreground">
                 {block.start_time}–{block.end_time}
@@ -42,6 +51,7 @@ export const TimeBlockList = ({ blocks, onTaskClick }: TimeBlockListProps) => {
               </span>
             </div>
             
+            {/* Task list */}
             {block.tasks.length > 0 && (
               <div className="space-y-0.5">
                 {block.tasks.map((task) => (
