@@ -16,7 +16,9 @@ import { cn } from "@/lib/utils";
 import { useTasks } from "@/hooks/useTasks";
 import { useToast } from "@/hooks/use-toast";
 import { MapboxLocationPicker } from "@/components/MapboxLocationPicker";
+import { MapFullScreen } from "@/components/MapFullScreen";
 import { useMapboxToken } from "@/hooks/useMapboxToken";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 interface CalendarEvent {
   id: string;
@@ -49,8 +51,23 @@ const Calendar = () => {
   const [recurrenceDay, setRecurrenceDay] = useState<number>(0);
   const [recurrenceEndDate, setRecurrenceEndDate] = useState("");
   const [isLocationPickerOpen, setIsLocationPickerOpen] = useState(false);
+  const [viewingLocation, setViewingLocation] = useState<{ address: string; lat: number; lng: number } | null>(null);
   const { tasks, isLoading, updateTask, createTasks, deleteTask } = useTasks();
   const { token: mapboxToken } = useMapboxToken();
+
+  const handleOpenLocation = (lat: number, lng: number, address: string) => {
+    const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
+    const appleMapsUrl = `http://maps.apple.com/?q=${lat},${lng}`;
+    const wazeUrl = `https://waze.com/ul?ll=${lat},${lng}&navigate=yes`;
+    const uberUrl = `https://m.uber.com/ul/?action=setPickup&pickup=my_location&dropoff[latitude]=${lat}&dropoff[longitude]=${lng}`;
+
+    return {
+      googleMaps: googleMapsUrl,
+      appleMaps: appleMapsUrl,
+      waze: wazeUrl,
+      uber: uberUrl,
+    };
+  };
   
   // Convert tasks with reminder times to calendar events
   const events = useMemo(() => {
@@ -439,6 +456,91 @@ const Calendar = () => {
                               <span>{event.location}</span>
                             </div>
                           )}
+                          {(() => {
+                            const task = tasks?.find(t => t.id === event.taskId);
+                            if (task?.location_address && task?.location_lat && task?.location_lng) {
+                              const urls = handleOpenLocation(task.location_lat, task.location_lng, task.location_address);
+                              return (
+                                <Popover>
+                                  <PopoverTrigger asChild>
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        hapticLight();
+                                      }}
+                                      className="flex items-center gap-2 text-primary hover:underline text-sm"
+                                    >
+                                      <MapPin className="w-4 h-4" />
+                                      <span>{task.location_address}</span>
+                                    </button>
+                                  </PopoverTrigger>
+                                  <PopoverContent className="w-56 p-2" align="start">
+                                    <div className="space-y-1">
+                                      <p className="font-mono text-xs text-muted-foreground px-2 py-1">
+                                        Open in...
+                                      </p>
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          hapticLight();
+                                          window.open(urls.googleMaps, '_blank');
+                                        }}
+                                        className="w-full text-left px-2 py-1.5 text-sm hover:bg-accent rounded-md"
+                                      >
+                                        🗺️ Google Maps
+                                      </button>
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          hapticLight();
+                                          window.open(urls.appleMaps, '_blank');
+                                        }}
+                                        className="w-full text-left px-2 py-1.5 text-sm hover:bg-accent rounded-md"
+                                      >
+                                        🍎 Apple Maps
+                                      </button>
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          hapticLight();
+                                          window.open(urls.waze, '_blank');
+                                        }}
+                                        className="w-full text-left px-2 py-1.5 text-sm hover:bg-accent rounded-md"
+                                      >
+                                        🚗 Waze
+                                      </button>
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          hapticLight();
+                                          window.open(urls.uber, '_blank');
+                                        }}
+                                        className="w-full text-left px-2 py-1.5 text-sm hover:bg-accent rounded-md"
+                                      >
+                                        🚕 Uber
+                                      </button>
+                                      <div className="border-t border-border my-1" />
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          hapticLight();
+                                          setViewingLocation({
+                                            address: task.location_address!,
+                                            lat: task.location_lat!,
+                                            lng: task.location_lng!,
+                                          });
+                                        }}
+                                        className="w-full text-left px-2 py-1.5 text-sm hover:bg-accent rounded-md"
+                                      >
+                                        👁️ Preview on map
+                                      </button>
+                                    </div>
+                                  </PopoverContent>
+                                </Popover>
+                              );
+                            }
+                            return null;
+                          })()}
                           {event.description && (
                             <p className="text-xs mt-1 text-muted-foreground/80">
                               {event.description}
@@ -784,6 +886,18 @@ const Calendar = () => {
           hapticSuccess();
         }}
       />
+
+      {/* Location Viewer */}
+      {viewingLocation && (
+        <MapFullScreen
+          open={!!viewingLocation}
+          onOpenChange={(open) => !open && setViewingLocation(null)}
+          lat={viewingLocation.lat}
+          lng={viewingLocation.lng}
+          address={viewingLocation.address}
+          accessToken={mapboxToken}
+        />
+      )}
     </div>
   );
 };
