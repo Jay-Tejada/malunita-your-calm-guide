@@ -3,6 +3,7 @@ import { cn } from "@/lib/utils";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { getClusterDomain } from "@/lib/knowledgeClusters";
 import { useEffect, useRef } from "react";
 
 interface TaskCardProps {
@@ -19,9 +20,13 @@ interface TaskCardProps {
   goalAligned?: boolean | null;
   alignmentReason?: string | null;
   priority?: number | null;
+  cluster?: {
+    domain?: string | null;
+    label?: string | null;
+  } | null;
 }
 
-export const TaskCard = ({ id, title, time, context, completed, selected, onToggle, onEdit, onSelect, onLongPress, goalAligned, alignmentReason, priority }: TaskCardProps) => {
+export const TaskCard = ({ id, title, time, context, completed, selected, onToggle, onEdit, onSelect, onLongPress, goalAligned, alignmentReason, priority, cluster }: TaskCardProps) => {
   const {
     attributes,
     listeners,
@@ -67,6 +72,8 @@ export const TaskCard = ({ id, title, time, context, completed, selected, onTogg
       }
     };
   }, []);
+
+  const clusterDomain = getClusterDomain(cluster?.domain);
 
   return (
     <div
@@ -142,6 +149,16 @@ export const TaskCard = ({ id, title, time, context, completed, selected, onTogg
             style={{ fontSize: '10px' }}
           >
             {priority >= 0.85 ? '🔥 Must' : priority >= 0.60 ? '⬆ Should' : '→ Could'}
+          </div>
+        )}
+        {cluster?.domain && (
+          <div className="mt-1">
+            <span 
+              className="inline-block rounded-full px-2 py-0.5 bg-neutral-100 text-neutral-500 font-mono"
+              style={{ fontSize: '10px' }}
+            >
+              {cluster.label || clusterDomain.label}
+            </span>
           </div>
         )}
         {(time || context) && (
