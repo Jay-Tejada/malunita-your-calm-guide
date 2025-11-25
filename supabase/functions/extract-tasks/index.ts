@@ -203,8 +203,16 @@ ${userProfile?.current_goal ? `Goal Alignment Evaluation:
 ${userProfile?.peak_activity_time ? `User's peak activity time: ${userProfile.peak_activity_time}` : ''}
 ${userProfile?.common_prefixes?.length > 0 ? `User often uses these prefixes: ${userProfile.common_prefixes.join(', ')}` : ''}${learningInsights}
 
+Capture Meta (for tracking rambles → structured inbox):
+- Create a brief raw_summary (1-2 sentences) of what the user was talking about
+- Detect intent_tags: array of ["work", "family", "finance", "health", "creative", etc.] based on the content
+- Set inbox_bucket: always "today_inbox" for now
+
 Return valid JSON in this exact format:
 {
+  "raw_summary": "Brief 1-2 sentence summary of the ramble",
+  "intent_tags": ["work", "planning"],
+  "inbox_bucket": "today_inbox",
   "tasks": [
     {
       "title": "Clear task title",

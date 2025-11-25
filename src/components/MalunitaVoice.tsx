@@ -28,6 +28,7 @@ import { useRelatedTaskSuggestions } from "@/hooks/useRelatedTaskSuggestions";
 import { useMemoryEngine } from "@/state/memoryEngine";
 import { routeReasoning } from "@/ai/reasoningRouter";
 import { runLongReasoning } from "@/ai/longReasoningEngine";
+import { useCaptureSessions } from "@/hooks/useCaptureSessions";
 
 interface Message {
   role: 'user' | 'assistant';
@@ -44,6 +45,8 @@ interface SuggestedTask {
   reminder_time?: string | null;
   goal_aligned?: boolean;
   alignment_reason?: string;
+  hidden_intent?: string | null;
+  ai_metadata?: any;
 }
 
 interface MalunitaVoiceProps {
@@ -118,6 +121,13 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
   const { checkForRelatedTasks } = useRelatedTaskSuggestions();
   const audioEnabled = profile?.wants_voice_playback ?? true;
   const isMobile = useIsMobile();
+  const { createSession } = useCaptureSessions();
+  
+  // Store extract-tasks metadata for capture session
+  const [extractMetadata, setExtractMetadata] = useState<{
+    raw_summary: string | null;
+    intent_tags: string[];
+  }>({ raw_summary: null, intent_tags: [] });
 
   // Notify parent of recording state changes
   useEffect(() => {
@@ -741,6 +751,14 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
                   });
 
                   if (extractError) throw extractError;
+
+                  // Store metadata for later capture session creation
+                  if (extractData.raw_summary || extractData.intent_tags) {
+                    setExtractMetadata({
+                      raw_summary: extractData.raw_summary || null,
+                      intent_tags: extractData.intent_tags || [],
+                    });
+                  }
 
                   if (extractData.tasks && extractData.tasks.length > 0) {
                     setPendingTasks(extractData.tasks);
@@ -1374,6 +1392,20 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
       }));
 
       const createdTasks = await createTasks(tasksToCreate);
+      
+      // Save capture session with task metadata
+      if (user && createdTasks && createdTasks.length > 0) {
+        const taskIds = createdTasks.map(t => t.id);
+        createSession({
+          raw_text: originalVoiceText,
+          summary: extractMetadata.raw_summary,
+          task_ids: taskIds,
+          intent_tags: extractMetadata.intent_tags,
+        });
+        
+        // Reset metadata
+        setExtractMetadata({ raw_summary: null, intent_tags: [] });
+      }
       
       // Store feedback for each task comparing AI suggestions vs user choices
       if (user && createdTasks) {

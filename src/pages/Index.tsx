@@ -24,6 +24,9 @@ import { AutoFocusNotification } from "@/components/AutoFocusNotification";
 import { CompanionContextMessage } from "@/components/CompanionContextMessage";
 import { fetchDailyPlan, DailyPlan } from "@/lib/ai/fetchDailyPlan";
 import { fetchDailyAlerts, DailyAlerts } from "@/lib/ai/fetchDailyAlerts";
+import { useCaptureSessions } from "@/hooks/useCaptureSessions";
+import { LastCapturePreview } from "@/components/LastCapturePreview";
+import { CaptureHistoryModal } from "@/components/CaptureHistoryModal";
 
 interface AISummary {
   decisions: string[];
@@ -99,6 +102,8 @@ const Index = () => {
   const { showReminder: showMidDayReminder, focusTask: midDayFocusTask, dismissReminder } = useMidDayFocusReminder();
   const { showWrapUp, completed: wrapUpCompleted } = useEndOfDayWrapUp();
   const { updateTask } = useTasks();
+  const { sessions, lastSession } = useCaptureSessions();
+  const [showCaptureHistory, setShowCaptureHistory] = useState(false);
   
   // Initialize prediction system (runs silently in background)
   usePrimaryFocusPrediction();
@@ -366,10 +371,31 @@ const Index = () => {
             onAIPlanUpdate={setAiPlan}
             onAIAlertsUpdate={setAiAlerts}
           />
+          
+          {/* Last capture preview - lightweight UI below orb */}
+          {lastSession && (
+            <div className="mt-6">
+              <LastCapturePreview 
+                session={lastSession} 
+                onClick={() => setShowCaptureHistory(true)}
+              />
+            </div>
+          )}
         </HomeCanvas>
       </HomeShell>
       
-      <MalunitaVoice 
+      {/* Capture history modal */}
+      <CaptureHistoryModal
+        open={showCaptureHistory}
+        onOpenChange={setShowCaptureHistory}
+        sessions={sessions || []}
+        onSessionClick={(session) => {
+          // Could add logic to highlight related tasks in the task list
+          console.log('Session clicked:', session);
+        }}
+      />
+      
+      <MalunitaVoice
         ref={voiceRef} 
         onRecordingStateChange={setIsRecording}
         onStatusChange={setVoiceStatus}
