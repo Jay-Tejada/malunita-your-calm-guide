@@ -1246,6 +1246,7 @@ export type Database = {
           location_lat: number | null
           location_lng: number | null
           parent_task_id: string | null
+          plan_id: string | null
           primary_focus_alignment: string | null
           recurrence_day: number | null
           recurrence_end_date: string | null
@@ -1285,6 +1286,7 @@ export type Database = {
           location_lat?: number | null
           location_lng?: number | null
           parent_task_id?: string | null
+          plan_id?: string | null
           primary_focus_alignment?: string | null
           recurrence_day?: number | null
           recurrence_end_date?: string | null
@@ -1324,6 +1326,7 @@ export type Database = {
           location_lat?: number | null
           location_lng?: number | null
           parent_task_id?: string | null
+          plan_id?: string | null
           primary_focus_alignment?: string | null
           recurrence_day?: number | null
           recurrence_end_date?: string | null
@@ -1352,6 +1355,13 @@ export type Database = {
           {
             foreignKeyName: "tasks_parent_task_id_fkey"
             columns: ["parent_task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_plan_id_fkey"
+            columns: ["plan_id"]
             isOneToOne: false
             referencedRelation: "tasks"
             referencedColumns: ["id"]
