@@ -10,6 +10,11 @@ export interface Task {
   project: string | null;
   people: string[];
   contextMarkers: string[];
+  // Virtual flags (computed, not stored)
+  task_type?: 'admin' | 'communication' | 'errand' | 'focus' | 'physical' | 'creative' | 'delivery' | 'follow_up';
+  tiny_task?: boolean;
+  heavy_task?: boolean;
+  emotional_weight?: number;
 }
 
 export interface UserContext {
