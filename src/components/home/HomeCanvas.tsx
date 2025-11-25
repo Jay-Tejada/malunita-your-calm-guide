@@ -9,7 +9,7 @@ import { useCompanionEvents } from "@/hooks/useCompanionEvents";
 import { Button } from "@/components/ui/button";
 import { Clock } from "lucide-react";
 import { useTimeBlocker } from "@/hooks/useTimeBlocker";
-import { TimeBlockList } from "@/components/TimeBlockList";
+import { TimeBlockPanel } from "@/components/timeblocking/TimeBlockPanel";
 
 interface HomeCanvasProps {
   children?: React.ReactNode;
@@ -143,10 +143,10 @@ export function HomeCanvas({ children, onOneThingClick, taskCreatedTrigger }: Ho
           </div>
         )}
 
-        {/* Time Blocks List */}
+        {/* Time Blocks Panel */}
         {showTimeBlocks && blocks.length > 0 && (
-          <div className="mt-6 w-full max-w-md px-4">
-            <TimeBlockList 
+          <div className="mt-6">
+            <TimeBlockPanel 
               blocks={blocks}
               onTaskClick={(taskId) => {
                 const taskElement = document.querySelector(`[data-task-id="${taskId}"]`);
