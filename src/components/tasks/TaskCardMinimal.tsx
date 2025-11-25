@@ -6,6 +6,7 @@ import { useTaskStreak } from "@/hooks/useTaskStreak";
 import { Check, Sparkles, Zap, Settings, Split, CalendarPlus } from "lucide-react";
 import { TaskLearningDialog } from "../TaskLearningDialog";
 import { TaskCorrectionPanel } from "./TaskCorrectionPanel";
+import { TaskActionSheet } from "./TaskActionSheet";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -378,6 +379,14 @@ export function TaskCardMinimal({ task, fullTask, isPrimaryFocus }: TaskCardMini
           >
             <Sparkles size={16} />
           </button>
+          
+          {/* Action Sheet Menu */}
+          <TaskActionSheet
+            task={fullTask}
+            onUpdate={() => window.location.reload()}
+            onDelete={() => window.location.reload()}
+            onBreakDown={isBigTask ? handleBreakDown : undefined}
+          />
         </div>
       )}
     </div>
