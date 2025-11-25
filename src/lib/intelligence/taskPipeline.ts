@@ -12,6 +12,7 @@ interface TaskIntelligence {
   routing: any;
   cluster: string | null;
   isTiny: boolean;
+  followUp?: string;
 }
 
 /**
@@ -82,6 +83,13 @@ export async function runTaskPipeline(
   const tinyClassification = classifyTask(task as any);
   const isTiny = tinyClassification.isTiny || extractedTaskText.split(/\s+/).length <= 4;
 
+  // Step 6: Generate automatic follow-up if person name detected
+  let followUp: string | undefined;
+  if (mappedContext?.people_mentions && mappedContext.people_mentions.length > 0) {
+    const personName = mappedContext.people_mentions[0];
+    followUp = `Follow up with ${personName} about this.`;
+  }
+
   // Return unified intelligence object
   return {
     original: extractedTaskText,
@@ -90,5 +98,6 @@ export async function runTaskPipeline(
     routing,
     cluster: clusterLabel,
     isTiny,
+    followUp,
   };
 }
