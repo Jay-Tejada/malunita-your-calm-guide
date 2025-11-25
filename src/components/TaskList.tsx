@@ -399,6 +399,7 @@ export const TaskList = ({ category: externalCategory }: TaskListProps = {}) => 
                       onEdit={() => handleEditTask(task)}
                       goalAligned={task.goal_aligned}
                       alignmentReason={task.alignment_reason}
+                      priority={task.future_priority_score}
                     />
                     <Button
                       variant="ghost"
@@ -454,6 +455,7 @@ export const TaskList = ({ category: externalCategory }: TaskListProps = {}) => 
               completed={activeTask.completed || false}
               goalAligned={activeTask.goal_aligned}
               alignmentReason={activeTask.alignment_reason}
+              priority={activeTask.future_priority_score}
             />
           </div>
         ) : null}

@@ -75,6 +75,7 @@ export const DailyPriorityPrompt = forwardRef<DailyPriorityPromptRef, DailyPrior
         category: 'primary_focus',
         priority: enriched.priority?.priority,
         effort: enriched.priority?.effort,
+        future_priority_score: enriched.priority?.score,
         context: enriched.context?.taskContext?.[0]?.contextSummary || 'Daily primary focus task',
         scheduled_bucket: enriched.routing?.taskRouting?.[0]?.bucket,
         is_tiny: enriched.isTiny,

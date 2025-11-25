@@ -41,6 +41,7 @@ export function QuickWins({ data, onTaskCreated }: QuickWinsProps) {
         category: enriched.priority?.priority === 'MUST' ? 'primary_focus' : 'quick_win',
         priority: enriched.priority?.priority,
         effort: enriched.priority?.effort,
+        future_priority_score: enriched.priority?.score,
         context: enriched.context?.taskContext?.[0]?.contextSummary,
         scheduled_bucket: enriched.routing?.taskRouting?.[0]?.bucket,
         is_tiny: enriched.isTiny,

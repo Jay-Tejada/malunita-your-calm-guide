@@ -18,9 +18,10 @@ interface TaskCardProps {
   onLongPress?: () => void;
   goalAligned?: boolean | null;
   alignmentReason?: string | null;
+  priority?: number | null;
 }
 
-export const TaskCard = ({ id, title, time, context, completed, selected, onToggle, onEdit, onSelect, onLongPress, goalAligned, alignmentReason }: TaskCardProps) => {
+export const TaskCard = ({ id, title, time, context, completed, selected, onToggle, onEdit, onSelect, onLongPress, goalAligned, alignmentReason, priority }: TaskCardProps) => {
   const {
     attributes,
     listeners,
@@ -135,6 +136,14 @@ export const TaskCard = ({ id, title, time, context, completed, selected, onTogg
             </TooltipProvider>
           )}
         </div>
+        {priority !== null && priority !== undefined && (
+          <div 
+            className="font-mono opacity-50 mt-0.5" 
+            style={{ fontSize: '10px' }}
+          >
+            {priority >= 0.85 ? '🔥 Must' : priority >= 0.60 ? '⬆ Should' : '→ Could'}
+          </div>
+        )}
         {(time || context) && (
           <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
             {time && (
