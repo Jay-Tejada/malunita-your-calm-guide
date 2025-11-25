@@ -64,11 +64,10 @@ export function HomeCanvas({ children, onOneThingClick }: HomeCanvasProps) {
             <OneThingPrompt
               questionText={
                 data?.primary_focus || 
-                data?.headline || 
                 "What is the ONE task that would make today a success?"
               }
               onClick={handlePromptClick}
-              subtle={!data?.primary_focus && !data?.headline}
+              subtle={!data?.primary_focus}
             />
           </div>
         )}
