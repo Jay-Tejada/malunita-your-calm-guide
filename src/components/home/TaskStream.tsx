@@ -1,14 +1,29 @@
+import { useState } from "react";
 import { useTasks, Task } from "@/hooks/useTasks";
 import { priorityScorer } from "@/lib/priorityScorer";
 import { contextMapper } from "@/lib/contextMapper";
 import { agendaRouter } from "@/lib/agendaRouter";
 import { TaskCardMinimal } from "../tasks/TaskCardMinimal";
+import { useTaskStorylines } from "@/hooks/useTaskStorylines";
+import { TaskStorylinesPanel } from "../storylines/TaskStorylinesPanel";
 
 export function TaskStream() {
   const { tasks, isLoading } = useTasks();
+  const { storylines, loading: storylinesLoading } = useTaskStorylines();
+  const [selectedStorylineId, setSelectedStorylineId] = useState<string | null>(null);
 
   // Filter incomplete tasks
-  const incompleteTasks = tasks?.filter(t => !t.completed) || [];
+  let incompleteTasks = tasks?.filter(t => !t.completed) || [];
+  
+  // Filter by selected storyline if any
+  if (selectedStorylineId) {
+    const selectedStoryline = storylines.find(s => s.id === selectedStorylineId);
+    if (selectedStoryline && selectedStoryline.allTaskIds) {
+      incompleteTasks = incompleteTasks.filter(t => 
+        selectedStoryline.allTaskIds!.includes(t.id)
+      );
+    }
+  }
 
   // Build the pipeline
   const extractedTasks = incompleteTasks.map(t => ({
@@ -88,6 +103,14 @@ export function TaskStream() {
 
   return (
     <div className="w-full space-y-8 pt-6">
+      {/* Task Storylines Panel */}
+      <TaskStorylinesPanel 
+        storylines={storylines}
+        loading={storylinesLoading}
+        onStorylineSelect={setSelectedStorylineId}
+        selectedStorylineId={selectedStorylineId}
+      />
+      
       {/* Today Section */}
       {sortedToday.length > 0 && (
         <div className="space-y-3">
