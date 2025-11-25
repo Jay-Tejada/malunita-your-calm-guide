@@ -46,6 +46,7 @@ export interface Task {
   effort?: 'tiny' | 'small' | 'medium' | 'large';
   scheduled_bucket?: 'today' | 'tomorrow' | 'this_week' | 'upcoming' | 'someday';
   is_tiny?: boolean;
+  future_priority_score?: number | null;
   idea_metadata?: any;
 }
 
