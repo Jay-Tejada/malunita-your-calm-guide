@@ -1,5 +1,9 @@
 import { Card } from "@/components/ui/card";
-import { Lightbulb, Target, Zap } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Lightbulb, Target, Zap, Map } from "lucide-react";
+import { useTaskPlan } from "@/hooks/useTaskPlan";
+import { TaskPlanPanel } from "@/components/planning/TaskPlanPanel";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 interface DailyIntelligenceProps {
   summary?: string | null;
@@ -9,13 +13,26 @@ interface DailyIntelligenceProps {
 }
 
 export function DailyIntelligence({ summary, quickWins, focusMessage, oneThing }: DailyIntelligenceProps) {
+  const { isLoading, isPanelOpen, currentQuest, buildFullQuest, closePanel } = useTaskPlan();
+
   // Render nothing if no data
   if (!summary && (!quickWins || quickWins.length === 0) && !focusMessage && !oneThing) {
     return null;
   }
 
   return (
-    <Card className="p-6 space-y-6">
+    <>
+      <Card className="p-6 space-y-6">
+        {/* Build Plan Button */}
+        <Button
+          onClick={buildFullQuest}
+          disabled={isLoading}
+          className="w-full"
+          variant="outline"
+        >
+          <Map className="w-4 h-4 mr-2" />
+          {isLoading ? "Building your plan..." : "🧩 Build My Plan"}
+        </Button>
       {/* ONE Thing Section */}
       {oneThing && (
         <div className="space-y-2">
@@ -77,6 +94,26 @@ export function DailyIntelligence({ summary, quickWins, focusMessage, oneThing }
           </ul>
         </div>
       )}
-    </Card>
+      </Card>
+
+      {/* Quest Panel Dialog */}
+      <Dialog open={isPanelOpen} onOpenChange={closePanel}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          {currentQuest && (
+            <TaskPlanPanel
+              questTitle={currentQuest.quest_title}
+              questSummary={currentQuest.quest_summary}
+              chapters={currentQuest.chapters}
+              motivationBoost={currentQuest.motivation_boost}
+              onClose={closePanel}
+              onTaskClick={(taskId) => {
+                console.log('Task clicked:', taskId);
+                // Could scroll to task in main list
+              }}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
