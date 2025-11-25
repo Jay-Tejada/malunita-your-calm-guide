@@ -54,6 +54,14 @@ export interface Task {
     label?: string | null;
   } | null;
   idea_metadata?: any;
+  ai_metadata?: {
+    category?: string;
+    priority?: 'MUST' | 'SHOULD' | 'COULD';
+    project?: string;
+    deadline?: string;
+    subtasks?: string[];
+    scheduled_bucket?: string;
+  } | null;
 }
 
 export const useTasks = () => {

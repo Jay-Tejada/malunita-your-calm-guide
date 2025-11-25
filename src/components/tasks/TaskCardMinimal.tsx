@@ -2,8 +2,9 @@ import { format, isToday, isTomorrow } from "date-fns";
 import { useState } from "react";
 import { useTasks, Task } from "@/hooks/useTasks";
 import { useCompanionEvents } from "@/hooks/useCompanionEvents";
-import { Check, Sparkles, Zap } from "lucide-react";
+import { Check, Sparkles, Zap, Settings } from "lucide-react";
 import { TaskLearningDialog } from "../TaskLearningDialog";
+import { TaskCorrectionPanel } from "./TaskCorrectionPanel";
 
 interface TaskCardMinimalProps {
   task: {
@@ -21,6 +22,7 @@ export function TaskCardMinimal({ task, fullTask, isPrimaryFocus }: TaskCardMini
   const { onTaskCompleted, onQuickWinCompleted } = useCompanionEvents();
   const [isCompleting, setIsCompleting] = useState(false);
   const [showLearningDialog, setShowLearningDialog] = useState(false);
+  const [showCorrectionPanel, setShowCorrectionPanel] = useState(false);
 
   const formatDueDate = (dateString?: string) => {
     if (!dateString) return null;
@@ -181,27 +183,51 @@ export function TaskCardMinimal({ task, fullTask, isPrimaryFocus }: TaskCardMini
         )}
       </div>
 
-      {/* Learning Button */}
+      {/* Action Buttons */}
       {fullTask && (
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            setShowLearningDialog(true);
-          }}
-          className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
-          style={{
-            marginTop: "2px",
-            padding: "4px",
-            borderRadius: "4px",
-            color: "#9B8C7A",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-          title="Help Malunita learn from this"
-        >
-          <Sparkles size={16} />
-        </button>
+        <div className="flex-shrink-0 flex items-center gap-1">
+          {/* Fix AI Output Button */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowCorrectionPanel(true);
+            }}
+            className="opacity-0 group-hover:opacity-100 transition-opacity"
+            style={{
+              marginTop: "2px",
+              padding: "4px",
+              borderRadius: "4px",
+              color: "#9B8C7A",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+            title="Fix AI Output"
+          >
+            <Settings size={16} />
+          </button>
+
+          {/* Learning Button */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowLearningDialog(true);
+            }}
+            className="opacity-0 group-hover:opacity-100 transition-opacity"
+            style={{
+              marginTop: "2px",
+              padding: "4px",
+              borderRadius: "4px",
+              color: "#9B8C7A",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+            title="Help Malunita learn from this"
+          >
+            <Sparkles size={16} />
+          </button>
+        </div>
       )}
     </div>
 
@@ -211,6 +237,41 @@ export function TaskCardMinimal({ task, fullTask, isPrimaryFocus }: TaskCardMini
         open={showLearningDialog}
         task={fullTask}
         onClose={() => setShowLearningDialog(false)}
+      />
+    )}
+
+    {/* Correction Panel */}
+    {fullTask && fullTask.ai_metadata && (
+      <TaskCorrectionPanel
+        task={fullTask}
+        initialAIOutput={fullTask.ai_metadata}
+        open={showCorrectionPanel}
+        onClose={() => setShowCorrectionPanel(false)}
+        onSubmitCorrection={async (correctedData) => {
+          try {
+            // Update task with corrected data
+            await updateTask({
+              id: fullTask.id,
+              updates: {
+                category: correctedData.category,
+                priority: correctedData.priority,
+                scheduled_bucket: correctedData.deadline || fullTask.scheduled_bucket,
+              },
+            });
+
+            // Dispatch custom event
+            window.dispatchEvent(new CustomEvent("ai:corrected", {
+              detail: {
+                taskId: fullTask.id,
+                correctedData,
+              }
+            }));
+
+            setShowCorrectionPanel(false);
+          } catch (error) {
+            console.error('Failed to apply corrections:', error);
+          }
+        }}
       />
     )}
     </>

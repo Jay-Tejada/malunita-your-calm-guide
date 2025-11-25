@@ -47,6 +47,12 @@ export function QuickWins({ data, onTaskCreated }: QuickWinsProps) {
         is_tiny: enriched.isTiny,
         is_tiny_task: enriched.isTiny,
         follow_up: enriched.followUp || null,
+        ai_metadata: {
+          category: enriched.priority?.priority === 'MUST' ? 'primary_focus' : 'quick_win',
+          priority: enriched.priority?.priority,
+          scheduled_bucket: enriched.routing?.taskRouting?.[0]?.bucket,
+          subtasks: enriched.subtasks,
+        },
         completed: false,
       });
 
