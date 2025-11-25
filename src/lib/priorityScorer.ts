@@ -1,3 +1,5 @@
+import { useMemoryEngine } from '@/state/memoryEngine';
+
 interface Task {
   id?: string;
   title: string;
@@ -88,6 +90,9 @@ function determinePriority(
 ): 'MUST' | 'SHOULD' | 'COULD' {
   const lowerText = task.title.toLowerCase();
   
+  // Get memory profile for personalization
+  const memory = useMemoryEngine.getState();
+  
   // Primary focus tasks are always MUST priority
   if (task.category === 'primary_focus' && task.is_focus) {
     return 'MUST';
@@ -140,6 +145,18 @@ function determinePriority(
     f.toLowerCase().includes(task.title.toLowerCase().substring(0, 15))
   );
   if (isFollowup) return 'SHOULD';
+  
+  // MEMORY PERSONALIZATION: Apply priority bias
+  // If user strongly prefers MUST tasks (bias > 0.7), boost priority
+  if (memory.priorityBias.must > 0.7) {
+    // Boost SHOULD to MUST for high-bias users
+    return 'MUST';
+  }
+  
+  // If user avoids MUST tasks (bias < 0.3), downgrade to SHOULD
+  if (memory.priorityBias.must < 0.3) {
+    return 'SHOULD';
+  }
   
   // Default
   return 'SHOULD';
