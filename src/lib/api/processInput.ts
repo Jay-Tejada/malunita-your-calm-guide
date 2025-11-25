@@ -21,8 +21,13 @@ export interface ProcessInputResult {
   tasks: ProcessedTask[];
   ideas: string[];
   decisions: string[];
-  contextSummary: Record<string, any>;
-  emotion: 'stressed' | 'ok' | 'motivated' | string;
+  contextSummary: {
+    totalTasks: number;
+    tinyTasks: number;
+    highPriority: number;
+    hasDueDates: number;
+  };
+  emotion: 'stressed' | 'ok' | 'motivated';
   clarifyingQuestions: string[];
   routing: {
     today: string[];
@@ -36,7 +41,7 @@ export async function processInput(payload: ProcessInputPayload): Promise<Proces
   const { data, error } = await supabase.functions.invoke('process-input', {
     body: {
       text: payload.text,
-      user_id: payload.userId, // Transform to snake_case for edge function
+      user_id: payload.userId,
     },
   });
 
