@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -99,26 +98,17 @@ export function DailyPriorityPrompt() {
     }
   };
 
+  // Auto-open dialog when prompt should show (once per day morning ritual)
+  useEffect(() => {
+    if (showPrompt) {
+      setIsDialogOpen(true);
+    }
+  }, [showPrompt]);
+
   if (!showPrompt) return null;
 
   return (
     <>
-      <AnimatePresence>
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -20 }}
-          className="fixed top-20 sm:top-16 md:top-12 left-0 right-0 flex justify-center z-10 px-4"
-        >
-          <button
-            onClick={handlePromptClick}
-            className="text-xs sm:text-sm text-foreground/80 hover:text-foreground transition-colors font-medium max-w-3xl text-center"
-          >
-            What is the ONE thing you could accomplish today that would get your head above water? Everything else is a bonus.
-          </button>
-        </motion.div>
-      </AnimatePresence>
-
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>

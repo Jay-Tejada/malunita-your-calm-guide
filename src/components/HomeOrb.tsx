@@ -1,63 +1,28 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 
 interface HomeOrbProps {
   onCapture?: () => void;
   isRecording?: boolean;
   status?: 'ready' | 'listening' | 'processing' | 'speaking';
   recordingDuration?: number;
-  onDataLoaded?: (data: {
-    oneThing: string | null;
-    quickWins: Array<{ id: string; title: string }>;
-    focusMessage: string | null;
-    dailySummary: string | null;
-  }) => void;
 }
 
 interface DailyCommandCenterResponse {
-  oneThing?: string;
-  quickWins?: Array<{ id: string; title: string }>;
-  focusMessage?: string;
-  dailySummary?: string;
   headline?: string;
 }
 
-export const HomeOrb = ({ onCapture, isRecording = false, status = 'ready', recordingDuration = 0, onDataLoaded }: HomeOrbProps) => {
+export const HomeOrb = ({ onCapture, isRecording = false, status = 'ready', recordingDuration = 0 }: HomeOrbProps) => {
   const [isHovered, setIsHovered] = useState(false);
-  const [oneThing, setOneThing] = useState<string | null>(null);
-  const [quickWins, setQuickWins] = useState<Array<{ id: string; title: string }>>([]);
-  const [focusMessage, setFocusMessage] = useState<string | null>(null);
-  const [dailySummary, setDailySummary] = useState<string | null>(null);
   const [headline, setHeadline] = useState<string | null>(null);
-  const [hasAnsweredToday, setHasAnsweredToday] = useState(true);
-  const [showOneThingPrompt, setShowOneThingPrompt] = useState(false);
-  const [oneThingInput, setOneThingInput] = useState("");
   const [showBillboard, setShowBillboard] = useState(false);
-  const [userId, setUserId] = useState<string | null>(null);
 
-  // Fetch user and daily command center data on mount
+  // Fetch daily command center data for headline only
   useEffect(() => {
     const fetchData = async () => {
-      // Get user
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
-      
-      setUserId(user.id);
-
-      // Check if user has answered today's one thing
-      const today = new Date().toISOString().split('T')[0];
-      const { data: existingAnswer } = await supabase
-        .from('daily_one_thing')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('date', today)
-        .maybeSingle();
-
-      setHasAnsweredToday(!!existingAnswer);
 
       // Fetch daily command center data
       const { data: commandData, error } = await supabase.functions.invoke<DailyCommandCenterResponse>(
@@ -65,49 +30,15 @@ export const HomeOrb = ({ onCapture, isRecording = false, status = 'ready', reco
         { body: { mode: 'home_screen' } }
       );
 
-      if (!error && commandData) {
-        setOneThing(commandData.oneThing || null);
-        setQuickWins(commandData.quickWins || []);
-        setFocusMessage(commandData.focusMessage || null);
-        setDailySummary(commandData.dailySummary || null);
-        setHeadline(commandData.headline || null);
-
-        // Notify parent component
-        if (onDataLoaded) {
-          onDataLoaded({
-            oneThing: commandData.oneThing || null,
-            quickWins: commandData.quickWins || [],
-            focusMessage: commandData.focusMessage || null,
-            dailySummary: commandData.dailySummary || null,
-          });
-        }
-
+      if (!error && commandData?.headline) {
+        setHeadline(commandData.headline);
         // Show billboard after 2 seconds if there's a headline
-        if (commandData.headline) {
-          setTimeout(() => setShowBillboard(true), 2000);
-        }
+        setTimeout(() => setShowBillboard(true), 2000);
       }
     };
 
     fetchData();
-  }, [onDataLoaded]);
-
-  const handleSaveOneThing = async () => {
-    if (!oneThingInput.trim() || !userId) return;
-
-    const today = new Date().toISOString().split('T')[0];
-    await supabase
-      .from('daily_one_thing')
-      .insert({
-        user_id: userId,
-        date: today,
-        text: oneThingInput.trim(),
-      });
-
-    setHasAnsweredToday(true);
-    setShowOneThingPrompt(false);
-    setOneThingInput("");
-  };
+  }, []);
 
   // All states use warm golden palette - only animation intensity changes
   const orbGradient = "radial-gradient(circle at 30% 30%, rgba(255, 248, 220, 0.9), rgba(247, 217, 141, 0.8) 50%, rgba(237, 197, 101, 0.7))";
@@ -115,7 +46,7 @@ export const HomeOrb = ({ onCapture, isRecording = false, status = 'ready', reco
 
   return (
     <div className="fixed bottom-24 left-0 right-0 flex flex-col items-center">
-      {/* Billboard Message */}
+      {/* Billboard Message - Auto-hide after 5 seconds */}
       <AnimatePresence>
         {showBillboard && headline && (
           <motion.div
@@ -124,6 +55,10 @@ export const HomeOrb = ({ onCapture, isRecording = false, status = 'ready', reco
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.5 }}
             className="mb-6 text-center"
+            onAnimationComplete={() => {
+              // Auto-hide after 5 seconds
+              setTimeout(() => setShowBillboard(false), 5000);
+            }}
           >
             <p className="text-sm text-muted-foreground max-w-md px-4">
               {headline}
@@ -131,38 +66,6 @@ export const HomeOrb = ({ onCapture, isRecording = false, status = 'ready', reco
           </motion.div>
         )}
       </AnimatePresence>
-
-      {/* One Thing Prompt */}
-      {!hasAnsweredToday && (
-        <div className="mb-4">
-          <button
-            onClick={() => setShowOneThingPrompt(true)}
-            className="text-sm text-muted-foreground hover:text-foreground transition-colors px-4 py-2 rounded-lg hover:bg-muted/50"
-          >
-            What is the ONE task that would make today a success?
-          </button>
-        </div>
-      )}
-
-      {/* One Thing Modal */}
-      <Dialog open={showOneThingPrompt} onOpenChange={setShowOneThingPrompt}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Your ONE Thing for Today</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 pt-4">
-            <Input
-              value={oneThingInput}
-              onChange={(e) => setOneThingInput(e.target.value)}
-              placeholder="What's the ONE task that would make today a success?"
-              onKeyDown={(e) => e.key === 'Enter' && handleSaveOneThing()}
-            />
-            <Button onClick={handleSaveOneThing} className="w-full">
-              Save
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
       {/* Main Orb */}
       <motion.button
         onClick={onCapture}
