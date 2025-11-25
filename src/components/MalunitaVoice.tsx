@@ -26,6 +26,8 @@ import { checkAndHandlePrediction } from "@/utils/predictionChecker";
 import { useAutoSplitTask } from "@/hooks/useAutoSplitTask";
 import { useRelatedTaskSuggestions } from "@/hooks/useRelatedTaskSuggestions";
 import { useMemoryEngine } from "@/state/memoryEngine";
+import { routeReasoning } from "@/ai/reasoningRouter";
+import { runLongReasoning } from "@/ai/longReasoningEngine";
 
 interface Message {
   role: 'user' | 'assistant';
@@ -821,8 +823,132 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
             recordStressedLanguage(transcribed);
 
             // ===========================================================
-            // THOUGHT ENGINE 2.0 PIPELINE
+            // REASONING ROUTER: Detect if deep reasoning is needed
             // ===========================================================
+            const hour = new Date().getHours();
+            const recentTasks = tasks?.slice(-10) || [];
+            const userCurrentMood = useMoodStore.getState().mood; // Get mood for routing
+            const mode = routeReasoning(transcribed, { 
+              hour, 
+              mood: userCurrentMood,
+              recentTasks: recentTasks.map(t => t.title)
+            });
+            
+            console.log(`🧠 Reasoning mode detected: ${mode.toUpperCase()}`);
+
+            // If DEEP mode is detected, use long reasoning
+            if (mode === "deep") {
+              console.log('🔬 DEEP MODE: Running long reasoning...');
+              const startTime = Date.now();
+              
+              try {
+                const memoryEngine = useMemoryEngine.getState();
+                const result = await runLongReasoning(transcribed, {
+                  tasks: tasks?.filter(t => !t.completed).map(t => ({
+                    id: t.id,
+                    title: t.title,
+                    category: t.category,
+                    is_focus: t.is_focus
+                  })) || [],
+                  goals: profile?.current_goal || null,
+                  mood: userCurrentMood,
+                  memory: {
+                    writingStyle: memoryEngine.writingStyle,
+                    positiveReinforcers: memoryEngine.positiveReinforcers.slice(-10)
+                  }
+                });
+                
+                const timeTaken = Date.now() - startTime;
+                
+                // Display only the answer to the user
+                setGptResponse(result.answer);
+                console.log('💡 Deep reasoning answer:', result.answer);
+                console.log('📊 Steps taken:', result.steps.length);
+                console.log('⏱️ Time taken:', timeTaken, 'ms');
+                
+                // Save reasoning metadata to database
+                const { data: { user } } = await supabase.auth.getUser();
+                if (user) {
+                  await supabase.from('ai_reasoning_log').insert({
+                    user_id: user.id,
+                    transcript: transcribed,
+                    mode: 'deep',
+                    answer: result.answer,
+                    steps: result.steps,
+                    reasoning_metadata: {
+                      chain_of_thought: result.reasoning,
+                      steps_count: result.steps.length
+                    },
+                    time_taken_ms: timeTaken,
+                    context_snapshot: {
+                      hour,
+                      mood: userCurrentMood,
+                      task_count: tasks?.length || 0,
+                      goals: profile?.current_goal
+                    }
+                  });
+                }
+                
+                // Update conversation history
+                setConversationHistory(prev => [
+                  ...prev,
+                  { role: 'user', content: transcribed },
+                  { role: 'assistant', content: result.answer }
+                ]);
+                
+                // Save to database
+                if (user) {
+                  await supabase.from('conversation_history').insert([
+                    {
+                      user_id: user.id,
+                      session_id: sessionId,
+                      role: 'user',
+                      content: transcribed,
+                    },
+                    {
+                      user_id: user.id,
+                      session_id: sessionId,
+                      role: 'assistant',
+                      content: result.answer,
+                      audio_played: audioEnabled,
+                    }
+                  ]);
+                }
+                
+                // Play audio response
+                if (audioEnabled) {
+                  try {
+                    const { data: ttsData, error: ttsError } = await supabase.functions.invoke('text-to-speech', {
+                      body: { text: result.answer, voice: 'nova' }
+                    });
+
+                    if (!ttsError && ttsData?.audioContent) {
+                      await playAudioResponse(ttsData.audioContent);
+                    }
+                  } catch (ttsError) {
+                    console.error('TTS error:', ttsError);
+                  }
+                }
+                
+                setIsProcessing(false);
+                setShowMoodSelector(true);
+                return; // Exit early, skip fast pipeline
+                
+              } catch (error: any) {
+                console.error('Deep reasoning error:', error);
+                toast({
+                  title: "Reasoning error",
+                  description: error.message || "Failed to process deep reasoning",
+                  variant: "destructive",
+                });
+                // Fall back to fast mode on error
+              }
+            }
+            
+            // ===========================================================
+            // FAST MODE: Standard THOUGHT ENGINE 2.0 PIPELINE
+            // ===========================================================
+            console.log('⚡ FAST MODE: Using standard pipeline');
 
             // Step 2: Split into multiple tasks
             console.log('✂️ STEP 2: Splitting tasks...');

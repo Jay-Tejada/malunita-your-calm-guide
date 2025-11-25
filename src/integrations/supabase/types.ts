@@ -112,6 +112,45 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_reasoning_log: {
+        Row: {
+          answer: string | null
+          context_snapshot: Json | null
+          created_at: string
+          id: string
+          mode: string
+          reasoning_metadata: Json | null
+          steps: Json | null
+          time_taken_ms: number | null
+          transcript: string
+          user_id: string
+        }
+        Insert: {
+          answer?: string | null
+          context_snapshot?: Json | null
+          created_at?: string
+          id?: string
+          mode: string
+          reasoning_metadata?: Json | null
+          steps?: Json | null
+          time_taken_ms?: number | null
+          transcript: string
+          user_id: string
+        }
+        Update: {
+          answer?: string | null
+          context_snapshot?: Json | null
+          created_at?: string
+          id?: string
+          mode?: string
+          reasoning_metadata?: Json | null
+          steps?: Json | null
+          time_taken_ms?: number | null
+          transcript?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       api_usage_logs: {
         Row: {
           created_at: string
