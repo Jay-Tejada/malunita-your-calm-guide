@@ -1175,6 +1175,7 @@ export type Database = {
           goal_aligned: boolean | null
           has_person_name: boolean | null
           has_reminder: boolean | null
+          hidden_intent: string | null
           id: string
           input_method: string | null
           is_focus: boolean | null
@@ -1213,6 +1214,7 @@ export type Database = {
           goal_aligned?: boolean | null
           has_person_name?: boolean | null
           has_reminder?: boolean | null
+          hidden_intent?: string | null
           id?: string
           input_method?: string | null
           is_focus?: boolean | null
@@ -1251,6 +1253,7 @@ export type Database = {
           goal_aligned?: boolean | null
           has_person_name?: boolean | null
           has_reminder?: boolean | null
+          hidden_intent?: string | null
           id?: string
           input_method?: string | null
           is_focus?: boolean | null
