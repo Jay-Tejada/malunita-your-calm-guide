@@ -27,6 +27,17 @@ interface DailySummary {
   executiveInsight: string;
   tone: 'calm' | 'direct' | 'urgent';
   mood: 'calm' | 'focused' | 'rushed' | 'overwhelmed';
+  one_thing_focus?: {
+    id: string;
+    title: string;
+    reason: string;
+    relief_score: number;
+  };
+  yesterday_done?: string[];
+  yesterday_missed?: string[];
+  carry_over_suggestions?: string[];
+  follow_ups?: string[];
+  summary_markdown?: string;
 }
 
 const detectMood = (text: string, taskCount: number): { mood: 'calm' | 'focused' | 'rushed' | 'overwhelmed', tone: 'calm' | 'direct' | 'urgent' } => {
@@ -204,11 +215,53 @@ serve(async (req) => {
     const companionStage = profileData?.companion_stage || 1;
     const focusPreferences = profileData?.focus_preferences || {};
 
-    // Step 4: Categorize tasks intelligently
+    // Step 4: Yesterday Review - detect completed and missed tasks
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayStart = new Date(yesterday);
+    yesterdayStart.setHours(0, 0, 0, 0);
+    const yesterdayEnd = new Date(yesterday);
+    yesterdayEnd.setHours(23, 59, 59, 999);
+
+    // Fetch tasks completed yesterday
+    const { data: completedYesterday } = await supabase
+      .from('tasks')
+      .select('title, completed_at')
+      .eq('user_id', user.id)
+      .eq('completed', true)
+      .gte('completed_at', yesterdayStart.toISOString())
+      .lte('completed_at', yesterdayEnd.toISOString());
+
+    const yesterdayDone = completedYesterday?.map(t => t.title) || [];
+
+    // Fetch tasks created yesterday but not completed yet
+    const { data: createdYesterday } = await supabase
+      .from('tasks')
+      .select('id, title, category, created_at')
+      .eq('user_id', user.id)
+      .eq('completed', false)
+      .gte('created_at', yesterdayStart.toISOString())
+      .lte('created_at', yesterdayEnd.toISOString());
+
+    const yesterdayMissed = createdYesterday?.map(t => t.title) || [];
+
+    // Suggest carry-overs only for relevant missed tasks
+    const carryOverSuggestions = createdYesterday
+      ?.filter(t => {
+        const title = t.title.toLowerCase();
+        // Exclude tasks that are clearly recurring or low priority
+        const isRecurring = title.includes('daily') || title.includes('weekly');
+        const isLowPriority = t.category === 'someday' || t.category === 'maybe';
+        return !isRecurring && !isLowPriority;
+      })
+      .slice(0, 3)
+      .map(t => t.title) || [];
+
+    // Step 5: Categorize tasks intelligently
     // Detect mood and tone
     const { mood, tone } = isHomeScreenMode 
       ? { mood: 'calm' as const, tone: 'direct' as const }
-      : detectMood(text, allTasks.length + extractedTasks.length);
+      : detectMood(text || '', allTasks.length + extractedTasks.length);
 
     // Priority Tasks: High-impact, focus items, or urgent
     const priorityTasks = allTasks
@@ -228,14 +281,34 @@ serve(async (req) => {
       .slice(0, 5)
       .map(t => t.title);
 
-    // Quick Wins: Small, non-time-based tasks
+    // Quick Wins: Tasks < 5 min using heuristics
+    const quickWinKeywords = ['email', 'call', 'fix', 'upload', 'send', 'reply', 'text', 'message', 'check', 'review', 'schedule', 'book'];
     const quickWins = allTasks
-      .filter(t => 
-        !t.is_time_based && 
-        !priorityTasks.includes(t.title) && 
-        !todaysSchedule.includes(t.title) &&
-        t.title.split(' ').length <= 8
-      )
+      .filter(t => {
+        const title = t.title.toLowerCase();
+        const hasKeyword = quickWinKeywords.some(kw => title.includes(kw));
+        const isShort = t.title.split(' ').length <= 6;
+        const notInOtherCategories = !priorityTasks.includes(t.title) && !todaysSchedule.includes(t.title);
+        return notInOtherCategories && (hasKeyword || isShort);
+      })
+      .slice(0, 5)
+      .map(t => t.title);
+
+    // Follow-ups: Find waiting tasks or tasks not touched in 48 hours
+    const followUpKeywords = ['waiting', 'follow up', 'check', 'pending', 'awaiting', 'blocked'];
+    const twoDaysAgo = new Date();
+    twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
+
+    const followUpTasks = allTasks
+      .filter(t => {
+        const title = t.title.toLowerCase();
+        const hasKeyword = followUpKeywords.some(kw => title.includes(kw));
+        const notTouchedRecently = new Date(t.updated_at || t.created_at) < twoDaysAgo;
+        const notInOtherCategories = !priorityTasks.includes(t.title) && 
+                                      !todaysSchedule.includes(t.title) && 
+                                      !quickWins.includes(t.title);
+        return notInOtherCategories && (hasKeyword || notTouchedRecently);
+      })
       .slice(0, 5)
       .map(t => t.title);
 
@@ -259,6 +332,58 @@ serve(async (req) => {
       const title = t.title.toLowerCase();
       return tinyWords.some(word => title.includes(word)) && title.split(' ').length <= 5;
     }).length;
+
+    // Step 6: ONE Thing Logic - Find the task that creates the biggest relief
+    // Score each task based on urgency, overdue, emotional weight, dependencies, complexity
+    const scoreTask = (task: any) => {
+      let score = 0;
+      const title = task.title.toLowerCase();
+      const createdDate = new Date(task.created_at);
+      const daysSinceCreated = Math.floor((Date.now() - createdDate.getTime()) / (1000 * 60 * 60 * 24));
+
+      // Urgency (keywords)
+      if (title.includes('urgent') || title.includes('asap') || title.includes('critical')) score += 30;
+      
+      // Overdue (created more than 3 days ago)
+      if (daysSinceCreated > 3) score += 20;
+      if (daysSinceCreated > 7) score += 15; // bonus for very old tasks
+
+      // Emotional weight (blocking keywords)
+      if (title.includes('blocked') || title.includes('stuck') || title.includes('waiting')) score += 25;
+      
+      // High-impact categories
+      if (task.category === 'work' || task.category === 'primary_focus') score += 15;
+      if (task.is_focus) score += 40;
+
+      // Complexity (longer tasks likely unlock more)
+      const wordCount = task.title.split(' ').length;
+      if (wordCount > 5 && wordCount < 15) score += 10; // Not too simple, not too complex
+
+      // Keywords suggesting high impact
+      if (title.includes('meeting') || title.includes('presentation') || title.includes('proposal')) score += 15;
+      if (title.includes('review') || title.includes('approve') || title.includes('decision')) score += 10;
+
+      return score;
+    };
+
+    // Get top candidate for ONE thing
+    const scoredTasks = allTasks
+      .filter(t => !t.completed)
+      .map(t => ({ task: t, score: scoreTask(t) }))
+      .sort((a, b) => b.score - a.score);
+
+    const oneThingFocus = scoredTasks.length > 0 
+      ? {
+          id: scoredTasks[0].task.id,
+          title: scoredTasks[0].task.title,
+          reason: `This task creates the biggest relief because it's ${
+            scoredTasks[0].score > 60 ? 'urgent and high-impact' :
+            scoredTasks[0].score > 40 ? 'important and actionable' :
+            'a solid starting point'
+          }.`,
+          relief_score: scoredTasks[0].score
+        }
+      : undefined;
 
     // Check for upcoming priority storms (tomorrow)
     const tomorrow = new Date();
@@ -452,19 +577,51 @@ Return ONLY the reasoning sentence starting with "Chosen because...". No extra t
         title
       }));
 
+      const summaryMarkdown = `
+${yesterdayDone.length > 0 ? `✅ Yesterday: ${yesterdayDone.length} task${yesterdayDone.length > 1 ? 's' : ''} completed.` : ''}
+${oneThingFocus ? `🎯 Focus: ${oneThingFocus.title}` : ''}
+${priorityTasks.length > 0 ? `📌 ${priorityTasks.length} priority items.` : ''}
+${quickWins.length > 0 ? `⚡ ${quickWins.length} quick wins ready.` : ''}
+      `.trim();
+
       return new Response(
         JSON.stringify({
           headline: executiveInsight,
-          summary_markdown: `You have ${allTasks.length} open tasks. ${priorityTasks.length > 0 ? `${priorityTasks.length} priority items need attention.` : ''}`,
+          summary_markdown: summaryMarkdown || `You have ${allTasks.length} open tasks. ${priorityTasks.length > 0 ? `${priorityTasks.length} priority items need attention.` : ''}`,
           quick_wins: quickWinsData,
-          focus_message: priorityTasks.length > 0 ? `Focus on: ${priorityTasks[0]}` : "Clear slate — ready to plan your day?",
+          focus_message: oneThingFocus ? oneThingFocus.title : (priorityTasks.length > 0 ? `Focus on: ${priorityTasks[0]}` : "Clear slate — ready to plan your day?"),
           one_thing_summary: oneThingSummary,
           one_thing_reasoning: oneThingReasoning,
-          storm_warning: stormWarning || null
+          storm_warning: stormWarning || null,
+          one_thing_focus: oneThingFocus,
+          follow_ups: followUpTasks.slice(0, 3),
+          yesterday_done: yesterdayDone.slice(0, 3),
+          carry_over_suggestions: carryOverSuggestions
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     } else {
+      // Generate narrative summary in markdown
+      const summaryMarkdown = `
+## Your Day at a Glance
+
+${yesterdayDone.length > 0 ? `✅ **Yesterday, you completed ${yesterdayDone.length} task${yesterdayDone.length > 1 ? 's' : ''}.**` : ''}
+${yesterdayMissed.length > 0 ? `⏭️ You have ${yesterdayMissed.length} task${yesterdayMissed.length > 1 ? 's' : ''} from yesterday still pending.` : ''}
+
+${oneThingFocus ? `🎯 **Your ONE Thing Today**: ${oneThingFocus.title}\n   ${oneThingFocus.reason}` : ''}
+
+${priorityTasks.length > 0 ? `📌 **Priority Tasks**: ${priorityTasks.length} items need your attention.` : ''}
+${todaysSchedule.length > 0 ? `📅 **Today's Schedule**: ${todaysSchedule.length} time-sensitive items.` : ''}
+${quickWins.length > 0 ? `⚡ **Quick Wins**: ${quickWins.length} small tasks you can knock out fast.` : ''}
+${followUpTasks.length > 0 ? `🔔 **Follow-ups**: ${followUpTasks.length} items need your attention or are awaiting response.` : ''}
+
+${stormWarning ? `⚠️ ${stormWarning}` : ''}
+
+${carryOverSuggestions.length > 0 ? `💡 **Consider carrying over**: ${carryOverSuggestions.join(', ')}` : ''}
+
+You've got this. Start with one thing, and the rest will follow.
+      `.trim();
+
       // Regular mode: return full summary
       const summary: DailySummary = {
         priorityTasks: priorityTasks.length > 0 ? priorityTasks : [],
@@ -475,6 +632,12 @@ Return ONLY the reasoning sentence starting with "Chosen because...". No extra t
         executiveInsight,
         tone,
         mood,
+        one_thing_focus: oneThingFocus,
+        yesterday_done: yesterdayDone,
+        yesterday_missed: yesterdayMissed,
+        carry_over_suggestions: carryOverSuggestions,
+        follow_ups: followUpTasks,
+        summary_markdown: summaryMarkdown,
       };
 
       return new Response(
