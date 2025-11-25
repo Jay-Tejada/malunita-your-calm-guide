@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { MindstreamPanel } from "@/components/intelligence/MindstreamPanel";
 import { OneThingPrompt } from "@/components/home/OneThingPrompt";
 import { useDailyPriorityPrompt } from "@/state/useDailyPriorityPrompt";
+import { useDailyMindstream } from "@/hooks/useDailyMindstream";
 
 interface HomeCanvasProps {
   children?: React.ReactNode;
@@ -10,6 +11,7 @@ interface HomeCanvasProps {
 
 export function HomeCanvas({ children, onOneThingClick }: HomeCanvasProps) {
   const { showPrompt } = useDailyPriorityPrompt();
+  const { headline } = useDailyMindstream();
   const [showOneThingPrompt, setShowOneThingPrompt] = useState(true);
 
   // Check localStorage on mount to see if dismissed today
@@ -51,7 +53,7 @@ export function HomeCanvas({ children, onOneThingClick }: HomeCanvasProps) {
         {shouldShowPrompt && (
           <div className="mb-8">
             <OneThingPrompt
-              questionText="What is the ONE task that would make today a success?"
+              questionText={headline || "What is the ONE task that would make today a success?"}
               onClick={handlePromptClick}
             />
           </div>

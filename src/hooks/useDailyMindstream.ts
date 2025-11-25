@@ -11,6 +11,7 @@ interface MindstreamData {
   clusters: Array<{ label: string; tasks: string[]; theme: string }>;
   nudges: string[];
   summaryMarkdown: string | null;
+  headline: string | null;
   emotionalState: {
     joy: number;
     stress: number;
@@ -33,6 +34,7 @@ export function useDailyMindstream(): MindstreamData {
     clusters: [],
     nudges: [],
     summaryMarkdown: null,
+    headline: null,
   });
   const [isLoading, setIsLoading] = useState(true);
 
@@ -79,6 +81,7 @@ export function useDailyMindstream(): MindstreamData {
             ...(cognitiveLoadState.recommendations || []),
           ],
           summaryMarkdown: commandCenter?.dailySummary || null,
+          headline: commandCenter?.headline || commandCenter?.primary_focus || null,
         });
       } catch (error) {
         console.error('Failed to fetch mindstream data:', error);
