@@ -1,3 +1,5 @@
+import { useMemoryEngine } from '@/state/memoryEngine';
+
 interface Task {
   id?: string;
   title: string;
@@ -200,6 +202,30 @@ export function agendaRouter(
     );
   }
   
+  // Get memory profile for personalization
+  const memory = useMemoryEngine.getState();
+  
+  // MEMORY PERSONALIZATION: Determine time of day boost
+  const currentHour = new Date().getHours();
+  let timeOfDayBoost = 0;
+  
+  if (currentHour >= 6 && currentHour < 12) {
+    // Morning
+    if (memory.energyPattern.morning > 0.6) {
+      timeOfDayBoost = 0.2; // Boost morning tasks
+    }
+  } else if (currentHour >= 12 && currentHour < 18) {
+    // Afternoon
+    if (memory.energyPattern.afternoon > 0.6) {
+      timeOfDayBoost = 0.2;
+    }
+  } else {
+    // Night
+    if (memory.energyPattern.night > 0.6) {
+      timeOfDayBoost = 0.2;
+    }
+  }
+  
   // Create a map of tasks with combined priority scores
   const taskPriorityMap = new Map<string, number>();
   for (const task of tasks) {
@@ -210,7 +236,17 @@ export function agendaRouter(
     // Combine current priority score with future_priority_score
     const basePriorityScore = score.priority === 'MUST' ? 1.0 : score.priority === 'SHOULD' ? 0.6 : 0.3;
     const futurePriorityScore = task.future_priority_score || 0;
-    const combinedScore = basePriorityScore * 0.6 + futurePriorityScore * 0.4;
+    let combinedScore = basePriorityScore * 0.6 + futurePriorityScore * 0.4;
+    
+    // MEMORY PERSONALIZATION: Apply energy pattern boost
+    if (timeOfDayBoost > 0) {
+      combinedScore += timeOfDayBoost;
+    }
+    
+    // MEMORY PERSONALIZATION: Reduce priority if category is in procrastination triggers
+    if (task.category && memory.procrastinationTriggers.includes(task.category)) {
+      combinedScore *= 0.7; // Gentle reduction for procrastinated categories
+    }
     
     taskPriorityMap.set(task.id, combinedScore);
   }

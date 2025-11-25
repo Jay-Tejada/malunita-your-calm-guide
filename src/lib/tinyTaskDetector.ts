@@ -1,5 +1,6 @@
 import { Task } from "@/hooks/useTasks";
 import { supabase } from "@/integrations/supabase/client";
+import { useMemoryEngine } from '@/state/memoryEngine';
 
 // Simple admin task keywords that indicate tiny tasks
 const TINY_TASK_KEYWORDS = [
@@ -54,6 +55,13 @@ export const classifyTask = (task: Task): TinyTaskClassification => {
   const contextLower = task.context?.toLowerCase() || '';
   const fullText = `${titleLower} ${contextLower}`;
 
+  // Get memory profile for personalization
+  const memory = useMemoryEngine.getState();
+  
+  // MEMORY PERSONALIZATION: Use learned threshold
+  const memoryThreshold = memory.tinyTaskThreshold;
+  const titleLength = task.title.length;
+
   // Check for tiny task keywords
   const hasTinyKeywords = TINY_TASK_KEYWORDS.some(keyword => 
     fullText.includes(keyword)
@@ -64,8 +72,9 @@ export const classifyTask = (task: Task): TinyTaskClassification => {
     fullText.includes(keyword)
   );
 
-  // Short titles are often tiny tasks
-  const isShortTitle = task.title.split(' ').length <= 5;
+  // Short titles are often tiny tasks - adjusted by memory
+  const wordCount = task.title.split(' ').length;
+  const isShortTitle = wordCount <= 5;
 
   // Time-based tasks are often administrative
   const isTimeBased = task.is_time_based;
@@ -92,6 +101,15 @@ export const classifyTask = (task: Task): TinyTaskClassification => {
   } else {
     confidence = 0.3;
     reason = 'May require more time or focus';
+  }
+  
+  // MEMORY PERSONALIZATION: Adjust confidence based on learned threshold
+  if (memoryThreshold && memoryThreshold < 10) {
+    // User has low threshold - classify more aggressively as tiny
+    if (titleLength <= memoryThreshold) {
+      confidence = Math.min(1.0, confidence + 0.3);
+      reason += ' (Matches your typical tiny task length)';
+    }
   }
 
   return {

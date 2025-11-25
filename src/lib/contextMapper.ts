@@ -1,3 +1,5 @@
+import { useMemoryEngine } from '@/state/memoryEngine';
+
 interface Task {
   id?: string;
   title: string;
@@ -117,13 +119,38 @@ function detectUrgency(taskText: string, emotionalTone: string): 'high' | 'mediu
 function inferCategory(taskText: string): string {
   const lowerText = taskText.toLowerCase();
   
+  // Get memory profile for personalization
+  const memory = useMemoryEngine.getState();
+  
+  let bestCategory = 'personal';
+  let bestScore = 0;
+  
   for (const [category, keywords] of Object.entries(CATEGORY_KEYWORDS)) {
     for (const keyword of keywords) {
-      if (lowerText.includes(keyword)) return category;
+      if (lowerText.includes(keyword)) {
+        // MEMORY PERSONALIZATION: Adjust confidence based on category preferences
+        let score = 1.0;
+        const preference = memory.categoryPreferences[category];
+        
+        if (preference !== undefined) {
+          if (preference < 0.2) {
+            // User rarely completes this category - reduce confidence
+            score = 0.3;
+          } else if (preference > 0.7) {
+            // User loves this category - boost confidence
+            score = 1.5;
+          }
+        }
+        
+        if (score > bestScore) {
+          bestScore = score;
+          bestCategory = category;
+        }
+      }
     }
   }
   
-  return 'personal';
+  return bestCategory;
 }
 
 function inferProjects(tasks: Task[], topics: string[]): Array<{ name: string; task_ids: string[] }> {
