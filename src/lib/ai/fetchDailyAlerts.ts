@@ -11,6 +11,7 @@ interface DeadlineWatcherResponse {
 interface FollowUpEngineResponse {
   follow_ups: Array<{
     task: string;
+    person?: string;
     days_waiting: number;
     severity: string;
   }>;
@@ -27,8 +28,8 @@ interface DailyAlerts {
   };
   followups: Array<{
     task: string;
+    person: string | null;
     days_waiting: number;
-    severity: string;
   }>;
   risk_count: number;
 }
@@ -91,7 +92,11 @@ export async function fetchDailyAlerts(): Promise<DailyAlerts | null> {
         overdue: deadlineData?.overdue || [],
         missing_preparation: deadlineData?.missing_preparation || [],
       },
-      followups: followUpData?.follow_ups || [],
+      followups: (followUpData?.follow_ups || []).map(f => ({
+        task: f.task,
+        person: f.person || null,
+        days_waiting: f.days_waiting
+      })),
       risk_count: riskCount,
     };
   } catch (error) {

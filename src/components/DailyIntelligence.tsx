@@ -26,6 +26,17 @@ interface AIPlan {
   reasoning: string;
 }
 
+interface AIAlerts {
+  headline: string;
+  deadlines: string[];
+  followups: {
+    task: string;
+    person: string | null;
+    days_waiting: number;
+  }[];
+  risk_count: number;
+}
+
 interface DailyIntelligenceProps {
   topPriorities?: Task[];
   followUps?: Task[];
@@ -36,6 +47,7 @@ interface DailyIntelligenceProps {
   emotionalTone?: string;
   aiSummary?: AISummary | null;
   aiPlan?: AIPlan | null;
+  aiAlerts?: AIAlerts | null;
 }
 
 export function DailyIntelligence({
@@ -47,7 +59,8 @@ export function DailyIntelligence({
   taskPatterns = [],
   emotionalTone,
   aiSummary,
-  aiPlan
+  aiPlan,
+  aiAlerts
 }: DailyIntelligenceProps) {
   
   const getEmotionLabel = (emotion: string) => {
@@ -64,6 +77,51 @@ export function DailyIntelligence({
       <h2 className="text-lg font-medium mb-5 font-mono">Daily Intelligence</h2>
       
       <div className="space-y-5">
+        {/* AI Alerts - Show first if present */}
+        {aiAlerts && (
+          <div className="pb-3 border-b border-border">
+            <div className="flex items-center gap-2 mb-3">
+              <AlertCircle className="w-4 h-4 text-destructive" />
+              <h3 className="text-sm font-medium font-mono">⚠️ Attention Needed</h3>
+            </div>
+            <p className="text-sm text-destructive mb-3">{aiAlerts.headline}</p>
+            
+            {aiAlerts.deadlines.length > 0 && (
+              <div className="mb-3">
+                <h4 className="text-xs font-medium font-mono uppercase tracking-wide text-muted-foreground mb-2">Deadlines</h4>
+                <ul className="space-y-1">
+                  {aiAlerts.deadlines.map((deadline, idx) => (
+                    <li key={idx} className="text-sm text-foreground flex items-start gap-2">
+                      <span className="text-destructive">•</span>
+                      <span>{deadline}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            
+            {aiAlerts.followups.length > 0 && (
+              <div>
+                <h4 className="text-xs font-medium font-mono uppercase tracking-wide text-muted-foreground mb-2">Follow-ups</h4>
+                <ul className="space-y-1">
+                  {aiAlerts.followups.map((followup, idx) => (
+                    <li key={idx} className="text-sm text-foreground flex items-start gap-2">
+                      <span className="text-destructive">•</span>
+                      <span>
+                        {followup.task}
+                        {followup.person && ` (${followup.person})`}
+                        <span className="text-muted-foreground ml-1">
+                          - {followup.days_waiting}d waiting
+                        </span>
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        )}
+        
         {/* STATIC SECTIONS - Always show */}
         
         {/* Top Priorities */}
