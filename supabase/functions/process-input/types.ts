@@ -5,6 +5,8 @@ export interface Task {
   priority: string;
   subtasks: string[];
   due: string | null;
+  reminder_time: string | null;
+  category: string | null;
   project: string | null;
   people: string[];
   contextMarkers: string[];

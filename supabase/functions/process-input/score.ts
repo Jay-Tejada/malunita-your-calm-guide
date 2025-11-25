@@ -1,7 +1,7 @@
 import type { Task, UserContext } from "./types.ts";
 
-const URGENCY_KEYWORDS = ['urgent', 'asap', 'now', 'today', 'immediately', 'critical'];
-const IMPORTANCE_KEYWORDS = ['important', 'key', 'critical', 'essential', 'priority'];
+const URGENCY_KEYWORDS = ['urgent', 'asap', 'now', 'today', 'immediately', 'critical', 'deadline', 'overdue'];
+const IMPORTANCE_KEYWORDS = ['important', 'key', 'critical', 'essential', 'priority', 'must do', 'need to'];
 
 export async function scorePriority(tasks: Task[], userContext: UserContext): Promise<Task[]> {
   return tasks.map(task => {
@@ -29,6 +29,11 @@ export async function scorePriority(tasks: Task[], userContext: UserContext): Pr
     // Penalty for complex tasks without clear deadline
     if (!task.isTiny && task.subtasks.length > 0) {
       score -= 1;
+    }
+
+    // Boost score if has explicit deadline
+    if (task.due) {
+      score += 1;
     }
 
     // Determine priority level
