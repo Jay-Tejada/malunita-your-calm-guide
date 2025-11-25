@@ -28,7 +28,7 @@ export const TaskInputBox = () => {
   const { createTasks } = useTasks();
   const { toast } = useToast();
   const { refetch } = useDailyIntelligence();
-  const { onTaskCompleted } = useCompanionEvents();
+  const { onTaskCreated } = useCompanionEvents();
 
   const handleSubmit = async (e?: React.FormEvent) => {
     e?.preventDefault();
@@ -108,7 +108,14 @@ export const TaskInputBox = () => {
       // Post-save actions
       window.dispatchEvent(new CustomEvent('task:created'));
       refetch();
-      onTaskCompleted(1);
+      
+      // Trigger companion reaction
+      const firstEnriched = enrichedTasks[0];
+      onTaskCreated({
+        priority: firstEnriched.future_priority_score,
+        isTiny: firstEnriched.is_tiny,
+        bucket: firstEnriched.scheduled_bucket,
+      });
 
       setInput("");
       setClarificationData(null);
@@ -175,7 +182,14 @@ export const TaskInputBox = () => {
         // Post-save actions
         window.dispatchEvent(new CustomEvent('task:created'));
         refetch();
-        onTaskCompleted(enrichedTasks.length);
+        
+        // Trigger companion reaction
+        const firstEnriched = enrichedTasks[0];
+        onTaskCreated({
+          priority: firstEnriched.future_priority_score,
+          isTiny: firstEnriched.is_tiny,
+          bucket: firstEnriched.scheduled_bucket,
+        });
 
         setInput("");
         setClarificationData(null);
@@ -237,7 +251,14 @@ export const TaskInputBox = () => {
       // Post-save actions
       window.dispatchEvent(new CustomEvent('task:created'));
       refetch();
-      onTaskCompleted(enrichedTasks.length);
+      
+      // Trigger companion reaction
+      const firstEnriched = enrichedTasks[0];
+      onTaskCreated({
+        priority: firstEnriched.future_priority_score,
+        isTiny: firstEnriched.is_tiny,
+        bucket: firstEnriched.scheduled_bucket,
+      });
 
       setInput("");
       setMultiTaskMode(false);

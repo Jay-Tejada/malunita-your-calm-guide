@@ -101,9 +101,67 @@ export function useCompanionEvents() {
     setTemporaryExpression(randomExpression, 3000);
   }, [setTemporaryExpression, updateEmotionalMemory]);
 
+  const onTaskCreated = useCallback((taskInfo?: { priority?: number; isTiny?: boolean; bucket?: string }) => {
+    // Tiny tasks trigger happiness
+    if (taskInfo?.isTiny) {
+      const tinyExpressions = ['happy', 'laughing'];
+      const randomExpression = tinyExpressions[Math.floor(Math.random() * tinyExpressions.length)];
+      setTemporaryExpression(randomExpression, 2500);
+      updateEmotionalMemory(3, 2);
+      window.dispatchEvent(new CustomEvent("companion:emotion"));
+      return;
+    }
+
+    // High priority tasks trigger concern/support
+    if (taskInfo?.priority && taskInfo.priority >= 0.85) {
+      const supportExpressions = ['concerned', 'supportive'];
+      const randomExpression = supportExpressions[Math.floor(Math.random() * supportExpressions.length)];
+      setTemporaryExpression(randomExpression, 3000);
+      updateEmotionalMemory(1, 3);
+      window.dispatchEvent(new CustomEvent("companion:emotion"));
+      return;
+    }
+
+    // Task routed to Today bucket triggers excitement
+    if (taskInfo?.bucket === 'today') {
+      setTemporaryExpression('excited', 3000);
+      updateEmotionalMemory(4, 2);
+      window.dispatchEvent(new CustomEvent("companion:emotion"));
+      return;
+    }
+
+    // Default: neutral positive reaction
+    setTemporaryExpression('welcoming', 2000);
+    updateEmotionalMemory(2, 1);
+    window.dispatchEvent(new CustomEvent("companion:emotion"));
+  }, [setTemporaryExpression, updateEmotionalMemory]);
+
+  const onTaskPrioritized = useCallback((priority: number) => {
+    if (priority >= 0.85) {
+      // High priority - show concern
+      const expressions = ['concerned', 'supportive'];
+      const randomExpression = expressions[Math.floor(Math.random() * expressions.length)];
+      setTemporaryExpression(randomExpression, 3000);
+      updateEmotionalMemory(0, 2);
+      window.dispatchEvent(new CustomEvent("companion:emotion"));
+    }
+  }, [setTemporaryExpression, updateEmotionalMemory]);
+
+  const onTaskRouted = useCallback((bucket: string) => {
+    if (bucket === 'today') {
+      // Routed to today - show excitement
+      setTemporaryExpression('excited', 3000);
+      updateEmotionalMemory(4, 2);
+      window.dispatchEvent(new CustomEvent("companion:emotion"));
+    }
+  }, [setTemporaryExpression, updateEmotionalMemory]);
+
   return {
     onTaskCompleted,
     onQuickWinCompleted,
+    onTaskCreated,
+    onTaskPrioritized,
+    onTaskRouted,
     triggerCompanionPing,
   };
 }
