@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
@@ -50,24 +50,7 @@ const Calendar = () => {
   const [recurrencePattern, setRecurrencePattern] = useState<'none' | 'daily' | 'weekly' | 'monthly'>('none');
   const [recurrenceDay, setRecurrenceDay] = useState<number>(0);
   const [recurrenceEndDate, setRecurrenceEndDate] = useState("");
-  const [isLocationPickerOpen, setIsLocationPickerOpen] = useState(false);
-  const [viewingLocation, setViewingLocation] = useState<{ address: string; lat: number; lng: number } | null>(null);
   const { tasks, isLoading, updateTask, createTasks, deleteTask } = useTasks();
-  const { token: mapboxToken } = useMapboxToken();
-
-  const handleOpenLocation = (lat: number, lng: number, address: string) => {
-    const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
-    const appleMapsUrl = `http://maps.apple.com/?q=${lat},${lng}`;
-    const wazeUrl = `https://waze.com/ul?ll=${lat},${lng}&navigate=yes`;
-    const uberUrl = `https://m.uber.com/ul/?action=setPickup&pickup=my_location&dropoff[latitude]=${lat}&dropoff[longitude]=${lng}`;
-
-    return {
-      googleMaps: googleMapsUrl,
-      appleMaps: appleMapsUrl,
-      waze: wazeUrl,
-      uber: uberUrl,
-    };
-  };
   
   // Convert tasks with reminder times to calendar events
   const events = useMemo(() => {
@@ -87,6 +70,77 @@ const Calendar = () => {
         recurrencePattern: task.recurrence_pattern || 'none',
       }));
   }, [tasks]);
+  
+  const [isLocationPickerOpen, setIsLocationPickerOpen] = useState(false);
+  const [viewingLocation, setViewingLocation] = useState<{ address: string; lat: number; lng: number } | null>(null);
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [travelTimes, setTravelTimes] = useState<Record<string, { duration: number; distance: number }>>({});
+  const { token: mapboxToken } = useMapboxToken();
+
+  // Get user's current location
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUserLocation({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+          });
+        },
+        (error) => {
+          console.log('Location access denied:', error);
+        }
+      );
+    }
+  }, []);
+
+  // Calculate travel times for events with locations
+  useEffect(() => {
+    if (!userLocation || !mapboxToken) return;
+
+    const eventsWithLocations = events.filter(event => {
+      const task = tasks?.find(t => t.id === event.taskId);
+      return task?.location_lat && task?.location_lng;
+    });
+
+    eventsWithLocations.forEach(async (event) => {
+      const task = tasks?.find(t => t.id === event.taskId);
+      if (!task?.location_lat || !task?.location_lng) return;
+
+      try {
+        const response = await fetch(
+          `https://api.mapbox.com/directions/v5/mapbox/driving/${userLocation.lng},${userLocation.lat};${task.location_lng},${task.location_lat}?access_token=${mapboxToken}&geometries=geojson`
+        );
+        const data = await response.json();
+        
+        if (data.routes && data.routes[0]) {
+          setTravelTimes(prev => ({
+            ...prev,
+            [event.taskId]: {
+              duration: Math.round(data.routes[0].duration / 60), // Convert to minutes
+              distance: Math.round(data.routes[0].distance / 1000), // Convert to km
+            },
+          }));
+        }
+      } catch (error) {
+        console.error('Error fetching travel time:', error);
+      }
+    });
+  }, [userLocation, events, tasks, mapboxToken]);
+
+  const handleOpenLocation = (lat: number, lng: number, address: string) => {
+    const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
+    const appleMapsUrl = `http://maps.apple.com/?q=${lat},${lng}`;
+    const wazeUrl = `https://waze.com/ul?ll=${lat},${lng}&navigate=yes`;
+    const uberUrl = `https://m.uber.com/ul/?action=setPickup&pickup=my_location&dropoff[latitude]=${lat}&dropoff[longitude]=${lng}`;
+
+    return {
+      googleMaps: googleMapsUrl,
+      appleMaps: appleMapsUrl,
+      waze: wazeUrl,
+      uber: uberUrl,
+    };
+  };
 
   const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 }); // Start on Monday
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
@@ -460,83 +514,92 @@ const Calendar = () => {
                             const task = tasks?.find(t => t.id === event.taskId);
                             if (task?.location_address && task?.location_lat && task?.location_lng) {
                               const urls = handleOpenLocation(task.location_lat, task.location_lng, task.location_address);
+                              const travelTime = travelTimes[event.taskId];
                               return (
-                                <Popover>
-                                  <PopoverTrigger asChild>
-                                    <button
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        hapticLight();
-                                      }}
-                                      className="flex items-center gap-2 text-primary hover:underline text-sm"
-                                    >
-                                      <MapPin className="w-4 h-4" />
-                                      <span>{task.location_address}</span>
-                                    </button>
-                                  </PopoverTrigger>
-                                  <PopoverContent className="w-56 p-2" align="start">
-                                    <div className="space-y-1">
-                                      <p className="font-mono text-xs text-muted-foreground px-2 py-1">
-                                        Open in...
-                                      </p>
+                                <div className="space-y-1">
+                                  <Popover>
+                                    <PopoverTrigger asChild>
                                       <button
                                         onClick={(e) => {
                                           e.stopPropagation();
                                           hapticLight();
-                                          window.open(urls.googleMaps, '_blank');
                                         }}
-                                        className="w-full text-left px-2 py-1.5 text-sm hover:bg-accent rounded-md"
+                                        className="flex items-center gap-2 text-primary hover:underline text-sm"
                                       >
-                                        🗺️ Google Maps
+                                        <MapPin className="w-4 h-4" />
+                                        <span>{task.location_address}</span>
                                       </button>
-                                      <button
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          hapticLight();
-                                          window.open(urls.appleMaps, '_blank');
-                                        }}
-                                        className="w-full text-left px-2 py-1.5 text-sm hover:bg-accent rounded-md"
-                                      >
-                                        🍎 Apple Maps
-                                      </button>
-                                      <button
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          hapticLight();
-                                          window.open(urls.waze, '_blank');
-                                        }}
-                                        className="w-full text-left px-2 py-1.5 text-sm hover:bg-accent rounded-md"
-                                      >
-                                        🚗 Waze
-                                      </button>
-                                      <button
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          hapticLight();
-                                          window.open(urls.uber, '_blank');
-                                        }}
-                                        className="w-full text-left px-2 py-1.5 text-sm hover:bg-accent rounded-md"
-                                      >
-                                        🚕 Uber
-                                      </button>
-                                      <div className="border-t border-border my-1" />
-                                      <button
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          hapticLight();
-                                          setViewingLocation({
-                                            address: task.location_address!,
-                                            lat: task.location_lat!,
-                                            lng: task.location_lng!,
-                                          });
-                                        }}
-                                        className="w-full text-left px-2 py-1.5 text-sm hover:bg-accent rounded-md"
-                                      >
-                                        👁️ Preview on map
-                                      </button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-56 p-2" align="start">
+                                      <div className="space-y-1">
+                                        <p className="font-mono text-xs text-muted-foreground px-2 py-1">
+                                          Open in...
+                                        </p>
+                                        <button
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            hapticLight();
+                                            window.open(urls.googleMaps, '_blank');
+                                          }}
+                                          className="w-full text-left px-2 py-1.5 text-sm hover:bg-accent rounded-md"
+                                        >
+                                          🗺️ Google Maps
+                                        </button>
+                                        <button
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            hapticLight();
+                                            window.open(urls.appleMaps, '_blank');
+                                          }}
+                                          className="w-full text-left px-2 py-1.5 text-sm hover:bg-accent rounded-md"
+                                        >
+                                          🍎 Apple Maps
+                                        </button>
+                                        <button
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            hapticLight();
+                                            window.open(urls.waze, '_blank');
+                                          }}
+                                          className="w-full text-left px-2 py-1.5 text-sm hover:bg-accent rounded-md"
+                                        >
+                                          🚗 Waze
+                                        </button>
+                                        <button
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            hapticLight();
+                                            window.open(urls.uber, '_blank');
+                                          }}
+                                          className="w-full text-left px-2 py-1.5 text-sm hover:bg-accent rounded-md"
+                                        >
+                                          🚕 Uber
+                                        </button>
+                                        <div className="border-t border-border my-1" />
+                                        <button
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            hapticLight();
+                                            setViewingLocation({
+                                              address: task.location_address!,
+                                              lat: task.location_lat!,
+                                              lng: task.location_lng!,
+                                            });
+                                          }}
+                                          className="w-full text-left px-2 py-1.5 text-sm hover:bg-accent rounded-md"
+                                        >
+                                          👁️ Preview on map
+                                        </button>
+                                      </div>
+                                    </PopoverContent>
+                                  </Popover>
+                                  {travelTime && (
+                                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                      <Clock className="w-3 h-3" />
+                                      <span>{travelTime.duration} min drive ({travelTime.distance} km)</span>
                                     </div>
-                                  </PopoverContent>
-                                </Popover>
+                                  )}
+                                </div>
                               );
                             }
                             return null;
