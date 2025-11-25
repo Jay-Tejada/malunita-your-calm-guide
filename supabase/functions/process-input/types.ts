@@ -37,6 +37,10 @@ export interface Routing {
   upcoming: string[];
   someday: string[];
   projects: string[];
+  work: string[];
+  home: string[];
+  gym: string[];
+  inbox: string[];
 }
 
 export interface ProcessInputResult {

@@ -37,6 +37,10 @@ export interface ProcessInputResult {
     upcoming: ProcessedTask[];
     someday: ProcessedTask[];
     projects: ProcessedTask[];
+    work: ProcessedTask[];
+    home: ProcessedTask[];
+    gym: ProcessedTask[];
+    inbox: ProcessedTask[];
   };
 }
 
