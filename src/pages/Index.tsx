@@ -284,6 +284,7 @@ const Index = () => {
           quickWins={mindstreamData.quickWins}
           followUps={mindstreamData.followUps}
           yesterdayDone={mindstreamData.yesterdayDone}
+          carryOverSuggestions={mindstreamData.carryOverSuggestions}
           isLoading={mindstreamData.isLoading}
           onSetFocus={() => dailyPriorityRef.current?.openDialog()}
         >
