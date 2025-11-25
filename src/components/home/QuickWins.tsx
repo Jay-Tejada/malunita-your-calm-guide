@@ -45,6 +45,8 @@ export function QuickWins({ data, onTaskCreated }: QuickWinsProps) {
         context: enriched.context?.taskContext?.[0]?.contextSummary,
         scheduled_bucket: enriched.routing?.taskRouting?.[0]?.bucket,
         is_tiny: enriched.isTiny,
+        is_tiny_task: enriched.isTiny,
+        follow_up: enriched.followUp || null,
         cluster: enriched.cluster ? { domain: enriched.cluster, label: enriched.cluster } : null,
         completed: false,
       });

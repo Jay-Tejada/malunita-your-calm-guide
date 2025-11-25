@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { MindstreamPanel } from "@/components/intelligence/MindstreamPanel";
 import { OneThingPrompt } from "@/components/home/OneThingPrompt";
 import { QuickWins } from "@/components/home/QuickWins";
+import { TasksByIntelligence } from "@/components/home/TasksByIntelligence";
 import { useDailyPriorityPrompt } from "@/state/useDailyPriorityPrompt";
 import { useDailyIntelligence } from "@/hooks/useDailyIntelligence";
 import { useCompanionEvents } from "@/hooks/useCompanionEvents";
@@ -115,8 +116,13 @@ export function HomeCanvas({ children, onOneThingClick, taskCreatedTrigger }: Ho
           <QuickWins data={data.quick_wins} onTaskCreated={handleTaskCreated} />
         )}
         
-        {/* Orb and other content */}
+        {/* Orb */}
         {children}
+      </div>
+      
+      {/* Organized Task Lists */}
+      <div className="mt-12">
+        <TasksByIntelligence />
       </div>
     </div>
   );

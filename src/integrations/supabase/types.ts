@@ -996,6 +996,7 @@ export type Database = {
           display_order: number | null
           focus_date: string | null
           focus_source: string | null
+          follow_up: string | null
           future_priority_score: number | null
           goal_aligned: boolean | null
           has_person_name: boolean | null
@@ -1004,6 +1005,7 @@ export type Database = {
           input_method: string | null
           is_focus: boolean | null
           is_time_based: boolean | null
+          is_tiny_task: boolean | null
           keywords: string[] | null
           location_address: string | null
           location_lat: number | null
@@ -1014,6 +1016,7 @@ export type Database = {
           recurrence_end_date: string | null
           recurrence_pattern: string | null
           reminder_time: string | null
+          scheduled_bucket: string | null
           title: string
           updated_at: string
           user_id: string
@@ -1030,6 +1033,7 @@ export type Database = {
           display_order?: number | null
           focus_date?: string | null
           focus_source?: string | null
+          follow_up?: string | null
           future_priority_score?: number | null
           goal_aligned?: boolean | null
           has_person_name?: boolean | null
@@ -1038,6 +1042,7 @@ export type Database = {
           input_method?: string | null
           is_focus?: boolean | null
           is_time_based?: boolean | null
+          is_tiny_task?: boolean | null
           keywords?: string[] | null
           location_address?: string | null
           location_lat?: number | null
@@ -1048,6 +1053,7 @@ export type Database = {
           recurrence_end_date?: string | null
           recurrence_pattern?: string | null
           reminder_time?: string | null
+          scheduled_bucket?: string | null
           title: string
           updated_at?: string
           user_id: string
@@ -1064,6 +1070,7 @@ export type Database = {
           display_order?: number | null
           focus_date?: string | null
           focus_source?: string | null
+          follow_up?: string | null
           future_priority_score?: number | null
           goal_aligned?: boolean | null
           has_person_name?: boolean | null
@@ -1072,6 +1079,7 @@ export type Database = {
           input_method?: string | null
           is_focus?: boolean | null
           is_time_based?: boolean | null
+          is_tiny_task?: boolean | null
           keywords?: string[] | null
           location_address?: string | null
           location_lat?: number | null
@@ -1082,6 +1090,7 @@ export type Database = {
           recurrence_end_date?: string | null
           recurrence_pattern?: string | null
           reminder_time?: string | null
+          scheduled_bucket?: string | null
           title?: string
           updated_at?: string
           user_id?: string
