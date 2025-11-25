@@ -22,7 +22,10 @@ interface MindstreamData {
   oneThingFocus?: OneThingFocus;
   followUps: string[];
   yesterdayDone: string[];
+  yesterdaySummaryText: string | null;
+  missedTasksCount: number;
   carryOverSuggestions: string[];
+  optionalCarryOver: string[];
   emotionalState: {
     joy: number;
     stress: number;
@@ -49,7 +52,10 @@ export function useDailyMindstream(): MindstreamData {
     oneThingFocus: undefined,
     followUps: [],
     yesterdayDone: [],
+    yesterdaySummaryText: null,
+    missedTasksCount: 0,
     carryOverSuggestions: [],
+    optionalCarryOver: [],
   });
   const [isLoading, setIsLoading] = useState(true);
 
@@ -100,7 +106,10 @@ export function useDailyMindstream(): MindstreamData {
           oneThingFocus: commandCenter?.one_thing_focus,
           followUps: commandCenter?.follow_ups || [],
           yesterdayDone: commandCenter?.yesterday_done || [],
+          yesterdaySummaryText: commandCenter?.yesterday_summary_text || null,
+          missedTasksCount: commandCenter?.missed_tasks_count || 0,
           carryOverSuggestions: commandCenter?.carry_over_suggestions || [],
+          optionalCarryOver: commandCenter?.optional_carry_over || [],
         });
       } catch (error) {
         console.error('Failed to fetch mindstream data:', error);
