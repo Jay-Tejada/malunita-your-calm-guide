@@ -28,7 +28,12 @@ interface AIPlan {
 
 interface AIAlerts {
   headline: string;
-  deadlines: string[];
+  deadlines: {
+    due_tomorrow: string[];
+    due_soon: string[];
+    overdue: string[];
+    missing_preparation: string[];
+  };
   followups: {
     task: string;
     person: string | null;
@@ -86,14 +91,35 @@ export function DailyIntelligence({
             </div>
             <p className="text-sm text-destructive mb-3">{aiAlerts.headline}</p>
             
-            {aiAlerts.deadlines.length > 0 && (
+            {(aiAlerts.deadlines.overdue.length > 0 || 
+              aiAlerts.deadlines.due_tomorrow.length > 0 || 
+              aiAlerts.deadlines.missing_preparation.length > 0 || 
+              aiAlerts.deadlines.due_soon.length > 0) && (
               <div className="mb-3">
                 <h4 className="text-xs font-medium font-mono uppercase tracking-wide text-muted-foreground mb-2">Deadlines</h4>
                 <ul className="space-y-1">
-                  {aiAlerts.deadlines.map((deadline, idx) => (
-                    <li key={idx} className="text-sm text-foreground flex items-start gap-2">
+                  {aiAlerts.deadlines.overdue.map((deadline, idx) => (
+                    <li key={`overdue-${idx}`} className="text-sm text-destructive flex items-start gap-2">
                       <span className="text-destructive">•</span>
-                      <span>{deadline}</span>
+                      <span>{deadline} (overdue)</span>
+                    </li>
+                  ))}
+                  {aiAlerts.deadlines.due_tomorrow.map((deadline, idx) => (
+                    <li key={`tomorrow-${idx}`} className="text-sm text-foreground flex items-start gap-2">
+                      <span className="text-destructive">•</span>
+                      <span>{deadline} (due tomorrow)</span>
+                    </li>
+                  ))}
+                  {aiAlerts.deadlines.missing_preparation.map((deadline, idx) => (
+                    <li key={`prep-${idx}`} className="text-sm text-foreground flex items-start gap-2">
+                      <span className="text-destructive">•</span>
+                      <span>{deadline} (needs prep)</span>
+                    </li>
+                  ))}
+                  {aiAlerts.deadlines.due_soon.map((deadline, idx) => (
+                    <li key={`soon-${idx}`} className="text-sm text-muted-foreground flex items-start gap-2">
+                      <span className="text-muted-foreground">•</span>
+                      <span>{deadline} (due soon)</span>
                     </li>
                   ))}
                 </ul>

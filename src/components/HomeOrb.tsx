@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { processInput, ProcessInputResult } from "@/lib/api/processInput";
 import { fetchDailyPlan, DailyPlan } from "@/lib/ai/fetchDailyPlan";
+import { fetchDailyAlerts, DailyAlerts } from "@/lib/ai/fetchDailyAlerts";
 import { useAttentionTracker } from "@/state/attentionTracker";
 
 interface HomeOrbProps {
@@ -12,6 +13,7 @@ interface HomeOrbProps {
   recordingDuration?: number;
   onAISummaryUpdate?: (summary: AISummary | null) => void;
   onAIPlanUpdate?: (plan: DailyPlan | null) => void;
+  onAIAlertsUpdate?: (alerts: DailyAlerts | null) => void;
 }
 
 interface AISummary {
@@ -32,7 +34,8 @@ export const HomeOrb = ({
   status = 'ready', 
   recordingDuration = 0,
   onAISummaryUpdate,
-  onAIPlanUpdate
+  onAIPlanUpdate,
+  onAIAlertsUpdate
 }: HomeOrbProps) => {
   const [isHovered, setIsHovered] = useState(false);
   const [headline, setHeadline] = useState<string | null>(null);
@@ -71,6 +74,12 @@ export const HomeOrb = ({
       const updatedPlan = await fetchDailyPlan(user.id);
       if (onAIPlanUpdate) {
         onAIPlanUpdate(updatedPlan);
+      }
+
+      // Refresh daily alerts after processing input
+      const alerts = await fetchDailyAlerts();
+      if (onAIAlertsUpdate) {
+        onAIAlertsUpdate(alerts);
       }
 
       // You can also use result.tasks to create tasks, result.routing for categorization, etc.

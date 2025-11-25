@@ -18,7 +18,7 @@ interface FollowUpEngineResponse {
   critical_count: number;
 }
 
-interface DailyAlerts {
+export interface DailyAlerts {
   headline: string;
   deadlines: {
     due_tomorrow: string[];
