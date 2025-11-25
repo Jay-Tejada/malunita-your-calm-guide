@@ -8,7 +8,8 @@ import { useProfile } from "@/hooks/useProfile";
 import { useCompanionIdentity, PersonalityType } from "@/hooks/useCompanionIdentity";
 import { useToast } from "@/hooks/use-toast";
 import { HomeShell } from "@/layouts/HomeShell";
-import { DailyPriorityPrompt } from "@/components/DailyPriorityPrompt";
+import { HomeCanvas } from "@/components/home/HomeCanvas";
+import { DailyPriorityPrompt, DailyPriorityPromptRef } from "@/components/DailyPriorityPrompt";
 import { FocusReflectionPrompt } from "@/components/FocusReflectionPrompt";
 import { MidDayFocusReminder } from "@/components/MidDayFocusReminder";
 import { EndOfDayWrapUp } from "@/components/EndOfDayWrapUp";
@@ -91,6 +92,7 @@ const Index = () => {
   const { companion, needsOnboarding, updateCompanion } = useCompanionIdentity();
   const { toast } = useToast();
   const voiceRef = useRef<MalunitaVoiceRef>(null);
+  const dailyPriorityRef = useRef<DailyPriorityPromptRef>(null);
   const { checkIfShouldShowPrompt } = useDailyPriorityPrompt();
   const { yesterdaysFocusTask, showPrompt: showReflection, saveReflection, dismissPrompt } = useFocusReflection();
   const { showReminder: showMidDayReminder, focusTask: midDayFocusTask, dismissReminder } = useMidDayFocusReminder();
@@ -326,7 +328,7 @@ const Index = () => {
             </div>
           </div>
         )}
-        <DailyPriorityPrompt />
+        <DailyPriorityPrompt ref={dailyPriorityRef} />
         {showWrapUp && (
           <div className="mb-6">
             <EndOfDayWrapUp completed={wrapUpCompleted} />
@@ -345,15 +347,17 @@ const Index = () => {
             />
           </div>
         )}
-        <HomeOrb
-          onCapture={handleOrbClick} 
-          isRecording={isRecording} 
-          status={getOrbStatus()}
-          recordingDuration={voiceStatus.recordingDuration}
-          onAISummaryUpdate={setAiSummary}
-          onAIPlanUpdate={setAiPlan}
-          onAIAlertsUpdate={setAiAlerts}
-        />
+        <HomeCanvas onOneThingClick={() => dailyPriorityRef.current?.openDialog()}>
+          <HomeOrb
+            onCapture={handleOrbClick} 
+            isRecording={isRecording} 
+            status={getOrbStatus()}
+            recordingDuration={voiceStatus.recordingDuration}
+            onAISummaryUpdate={setAiSummary}
+            onAIPlanUpdate={setAiPlan}
+            onAIAlertsUpdate={setAiAlerts}
+          />
+        </HomeCanvas>
       </HomeShell>
       
       <MalunitaVoice 
