@@ -15,6 +15,17 @@ interface AISummary {
   focus: string | null;
 }
 
+interface AIPlan {
+  top_priority: string;
+  must_do: string[];
+  should_do: string[];
+  could_do: string[];
+  quick_wins: string[];
+  warnings: string[];
+  day_theme: string;
+  reasoning: string;
+}
+
 interface DailyIntelligenceProps {
   topPriorities?: Task[];
   followUps?: Task[];
@@ -24,6 +35,7 @@ interface DailyIntelligenceProps {
   taskPatterns?: string[];
   emotionalTone?: string;
   aiSummary?: AISummary | null;
+  aiPlan?: AIPlan | null;
 }
 
 export function DailyIntelligence({
@@ -34,7 +46,8 @@ export function DailyIntelligence({
   overloadWarning = false,
   taskPatterns = [],
   emotionalTone,
-  aiSummary
+  aiSummary,
+  aiPlan
 }: DailyIntelligenceProps) {
   
   const getEmotionLabel = (emotion: string) => {
@@ -214,6 +227,68 @@ export function DailyIntelligence({
                       <span className="text-muted-foreground">•</span>
                       <span>{question}</span>
                     </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </>
+        )}
+
+        {/* AI Plan from daily-prioritization */}
+        {aiPlan && (
+          <>
+            {aiPlan.top_priority && (
+              <div className="pt-3 space-y-1">
+                <h3 className="text-xs font-medium font-mono uppercase tracking-wide text-muted-foreground">The One Thing</h3>
+                <p className="text-sm">{aiPlan.top_priority}</p>
+              </div>
+            )}
+
+            {aiPlan.must_do.length > 0 && (
+              <div className="pt-3 space-y-1">
+                <h3 className="text-xs font-medium font-mono uppercase tracking-wide text-muted-foreground">Must Do</h3>
+                <ul className="space-y-0.5">
+                  {aiPlan.must_do.map((task, idx) => (
+                    <li key={idx} className="text-sm text-foreground">{task}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {aiPlan.should_do.length > 0 && (
+              <div className="pt-3 space-y-1">
+                <h3 className="text-xs font-medium font-mono uppercase tracking-wide text-muted-foreground">Should Do</h3>
+                <ul className="space-y-0.5">
+                  {aiPlan.should_do.map((task, idx) => (
+                    <li key={idx} className="text-sm text-muted-foreground">{task}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {aiPlan.quick_wins.length > 0 && (
+              <div className="pt-3 space-y-1">
+                <h3 className="text-xs font-medium font-mono uppercase tracking-wide text-muted-foreground">Quick Wins</h3>
+                <ul className="space-y-0.5">
+                  {aiPlan.quick_wins.map((task, idx) => (
+                    <li key={idx} className="text-sm text-muted-foreground">{task}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {aiPlan.day_theme && (
+              <div className="pt-3">
+                <p className="text-sm italic text-muted-foreground">{aiPlan.day_theme}</p>
+              </div>
+            )}
+
+            {aiPlan.warnings.length > 0 && (
+              <div className="pt-3 space-y-1">
+                <h3 className="text-xs font-medium font-mono uppercase tracking-wide text-destructive">Warnings</h3>
+                <ul className="space-y-0.5">
+                  {aiPlan.warnings.map((warning, idx) => (
+                    <li key={idx} className="text-sm text-destructive">{warning}</li>
                   ))}
                 </ul>
               </div>
