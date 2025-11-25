@@ -25,6 +25,7 @@ import { useCognitiveLoad } from "@/state/cognitiveLoad";
 import { checkAndHandlePrediction } from "@/utils/predictionChecker";
 import { useAutoSplitTask } from "@/hooks/useAutoSplitTask";
 import { useRelatedTaskSuggestions } from "@/hooks/useRelatedTaskSuggestions";
+import { useMemoryEngine } from "@/state/memoryEngine";
 
 interface Message {
   role: 'user' | 'assistant';
@@ -704,6 +705,26 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
                 setTranscribedText(cleanedText);
                 console.log('Transcribed (stop command detected):', cleanedText);
                 
+                // Learn from writing style (async, non-blocking)
+                supabase.functions.invoke('learn-writing-style', {
+                  body: { 
+                    text: cleanedText,
+                    inputMethod: 'voice'
+                  }
+                }).then(({ data: learningData }) => {
+                  if (learningData) {
+                    const memoryEngine = useMemoryEngine.getState();
+                    if (learningData.writingStyle) {
+                      memoryEngine.setWritingStyle(learningData.writingStyle);
+                    }
+                    if (learningData.phrasings) {
+                      learningData.phrasings.forEach((phrase: string) => {
+                        memoryEngine.addPositiveReinforcer(phrase);
+                      });
+                    }
+                  }
+                });
+                
                 try {
                   // Extract tasks using AI
                   const { data: { user } } = await supabase.auth.getUser();
@@ -766,6 +787,36 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
             setTranscribedText(transcribed);
             console.log('📝 Transcribed text:', transcribed);
 
+            // Learn from writing style (async, non-blocking)
+            supabase.functions.invoke('learn-writing-style', {
+              body: { 
+                text: transcribed,
+                inputMethod: 'voice'
+              }
+            }).then(({ data: learningData, error: learningError }) => {
+              if (learningError) {
+                console.error('Learning error:', learningError);
+                return;
+              }
+              
+              if (learningData) {
+                console.log('✅ Learned writing style:', learningData.writingStyle);
+                
+                // Update memory engine locally
+                const memoryEngine = useMemoryEngine.getState();
+                if (learningData.writingStyle) {
+                  memoryEngine.setWritingStyle(learningData.writingStyle);
+                }
+                
+                // Store unique phrasings
+                if (learningData.phrasings && learningData.phrasings.length > 0) {
+                  learningData.phrasings.forEach((phrase: string) => {
+                    memoryEngine.addPositiveReinforcer(phrase);
+                  });
+                }
+              }
+            });
+
             // Detect stressed language for cognitive load tracking
             recordStressedLanguage(transcribed);
 
@@ -788,8 +839,15 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
 
             // Step 3: Extract tasks
             console.log('🔍 STEP 3: Extracting tasks...');
+            const extractUserId = profile?.id; // Use profile ID to avoid redeclaring user
+            
             const { data: extractData, error: extractError } = await supabase.functions.invoke('extract-tasks', {
-              body: { text: transcribed }
+              body: { 
+                text: transcribed,
+                userProfile: profile,
+                userId: extractUserId,
+                currentDate: new Date().toISOString()
+              }
             });
 
             if (extractError) {

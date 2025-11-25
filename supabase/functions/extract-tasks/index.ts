@@ -86,6 +86,36 @@ serve(async (req) => {
       const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
       const supabase = createClient(supabaseUrl, supabaseKey);
       
+      // Get memory profile for personalized extraction
+      const { data: memoryProfile } = await supabase
+        .from('ai_memory_profiles')
+        .select('*')
+        .eq('user_id', userId)
+        .maybeSingle();
+      
+      if (memoryProfile) {
+        learningInsights += `\n\nPersonalized learning data:
+- Writing style: ${memoryProfile.writing_style || 'neutral'}`;
+        
+        // Add personal vocabulary hints
+        if (memoryProfile.category_preferences?._writing_patterns) {
+          const patterns = memoryProfile.category_preferences._writing_patterns as any[];
+          if (patterns.length > 0) {
+            learningInsights += `\n- Common phrases: ${patterns.map((p: any) => p.text).join(', ')}`;
+          }
+        }
+        
+        // Add procrastination triggers
+        if (memoryProfile.procrastination_triggers && memoryProfile.procrastination_triggers.length > 0) {
+          learningInsights += `\n- Avoid suggesting categories: ${memoryProfile.procrastination_triggers.join(', ')}`;
+        }
+        
+        // Add tiny task threshold
+        if (memoryProfile.tiny_task_threshold) {
+          learningInsights += `\n- Tiny task threshold: ${memoryProfile.tiny_task_threshold} characters`;
+        }
+      }
+      
       // Get user's custom categories
       const { data: customCategories } = await supabase
         .from('custom_categories')
@@ -121,7 +151,7 @@ serve(async (req) => {
           timeframePatterns[item.actual_timeframe].push(key);
         });
         
-        learningInsights = `\n\nLearning from user's past corrections:
+        learningInsights += `\n\nLearning from user's past corrections:
 - Category preferences: ${Object.entries(categoryPatterns).map(([cat, tasks]) => 
   `${cat} for tasks like: ${tasks.slice(0, 3).join(', ')}`).join('; ')}
 - Timeframe preferences: ${Object.entries(timeframePatterns).map(([time, tasks]) => 

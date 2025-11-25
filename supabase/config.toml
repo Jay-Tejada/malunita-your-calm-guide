@@ -160,4 +160,7 @@ verify_jwt = true
 [functions.weekly-retraining]
 verify_jwt = false
 
+[functions.learn-writing-style]
+verify_jwt = true
+
 
