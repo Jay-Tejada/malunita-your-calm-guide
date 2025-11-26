@@ -63,7 +63,7 @@ interface SuggestedTask {
 
 interface MalunitaVoiceProps {
   onSaveNote?: (text: string, response: string) => void;
-  onPlanningModeActivated?: () => void;
+  onPlanningModeActivated?: (text: string) => void;
   onReflectionModeActivated?: () => void;
   onOrbReflectionTrigger?: () => void;
   onTasksCreated?: () => void;
@@ -824,6 +824,32 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
             
             setTranscribedText(transcribed);
             console.log('📝 Transcribed text:', transcribed);
+            
+            // Check for planning mode phrases
+            const planningPhrases = [
+              'help me plan',
+              'break this down',
+              'turn this into steps',
+              'i need a plan',
+              'help me think this through',
+              'make a plan for this'
+            ];
+            
+            const isPlanningMode = planningPhrases.some(phrase => 
+              lowerTranscribed.includes(phrase)
+            );
+            
+            if (isPlanningMode) {
+              console.log('🎯 Planning mode detected!');
+              setIsProcessing(false);
+              
+              // Trigger planning mode with original text
+              if (onPlanningModeActivated) {
+                onPlanningModeActivated(transcribed);
+              }
+              
+              return;
+            }
 
             // Learn from writing style (async, non-blocking)
             supabase.functions.invoke('learn-writing-style', {

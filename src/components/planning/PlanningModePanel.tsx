@@ -4,10 +4,11 @@ import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
 
 interface PlanningModePanelProps {
+  initialText: string;
   onClose: () => void;
 }
 
-export const PlanningModePanel: React.FC<PlanningModePanelProps> = ({ onClose }) => {
+export const PlanningModePanel: React.FC<PlanningModePanelProps> = ({ initialText, onClose }) => {
   return (
     <div className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center p-6 z-50">
       <Card className="max-w-2xl w-full p-6 space-y-6">
@@ -23,7 +24,7 @@ export const PlanningModePanel: React.FC<PlanningModePanelProps> = ({ onClose })
           <div className="p-4 rounded-lg border border-secondary">
             <h4 className="font-medium text-sm mb-2">Extracted Goals & Statements</h4>
             <div className="text-sm text-muted-foreground">
-              {/* Empty for now */}
+              <p className="italic">{initialText}</p>
             </div>
           </div>
 
