@@ -21,6 +21,9 @@ import { MapFullScreen } from "@/components/MapFullScreen";
 import { useMapboxToken } from "@/hooks/useMapboxToken";
 import { MapPin } from "lucide-react";
 import { TodaySection } from "@/components/drawer/TodaySection";
+import { TodaysBriefing } from "@/components/home/TodaysBriefing";
+import { DailyIntelligence } from "@/components/home/DailyIntelligence";
+import { useDailyMindstream } from "@/hooks/useDailyMindstream";
 
 type DrawerMode = "root" | "today" | "inbox" | "someday" | "work" | "home" | "gym" | "calendar" | `project-${string}`;
 
@@ -51,6 +54,7 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
   const { toast } = useToast();
   const { recordEventTitle } = useRecentEventTitles();
   const { token: mapboxToken } = useMapboxToken();
+  const mindstreamData = useDailyMindstream();
   const [completingTaskIds, setCompletingTaskIds] = useState<Set<string>>(new Set());
   const [isNewEventDialogOpen, setIsNewEventDialogOpen] = useState(false);
   const [newEventTitle, setNewEventTitle] = useState("");
@@ -442,12 +446,26 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
                     transition={{ duration: 0.14 }}
                     className="h-full flex flex-col p-6 md:p-8 pt-16"
                   >
-                    {/* Prompt Card */}
-                    <div className="w-full rounded-xl bg-gradient-to-b from-muted/50 to-muted/30 p-4 flex items-center gap-3 mb-5">
-                      <div className="w-1.5 h-1.5 rounded-full bg-foreground/40 flex-shrink-0" />
-                      <p className="font-mono text-[15px] text-foreground/90">
-                        What matters most today?
-                      </p>
+                    {/* Today's Briefing */}
+                    <div className="mb-6">
+                      <TodaysBriefing
+                        oneThingFocus={mindstreamData.oneThingFocus}
+                        quickWins={mindstreamData.quickWins}
+                        followUps={mindstreamData.followUps}
+                        yesterdayDone={mindstreamData.yesterdayDone}
+                        carryOverSuggestions={mindstreamData.carryOverSuggestions}
+                        isLoading={mindstreamData.isLoading}
+                      />
+                    </div>
+
+                    {/* Daily Intelligence */}
+                    <div className="mb-6">
+                      <DailyIntelligence
+                        summary={mindstreamData.oneThingFocus?.reason}
+                        quickWins={mindstreamData.quickWins}
+                        focusMessage={null}
+                        oneThing={mindstreamData.oneThingFocus?.title}
+                      />
                     </div>
 
                     {/* Add New Task Button */}

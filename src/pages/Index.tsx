@@ -290,12 +290,6 @@ const Index = () => {
         
         <HomeCanvas
           oneThingFocus={mindstreamData.oneThingFocus}
-          quickWins={mindstreamData.quickWins}
-          followUps={mindstreamData.followUps}
-          yesterdayDone={mindstreamData.yesterdayDone}
-          carryOverSuggestions={mindstreamData.carryOverSuggestions}
-          isLoading={mindstreamData.isLoading}
-          onSetFocus={() => dailyPriorityRef.current?.openDialog()}
           planningMode={planningMode}
           planningText={planningText}
           onClosePlanning={() => setPlanningMode(false)}
@@ -309,16 +303,6 @@ const Index = () => {
             onAIPlanUpdate={setAiPlan}
             onAIAlertsUpdate={setAiAlerts}
           />
-          
-          {/* Last capture preview - lightweight UI below orb */}
-          {lastSession && (
-            <div className="mt-6">
-              <LastCapturePreview 
-                session={lastSession} 
-                onClick={() => setShowCaptureHistory(true)}
-              />
-            </div>
-          )}
         </HomeCanvas>
       </HomeShell>
       
