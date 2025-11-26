@@ -21,6 +21,13 @@ export function usePersonalFeed() {
 
   const fetchAndShowFeed = async () => {
     try {
+      // Check if user is authenticated first
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        console.log('User not authenticated, skipping personal feed');
+        return;
+      }
+
       const { data, error } = await supabase.functions.invoke('malunita-personal-feed');
       
       if (error) {
