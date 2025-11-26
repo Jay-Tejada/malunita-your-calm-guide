@@ -1,5 +1,8 @@
 project_id = "jmibxihrllcleyjeenhu"
 
+[functions.malunita-personal-feed]
+verify_jwt = true
+
 [functions.process-voice-input]
 verify_jwt = true
 
