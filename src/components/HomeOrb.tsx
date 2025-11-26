@@ -147,17 +147,23 @@ export const HomeOrb = ({
           className="relative cursor-pointer"
           whileHover={{ scale: 1.03 }}
           whileTap={{ scale: 0.97 }}
-          style={{
-            width: '160px',
-            height: '160px',
-            maxWidth: '22vw',
-          }}
         >
-          <img 
-            src="/brand/orb_main.png" 
-            alt="Malunita Orb"
-            className="w-full h-full object-contain"
-          />
+          <div 
+            className="rounded-full overflow-hidden flex items-center justify-center"
+            style={{
+              width: '160px',
+              height: '160px',
+              maxWidth: '22vw',
+              background: 'none',
+              padding: 0,
+            }}
+          >
+            <img 
+              src="/brand/orb_main.png" 
+              alt="Malunita Orb"
+              className="w-full h-full object-cover rounded-full block"
+            />
+          </div>
         </motion.button>
 
         {/* Status text - 24px below orb */}
