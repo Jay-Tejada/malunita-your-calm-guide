@@ -1,5 +1,8 @@
 project_id = "jmibxihrllcleyjeenhu"
 
+[functions.task-staleness-checker]
+verify_jwt = false
+
 [functions.malunita-personal-feed]
 verify_jwt = true
 

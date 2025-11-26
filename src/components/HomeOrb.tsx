@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Brain } from "lucide-react";
 import { usePersonalFeed } from "@/hooks/usePersonalFeed";
 import { PersonalFeedMessage } from "@/components/PersonalFeedMessage";
+import { StaleTasksPopup } from "@/components/StaleTasksPopup";
 
 interface HomeOrbProps {
   onCapture?: () => void;
@@ -127,6 +128,9 @@ export const HomeOrb = ({
           show={showFeed}
         />
       )}
+      
+      {/* Stale Tasks Popup */}
+      <StaleTasksPopup />
       
       {/* Interruption Alert */}
       <AnimatePresence>
