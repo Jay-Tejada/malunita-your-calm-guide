@@ -369,77 +369,95 @@ serve(async (req) => {
     }).length;
 
     // Step 6: ONE Thing Logic - Find the task that creates the biggest relief
-    // Score each task based on urgency, emotional weight, heavy work, and domino effect
-    const scoreTask = (task: any) => {
-      let score = 0;
-      const title = task.title.toLowerCase();
-      const createdDate = new Date(task.created_at);
-      const daysSinceCreated = Math.floor((Date.now() - createdDate.getTime()) / (1000 * 60 * 60 * 24));
+    // Priority: Check if user explicitly marked any task as is_one_thing
+    const explicitOneThing = enrichedTasks.find(t => {
+      const metadata = t.ai_metadata as any;
+      return metadata?.is_one_thing === true && !t.completed;
+    });
 
-      // Use virtual flags for better scoring
-      // Emotional weight (0-10 scale)
-      if (task.emotional_weight) {
-        score += task.emotional_weight * 10; // Weight emotional impact heavily
-      }
+    let oneThingFocus;
+    
+    if (explicitOneThing) {
+      // User explicitly said this is their ONE thing
+      oneThingFocus = {
+        id: explicitOneThing.id,
+        title: explicitOneThing.title,
+        reason: "You said this is the ONE thing that matters today.",
+        relief_score: 100
+      };
+    } else {
+      // Score each task based on urgency, emotional weight, heavy work, and domino effect
+      const scoreTask = (task: any) => {
+        let score = 0;
+        const title = task.title.toLowerCase();
+        const createdDate = new Date(task.created_at);
+        const daysSinceCreated = Math.floor((Date.now() - createdDate.getTime()) / (1000 * 60 * 60 * 24));
 
-      // Heavy tasks get priority (they unlock the most relief)
-      if (task.heavy_task) {
-        score += 50;
-      }
-
-      // Focus tasks are prioritized
-      if (task.task_type === 'focus') {
-        score += 30;
-      }
-
-      // Urgency (legacy keywords for compatibility)
-      const urgentWords = ['urgent', 'asap', 'important', 'critical', 'deadline', 'overdue'];
-      if (urgentWords.some(word => title.includes(word))) {
-        score += 40;
-      }
-      
-      // Overdue (created more than 3 days ago)
-      if (daysSinceCreated > 3) score += 20;
-      if (daysSinceCreated > 7) score += 15; // bonus for very old tasks
-
-      // Emotional weight keywords (legacy for compatibility)
-      if (title.includes('blocked') || title.includes('stuck') || title.includes('waiting')) score += 25;
-      
-      // High-impact categories
-      if (task.category === 'work' || task.category === 'primary_focus') score += 15;
-      if (task.is_focus) score += 40;
-
-      // Complexity (longer tasks likely unlock more)
-      const wordCount = task.title.split(' ').length;
-      if (wordCount > 5 && wordCount < 15) score += 10; // Not too simple, not too complex
-
-      // Keywords suggesting high impact
-      if (title.includes('meeting') || title.includes('presentation') || title.includes('proposal')) score += 15;
-      if (title.includes('review') || title.includes('approve') || title.includes('decision')) score += 10;
-
-      return score;
-    };
-
-    // Get top candidate for ONE thing (use enriched tasks with virtual flags)
-    const scoredTasks = enrichedTasks
-      .filter(t => !t.completed)
-      .map(t => ({ task: t, score: scoreTask(t) }))
-      .sort((a, b) => b.score - a.score);
-
-    const oneThingFocus = scoredTasks.length > 0 
-      ? {
-          id: scoredTasks[0].task.id,
-          title: scoredTasks[0].task.title,
-          reason: `This task creates the biggest relief because ${
-            scoredTasks[0].task.heavy_task ? "it's a major undertaking that unlocks momentum" :
-            (scoredTasks[0].task.emotional_weight || 0) > 5 ? "it's weighing on you emotionally" :
-            scoredTasks[0].score > 60 ? 'it\'s urgent and high-impact' :
-            scoredTasks[0].score > 40 ? 'it\'s important and actionable' :
-            'it\'s a solid starting point'
-          }.`,
-          relief_score: scoredTasks[0].score
+        // Use virtual flags for better scoring
+        // Emotional weight (0-10 scale)
+        if (task.emotional_weight) {
+          score += task.emotional_weight * 10; // Weight emotional impact heavily
         }
-      : undefined;
+
+        // Heavy tasks get priority (they unlock the most relief)
+        if (task.heavy_task) {
+          score += 50;
+        }
+
+        // Focus tasks are prioritized
+        if (task.task_type === 'focus') {
+          score += 30;
+        }
+
+        // Urgency (legacy keywords for compatibility)
+        const urgentWords = ['urgent', 'asap', 'important', 'critical', 'deadline', 'overdue'];
+        if (urgentWords.some(word => title.includes(word))) {
+          score += 40;
+        }
+      
+        // Overdue (created more than 3 days ago)
+        if (daysSinceCreated > 3) score += 20;
+        if (daysSinceCreated > 7) score += 15; // bonus for very old tasks
+
+        // Emotional weight keywords (legacy for compatibility)
+        if (title.includes('blocked') || title.includes('stuck') || title.includes('waiting')) score += 25;
+      
+        // High-impact categories
+        if (task.category === 'work' || task.category === 'primary_focus') score += 15;
+        if (task.is_focus) score += 40;
+
+        // Complexity (longer tasks likely unlock more)
+        const wordCount = task.title.split(' ').length;
+        if (wordCount > 5 && wordCount < 15) score += 10; // Not too simple, not too complex
+
+        // Keywords suggesting high impact
+        if (title.includes('meeting') || title.includes('presentation') || title.includes('proposal')) score += 15;
+        if (title.includes('review') || title.includes('approve') || title.includes('decision')) score += 10;
+
+        return score;
+      };
+
+      // Get top candidate for ONE thing (use enriched tasks with virtual flags)
+      const scoredTasks = enrichedTasks
+        .filter(t => !t.completed)
+        .map(t => ({ task: t, score: scoreTask(t) }))
+        .sort((a, b) => b.score - a.score);
+
+      oneThingFocus = scoredTasks.length > 0 
+        ? {
+            id: scoredTasks[0].task.id,
+            title: scoredTasks[0].task.title,
+            reason: `This task creates the biggest relief because ${
+              scoredTasks[0].task.heavy_task ? "it's a major undertaking that unlocks momentum" :
+              (scoredTasks[0].task.emotional_weight || 0) > 5 ? "it's weighing on you emotionally" :
+              scoredTasks[0].score > 60 ? 'it\'s urgent and high-impact' :
+              scoredTasks[0].score > 40 ? 'it\'s important and actionable' :
+              'it\'s a solid starting point'
+            }.`,
+            relief_score: scoredTasks[0].score
+          }
+        : undefined;
+    }
 
     // Check for upcoming priority storms (tomorrow)
     const tomorrow = new Date();
