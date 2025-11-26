@@ -15,19 +15,29 @@ export default function ResetPassword() {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Check if there's a valid session (user clicked reset link)
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        setIsValidSession(true);
-      } else {
-        toast({
-          title: "Invalid reset link",
-          description: "Please request a new password reset link.",
-          variant: "destructive",
-        });
-        navigate("/");
-      }
-    });
+    // Check for password recovery token in URL
+    const hashParams = new URLSearchParams(window.location.hash.substring(1));
+    const accessToken = hashParams.get('access_token');
+    const type = hashParams.get('type');
+    
+    if (type === 'recovery' && accessToken) {
+      // Valid recovery link
+      setIsValidSession(true);
+    } else {
+      // Check if there's already a valid session
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session) {
+          setIsValidSession(true);
+        } else {
+          toast({
+            title: "Invalid reset link",
+            description: "Please request a new password reset link.",
+            variant: "destructive",
+          });
+          navigate("/");
+        }
+      });
+    }
   }, [navigate, toast]);
 
   const handleResetPassword = async (e: React.FormEvent) => {
