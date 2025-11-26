@@ -17,7 +17,9 @@ export const useDailyPriorityPrompt = create<DailyPriorityPromptState>()(
       priorityTaskId: null,
       
       checkIfShouldShowPrompt: () => {
-        const today = new Date().toISOString().split('T')[0];
+        const now = new Date();
+        const today = now.toISOString().split('T')[0];
+        const currentHour = now.getHours();
         const lastAnswered = get().lastAnsweredDate;
         
         // If already answered today, don't show
@@ -26,8 +28,12 @@ export const useDailyPriorityPrompt = create<DailyPriorityPromptState>()(
           return;
         }
         
-        // New day - show the prompt automatically
-        set({ showPrompt: true, priorityTaskId: null });
+        // Only show in morning hours (5 AM - 12 PM)
+        if (currentHour >= 5 && currentHour < 12) {
+          set({ showPrompt: true, priorityTaskId: null });
+        } else {
+          set({ showPrompt: false });
+        }
       },
       
       markPromptAnswered: (taskId: string) => {
