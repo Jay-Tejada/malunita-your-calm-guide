@@ -184,3 +184,6 @@ verify_jwt = true
 [functions.quest-wrapper]
 verify_jwt = true
 
+[functions.planning-breakdown]
+verify_jwt = true
+
