@@ -15,6 +15,7 @@ import { TaskFeedbackDialog } from "@/components/TaskFeedbackDialog";
 import { TaskCorrectionPanel } from "@/components/tasks/TaskCorrectionPanel";
 import { VoiceOrb } from "@/components/VoiceOrb";
 import { CompanionAvatar, CompanionMode } from "@/components/companion/CompanionAvatar";
+import { ClarificationBanner } from "@/components/ClarificationBanner";
 import { processRawInput } from "@/lib/taskProcessing";
 import { contextMapper } from "@/lib/contextMapper";
 import { priorityScorer } from "@/lib/priorityScorer";
@@ -119,6 +120,11 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
   const [correctionContext, setCorrectionContext] = useState<{
     transcript: string;
     aiOutput: any;
+  } | null>(null);
+  const [clarificationQuestion, setClarificationQuestion] = useState<{
+    task_id: string;
+    question: string;
+    type: 'deadline' | 'category' | 'project' | 'priority' | 'agenda';
   } | null>(null);
   
   const { profile } = useProfile();
@@ -901,11 +907,37 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
             // ===========================================================
             
             if (mode === 'add_tasks' && extractedTasks && extractedTasks.length > 0) {
-              // Show task confirmation dialog
+              // Store tasks first
               setPendingTasks(extractedTasks);
               setOriginalVoiceText(transcribed);
-              setShowConfirmation(true);
               setGptResponse(reply_text || `Found ${extractedTasks.length} task${extractedTasks.length > 1 ? 's' : ''}`);
+              
+              // Check if any task needs clarification
+              const tasksWithIds = extractedTasks.map((t, i) => ({
+                ...t,
+                id: `temp_${i}`,
+              }));
+              
+              const clarificationResult = clarificationPrompter(
+                tasksWithIds,
+                { projects: [], categories: [], people_mentions: [], implied_deadlines: [], time_sensitivity: [] },
+                tasksWithIds.map(t => ({
+                  task_id: t.id!,
+                  priority: t.priority_score && t.priority_score > 70 ? 'MUST' : t.priority_score && t.priority_score > 40 ? 'SHOULD' : 'COULD',
+                  effort: t.tiny_task ? 'tiny' : t.heavy_task ? 'large' : 'medium',
+                  fiesta_ready: !!t.tiny_task,
+                  big_task: !!t.heavy_task,
+                })),
+                { summary: '', topics: [], insights: [], decisions: [], ideas: [], followups: [], questions: [], emotional_tone: 'neutral' }
+              );
+              
+              if (clarificationResult.needs_clarification && clarificationResult.questions.length > 0) {
+                // Show first clarification question
+                setClarificationQuestion(clarificationResult.questions[0]);
+              } else {
+                // No clarification needed, show confirmation directly
+                setShowConfirmation(true);
+              }
               
               // Add reply to memory
               if (reply_text) {
@@ -1325,62 +1357,133 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
     }
   };
 
-  return (
-    <div className="hidden">
-      {/* Hidden voice recorder - only for functionality, visuals disabled on home page */}
+  const handleClarificationAnswer = (answer: string) => {
+    if (!clarificationQuestion) return;
+    
+    // Find the task that needs clarification
+    const taskIdNum = parseInt(clarificationQuestion.task_id.replace('temp_', ''));
+    const updatedTasks = [...pendingTasks];
+    
+    if (taskIdNum >= 0 && taskIdNum < updatedTasks.length) {
+      const task = updatedTasks[taskIdNum];
       
-      {/* Conversational Task Flow */}
-      {showConfirmation && pendingTasks.length > 0 && (
-        <ConversationalTaskFlow
-          tasks={pendingTasks}
-          originalText={originalVoiceText}
-          onComplete={handleConfirmTasks}
-          onCancel={() => {
-            setShowConfirmation(false);
-            setPendingTasks([]);
-            setOriginalVoiceText('');
-            setIsProcessing(false);
-          }}
-          audioEnabled={audioEnabled}
-        />
-      )}
+      // Update task based on clarification type
+      switch (clarificationQuestion.type) {
+        case 'deadline':
+          if (answer === 'Today') {
+            task.ideal_day = 'today';
+            task.reminder_time = new Date().toISOString();
+          } else if (answer === 'Tomorrow') {
+            task.ideal_day = 'tomorrow';
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            task.reminder_time = tomorrow.toISOString();
+          } else if (answer === 'This week') {
+            task.ideal_day = 'this_week';
+          }
+          break;
+        case 'category':
+          task.suggested_category = answer.toLowerCase();
+          break;
+        case 'priority':
+          if (answer === 'Must do') {
+            task.priority_score = 90;
+          } else if (answer === 'Should do') {
+            task.priority_score = 60;
+          } else {
+            task.priority_score = 30;
+          }
+          break;
+        case 'agenda':
+          if (answer === 'Yes') {
+            task.is_one_thing = true;
+          }
+          break;
+      }
+      
+      setPendingTasks(updatedTasks);
+    }
+    
+    // Clear clarification and show confirmation
+    setClarificationQuestion(null);
+    setShowConfirmation(true);
+  };
 
-      {/* Task Feedback Dialog */}
-      {showFeedbackDialog && feedbackTaskData && (
-        <TaskFeedbackDialog
-          open={showFeedbackDialog}
-          onOpenChange={setShowFeedbackDialog}
-          taskId={feedbackTaskData.taskId}
-          taskTitle={feedbackTaskData.taskTitle}
-          originalText={feedbackTaskData.originalText}
-          suggestedCategory={feedbackTaskData.suggestedCategory}
-          actualCategory={feedbackTaskData.actualCategory}
-        />
-      )}
+  const handleDismissClarification = () => {
+    setClarificationQuestion(null);
+    setShowConfirmation(true);
+  };
 
-      {/* Task Correction Panel for Voice Misunderstandings */}
-      {showCorrectionPanel && correctionContext && (
-        <TaskCorrectionPanel
-          task={{
-            id: 'voice-transcript',
-            title: correctionContext.transcript,
-            context: correctionContext.transcript,
-            category: 'inbox',
-            completed: false,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-            user_id: '',
-          } as any}
-          initialAIOutput={correctionContext.aiOutput}
-          onSubmitCorrection={handleCorrectionSubmit}
-          open={showCorrectionPanel}
-          onClose={() => {
-            setShowCorrectionPanel(false);
-            setCorrectionContext(null);
-          }}
-        />
+  return (
+    <>
+      {/* Clarification Banner - Rendered above orb */}
+      {clarificationQuestion && (
+        <div className="fixed bottom-32 left-0 right-0 z-50 flex items-center justify-center px-4">
+          <ClarificationBanner
+            question={clarificationQuestion.question}
+            type={clarificationQuestion.type}
+            onAnswer={handleClarificationAnswer}
+            onDismiss={handleDismissClarification}
+          />
+        </div>
       )}
-    </div>
+      
+      <div className="hidden">
+        {/* Hidden voice recorder - only for functionality, visuals disabled on home page */}
+        
+        {/* Conversational Task Flow */}
+        {showConfirmation && pendingTasks.length > 0 && !clarificationQuestion && (
+          <ConversationalTaskFlow
+            tasks={pendingTasks}
+            originalText={originalVoiceText}
+            onComplete={handleConfirmTasks}
+            onCancel={() => {
+              setShowConfirmation(false);
+              setPendingTasks([]);
+              setOriginalVoiceText('');
+              setIsProcessing(false);
+            }}
+            audioEnabled={audioEnabled}
+          />
+        )}
+
+        {/* Task Feedback Dialog */}
+        {showFeedbackDialog && feedbackTaskData && (
+          <TaskFeedbackDialog
+            open={showFeedbackDialog}
+            onOpenChange={setShowFeedbackDialog}
+            taskId={feedbackTaskData.taskId}
+            taskTitle={feedbackTaskData.taskTitle}
+            originalText={feedbackTaskData.originalText}
+            suggestedCategory={feedbackTaskData.suggestedCategory}
+            actualCategory={feedbackTaskData.actualCategory}
+          />
+        )}
+
+        {/* Task Correction Panel for Voice Misunderstandings */}
+        {showCorrectionPanel && correctionContext && (
+          <TaskCorrectionPanel
+            task={{
+              id: 'voice-transcript',
+              title: correctionContext.transcript,
+              context: correctionContext.transcript,
+              category: 'inbox',
+              completed: false,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+              user_id: '',
+            } as any}
+            initialAIOutput={correctionContext.aiOutput}
+            onSubmitCorrection={handleCorrectionSubmit}
+            open={showCorrectionPanel}
+            onClose={() => {
+              setShowCorrectionPanel(false);
+              setCorrectionContext(null);
+            }}
+          />
+        )}
+      </div>
+    </>
   );
 });
 
