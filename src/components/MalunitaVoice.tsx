@@ -180,16 +180,48 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
   const handleVoiceTaskCapture = async (text: string, category?: 'inbox' | 'home' | 'work' | 'gym' | 'projects') => {
     try {
       setIsSaving(true);
-      const createdTasks = await createTasks([{
-        title: text,
-        category: category || 'inbox',
-        input_method: 'voice',
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast({
+          title: "Authentication required",
+          description: "Please sign in to save tasks",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      console.log('🧠 Processing voice input through AI:', text);
+
+      // Process input through intelligent pipeline
+      const { processInput } = await import('@/lib/api/processInput');
+      const result = await processInput({
+        text,
+        userId: user.id,
+      });
+
+      console.log('📊 AI Analysis result:', result);
+
+      // Create tasks from analyzed results
+      const tasksToCreate = result.tasks.map(task => ({
+        title: task.cleaned || task.raw,
+        category: task.category || category || 'inbox',
+        input_method: 'voice' as const,
         completed: false,
-      }]);
+        reminder_time: task.reminder_time || undefined,
+        ai_metadata: {
+          priority: task.priority?.toUpperCase() as 'MUST' | 'SHOULD' | 'COULD',
+          isTiny: task.isTiny,
+          task_type: task.task_type,
+          emotional_weight: task.emotional_weight,
+          priority_score: task.priority_score,
+          ideal_time: task.ideal_time,
+        },
+      }));
+
+      const createdTasks = tasksToCreate.length > 0 ? await createTasks(tasksToCreate) : [];
       
       // Trigger haptic feedback on mobile devices
       if ('vibrate' in navigator) {
-        // Short double pulse: vibrate-pause-vibrate
         navigator.vibrate([50, 50, 50]);
       }
       
@@ -204,17 +236,32 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
         onTasksCreated();
       }
       
-      // Generate and play TTS confirmation
-      if (createdTasks && createdTasks.length > 0 && audioEnabled) {
-        const task = createdTasks[0];
-        const categoryName = (category || 'inbox').charAt(0).toUpperCase() + (category || 'inbox').slice(1);
-        const confirmationMessage = `You said: "${text}" I've added it to your tasks under ${categoryName}. Want to set a reminder?`;
+      // Generate intelligent AI response
+      let aiResponseText = result.aiResponse || '';
+      
+      if (!aiResponseText && createdTasks.length > 0) {
+        // Fallback response if no AI response
+        const taskCount = createdTasks.length;
+        const taskWord = taskCount === 1 ? 'task' : 'tasks';
+        aiResponseText = `Got it! I've added ${taskCount} ${taskWord} for you. `;
         
-        setGptResponse(confirmationMessage);
+        if (result.emotion === 'stressed') {
+          aiResponseText += "Take a breath - you've got this. ";
+        }
         
+        if (result.ideas.length > 0) {
+          aiResponseText += `I also noted ${result.ideas.length} idea${result.ideas.length > 1 ? 's' : ''} to revisit later.`;
+        }
+      }
+      
+      console.log('🗣️ AI Response:', aiResponseText);
+      setGptResponse(aiResponseText);
+      
+      // Play TTS response if enabled
+      if (audioEnabled && aiResponseText) {
         try {
           const { data: ttsData, error: ttsError } = await supabase.functions.invoke('text-to-speech', {
-            body: { text: confirmationMessage, voice: 'nova' }
+            body: { text: aiResponseText, voice: 'nova' }
           });
 
           if (!ttsError && ttsData?.audioContent) {
@@ -225,20 +272,25 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
         }
       }
       
-      // Show feedback dialog for the created task
+      // Show feedback dialog for the first created task
       if (createdTasks && createdTasks.length > 0) {
         const task = createdTasks[0];
         setFeedbackTaskData({
           taskId: task.id,
           taskTitle: task.title,
           originalText: text,
-          suggestedCategory: category,
-          actualCategory: category || 'inbox',
+          suggestedCategory: task.category,
+          actualCategory: task.category || 'inbox',
         });
         setShowFeedbackDialog(true);
       }
     } catch (error) {
-      console.error('Error creating task from voice:', error);
+      console.error('Error processing voice input:', error);
+      toast({
+        title: "Processing error",
+        description: "I had trouble understanding that. Could you try again?",
+        variant: "destructive",
+      });
     } finally {
       setIsSaving(false);
     }
