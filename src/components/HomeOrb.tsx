@@ -1,7 +1,7 @@
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { processInput, ProcessInputResult } from "@/lib/api/processInput";
+import { processInput } from "@/lib/api/processInput";
 import { fetchDailyPlan, DailyPlan } from "@/lib/ai/fetchDailyPlan";
 import { fetchDailyAlerts, DailyAlerts } from "@/lib/ai/fetchDailyAlerts";
 import { useAttentionTracker } from "@/state/attentionTracker";
@@ -47,7 +47,6 @@ export const HomeOrb = ({
   const { currentFeed, showFeed } = usePersonalFeed();
 
   // Example: Call processInput when you have text input
-  // This would typically be triggered after voice transcription or text input
   const handleProcessInput = async (text: string) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -67,24 +66,19 @@ export const HomeOrb = ({
         focus: result.contextSummary?.totalTasks ? `${result.contextSummary.totalTasks} tasks` : null,
       };
 
-      // Pass it up to parent component
       if (onAISummaryUpdate) {
         onAISummaryUpdate(aiSummary);
       }
 
-      // Refresh daily plan after processing input
       const updatedPlan = await fetchDailyPlan(user.id);
       if (onAIPlanUpdate) {
         onAIPlanUpdate(updatedPlan);
       }
 
-      // Refresh daily alerts after processing input
       const alerts = await fetchDailyAlerts();
       if (onAIAlertsUpdate) {
         onAIAlertsUpdate(alerts);
       }
-
-      // You can also use result.tasks to create tasks, result.routing for categorization, etc.
     } catch (error) {
       console.error('Failed to process input:', error);
     }
@@ -104,17 +98,10 @@ export const HomeOrb = ({
       }
     };
 
-    // Initial check
     checkFocusDrift();
-
-    // Check every 5 minutes
     const interval = setInterval(checkFocusDrift, 5 * 60 * 1000);
-
     return () => clearInterval(interval);
   }, [lastFocusedTaskId, getMinutesAway]);
-
-  // All states use warm golden palette - only animation intensity changes
-  const orbGlow = "rgba(247, 217, 141, 0.5)";
 
   return (
     <>
@@ -150,116 +137,62 @@ export const HomeOrb = ({
         </div>
       )}
 
-      {/* Main Orb */}
-      <div className="relative flex flex-col items-center">
-        <motion.button
-          onClick={onCapture}
-          onHoverStart={() => setIsHovered(true)}
-          onHoverEnd={() => setIsHovered(false)}
-          className="relative group cursor-pointer"
-          animate={{
-            scale: [1, 1.02, 1],
-          }}
-          transition={{
-            duration: 4,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
-        >
-          {/* Outer glow layer - subtle breathing pulse when recording */}
-          <motion.div
-            className="absolute inset-0 rounded-full blur-[60px]"
+      {/* Main Orb Container */}
+      <div className="flex flex-col items-center">
+        {/* Orb with minimal glow */}
+        <div className="relative">
+          {/* Subtle glow layer */}
+          <div 
+            className="absolute inset-0 rounded-full"
             style={{
-              background: "radial-gradient(circle, rgba(247, 217, 141, 0.5) 0%, rgba(247, 217, 141, 0.15) 70%, transparent 100%)",
-              width: "320px",
-              height: "320px",
-              left: "50%",
-              top: "50%",
-              transform: "translate(-50%, -50%)",
-            }}
-            animate={{
-              scale: isRecording ? [1, 1.12, 1] : (isHovered ? [1, 1.1, 1] : [1, 1.05, 1]),
-              opacity: isRecording ? [0.7, 0.95, 0.7] : (isHovered ? [0.6, 0.8, 0.6] : [0.4, 0.6, 0.4]),
-            }}
-            transition={{
-              duration: isRecording ? 2 : 3,
-              repeat: Infinity,
-              ease: "easeInOut",
+              filter: 'blur(80px)',
+              opacity: 0.15,
+              background: '#f0e7cc',
+              width: '100%',
+              height: '100%',
+              transform: 'scale(1.5)',
             }}
           />
           
-          {/* Middle glow layer */}
-          <motion.div
-            className="absolute inset-0 rounded-full blur-[40px]"
+          {/* Orb button */}
+          <motion.button
+            onClick={onCapture}
+            onHoverStart={() => setIsHovered(true)}
+            onHoverEnd={() => setIsHovered(false)}
+            className="relative cursor-pointer block"
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.97 }}
             style={{
-              background: "radial-gradient(circle, rgba(247, 217, 141, 0.7) 0%, rgba(247, 217, 141, 0.25) 60%, transparent 100%)",
-              width: "240px",
-              height: "240px",
-              left: "50%",
-              top: "50%",
-              transform: "translate(-50%, -50%)",
+              width: 'min(32vw, 280px)',
+              height: 'auto',
+              aspectRatio: '1 / 1',
             }}
-            animate={{
-              scale: isRecording ? [1, 1.1, 1] : (isHovered ? [1, 1.08, 1] : [1, 1.05, 1]),
-              opacity: isRecording ? [0.85, 1, 0.85] : (isHovered ? [0.7, 0.9, 0.7] : [0.5, 0.7, 0.5]),
-            }}
-            transition={{
-              duration: isRecording ? 1.8 : 2.5,
-              repeat: Infinity,
-              ease: "easeInOut",
-            }}
-          />
-
-          {/* Core orb - new brand orb image */}
-          <motion.div
-            className="relative rounded-full shadow-2xl overflow-hidden"
-            style={{
-              width: "min(35vw, 280px)",
-              height: "min(35vw, 280px)",
-              boxShadow: `0 8px 32px ${orbGlow}`,
-            }}
-            initial={{ opacity: 0 }}
-            animate={{ 
-              opacity: 1,
-              scale: isRecording ? [1, 1.03, 1] : 1
-            }}
-            transition={{
-              opacity: { duration: 0.6 },
-              scale: {
-                duration: 2,
-                repeat: Infinity,
-                ease: "easeInOut",
-              }
-            }}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
           >
             <img 
               src="/brand/orb_main.png" 
               alt="Malunita Orb"
-              className="w-full h-full object-cover"
+              className="w-full h-full rounded-full object-cover"
+              style={{
+                display: 'block',
+              }}
             />
-          </motion.div>
-        </motion.button>
+          </motion.button>
+        </div>
 
-        {/* Status and timer text */}
-        <div className="mt-8 flex flex-col items-center gap-4">
+        {/* Status text - 24px below orb */}
+        <div 
+          className="mt-6 flex flex-col items-center"
+          style={{ marginTop: '24px' }}
+        >
           {status !== 'ready' ? (
             <motion.p
-              className="text-lg font-mono tracking-wide"
-              style={{ color: "rgba(128, 128, 128, 0.7)" }}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ 
-                opacity: status === 'listening' ? [0.7, 1, 0.7] : 1, 
-                y: 0,
-              }}
-              transition={{ 
-                delay: 0.4,
-                opacity: {
-                  duration: 2,
-                  repeat: status === 'listening' ? Infinity : 0,
-                  ease: "easeInOut"
-                }
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              style={{
+                fontSize: '18px',
+                fontFamily: 'IBM Plex Mono, monospace',
+                opacity: 0.45,
+                textAlign: 'center',
               }}
             >
               {status === 'listening' && 'Listening...'}
@@ -268,37 +201,51 @@ export const HomeOrb = ({
             </motion.p>
           ) : (
             <motion.p
-              className="text-lg font-mono tracking-wide"
-              style={{ color: "rgba(128, 128, 128, 0.7)" }}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.2 }}
+              style={{
+                fontSize: '18px',
+                fontFamily: 'IBM Plex Mono, monospace',
+                opacity: 0.45,
+                textAlign: 'center',
+              }}
             >
               What's on your mind?
             </motion.p>
           )}
           
+          {/* Timer for listening state */}
           {status === 'listening' && recordingDuration > 0 && (
             <motion.p
-              className="text-sm font-mono"
-              style={{ color: "rgba(128, 128, 128, 0.5)" }}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ delay: 0.6 }}
+              transition={{ delay: 0.3 }}
+              style={{
+                fontSize: '14px',
+                fontFamily: 'IBM Plex Mono, monospace',
+                opacity: 0.35,
+                marginTop: '8px',
+              }}
             >
               {Math.floor(recordingDuration / 1000)}s
             </motion.p>
           )}
 
-          {/* Think With Me Button */}
+          {/* Think With Me Button - 24px below text */}
           <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.8 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.4 }}
+            style={{ marginTop: '24px' }}
           >
             <ThinkWithMe
               trigger={
-                <Button variant="outline" size="sm" className="gap-2 bg-background/80 backdrop-blur-sm hover:bg-background">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="gap-2 bg-background/80 backdrop-blur-sm hover:bg-background border-border/40"
+                >
                   <Brain className="w-4 h-4" />
                   <span>Think With Me</span>
                 </Button>
