@@ -6,15 +6,39 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { useTasks } from "@/hooks/useTasks";
 import { InboxActions } from "@/components/InboxActions";
+import { PlanningModePanel } from "@/components/planning/PlanningModePanel";
+import { usePlanningBreakdown } from "@/hooks/usePlanningBreakdown";
 
 
 const Inbox = () => {
   const navigate = useNavigate();
   const { tasks, isLoading } = useTasks();
+  const [planningMode, setPlanningMode] = useState(false);
+  const [planningText, setPlanningText] = useState("");
+  const { loading, error, result, runPlanningBreakdown } = usePlanningBreakdown();
+
+  const handlePlanThis = (title: string) => {
+    setPlanningText(title);
+    setPlanningMode(true);
+  };
 
   return (
     <div className="min-h-screen bg-background">
       <Header />
+      
+      {/* Planning Mode Overlay */}
+      {planningMode && (
+        <div className="fixed inset-0 bg-background/40 backdrop-blur-sm flex items-center justify-center p-6 z-50">
+          <PlanningModePanel 
+            initialText={planningText}
+            loading={loading}
+            error={error}
+            result={result}
+            onRun={() => runPlanningBreakdown(planningText)}
+            onClose={() => setPlanningMode(false)} 
+          />
+        </div>
+      )}
       
       <main className="container mx-auto px-4 py-6 max-w-4xl pb-20 md:pb-6">
         <div className="flex items-center gap-4 mb-6">
@@ -38,7 +62,7 @@ const Inbox = () => {
           {/* Inbox Actions */}
           {!isLoading && tasks && <InboxActions tasks={tasks} />}
           
-          <TaskList category="inbox" />
+          <TaskList category="inbox" onPlanThis={handlePlanThis} />
         </div>
       </main>
     </div>
