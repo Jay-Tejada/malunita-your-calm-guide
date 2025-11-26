@@ -1289,6 +1289,7 @@ export type Database = {
           recurrence_pattern: string | null
           reminder_time: string | null
           scheduled_bucket: string | null
+          staleness_status: string | null
           title: string
           updated_at: string
           user_id: string
@@ -1329,6 +1330,7 @@ export type Database = {
           recurrence_pattern?: string | null
           reminder_time?: string | null
           scheduled_bucket?: string | null
+          staleness_status?: string | null
           title: string
           updated_at?: string
           user_id: string
@@ -1369,6 +1371,7 @@ export type Database = {
           recurrence_pattern?: string | null
           reminder_time?: string | null
           scheduled_bucket?: string | null
+          staleness_status?: string | null
           title?: string
           updated_at?: string
           user_id?: string
