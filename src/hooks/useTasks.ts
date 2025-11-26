@@ -187,6 +187,25 @@ export const useTasks = () => {
           undefined // We don't track duration yet
         );
         
+        // Insert into task_history for analytics
+        try {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user?.id) {
+            const metadata = data.ai_metadata as any;
+            await supabase.from('task_history').insert({
+              user_id: user.id,
+              task_text: data.title,
+              completed_at: new Date().toISOString(),
+              category: category,
+              sentiment: metadata?.priority === 'MUST' ? 'urgent' : 'neutral',
+              difficulty: data.is_tiny_task ? 'tiny' : 'medium',
+              emotional_context: data.context || null,
+            });
+          }
+        } catch (error) {
+          console.error('Failed to log task history:', error);
+        }
+        
         // Track quest progress for task completion
         questTracker.trackTaskCompletion();
         
