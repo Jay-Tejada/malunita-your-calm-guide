@@ -140,16 +140,16 @@ export const HomeOrb = ({
       {/* Main Orb Container */}
       <div className="flex flex-col items-center">
         {/* Orb with minimal glow */}
-        <div className="relative">
-          {/* Subtle glow layer */}
+        <div className="relative flex items-center justify-center">
+          {/* Subtle glow layer behind orb */}
           <div 
-            className="absolute inset-0 rounded-full"
+            className="absolute rounded-full pointer-events-none"
             style={{
+              width: 'min(32vw, 280px)',
+              height: 'min(32vw, 280px)',
               filter: 'blur(80px)',
               opacity: 0.15,
               background: '#f0e7cc',
-              width: '100%',
-              height: '100%',
               transform: 'scale(1.5)',
             }}
           />
@@ -159,29 +159,25 @@ export const HomeOrb = ({
             onClick={onCapture}
             onHoverStart={() => setIsHovered(true)}
             onHoverEnd={() => setIsHovered(false)}
-            className="relative cursor-pointer block"
+            className="relative cursor-pointer"
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.97 }}
             style={{
               width: 'min(32vw, 280px)',
-              height: 'auto',
-              aspectRatio: '1 / 1',
+              maxWidth: '280px',
             }}
           >
             <img 
               src="/brand/orb_main.png" 
               alt="Malunita Orb"
-              className="w-full h-full rounded-full object-cover"
-              style={{
-                display: 'block',
-              }}
+              className="w-full h-auto aspect-square rounded-full object-cover"
             />
           </motion.button>
         </div>
 
         {/* Status text - 24px below orb */}
         <div 
-          className="mt-6 flex flex-col items-center"
+          className="flex flex-col items-center"
           style={{ marginTop: '24px' }}
         >
           {status !== 'ready' ? (

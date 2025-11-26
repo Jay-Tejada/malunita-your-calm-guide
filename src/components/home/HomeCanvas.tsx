@@ -54,15 +54,16 @@ export const HomeCanvas = memo(function HomeCanvas({
         {/* Today's Focus text - only if exists */}
         {oneThingFocus && (
           <div 
-            className="text-center mb-10"
+            className="text-center"
             style={{ 
               maxWidth: '70vw',
               fontSize: '16px',
               fontWeight: 400,
               color: 'rgba(0, 0, 0, 0.55)',
+              marginBottom: '40px',
             }}
           >
-            Today's Focus: {oneThingFocus.title}
+            {oneThingFocus.title}
           </div>
         )}
         
