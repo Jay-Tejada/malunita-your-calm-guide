@@ -11,7 +11,6 @@ import { cn } from '@/lib/utils';
 
 interface DreamModeProps {
   onClose: () => void;
-  onMorningRitual?: () => void;
 }
 
 interface DreamSymbol {
@@ -23,13 +22,12 @@ interface DreamSymbol {
   color?: string;
 }
 
-export const DreamMode = ({ onClose, onMorningRitual }: DreamModeProps) => {
+export const DreamMode = ({ onClose }: DreamModeProps) => {
   const { tasks } = useTasks();
   const { categories: customCategoryList } = useCustomCategories();
   const [symbols, setSymbols] = useState<DreamSymbol[]>([]);
   const [showSummary, setShowSummary] = useState(false);
   const [helperMessage, setHelperMessage] = useState<string | null>(null);
-  const [showMorningRitualPrompt, setShowMorningRitualPrompt] = useState(false);
 
   // Generate dream symbols based on tasks
   useEffect(() => {
@@ -167,17 +165,7 @@ export const DreamMode = ({ onClose, onMorningRitual }: DreamModeProps) => {
     return interpretation;
   };
 
-  // Check if it's morning (6am-10am) for morning ritual prompt
-  useEffect(() => {
-    const checkMorningRitual = () => {
-      const hour = new Date().getHours();
-      if (hour >= 6 && hour < 10) {
-        setShowMorningRitualPrompt(true);
-      }
-    };
-
-    checkMorningRitual();
-  }, []);
+  // Morning ritual prompt removed - using DailyPriorityPrompt instead
 
   const handleMalunitaTap = () => {
     setShowSummary(true);
@@ -185,15 +173,6 @@ export const DreamMode = ({ onClose, onMorningRitual }: DreamModeProps) => {
   };
 
   const handleClose = () => {
-    if (showMorningRitualPrompt && onMorningRitual) {
-      // Offer morning ritual
-      const shouldStartRitual = window.confirm(
-        'Good morning! Would you like to start your Morning Ritual to plan your day?'
-      );
-      if (shouldStartRitual) {
-        onMorningRitual();
-      }
-    }
     onClose();
   };
 

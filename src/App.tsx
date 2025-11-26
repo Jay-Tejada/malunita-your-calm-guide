@@ -11,7 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useMemoryEngine } from "@/state/memoryEngine";
 import { AnimatePresence } from "framer-motion";
 import { useRitualTrigger } from "@/hooks/useRitualTrigger";
-import { MorningRitual } from "@/features/rituals/MorningRitual";
+// MorningRitual removed - using DailyPriorityPrompt instead
 import { EveningRitual } from "@/features/rituals/EveningRitual";
 import { questTracker } from "@/lib/questTracker";
 import { Layout } from "@/components/Layout";
@@ -155,12 +155,6 @@ const App = () => {
           
           {/* Ritual overlays */}
           <AnimatePresence>
-            {shouldShowRitual === "morning" && (
-              <MorningRitual
-                onComplete={() => handleRitualComplete('morning')}
-                onSkip={dismissRitual}
-              />
-            )}
             {shouldShowRitual === "evening" && (
               <EveningRitual
                 onComplete={() => handleRitualComplete('evening')}

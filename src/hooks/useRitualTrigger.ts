@@ -30,16 +30,7 @@ export function useRitualTrigger() {
         const hour = now.getHours();
         const today = now.toISOString().split('T')[0];
 
-        // Check morning ritual (5am - 11am)
-        if (hour >= 5 && hour < 11) {
-          const lastMorning = ritualPrefs?.last_morning_ritual;
-          const lastMorningDate = lastMorning ? new Date(lastMorning).toISOString().split('T')[0] : null;
-          
-          if (lastMorningDate !== today && ritualPrefs?.morning_ritual?.enabled !== false) {
-            setShouldShowRitual("morning");
-            return;
-          }
-        }
+        // Morning ritual disabled - using DailyPriorityPrompt instead
 
         // Check evening ritual (7pm - 1am)
         if (hour >= 19 || hour < 1) {
