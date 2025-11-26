@@ -10,8 +10,7 @@ interface PlanningModePanelProps {
 
 export const PlanningModePanel: React.FC<PlanningModePanelProps> = ({ initialText, onClose }) => {
   return (
-    <div className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center p-6 z-50">
-      <Card className="max-w-2xl w-full p-6 space-y-6">
+    <Card className="max-w-2xl w-full p-6 space-y-6">
         <div>
           <h3 className="text-xl font-light mb-2">Planning Mode</h3>
           <p className="text-sm text-muted-foreground">
@@ -52,6 +51,5 @@ export const PlanningModePanel: React.FC<PlanningModePanelProps> = ({ initialTex
           </Button>
         </div>
       </Card>
-    </div>
   );
 };

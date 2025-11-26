@@ -39,12 +39,14 @@ export const HomeCanvas = memo(function HomeCanvas({
 }: HomeCanvasProps) {
   return (
     <div className="min-h-screen w-full relative flex flex-col items-center justify-center px-4">
-      {/* Planning Mode Panel - appears above everything */}
+      {/* Planning Mode Panel - appears above everything with backdrop */}
       {planningMode && onClosePlanning && (
-        <PlanningModePanel 
-          initialText={planningText}
-          onClose={onClosePlanning} 
-        />
+        <div className="fixed inset-0 bg-background/40 backdrop-blur-sm flex items-center justify-center p-6 z-50">
+          <PlanningModePanel 
+            initialText={planningText}
+            onClose={onClosePlanning} 
+          />
+        </div>
       )}
       {/* Clean minimal home - briefing above, orb below */}
       <div className="flex flex-col items-center justify-center gap-8 w-full">
