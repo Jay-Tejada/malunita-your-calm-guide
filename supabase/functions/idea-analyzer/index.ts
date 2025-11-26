@@ -120,12 +120,37 @@ Your job is to analyze the user's input and return a JSON object with the follow
   "ideas": ["idea 1", "idea 2"],
   "followups": ["followup 1", "followup 2"],
   "questions": ["question they're asking themselves"],
-  "emotional_tone": "neutral|overwhelmed|focused|stressed",
+  "emotional_tone": "neutral|overwhelmed|focused|stressed|venting|brainstorming|planning",
+  "detected_one_thing": true,
   "primary_focus_alignment": {
     "score": "aligned|neutral|distracting",
     "reasoning": "Brief explanation of alignment"
   }
 }
+
+**ONE Thing Detection:**
+Detect if the user is signaling THIS task as their main priority. Look for phrases like:
+- "if I just finish THIS..."
+- "if I just get this one thing done"
+- "this is the main priority"
+- "this is the main item"
+- "this will get my head above water"
+- "this makes the day a success"
+- "most important thing is"
+- "key thing is"
+- "only thing I need to do is"
+- "main focus today"
+
+If detected, set "detected_one_thing": true
+
+**Emotional Tone Detection:**
+- "venting": Frustrated, stressed, complaining, expressing difficulty
+- "overwhelmed": Too many things, scattered, can't handle it all
+- "brainstorming": Exploring ideas, thinking through options, creative mode
+- "planning": Organizing, sequencing, structuring approach
+- "focused": Clear intent, decisive, action-oriented
+- "stressed": Anxious, worried, under pressure
+- "neutral": Default, balanced
 
 ${primaryFocusTask ? `\n**CRITICAL CONTEXT: Today's ONE-thing priority is "${primaryFocusTask}"**\nWhen analyzing tasks, consider their relationship to this primary focus:\n- "aligned": Tasks that directly support or enable the ONE-thing\n- "neutral": Unrelated tasks that don't conflict\n- "distracting": Tasks that compete for attention or conflict with the ONE-thing\n` : ''}
 
