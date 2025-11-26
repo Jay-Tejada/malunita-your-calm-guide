@@ -1,6 +1,4 @@
 import React, { memo } from "react";
-import { TodaysBriefing } from "./TodaysBriefing";
-import { OneThingPromptBubble } from "../OneThingPromptBubble";
 import { PlanningModePanel } from "../planning/PlanningModePanel";
 import { usePlanningBreakdown } from "@/hooks/usePlanningBreakdown";
 
@@ -19,7 +17,6 @@ interface HomeCanvasProps {
   yesterdayDone?: string[];
   carryOverSuggestions?: string[];
   isLoading?: boolean;
-  onSetFocus?: () => void;
   planningMode?: boolean;
   planningText?: string;
   onClosePlanning?: () => void;
@@ -28,12 +25,6 @@ interface HomeCanvasProps {
 export const HomeCanvas = memo(function HomeCanvas({
   children, 
   oneThingFocus, 
-  quickWins = [], 
-  followUps = [],
-  yesterdayDone,
-  carryOverSuggestions = [],
-  isLoading,
-  onSetFocus,
   planningMode = false,
   planningText = "",
   onClosePlanning,
@@ -55,35 +46,20 @@ export const HomeCanvas = memo(function HomeCanvas({
           />
         </div>
       )}
-      {/* Clean minimal home - briefing above, orb below */}
-      <div className="flex flex-col items-center justify-center gap-8 w-full">
-        {/* ONE Thing Prompt - dismissible bubble at top */}
-        {onSetFocus && (
-          <OneThingPromptBubble
-            hasOneThing={!!oneThingFocus}
-            onSetFocus={onSetFocus}
-          />
+      
+      {/* Clean minimal home - only orb and optional ONE thing */}
+      <div className="flex flex-col items-center justify-center gap-6 w-full">
+        {/* Optional ONE Thing at top - single line only */}
+        {oneThingFocus && (
+          <div className="text-center max-w-md mb-4">
+            <p className="text-sm text-primary/80 font-medium">
+              Today's Focus: {oneThingFocus.title}
+            </p>
+          </div>
         )}
         
-        {/* Today's Briefing - collapsed by default, above orb */}
-        <TodaysBriefing
-          oneThingFocus={oneThingFocus}
-          quickWins={quickWins}
-          followUps={followUps}
-          yesterdayDone={yesterdayDone}
-          carryOverSuggestions={carryOverSuggestions}
-          isLoading={isLoading}
-        />
-        
-        {/* Orb section */}
-        <div className="flex flex-col items-center justify-center gap-8">
-          <p className="font-mono text-sm text-muted-foreground">
-            What's on your mind?
-          </p>
-          
-          {/* Orb */}
-          {children}
-        </div>
+        {/* Orb (includes text and Think With Me button) */}
+        {children}
       </div>
     </div>
   );

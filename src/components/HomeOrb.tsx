@@ -114,7 +114,7 @@ export const HomeOrb = ({
   const orbGlow = "rgba(247, 217, 141, 0.5)";
 
   return (
-    <div className="fixed bottom-24 left-0 right-0 flex flex-col items-center">
+    <div className="flex flex-col items-center">
       {/* Interruption Alert */}
       <AnimatePresence>
         {interruptionAlert && (
