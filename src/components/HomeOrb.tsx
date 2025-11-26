@@ -139,41 +139,26 @@ export const HomeOrb = ({
 
       {/* Main Orb Container */}
       <div className="flex flex-col items-center">
-        {/* Orb with minimal glow */}
-        <div className="relative flex items-center justify-center">
-          {/* Subtle glow layer behind orb */}
-          <div 
-            className="absolute rounded-full pointer-events-none"
-            style={{
-              width: 'min(32vw, 280px)',
-              height: 'min(32vw, 280px)',
-              filter: 'blur(80px)',
-              opacity: 0.15,
-              background: '#f0e7cc',
-              transform: 'scale(1.5)',
-            }}
+        {/* Orb - brand icon, no background effects */}
+        <motion.button
+          onClick={onCapture}
+          onHoverStart={() => setIsHovered(true)}
+          onHoverEnd={() => setIsHovered(false)}
+          className="relative cursor-pointer"
+          whileHover={{ scale: 1.03 }}
+          whileTap={{ scale: 0.97 }}
+          style={{
+            width: '160px',
+            height: '160px',
+            maxWidth: '22vw',
+          }}
+        >
+          <img 
+            src="/brand/orb_main.png" 
+            alt="Malunita Orb"
+            className="w-full h-full object-contain"
           />
-          
-          {/* Orb button */}
-          <motion.button
-            onClick={onCapture}
-            onHoverStart={() => setIsHovered(true)}
-            onHoverEnd={() => setIsHovered(false)}
-            className="relative cursor-pointer"
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.97 }}
-            style={{
-              width: 'min(32vw, 280px)',
-              maxWidth: '280px',
-            }}
-          >
-            <img 
-              src="/brand/orb_main.png" 
-              alt="Malunita Orb"
-              className="w-full h-auto aspect-square rounded-full object-cover"
-            />
-          </motion.button>
-        </div>
+        </motion.button>
 
         {/* Status text - 24px below orb */}
         <div 
