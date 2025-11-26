@@ -28,7 +28,11 @@ export function usePersonalFeed() {
         return;
       }
 
-      const { data, error } = await supabase.functions.invoke('malunita-personal-feed');
+      const { data, error } = await supabase.functions.invoke('malunita-personal-feed', {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      });
       
       if (error) {
         console.error('Error fetching personal feed:', error);
