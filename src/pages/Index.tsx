@@ -20,6 +20,7 @@ import { useCaptureSessions } from "@/hooks/useCaptureSessions";
 import { LastCapturePreview } from "@/components/LastCapturePreview";
 import { CaptureHistoryModal } from "@/components/CaptureHistoryModal";
 import { useDailyMindstream } from "@/hooks/useDailyMindstream";
+import { PlanningModePanel } from "@/components/planning/PlanningModePanel";
 
 interface AISummary {
   decisions: string[];
@@ -96,6 +97,7 @@ const Index = () => {
   const { sessions, lastSession } = useCaptureSessions();
   const [showCaptureHistory, setShowCaptureHistory] = useState(false);
   const mindstreamData = useDailyMindstream();
+  const [planningMode, setPlanningMode] = useState(false);
   
   // Initialize prediction system (runs silently in background)
   usePrimaryFocusPrediction();
@@ -267,6 +269,12 @@ const Index = () => {
     <>
       <AutoFocusNotification />
       <CompanionContextMessage />
+      
+      {/* Planning Mode Panel - appears above everything */}
+      {planningMode && (
+        <PlanningModePanel onClose={() => setPlanningMode(false)} />
+      )}
+      
       <HomeShell
         onSettingsClick={handleSettingsClick}
         onCategoryClick={handleCategoryClick}
