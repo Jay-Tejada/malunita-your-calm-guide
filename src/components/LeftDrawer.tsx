@@ -446,7 +446,7 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
                     transition={{ duration: 0.14 }}
                     className="h-full flex flex-col p-6 md:p-8 pt-16"
                   >
-                    {/* Today's Briefing */}
+                    {/* Today's Briefing - ONLY in drawer */}
                     <div className="mb-6">
                       <TodaysBriefing
                         oneThingFocus={mindstreamData.oneThingFocus}
@@ -455,16 +455,6 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
                         yesterdayDone={mindstreamData.yesterdayDone}
                         carryOverSuggestions={mindstreamData.carryOverSuggestions}
                         isLoading={mindstreamData.isLoading}
-                      />
-                    </div>
-
-                    {/* Daily Intelligence */}
-                    <div className="mb-6">
-                      <DailyIntelligence
-                        summary={mindstreamData.oneThingFocus?.reason}
-                        quickWins={mindstreamData.quickWins}
-                        focusMessage={null}
-                        oneThing={mindstreamData.oneThingFocus?.title}
                       />
                     </div>
 

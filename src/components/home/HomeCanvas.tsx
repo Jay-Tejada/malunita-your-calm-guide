@@ -47,12 +47,15 @@ export const HomeCanvas = memo(function HomeCanvas({
         </div>
       )}
       
-      {/* Clean minimal home - only orb and optional ONE thing */}
-      <div className="flex flex-col items-center justify-center gap-6 w-full">
-        {/* Optional ONE Thing at top - single line only */}
+      {/* Clean minimal home - ONLY ONE element above orb */}
+      <div className="flex flex-col items-center justify-center gap-8 w-full">
+        {/* Show ONLY Today's Focus if it exists, otherwise show nothing here */}
         {oneThingFocus && (
-          <div className="text-center max-w-md mb-4">
-            <p className="text-sm text-primary/80 font-medium">
+          <div className="text-center max-w-[80%] mb-2">
+            <p 
+              className="text-sm font-medium"
+              style={{ color: '#808080' }}
+            >
               Today's Focus: {oneThingFocus.title}
             </p>
           </div>
