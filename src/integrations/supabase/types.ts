@@ -1142,6 +1142,42 @@ export type Database = {
         }
         Relationships: []
       }
+      task_history: {
+        Row: {
+          category: string | null
+          completed_at: string
+          created_at: string
+          difficulty: string | null
+          emotional_context: string | null
+          id: string
+          sentiment: string | null
+          task_text: string
+          user_id: string
+        }
+        Insert: {
+          category?: string | null
+          completed_at: string
+          created_at?: string
+          difficulty?: string | null
+          emotional_context?: string | null
+          id?: string
+          sentiment?: string | null
+          task_text: string
+          user_id: string
+        }
+        Update: {
+          category?: string | null
+          completed_at?: string
+          created_at?: string
+          difficulty?: string | null
+          emotional_context?: string | null
+          id?: string
+          sentiment?: string | null
+          task_text?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       task_learning_feedback: {
         Row: {
           actual_category: string
