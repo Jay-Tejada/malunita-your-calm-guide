@@ -276,14 +276,6 @@ const Index = () => {
       <AutoFocusNotification />
       <CompanionContextMessage />
       
-      {/* Planning Mode Panel - appears above everything */}
-      {planningMode && (
-        <PlanningModePanel 
-          initialText={planningText}
-          onClose={() => setPlanningMode(false)} 
-        />
-      )}
-      
       <HomeShell
         onSettingsClick={handleSettingsClick}
         onCategoryClick={handleCategoryClick}
@@ -304,6 +296,9 @@ const Index = () => {
           carryOverSuggestions={mindstreamData.carryOverSuggestions}
           isLoading={mindstreamData.isLoading}
           onSetFocus={() => dailyPriorityRef.current?.openDialog()}
+          planningMode={planningMode}
+          planningText={planningText}
+          onClosePlanning={() => setPlanningMode(false)}
         >
           <HomeOrb
             onCapture={handleOrbClick} 

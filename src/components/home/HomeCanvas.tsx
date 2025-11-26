@@ -1,6 +1,7 @@
 import React, { memo } from "react";
 import { TodaysBriefing } from "./TodaysBriefing";
 import { OneThingPromptBubble } from "../OneThingPromptBubble";
+import { PlanningModePanel } from "../planning/PlanningModePanel";
 
 interface OneThingFocus {
   id: string;
@@ -18,6 +19,9 @@ interface HomeCanvasProps {
   carryOverSuggestions?: string[];
   isLoading?: boolean;
   onSetFocus?: () => void;
+  planningMode?: boolean;
+  planningText?: string;
+  onClosePlanning?: () => void;
 }
 
 export const HomeCanvas = memo(function HomeCanvas({
@@ -29,9 +33,19 @@ export const HomeCanvas = memo(function HomeCanvas({
   carryOverSuggestions = [],
   isLoading,
   onSetFocus,
+  planningMode = false,
+  planningText = "",
+  onClosePlanning,
 }: HomeCanvasProps) {
   return (
     <div className="min-h-screen w-full relative flex flex-col items-center justify-center px-4">
+      {/* Planning Mode Panel - appears above everything */}
+      {planningMode && onClosePlanning && (
+        <PlanningModePanel 
+          initialText={planningText}
+          onClose={onClosePlanning} 
+        />
+      )}
       {/* Clean minimal home - briefing above, orb below */}
       <div className="flex flex-col items-center justify-center gap-8 w-full">
         {/* ONE Thing Prompt - dismissible bubble at top */}
