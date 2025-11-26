@@ -98,6 +98,7 @@ const Index = () => {
   const [showCaptureHistory, setShowCaptureHistory] = useState(false);
   const mindstreamData = useDailyMindstream();
   const [planningMode, setPlanningMode] = useState(false);
+  const [planningText, setPlanningText] = useState("");
   
   // Initialize prediction system (runs silently in background)
   usePrimaryFocusPrediction();
@@ -265,6 +266,11 @@ const Index = () => {
     setTaskCreatedTrigger(prev => prev + 1);
   };
 
+  const handlePlanningModeActivated = (text: string) => {
+    setPlanningText(text);
+    setPlanningMode(true);
+  };
+
   return (
     <>
       <AutoFocusNotification />
@@ -272,7 +278,10 @@ const Index = () => {
       
       {/* Planning Mode Panel - appears above everything */}
       {planningMode && (
-        <PlanningModePanel onClose={() => setPlanningMode(false)} />
+        <PlanningModePanel 
+          initialText={planningText}
+          onClose={() => setPlanningMode(false)} 
+        />
       )}
       
       <HomeShell
@@ -333,6 +342,7 @@ const Index = () => {
         ref={voiceRef} 
         onRecordingStateChange={setIsRecording}
         onStatusChange={setVoiceStatus}
+        onPlanningModeActivated={handlePlanningModeActivated}
       />
     </>
   );
