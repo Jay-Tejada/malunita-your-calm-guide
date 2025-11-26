@@ -4,6 +4,8 @@ import { Lightbulb, Target, Zap, Map } from "lucide-react";
 import { useTaskPlan } from "@/hooks/useTaskPlan";
 import { TaskPlanPanel } from "@/components/planning/TaskPlanPanel";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { useTasks } from "@/hooks/useTasks";
+import { useToast } from "@/hooks/use-toast";
 
 interface DailyIntelligenceProps {
   summary?: string | null;
@@ -14,6 +16,51 @@ interface DailyIntelligenceProps {
 
 export function DailyIntelligence({ summary, quickWins, focusMessage, oneThing }: DailyIntelligenceProps) {
   const { isLoading, isPanelOpen, currentQuest, buildFullQuest, closePanel } = useTaskPlan();
+  const { createTasks } = useTasks();
+  const { toast } = useToast();
+
+  const handleTaskClick = async (stepId: string) => {
+    if (!currentQuest) return;
+
+    // Find the step across all chapters
+    let foundStep: any = null;
+    let foundChapter: any = null;
+    
+    for (const chapter of currentQuest.chapters) {
+      const step = chapter.steps.find(s => s.id === stepId);
+      if (step) {
+        foundStep = step;
+        foundChapter = chapter;
+        break;
+      }
+    }
+
+    if (!foundStep) return;
+
+    try {
+      // Create the task from the plan step
+      await createTasks([{
+        title: foundStep.title,
+        category: 'inbox',
+        context: foundStep.reason,
+        is_tiny_task: foundStep.tiny || false,
+      }]);
+
+      toast({
+        title: "Task created!",
+        description: `"${foundStep.title}" added to your inbox`,
+      });
+
+      // Keep dialog open so user can continue creating tasks from the plan
+    } catch (error) {
+      console.error('Error creating task from plan:', error);
+      toast({
+        title: "Failed to create task",
+        description: "Please try again",
+        variant: "destructive",
+      });
+    }
+  };
 
   // Render nothing if no data
   if (!summary && (!quickWins || quickWins.length === 0) && !focusMessage && !oneThing) {
@@ -106,10 +153,7 @@ export function DailyIntelligence({ summary, quickWins, focusMessage, oneThing }
               chapters={currentQuest.chapters}
               motivationBoost={currentQuest.motivation_boost}
               onClose={closePanel}
-              onTaskClick={(taskId) => {
-                console.log('Task clicked:', taskId);
-                // Could scroll to task in main list
-              }}
+              onTaskClick={handleTaskClick}
             />
           )}
         </DialogContent>
