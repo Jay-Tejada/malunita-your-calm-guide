@@ -8,6 +8,8 @@ import { useAttentionTracker } from "@/state/attentionTracker";
 import { ThinkWithMe } from "@/components/ThinkWithMe";
 import { Button } from "@/components/ui/button";
 import { Brain } from "lucide-react";
+import { usePersonalFeed } from "@/hooks/usePersonalFeed";
+import { PersonalFeedMessage } from "@/components/PersonalFeedMessage";
 
 interface HomeOrbProps {
   onCapture?: () => void;
@@ -41,6 +43,7 @@ export const HomeOrb = ({
   const [interruptionAlert, setInterruptionAlert] = useState<string | null>(null);
   
   const { getMinutesAway, lastFocusedTaskId } = useAttentionTracker();
+  const { currentFeed, showFeed } = usePersonalFeed();
 
   // Example: Call processInput when you have text input
   // This would typically be triggered after voice transcription or text input
@@ -114,7 +117,17 @@ export const HomeOrb = ({
   const orbGlow = "rgba(247, 217, 141, 0.5)";
 
   return (
-    <div className="flex flex-col items-center">
+    <div className="relative flex flex-col items-center">
+      {/* Personal Feed Message */}
+      {currentFeed && (
+        <PersonalFeedMessage
+          insight={currentFeed.insight}
+          pattern={currentFeed.pattern}
+          flashback={currentFeed.flashback}
+          show={showFeed}
+        />
+      )}
+      
       {/* Interruption Alert */}
       <AnimatePresence>
         {interruptionAlert && (
