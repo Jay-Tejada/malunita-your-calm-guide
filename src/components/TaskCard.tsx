@@ -1,4 +1,4 @@
-import { CheckCircle2, Circle, Clock, GripVertical, Target, Settings, Split, CalendarPlus, Zap } from "lucide-react";
+import { CheckCircle2, Circle, Clock, GripVertical, Target, Settings, Split, CalendarPlus, Zap, Lightbulb } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -34,9 +34,10 @@ interface TaskCardProps {
   fullTask?: Task;
   onTaskUpdate?: (updates: any) => void;
   onCreateTasks?: (tasks: any[]) => Promise<void>;
+  onPlanThis?: (title: string) => void;
 }
 
-export const TaskCard = ({ id, title, time, context, completed, selected, onToggle, onEdit, onSelect, onLongPress, goalAligned, alignmentReason, priority, cluster, fullTask, onTaskUpdate, onCreateTasks }: TaskCardProps) => {
+export const TaskCard = ({ id, title, time, context, completed, selected, onToggle, onEdit, onSelect, onLongPress, goalAligned, alignmentReason, priority, cluster, fullTask, onTaskUpdate, onCreateTasks, onPlanThis }: TaskCardProps) => {
   const { registerCompletion } = useTaskStreak();
   const { onTaskCompleted, onQuickWinCompleted } = useCompanionEvents();
   const { toast } = useToast();
@@ -294,6 +295,20 @@ export const TaskCard = ({ id, title, time, context, completed, selected, onTogg
           
           {/* Action buttons group */}
           <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            {/* Plan This Button */}
+            {onPlanThis && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onPlanThis(title);
+                }}
+                className="flex-shrink-0"
+                title="Plan This"
+              >
+                <Lightbulb className="w-4 h-4 text-muted-foreground hover:text-accent" />
+              </button>
+            )}
+
             {/* Break Down Button (for big tasks) */}
             {isBigTask && onCreateTasks && (
               <button

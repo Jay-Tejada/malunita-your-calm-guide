@@ -35,9 +35,10 @@ import {
 
 interface TaskListProps {
   category?: string;
+  onPlanThis?: (title: string) => void;
 }
 
-export const TaskList = ({ category: externalCategory }: TaskListProps = {}) => {
+export const TaskList = ({ category: externalCategory, onPlanThis }: TaskListProps = {}) => {
   const { tasks, isLoading, updateTask, deleteTask, createTasks } = useTasks();
   const { categories, createCategory } = useCustomCategories();
   const growth = useCompanionGrowth();
@@ -512,24 +513,25 @@ export const TaskList = ({ category: externalCategory }: TaskListProps = {}) => 
                                onCheckedChange={() => handleToggleTaskSelection(task.id)}
                                className="shrink-0"
                              />
-                             <TaskCard
-                               id={task.id}
-                               title={task.title}
-                               context={task.context || undefined}
-                               completed={task.completed || false}
-                               selected={selectedTaskId === task.id}
-                               onToggle={() => handleToggleComplete(task)}
-                               onSelect={() => setSelectedTaskId(task.id)}
-                               onLongPress={() => handleLongPress(task)}
-                               onEdit={() => handleEditTask(task)}
-                               goalAligned={task.goal_aligned}
-                               alignmentReason={task.alignment_reason}
-                               priority={task.future_priority_score}
-                               cluster={task.cluster}
-                               fullTask={task}
-                               onTaskUpdate={(updates) => updateTask({ id: task.id, updates })}
-                               onCreateTasks={handleCreateSubtasks}
-                             />
+                              <TaskCard
+                                id={task.id}
+                                title={task.title}
+                                context={task.context || undefined}
+                                completed={task.completed || false}
+                                selected={selectedTaskId === task.id}
+                                onToggle={() => handleToggleComplete(task)}
+                                onSelect={() => setSelectedTaskId(task.id)}
+                                onLongPress={() => handleLongPress(task)}
+                                onEdit={() => handleEditTask(task)}
+                                goalAligned={task.goal_aligned}
+                                alignmentReason={task.alignment_reason}
+                                priority={task.future_priority_score}
+                                cluster={task.cluster}
+                                fullTask={task}
+                                onTaskUpdate={(updates) => updateTask({ id: task.id, updates })}
+                                onCreateTasks={handleCreateSubtasks}
+                                onPlanThis={onPlanThis}
+                              />
                              {selectedDomain === "inbox" && (
                                <QuickSendButton taskId={task.id} taskTitle={task.title} />
                              )}
@@ -557,24 +559,25 @@ export const TaskList = ({ category: externalCategory }: TaskListProps = {}) => 
                               onCheckedChange={() => handleToggleTaskSelection(task.id)}
                               className="shrink-0"
                             />
-                            <TaskCard
-                              id={task.id}
-                              title={task.title}
-                              context={task.context || undefined}
-                              completed={task.completed || false}
-                              selected={selectedTaskId === task.id}
-                              onToggle={() => handleToggleComplete(task)}
-                              onSelect={() => setSelectedTaskId(task.id)}
-                              onLongPress={() => handleLongPress(task)}
-                              onEdit={() => handleEditTask(task)}
-                              goalAligned={task.goal_aligned}
-                              alignmentReason={task.alignment_reason}
-                              priority={task.future_priority_score}
-                              cluster={task.cluster}
-                              fullTask={task}
-                              onTaskUpdate={(updates) => updateTask({ id: task.id, updates })}
-                              onCreateTasks={handleCreateSubtasks}
-                            />
+                             <TaskCard
+                               id={task.id}
+                               title={task.title}
+                               context={task.context || undefined}
+                               completed={task.completed || false}
+                               selected={selectedTaskId === task.id}
+                               onToggle={() => handleToggleComplete(task)}
+                               onSelect={() => setSelectedTaskId(task.id)}
+                               onLongPress={() => handleLongPress(task)}
+                               onEdit={() => handleEditTask(task)}
+                               goalAligned={task.goal_aligned}
+                               alignmentReason={task.alignment_reason}
+                               priority={task.future_priority_score}
+                               cluster={task.cluster}
+                               fullTask={task}
+                               onTaskUpdate={(updates) => updateTask({ id: task.id, updates })}
+                               onCreateTasks={handleCreateSubtasks}
+                               onPlanThis={onPlanThis}
+                             />
                             {selectedDomain === "inbox" && (
                               <QuickSendButton taskId={task.id} taskTitle={task.title} />
                             )}

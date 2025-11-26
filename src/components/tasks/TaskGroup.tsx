@@ -16,9 +16,10 @@ interface TaskGroupProps {
   tasks: Task[];
   defaultOpen?: boolean;
   onTaskClick?: (taskId: string) => void;
+  onPlanThis?: (title: string) => void;
 }
 
-export const TaskGroup = ({ title, tasks, defaultOpen = true, onTaskClick }: TaskGroupProps) => {
+export const TaskGroup = ({ title, tasks, defaultOpen = true, onTaskClick, onPlanThis }: TaskGroupProps) => {
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
   if (tasks.length === 0) return null;
@@ -62,6 +63,7 @@ export const TaskGroup = ({ title, tasks, defaultOpen = true, onTaskClick }: Tas
                 completed={task.completed}
                 category={task.category}
                 onClick={() => onTaskClick?.(task.id)}
+                onPlanThis={onPlanThis}
               />
             ))}
           </motion.div>

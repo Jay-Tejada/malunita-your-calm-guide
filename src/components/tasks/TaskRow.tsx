@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Clock, Check, Circle, ChevronRight, Star } from "lucide-react";
+import { Clock, Check, Circle, ChevronRight, Star, Lightbulb } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface TaskRowProps {
@@ -9,9 +9,10 @@ interface TaskRowProps {
   category?: string | null;
   onClick?: () => void;
   isPrimaryFocus?: boolean;
+  onPlanThis?: (title: string) => void;
 }
 
-export const TaskRow = ({ id, title, completed, category, onClick, isPrimaryFocus }: TaskRowProps) => {
+export const TaskRow = ({ id, title, completed, category, onClick, isPrimaryFocus, onPlanThis }: TaskRowProps) => {
   const getStatusIcon = () => {
     if (completed) {
       return <Check className="w-3 h-3 text-primary/70" />;
@@ -56,6 +57,20 @@ export const TaskRow = ({ id, title, completed, category, onClick, isPrimaryFocu
           </span>
         )}
       </div>
+
+      {/* Plan This Button */}
+      {onPlanThis && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onPlanThis(title);
+          }}
+          className="opacity-0 group-hover:opacity-100 transition-opacity"
+          title="Plan This"
+        >
+          <Lightbulb className="w-4 h-4 text-muted-foreground hover:text-accent" />
+        </button>
+      )}
 
       {/* Chevron */}
       <ChevronRight className="w-3 h-3 text-foreground/20 group-hover:text-foreground/40 transition-colors" />

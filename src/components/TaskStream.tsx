@@ -11,9 +11,10 @@ interface TaskStreamProps {
   onNavigate?: (direction: 'prev' | 'next') => void;
   hasPrev?: boolean;
   hasNext?: boolean;
+  onPlanThis?: (title: string) => void;
 }
 
-export const TaskStream = ({ category, onClose, onNavigate, hasPrev, hasNext }: TaskStreamProps) => {
+export const TaskStream = ({ category, onClose, onNavigate, hasPrev, hasNext, onPlanThis }: TaskStreamProps) => {
   const [swipeOffset, setSwipeOffset] = useState(0);
   const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | 'down' | null>(null);
   const { toast } = useToast();
@@ -167,7 +168,7 @@ export const TaskStream = ({ category, onClose, onNavigate, hasPrev, hasNext }: 
         {hasNext && <span>Swipe →</span>}
       </div>
       
-      <TaskList category={category} />
+      <TaskList category={category} onPlanThis={onPlanThis} />
     </div>
   );
 };
