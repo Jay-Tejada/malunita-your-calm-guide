@@ -495,11 +495,7 @@ export function useWorkflowRituals() {
       weekly_reset: { enabled: true, day: 0, hour: 19, action_button: "View Insights" }
     };
 
-    // Morning Ritual
-    const morningPref = ritualPrefs.morning_ritual;
-    if (morningPref.enabled && hour >= morningPref.start_hour && hour < morningPref.end_hour && !ritualState.morningShown) {
-      triggerMorningRitual();
-    }
+    // Morning Ritual disabled - using DailyPriorityPrompt instead
 
     // Midday Check-in
     const middayPref = ritualPrefs.midday_checkin;
