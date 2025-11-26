@@ -2,6 +2,7 @@ import React, { memo } from "react";
 import { TodaysBriefing } from "./TodaysBriefing";
 import { OneThingPromptBubble } from "../OneThingPromptBubble";
 import { PlanningModePanel } from "../planning/PlanningModePanel";
+import { usePlanningBreakdown } from "@/hooks/usePlanningBreakdown";
 
 interface OneThingFocus {
   id: string;
@@ -37,6 +38,8 @@ export const HomeCanvas = memo(function HomeCanvas({
   planningText = "",
   onClosePlanning,
 }: HomeCanvasProps) {
+  const { loading, error, result, runPlanningBreakdown } = usePlanningBreakdown();
+
   return (
     <div className="min-h-screen w-full relative flex flex-col items-center justify-center px-4">
       {/* Planning Mode Panel - appears above everything with backdrop */}
@@ -44,6 +47,10 @@ export const HomeCanvas = memo(function HomeCanvas({
         <div className="fixed inset-0 bg-background/40 backdrop-blur-sm flex items-center justify-center p-6 z-50">
           <PlanningModePanel 
             initialText={planningText}
+            loading={loading}
+            error={error}
+            result={result}
+            onRun={() => runPlanningBreakdown(planningText)}
             onClose={onClosePlanning} 
           />
         </div>
