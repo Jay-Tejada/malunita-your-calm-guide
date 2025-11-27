@@ -126,14 +126,8 @@ export const SimpleJournal = () => {
   return (
     <>
       <div className="max-w-4xl mx-auto space-y-8">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-3xl font-semibold mb-2">Your Journal</h2>
-            <p className="text-muted-foreground">
-              {entries?.length || 0} {entries?.length === 1 ? 'entry' : 'entries'}
-            </p>
-          </div>
+        {/* New Entry button - minimal header */}
+        <div className="flex justify-end">
           <Button
             onClick={handleNewEntry}
             className="gap-2"
