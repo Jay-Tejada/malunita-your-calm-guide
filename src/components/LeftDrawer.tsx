@@ -25,7 +25,7 @@ import { TodaysBriefing } from "@/components/home/TodaysBriefing";
 import { DailyIntelligence } from "@/components/home/DailyIntelligence";
 import { useDailyMindstream } from "@/hooks/useDailyMindstream";
 
-type DrawerMode = "root" | "today" | "inbox" | "someday" | "work" | "home" | "gym" | "calendar" | `project-${string}`;
+type DrawerMode = "root" | "today" | "inbox" | "someday" | "work" | "home" | "gym" | "journal" | "calendar" | `project-${string}`;
 
 interface LeftDrawerProps {
   isOpen: boolean;
@@ -43,6 +43,7 @@ const spaceCategories = [
   { id: "work", label: "Work", filter: (task: any) => task.category === "work" },
   { id: "home", label: "Home", filter: (task: any) => task.category === "home" },
   { id: "gym", label: "Gym", filter: (task: any) => task.category === "gym" },
+  { id: "journal", label: "Journal", isPage: true }, // Navigate to page instead of filtering
 ];
 
 const calendarCategory = { id: "calendar", label: "Calendar", filter: (task: any) => task.reminder_time !== null };
@@ -74,6 +75,14 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
 
   const handleCategoryClick = (categoryId: DrawerMode) => {
     hapticLight();
+    
+    // Check if this is a page navigation (like Journal)
+    if (categoryId === "journal") {
+      onNavigate("/journal");
+      onClose();
+      return;
+    }
+    
     setDrawerMode(categoryId);
   };
 
