@@ -55,8 +55,40 @@ export function useRitualTrigger() {
     checkRitualTrigger();
   }, []);
 
+  const dismissRitual = async () => {
+    // Save that we've shown the ritual today (whether completed or skipped)
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user && shouldShowRitual) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('ritual_preferences')
+          .eq('id', user.id)
+          .single();
+
+        const ritualPrefs = (profile?.ritual_preferences as any) || {};
+        const now = new Date().toISOString();
+
+        await supabase
+          .from('profiles')
+          .update({
+            ritual_preferences: {
+              ...ritualPrefs,
+              ...(shouldShowRitual === 'evening' ? { last_evening_ritual: now } : {}),
+              ...(shouldShowRitual === 'morning' ? { last_morning_ritual: now } : {})
+            }
+          })
+          .eq('id', user.id);
+      }
+    } catch (error) {
+      console.error('Error saving ritual dismissal:', error);
+    }
+    
+    setShouldShowRitual(null);
+  };
+
   return {
     shouldShowRitual,
-    dismissRitual: () => setShouldShowRitual(null)
+    dismissRitual
   };
 }
