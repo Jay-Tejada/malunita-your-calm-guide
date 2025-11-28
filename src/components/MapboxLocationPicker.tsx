@@ -16,6 +16,7 @@ interface MapboxLocationPickerProps {
     lng: number;
   }) => void;
   accessToken?: string;
+  isTokenLoading?: boolean;
 }
 
 export const MapboxLocationPicker = ({
@@ -23,6 +24,7 @@ export const MapboxLocationPicker = ({
   onOpenChange,
   onConfirm,
   accessToken,
+  isTokenLoading = false,
 }: MapboxLocationPickerProps) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
@@ -37,61 +39,67 @@ export const MapboxLocationPicker = ({
   useEffect(() => {
     if (!open || !mapContainer.current || !accessToken) return;
 
-    mapboxgl.accessToken = accessToken;
+    // Small delay to ensure dialog is fully rendered
+    const timeoutId = setTimeout(() => {
+      if (!mapContainer.current) return;
 
-    // Initialize map
-    map.current = new mapboxgl.Map({
-      container: mapContainer.current,
-      style: "mapbox://styles/mapbox/light-v11",
-      center: [-98.5795, 39.8283], // Center of US
-      zoom: 3,
-    });
+      mapboxgl.accessToken = accessToken;
 
-    // Add navigation controls
-    map.current.addControl(
-      new mapboxgl.NavigationControl({
-        visualizePitch: false,
-      }),
-      "top-right"
-    );
-
-    // Initialize geocoder
-    if (geocoderContainer.current) {
-      const geocoder = new MapboxGeocoder({
-        accessToken: accessToken,
-        mapboxgl: mapboxgl as any,
-        marker: false,
-        placeholder: "Search for a location",
+      // Initialize map
+      map.current = new mapboxgl.Map({
+        container: mapContainer.current,
+        style: "mapbox://styles/mapbox/light-v11",
+        center: [-98.5795, 39.8283], // Center of US
+        zoom: 3,
       });
 
-      geocoderContainer.current.appendChild(geocoder.onAdd(map.current));
+      // Add navigation controls
+      map.current.addControl(
+        new mapboxgl.NavigationControl({
+          visualizePitch: false,
+        }),
+        "top-right"
+      );
 
-      // Handle geocoder result
-      geocoder.on("result", (e) => {
-        const { center, place_name } = e.result;
-        addMarker(center[1], center[0], place_name);
-      });
-    }
-
-    // Click to add marker
-    map.current.on("click", (e) => {
-      const { lng, lat } = e.lngLat;
-      
-      // Reverse geocode to get address
-      fetch(
-        `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${accessToken}`
-      )
-        .then((res) => res.json())
-        .then((data) => {
-          const address = data.features[0]?.place_name || `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
-          addMarker(lat, lng, address);
-        })
-        .catch(() => {
-          addMarker(lat, lng, `${lat.toFixed(4)}, ${lng.toFixed(4)}`);
+      // Initialize geocoder
+      if (geocoderContainer.current) {
+        const geocoder = new MapboxGeocoder({
+          accessToken: accessToken,
+          mapboxgl: mapboxgl as any,
+          marker: false,
+          placeholder: "Search for a location",
         });
-    });
+
+        geocoderContainer.current.appendChild(geocoder.onAdd(map.current));
+
+        // Handle geocoder result
+        geocoder.on("result", (e) => {
+          const { center, place_name } = e.result;
+          addMarker(center[1], center[0], place_name);
+        });
+      }
+
+      // Click to add marker
+      map.current.on("click", (e) => {
+        const { lng, lat } = e.lngLat;
+        
+        // Reverse geocode to get address
+        fetch(
+          `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${accessToken}`
+        )
+          .then((res) => res.json())
+          .then((data) => {
+            const address = data.features[0]?.place_name || `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+            addMarker(lat, lng, address);
+          })
+          .catch(() => {
+            addMarker(lat, lng, `${lat.toFixed(4)}, ${lng.toFixed(4)}`);
+          });
+      });
+    }, 100);
 
     return () => {
+      clearTimeout(timeoutId);
       marker.current?.remove();
       map.current?.remove();
     };
@@ -143,6 +151,24 @@ export const MapboxLocationPicker = ({
     }
   };
 
+  if (isTokenLoading) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle className="font-mono text-[16px]">Pick Location</DialogTitle>
+          </DialogHeader>
+          <div className="py-8 text-center space-y-2">
+            <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
+            <p className="text-sm text-muted-foreground font-mono">
+              Loading map...
+            </p>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
   if (!accessToken) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
@@ -153,7 +179,7 @@ export const MapboxLocationPicker = ({
           <div className="py-8 text-center space-y-2">
             <MapPin className="w-8 h-8 text-muted-foreground mx-auto" />
             <p className="text-sm text-muted-foreground font-mono">
-              Add your Mapbox token in Settings → Cloud → Secrets (MAPBOX_ACCESS_TOKEN) to enable location picking
+              Mapbox token not configured. Contact support.
             </p>
           </div>
         </DialogContent>
