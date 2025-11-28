@@ -22,7 +22,7 @@ interface DailyPriorityPromptProps {
 }
 
 export const DailyPriorityPrompt = forwardRef<DailyPriorityPromptRef, DailyPriorityPromptProps>(({ onTaskCreated }, ref) => {
-  const { showPrompt, checkIfShouldShowPrompt, markPromptAnswered } = useDailyPriorityPrompt();
+  const { showPrompt, checkIfShouldShowPrompt, markPromptAnswered, markPromptSkipped } = useDailyPriorityPrompt();
   const { createTasks } = useTasks();
   const { refetch } = useDailyIntelligence();
   const { onTaskCreated: onTaskCreatedEvent } = useCompanionEvents();
@@ -188,10 +188,13 @@ export const DailyPriorityPrompt = forwardRef<DailyPriorityPromptRef, DailyPrior
             <div className="flex gap-2 justify-end">
               <Button
                 variant="outline"
-                onClick={() => setIsDialogOpen(false)}
+                onClick={() => {
+                  markPromptSkipped();
+                  setIsDialogOpen(false);
+                }}
                 disabled={isSubmitting}
               >
-                Cancel
+                Skip Today
               </Button>
               <Button
                 onClick={handleSubmit}

@@ -95,25 +95,20 @@ export function EveningRitual({ onComplete, onSkip }: EveningRitualProps) {
       emotionalMemory.adjustFatigue(3); // End of day fatigue
       emotionalMemory.recordActivity();
 
-      // Update profile with ritual completion and insights
+      // Update insights only (timestamp handled in App.tsx)
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         const { data: profile } = await supabase
           .from('profiles')
-          .select('ritual_preferences, insights')
+          .select('insights')
           .eq('id', user.id)
           .single();
 
-        const ritualPrefs = (profile?.ritual_preferences as any) || {};
         const insights = (profile?.insights as any) || {};
 
         await supabase
           .from('profiles')
           .update({
-            ritual_preferences: {
-              ...ritualPrefs,
-              last_evening_ritual: new Date().toISOString()
-            },
             insights: {
               ...insights,
               last_reflection: {

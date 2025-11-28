@@ -7,6 +7,7 @@ interface DailyPriorityPromptState {
   priorityTaskId: string | null;
   checkIfShouldShowPrompt: () => void;
   markPromptAnswered: (taskId: string) => void;
+  markPromptSkipped: () => void;
 }
 
 export const useDailyPriorityPrompt = create<DailyPriorityPromptState>()(
@@ -42,6 +43,14 @@ export const useDailyPriorityPrompt = create<DailyPriorityPromptState>()(
           lastAnsweredDate: today, 
           showPrompt: false, 
           priorityTaskId: taskId
+        });
+      },
+      
+      markPromptSkipped: () => {
+        const today = new Date().toISOString().split('T')[0];
+        set({ 
+          lastAnsweredDate: today, 
+          showPrompt: false
         });
       },
     }),

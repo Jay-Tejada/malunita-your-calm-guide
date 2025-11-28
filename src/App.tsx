@@ -50,7 +50,34 @@ const App = () => {
   const { shouldShowRitual, dismissRitual } = useRitualTrigger();
   const { showRitualCutscene } = useCutsceneManager();
 
-  const handleRitualComplete = (type: 'morning' | 'evening') => {
+  const handleRitualComplete = async (type: 'morning' | 'evening') => {
+    // Update profile with ritual completion timestamp FIRST
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('ritual_preferences')
+          .eq('id', user.id)
+          .single();
+
+        const ritualPrefs = (profile?.ritual_preferences as any) || {};
+
+        await supabase
+          .from('profiles')
+          .update({
+            ritual_preferences: {
+              ...ritualPrefs,
+              ...(type === 'evening' ? { last_evening_ritual: new Date().toISOString() } : {}),
+              ...(type === 'morning' ? { last_morning_ritual: new Date().toISOString() } : {})
+            }
+          })
+          .eq('id', user.id);
+      }
+    } catch (error) {
+      console.error('Error saving ritual completion:', error);
+    }
+
     showRitualCutscene(type);
     dismissRitual();
     
