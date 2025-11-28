@@ -1,9 +1,21 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { AlertCircle, Calendar, Archive, X } from "lucide-react";
+import { AlertCircle, Calendar, Archive, X, Clock } from "lucide-react";
 import { Button } from "./ui/button";
 import { useStaleTasks } from "@/hooks/useStaleTasks";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "./ui/alert-dialog";
+import { supabase } from "@/integrations/supabase/client";
+import { format } from "date-fns";
 
 const STORAGE_KEY = "last_stale_task_check";
 const CHECK_INTERVAL = 24 * 60 * 60 * 1000; // 24 hours
@@ -12,6 +24,7 @@ export function StaleTasksPopup() {
   const { staleTasks, loading, archiveTask, scheduleForToday, dismissForNow } = useStaleTasks();
   const [showPopup, setShowPopup] = useState(false);
   const [currentTaskIndex, setCurrentTaskIndex] = useState(0);
+  const [showReminderDialog, setShowReminderDialog] = useState(false);
 
   useEffect(() => {
     // Check if we should show the popup
@@ -43,10 +56,34 @@ export function StaleTasksPopup() {
     }
   };
 
-  const handleSchedule = async () => {
+  const handleSchedule = () => {
+    setShowReminderDialog(true);
+  };
+
+  const scheduleTaskWithReminder = async (hours?: number) => {
     try {
       await scheduleForToday(currentTask.id);
-      toast.success("Task scheduled for today");
+      
+      // Add reminder if time specified
+      if (hours !== undefined) {
+        const reminderTime = new Date();
+        reminderTime.setHours(reminderTime.getHours() + hours);
+
+        const { error } = await supabase
+          .from('tasks')
+          .update({
+            reminder_time: reminderTime.toISOString(),
+            has_reminder: true,
+          })
+          .eq('id', currentTask.id);
+
+        if (error) throw error;
+        toast.success(`Task scheduled for today with reminder at ${format(reminderTime, 'h:mm a')}`);
+      } else {
+        toast.success("Task scheduled for today");
+      }
+      
+      setShowReminderDialog(false);
       moveToNextTask();
     } catch (error) {
       toast.error("Failed to schedule task");
@@ -204,6 +241,49 @@ export function StaleTasksPopup() {
           )}
         </motion.div>
       </motion.div>
+
+      <AlertDialog open={showReminderDialog} onOpenChange={setShowReminderDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Schedule for Today</AlertDialogTitle>
+            <AlertDialogDescription>
+              Would you like to add a reminder for this task?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="grid gap-2 py-4">
+            <Button 
+              variant="outline" 
+              onClick={() => scheduleTaskWithReminder(1)}
+              className="justify-start gap-3"
+            >
+              <Clock className="h-4 w-4" />
+              In 1 hour
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={() => scheduleTaskWithReminder(3)}
+              className="justify-start gap-3"
+            >
+              <Clock className="h-4 w-4" />
+              In 3 hours
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={() => scheduleTaskWithReminder(6)}
+              className="justify-start gap-3"
+            >
+              <Clock className="h-4 w-4" />
+              In 6 hours
+            </Button>
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => scheduleTaskWithReminder()}>
+              Schedule without reminder
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AnimatePresence>
   );
 }
