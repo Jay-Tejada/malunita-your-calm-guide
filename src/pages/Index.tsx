@@ -21,6 +21,7 @@ import { LastCapturePreview } from "@/components/LastCapturePreview";
 import { CaptureHistoryModal } from "@/components/CaptureHistoryModal";
 import { useDailyMindstream } from "@/hooks/useDailyMindstream";
 import { PlanningModePanel } from "@/components/planning/PlanningModePanel";
+import { TaskInputBox } from "@/components/TaskInputBox";
 
 interface AISummary {
   decisions: string[];
@@ -294,15 +295,22 @@ const Index = () => {
           planningText={planningText}
           onClosePlanning={() => setPlanningMode(false)}
         >
-          <HomeOrb
-            onCapture={handleOrbClick} 
-            isRecording={isRecording} 
-            status={getOrbStatus()}
-            recordingDuration={voiceStatus.recordingDuration}
-            onAISummaryUpdate={setAiSummary}
-            onAIPlanUpdate={setAiPlan}
-            onAIAlertsUpdate={setAiAlerts}
-          />
+          <div className="flex flex-col items-center gap-8">
+            <HomeOrb
+              onCapture={handleOrbClick} 
+              isRecording={isRecording} 
+              status={getOrbStatus()}
+              recordingDuration={voiceStatus.recordingDuration}
+              onAISummaryUpdate={setAiSummary}
+              onAIPlanUpdate={setAiPlan}
+              onAIAlertsUpdate={setAiAlerts}
+            />
+            
+            {/* Text input fallback for desktop */}
+            <div className="w-full max-w-md">
+              <TaskInputBox />
+            </div>
+          </div>
         </HomeCanvas>
       </HomeShell>
       
