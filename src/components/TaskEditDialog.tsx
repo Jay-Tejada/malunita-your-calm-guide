@@ -35,7 +35,7 @@ export const TaskEditDialog = ({ open, task, onSave, onClose }: TaskEditDialogPr
   const [locationLng, setLocationLng] = useState<number | null>(null);
   const [locationAddress, setLocationAddress] = useState<string | null>(null);
   const [showLocationPicker, setShowLocationPicker] = useState(false);
-  const { token: accessToken } = useMapboxToken();
+  const { token: accessToken, loading: tokenLoading } = useMapboxToken();
   const { suggestions, isLoading: isSuggestionsLoading, generateSuggestions, clearSuggestions } = useMicroSuggestions();
   const { tasks: allTasks, updateTask } = useTasks();
   const queryClient = useQueryClient();
@@ -273,6 +273,7 @@ export const TaskEditDialog = ({ open, task, onSave, onClose }: TaskEditDialogPr
           onOpenChange={setShowLocationPicker}
           onConfirm={handleLocationConfirm}
           accessToken={accessToken}
+          isTokenLoading={tokenLoading}
         />
 
         <DialogFooter>
