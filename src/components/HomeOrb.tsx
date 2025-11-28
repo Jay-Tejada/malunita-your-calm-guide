@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { processInput } from "@/lib/api/processInput";
 import { fetchDailyPlan, DailyPlan } from "@/lib/ai/fetchDailyPlan";
@@ -7,10 +7,19 @@ import { fetchDailyAlerts, DailyAlerts } from "@/lib/ai/fetchDailyAlerts";
 import { useAttentionTracker } from "@/state/attentionTracker";
 import { ThinkWithMe } from "@/components/ThinkWithMe";
 import { Button } from "@/components/ui/button";
-import { Brain } from "lucide-react";
+import { Brain, Plus } from "lucide-react";
 import { usePersonalFeed } from "@/hooks/usePersonalFeed";
 import { PersonalFeedMessage } from "@/components/PersonalFeedMessage";
 import { StaleTasksPopup } from "@/components/StaleTasksPopup";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
 
 interface HomeOrbProps {
   onCapture?: () => void;
@@ -42,18 +51,53 @@ export const HomeOrb = ({
 }: HomeOrbProps) => {
   const [isHovered, setIsHovered] = useState(false);
   const [interruptionAlert, setInterruptionAlert] = useState<string | null>(null);
+  const [showTextInput, setShowTextInput] = useState(false);
+  const [taskText, setTaskText] = useState("");
+  const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const [isLongPress, setIsLongPress] = useState(false);
   
   const { getMinutesAway, lastFocusedTaskId } = useAttentionTracker();
   const { currentFeed, showFeed } = usePersonalFeed();
 
-  // Example: Call processInput when you have text input
-  const handleProcessInput = async (text: string) => {
+  const handleOrbTouchStart = () => {
+    setIsLongPress(false);
+    longPressTimerRef.current = setTimeout(() => {
+      setIsLongPress(true);
+      if (onCapture) {
+        onCapture();
+      }
+    }, 500); // 500ms for long press
+  };
+
+  const handleOrbTouchEnd = () => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+    }
+    
+    // If it wasn't a long press, show text input
+    if (!isLongPress) {
+      setShowTextInput(true);
+    }
+    setIsLongPress(false);
+  };
+
+  const handleOrbClick = () => {
+    // On desktop, always show text input
+    const isMobile = 'ontouchstart' in window;
+    if (!isMobile) {
+      setShowTextInput(true);
+    }
+  };
+
+  const handleTextSubmit = async () => {
+    if (!taskText.trim()) return;
+
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
       const result = await processInput({
-        text,
+        text: taskText,
         userId: user.id,
       });
 
@@ -79,8 +123,13 @@ export const HomeOrb = ({
       if (onAIAlertsUpdate) {
         onAIAlertsUpdate(alerts);
       }
+
+      toast.success("Task added");
+      setTaskText("");
+      setShowTextInput(false);
     } catch (error) {
       console.error('Failed to process input:', error);
+      toast.error("Failed to add task");
     }
   };
 
@@ -141,7 +190,9 @@ export const HomeOrb = ({
       <div className="flex flex-col items-center">
         {/* Orb - brand icon, no background effects */}
         <motion.button
-          onClick={onCapture}
+          onClick={handleOrbClick}
+          onTouchStart={handleOrbTouchStart}
+          onTouchEnd={handleOrbTouchEnd}
           onHoverStart={() => setIsHovered(true)}
           onHoverEnd={() => setIsHovered(false)}
           className="relative cursor-pointer"
@@ -241,6 +292,34 @@ export const HomeOrb = ({
           </motion.div>
         </div>
       </div>
+
+      {/* Text Input Dialog */}
+      <Dialog open={showTextInput} onOpenChange={setShowTextInput}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add a task</DialogTitle>
+            <DialogDescription>
+              What's on your mind?
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex gap-2">
+            <Input
+              value={taskText}
+              onChange={(e) => setTaskText(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  handleTextSubmit();
+                }
+              }}
+              placeholder="Type your task..."
+              autoFocus
+            />
+            <Button onClick={handleTextSubmit} size="icon">
+              <Plus className="h-4 w-4" />
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 };
