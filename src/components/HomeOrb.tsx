@@ -55,14 +55,17 @@ export const HomeOrb = ({
   const [taskText, setTaskText] = useState("");
   const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
   const [isLongPress, setIsLongPress] = useState(false);
+  const [isLongPressing, setIsLongPressing] = useState(false);
   
   const { getMinutesAway, lastFocusedTaskId } = useAttentionTracker();
   const { currentFeed, showFeed } = usePersonalFeed();
 
   const handleOrbTouchStart = () => {
     setIsLongPress(false);
+    setIsLongPressing(true);
     longPressTimerRef.current = setTimeout(() => {
       setIsLongPress(true);
+      setIsLongPressing(false);
       if (onCapture) {
         onCapture();
       }
@@ -73,6 +76,8 @@ export const HomeOrb = ({
     if (longPressTimerRef.current) {
       clearTimeout(longPressTimerRef.current);
     }
+    
+    setIsLongPressing(false);
     
     // If it wasn't a long press, show text input
     if (!isLongPress) {
@@ -199,8 +204,30 @@ export const HomeOrb = ({
           whileHover={{ scale: 1.03 }}
           whileTap={{ scale: 0.97 }}
         >
+          {/* Pulsing ring during long press */}
+          {isLongPressing && (
+            <motion.div
+              className="absolute inset-0 rounded-full border-4 border-primary"
+              initial={{ scale: 1, opacity: 0.8 }}
+              animate={{ 
+                scale: [1, 1.15, 1],
+                opacity: [0.8, 0.4, 0.8]
+              }}
+              transition={{ 
+                duration: 0.5,
+                repeat: 0,
+                ease: "easeInOut"
+              }}
+              style={{
+                width: '160px',
+                height: '160px',
+                maxWidth: '22vw',
+              }}
+            />
+          )}
+          
           <div 
-            className="rounded-full overflow-hidden flex items-center justify-center"
+            className="rounded-full overflow-hidden flex items-center justify-center relative"
             style={{
               width: '160px',
               height: '160px',
