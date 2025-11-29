@@ -1,5 +1,5 @@
-import { motion, AnimatePresence } from 'framer-motion';
 import { useEffect, useState } from 'react';
+import { cn } from '@/lib/utils';
 
 interface HelperBubbleProps {
   message: string | null;
@@ -27,25 +27,23 @@ export const HelperBubble = ({ message, onDismiss }: HelperBubbleProps) => {
     }
   }, [message, onDismiss]);
 
+  if (!visible || !message) return null;
+
   return (
-    <AnimatePresence>
-      {visible && message && (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95, y: 10 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.95, y: 10 }}
-          transition={{ duration: 0.2, ease: "easeOut" }}
-          className="absolute -top-6 right-0 bg-background/90 backdrop-blur-sm shadow-lg rounded-2xl px-4 py-2 text-sm max-w-[220px] border border-primary/20 z-50"
-        >
-          <div className="relative">
-            <p className="text-foreground font-medium">{message}</p>
-            
-            {/* Speech bubble pointer */}
-            <div className="absolute -bottom-3 right-8 w-0 h-0 border-l-8 border-l-transparent border-r-8 border-r-transparent border-t-8 border-t-background/90" />
-          </div>
-        </motion.div>
+    <div
+      className={cn(
+        "absolute -top-6 right-0 bg-background/90 backdrop-blur-sm shadow-lg rounded-2xl px-4 py-2 text-sm max-w-[220px] border border-primary/20 z-50",
+        "transition-all duration-200 ease-out",
+        visible ? "animate-scale-in" : "animate-scale-out"
       )}
-    </AnimatePresence>
+    >
+      <div className="relative">
+        <p className="text-foreground font-medium">{message}</p>
+        
+        {/* Speech bubble pointer */}
+        <div className="absolute -bottom-3 right-8 w-0 h-0 border-l-8 border-l-transparent border-r-8 border-r-transparent border-t-8 border-t-background/90" />
+      </div>
+    </div>
   );
 };
 
