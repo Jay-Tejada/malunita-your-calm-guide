@@ -1,9 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
-import { Brain } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface OrbMeditationProps {
-  onCapture: (text: string) => void;
-  onThinkWithMe: () => void;
+  onCapture?: (text: string) => void;
+  onThinkWithMe?: () => void;
+  className?: string;
 }
 
 /**
@@ -16,7 +17,11 @@ interface OrbMeditationProps {
  * - No heavy dependencies
  * - Pure CSS animations
  */
-export const OrbMeditation = ({ onCapture, onThinkWithMe }: OrbMeditationProps) => {
+export const OrbMeditation = ({ 
+  onCapture, 
+  onThinkWithMe, 
+  className 
+}: OrbMeditationProps) => {
   const [isInputOpen, setIsInputOpen] = useState(false);
   const [inputText, setInputText] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
@@ -35,7 +40,7 @@ export const OrbMeditation = ({ onCapture, onThinkWithMe }: OrbMeditationProps) 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (inputText.trim()) {
-      onCapture(inputText.trim());
+      onCapture?.(inputText.trim());
       setInputText('');
       setIsInputOpen(false);
     }
@@ -49,63 +54,96 @@ export const OrbMeditation = ({ onCapture, onThinkWithMe }: OrbMeditationProps) 
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[60vh] gap-12">
-      {/* Main Orb */}
-      <button
-        onClick={handleOrbClick}
-        className="relative group cursor-pointer transition-transform duration-200 hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-primary/20 rounded-full"
-        aria-label="Open meditation input"
-      >
-        {/* Glow effect */}
-        <div className="absolute inset-0 rounded-full bg-primary/10 blur-2xl animate-pulse-opacity" />
+    <div className={cn("flex flex-col items-center justify-center min-h-[60vh] gap-8", className)}>
+      {/* Orb Container */}
+      <div className="relative">
+        {/* Outer glow layer */}
+        <div className="absolute inset-0 rounded-full blur-3xl bg-primary/20 animate-pulse-opacity" />
         
-        {/* Orb container */}
-        <div className="relative w-40 h-40 rounded-full bg-gradient-to-br from-background via-card to-background border border-border/50 shadow-lg flex items-center justify-center overflow-hidden">
-          {/* Inner glow */}
-          <div className="absolute inset-0 bg-gradient-radial from-primary/5 via-transparent to-transparent" />
+        {/* Middle glow layer */}
+        <div 
+          className="absolute inset-2 rounded-full blur-2xl bg-primary/30 animate-pulse-opacity" 
+          style={{ animationDelay: '0.5s' }} 
+        />
+        
+        {/* Main orb */}
+        <button
+          onClick={handleOrbClick}
+          disabled={isInputOpen}
+          className={cn(
+            "relative w-40 h-40 rounded-full",
+            "bg-gradient-radial from-primary/40 via-primary/20 to-transparent",
+            "border-2 border-primary/30",
+            "backdrop-blur-sm",
+            "transition-all duration-500 ease-out",
+            "shadow-lg shadow-primary/10",
+            !isInputOpen && "hover:scale-105 hover:border-primary/50 cursor-pointer",
+            !isInputOpen && "active:scale-95",
+            "focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2"
+          )}
+          aria-label="Meditation orb"
+        >
+          {/* Inner gradient pulse */}
+          <div 
+            className="absolute inset-4 rounded-full bg-gradient-radial from-primary/30 to-transparent animate-pulse-opacity" 
+            style={{ animationDelay: '1s' }} 
+          />
           
-          {/* Moon icon */}
-          <span className="text-6xl relative z-10" role="img" aria-label="moon">
-            🌙
-          </span>
-        </div>
-      </button>
+          {/* Core glow */}
+          <div className="absolute inset-8 rounded-full bg-primary/40 blur-md" />
+        </button>
+      </div>
 
-      {/* Prompt text */}
-      <div className="flex flex-col items-center gap-6">
+      {/* Text or Input */}
+      <div className="w-full max-w-md px-4">
         {!isInputOpen ? (
-          <>
-            <p className="text-lg font-mono text-foreground/45 text-center">
+          <div className="flex flex-col items-center gap-4">
+            <p className="text-center text-foreground/60 text-lg font-light animate-fade-in">
               What's on your mind?
             </p>
             
-            {/* Think With Me button */}
-            <button
-              onClick={onThinkWithMe}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-background/80 backdrop-blur-sm border border-border/40 text-foreground/60 text-sm font-mono transition-all duration-200 hover:bg-background hover:text-foreground/80 hover:border-border/60 focus:outline-none focus:ring-2 focus:ring-primary/20"
-            >
-              <Brain className="w-4 h-4" />
-              <span>Think With Me</span>
-            </button>
-          </>
+            {/* Optional Think With Me button */}
+            {onThinkWithMe && (
+              <button
+                onClick={onThinkWithMe}
+                className={cn(
+                  "text-sm text-foreground/50 hover:text-foreground/80",
+                  "transition-colors duration-200",
+                  "underline underline-offset-4 decoration-foreground/20",
+                  "hover:decoration-foreground/40"
+                )}
+              >
+                or think with me
+              </button>
+            )}
+          </div>
         ) : (
-          /* Quick input */
-          <form onSubmit={handleSubmit} className="w-full max-w-md">
-            <div className="flex flex-col gap-2">
-              <input
-                ref={inputRef}
-                type="text"
-                value={inputText}
-                onChange={(e) => setInputText(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder="Type your task or thought..."
-                className="w-full px-4 py-3 rounded-lg bg-background border border-border text-foreground placeholder:text-foreground/40 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all duration-200"
-                autoComplete="off"
-              />
-              <div className="flex items-center justify-between text-xs font-mono text-foreground/40">
-                <span>Press Enter to capture</span>
-                <span>Press Esc to cancel</span>
-              </div>
+          <form onSubmit={handleSubmit} className="w-full animate-fade-in">
+            <input
+              ref={inputRef}
+              type="text"
+              value={inputText}
+              onChange={(e) => setInputText(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Type your thoughts..."
+              className={cn(
+                "w-full px-6 py-4 rounded-full",
+                "bg-card/50 backdrop-blur-sm",
+                "border-2 border-primary/20",
+                "text-foreground text-center text-lg",
+                "placeholder:text-foreground/40",
+                "focus:outline-none focus:border-primary/50",
+                "transition-all duration-300",
+                "shadow-lg shadow-primary/5"
+              )}
+              autoComplete="off"
+            />
+            
+            {/* Subtle hints */}
+            <div className="flex items-center justify-center gap-4 mt-2 text-xs text-foreground/40">
+              <span>Enter to capture</span>
+              <span className="text-foreground/20">•</span>
+              <span>Esc to cancel</span>
             </div>
           </form>
         )}
