@@ -4,7 +4,6 @@ import { GlobeButton } from "@/components/GlobeButton";
 import { LeftDrawer } from "@/components/LeftDrawer";
 import { RightDrawer } from "@/components/RightDrawer";
 import { QuickCapture } from "@/components/QuickCapture";
-import { ShortcutsHelp } from "@/components/ShortcutsHelp";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { useProcessInputMutation } from "@/hooks/useProcessInputMutation";
 import { useTasks } from "@/hooks/useTasks";
@@ -108,9 +107,6 @@ export const Layout = () => {
         onOpenChange={setQuickCaptureOpen}
         onCapture={handleQuickCapture}
       />
-
-      {/* Shortcuts Help Modal */}
-      <ShortcutsHelp />
 
       {/* Page Content */}
       <Outlet />

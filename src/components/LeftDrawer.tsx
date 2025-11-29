@@ -24,6 +24,7 @@ import { TodaySection } from "@/components/drawer/TodaySection";
 import { TodaysBriefing } from "@/components/home/TodaysBriefing";
 import { DailyIntelligence } from "@/components/home/DailyIntelligence";
 import { useDailyMindstream } from "@/hooks/useDailyMindstream";
+import { ShortcutsHelp } from "@/components/ShortcutsHelp";
 
 type DrawerMode = "root" | "today" | "inbox" | "someday" | "work" | "home" | "gym" | "journal" | "calendar" | `project-${string}`;
 
@@ -580,6 +581,11 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
                     </div>
 
                     <div className="flex-1" />
+
+                    {/* Keyboard Shortcuts - At bottom */}
+                    <div className="mt-auto pt-4 px-6 pb-6 border-t border-border/50">
+                      <ShortcutsHelp />
+                    </div>
                   </motion.div>
                 ) : drawerMode === "today" ? (
                   <motion.div
