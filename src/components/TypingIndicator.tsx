@@ -12,14 +12,14 @@ export const TypingIndicator = ({ mood = 'neutral', className = '' }: TypingIndi
     switch (mood) {
       case 'excited':
       case 'overjoyed':
-        return 'duration-[400ms]'; // Faster
+        return 'duration-500'; // Faster
       case 'sleepy':
       case 'sleeping':
-        return 'duration-[1200ms]'; // Very slow
+        return 'duration-[1500ms]'; // Very slow
       case 'angry':
         return 'duration-500';
       default:
-        return 'duration-[600ms]'; // Normal
+        return 'duration-700'; // Normal
     }
   };
 
