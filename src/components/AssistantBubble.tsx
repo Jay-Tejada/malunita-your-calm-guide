@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import { CreatureSprite } from '@/components/CreatureSprite';
 import { useMoodStore } from '@/state/moodMachine';
 import { detectMoodFromMessage } from '@/state/moodMachine';
@@ -324,14 +324,12 @@ const AssistantBubble = ({ onOpenChat, className = '', typing = false }: Assista
   };
 
   return (
-    <motion.div
-      initial={{ scale: 0, opacity: 0 }}
-      animate={{ scale: 1, opacity: 1 }}
-      exit={{ scale: 0, opacity: 0 }}
-      className={`fixed bottom-6 right-6 z-50 cursor-pointer select-none ${className}`}
+    <div
+      className={`fixed bottom-6 right-6 z-50 cursor-pointer select-none transition-transform duration-200 hover:scale-105 active:scale-95 ${className}`}
       onClick={handleClick}
-      whileHover={{ scale: 1.05 }}
-      whileTap={{ scale: 0.95 }}
+      style={{
+        animation: 'fade-in 0.3s ease-out'
+      }}
     >
       {/* Helper bubble */}
       <HelperBubble 
@@ -374,32 +372,28 @@ const AssistantBubble = ({ onOpenChat, className = '', typing = false }: Assista
         </div>
 
         {/* Play button */}
-        <motion.button
+        <button
           onClick={(e) => {
             e.stopPropagation();
             setShowMiniGames(true);
           }}
-          className="absolute -top-2 -right-2 rounded-full p-2 shadow-lg bg-background border-2 border-primary/30"
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
+          className="absolute -top-2 -right-2 rounded-full p-2 shadow-lg bg-background border-2 border-primary/30 transition-transform duration-200 hover:scale-110 active:scale-90"
         >
           <Gamepad2 className="w-4 h-4 text-primary" />
-        </motion.button>
+        </button>
 
         {/* Mic button */}
-        <motion.button
+        <button
           onClick={toggleVoiceMode}
           className={cn(
-            "absolute -bottom-2 -right-2 rounded-full p-2 shadow-lg",
+            "absolute -bottom-2 -right-2 rounded-full p-2 shadow-lg transition-transform duration-200 hover:scale-110 active:scale-90",
             voiceMode 
               ? "bg-primary text-primary-foreground" 
               : "bg-background border-2 border-primary/30"
           )}
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
         >
           {voiceMode ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
-        </motion.button>
+        </button>
 
         {/* Heart particles when loving */}
         <AnimatePresence>
@@ -441,7 +435,7 @@ const AssistantBubble = ({ onOpenChat, className = '', typing = false }: Assista
 
       {/* Mini-games modal */}
       <MiniGamesModal open={showMiniGames} onOpenChange={setShowMiniGames} />
-    </motion.div>
+    </div>
   );
 };
 

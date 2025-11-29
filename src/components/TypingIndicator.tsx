@@ -1,4 +1,3 @@
-import { motion } from 'framer-motion';
 import { Heart } from 'lucide-react';
 import type { Mood } from '@/state/moodMachine';
 
@@ -13,24 +12,19 @@ export const TypingIndicator = ({ mood = 'neutral', className = '' }: TypingIndi
     switch (mood) {
       case 'excited':
       case 'overjoyed':
-        return 0.4; // Faster
+        return 'duration-[400ms]'; // Faster
       case 'sleepy':
       case 'sleeping':
-        return 1.2; // Very slow
+        return 'duration-[1200ms]'; // Very slow
       case 'angry':
-        return 0.5;
+        return 'duration-500';
       default:
-        return 0.6; // Normal
+        return 'duration-[600ms]'; // Normal
     }
   };
 
   const speed = getAnimationSpeed();
   const isLoving = mood === 'loving';
-
-  const dotVariants = {
-    initial: { opacity: 0.3, y: 0 },
-    animate: { opacity: 1, y: -8 }
-  };
 
   return (
     <div className={`flex items-center justify-center gap-1.5 ${className}`}>
@@ -38,40 +32,27 @@ export const TypingIndicator = ({ mood = 'neutral', className = '' }: TypingIndi
         // Hearts for loving mood
         <>
           {[0, 1, 2].map((i) => (
-            <motion.div
+            <div
               key={i}
-              variants={dotVariants}
-              initial="initial"
-              animate="animate"
-              transition={{
-                duration: speed,
-                repeat: Infinity,
-                repeatType: "reverse",
-                delay: i * (speed / 3),
-                ease: "easeInOut"
+              className={`animate-typing-dot ${speed}`}
+              style={{ 
+                animationDelay: `${i * 200}ms`,
               }}
             >
               <Heart className="w-2.5 h-2.5 text-primary fill-primary" />
-            </motion.div>
+            </div>
           ))}
         </>
       ) : (
         // Regular dots for other moods
         <>
           {[0, 1, 2].map((i) => (
-            <motion.div
+            <div
               key={i}
-              variants={dotVariants}
-              initial="initial"
-              animate="animate"
-              transition={{
-                duration: speed,
-                repeat: Infinity,
-                repeatType: "reverse",
-                delay: i * (speed / 3),
-                ease: "easeInOut"
+              className={`w-2 h-2 rounded-full bg-primary animate-typing-dot ${speed}`}
+              style={{ 
+                animationDelay: `${i * 200}ms`,
               }}
-              className="w-2 h-2 rounded-full bg-primary"
             />
           ))}
         </>
