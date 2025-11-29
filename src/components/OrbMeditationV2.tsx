@@ -7,6 +7,8 @@ interface OrbMeditationV2Props {
   onVoiceCapture?: () => void;
   onThinkWithMe?: () => void;
   userName?: string;
+  isRecording?: boolean;
+  isProcessing?: boolean;
 }
 
 type OrbState = 'idle' | 'active' | 'recording' | 'processing' | 'success';
@@ -15,7 +17,9 @@ export const OrbMeditationV2 = ({
   onCapture, 
   onVoiceCapture, 
   onThinkWithMe, 
-  userName = 'there' 
+  userName = 'there',
+  isRecording = false,
+  isProcessing = false,
 }: OrbMeditationV2Props) => {
   const [inputText, setInputText] = useState('');
   const [orbState, setOrbState] = useState<OrbState>('idle');
@@ -28,6 +32,17 @@ export const OrbMeditationV2 = ({
       inputRef.current.focus();
     }
   }, []);
+
+  // Sync orb state with voice recording state
+  useEffect(() => {
+    if (isRecording) {
+      setOrbState('recording');
+    } else if (isProcessing) {
+      setOrbState('processing');
+    } else if (!inputText) {
+      setOrbState('idle');
+    }
+  }, [isRecording, isProcessing, inputText]);
 
   // Get contextual greeting based on time
   const getGreeting = () => {
@@ -62,7 +77,6 @@ export const OrbMeditationV2 = ({
 
   // Handle voice button
   const handleVoice = () => {
-    setOrbState('recording');
     onVoiceCapture?.();
   };
 

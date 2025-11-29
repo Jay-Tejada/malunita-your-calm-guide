@@ -360,6 +360,8 @@ const Index = () => {
             onVoiceCapture={() => voiceRef.current?.startRecording()}
             onThinkWithMe={() => setShowThinkWithMe(true)}
             userName={profile?.companion_name || 'there'}
+            isRecording={voiceStatus.isListening}
+            isProcessing={voiceStatus.isProcessing}
           />
 
           {/* Notebook feed below orb */}
