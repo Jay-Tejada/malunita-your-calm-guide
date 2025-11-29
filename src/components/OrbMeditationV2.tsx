@@ -75,8 +75,8 @@ export const OrbMeditationV2 = ({
     <div className="flex flex-col items-center justify-center min-h-[70vh] px-4 gap-6 md:gap-8">
       <style>{`
         @keyframes orb-breathe {
-          0%, 100% { transform: scale(1); }
-          50% { transform: scale(1.05); }
+          0%, 100% { transform: scale(1); filter: brightness(1); }
+          50% { transform: scale(1.05); filter: brightness(1.1); }
         }
         @keyframes orb-active {
           0%, 100% { transform: scale(1); }
@@ -88,15 +88,18 @@ export const OrbMeditationV2 = ({
           75% { transform: scale(1.02) rotate(2deg); }
         }
         @keyframes orb-shimmer {
-          0% { opacity: 0.8; }
-          50% { opacity: 1; }
-          100% { opacity: 0.8; }
+          0%, 100% { 
+            filter: brightness(1) drop-shadow(0 0 40px rgba(168, 85, 247, 0.6));
+          }
+          50% { 
+            filter: brightness(1.2) drop-shadow(0 0 50px rgba(168, 85, 247, 0.8));
+          }
         }
         @keyframes orb-success {
           0%, 100% { transform: scale(1); }
           50% { transform: scale(1.15); }
         }
-        .orb-idle { animation: orb-breathe 4s ease-in-out infinite; }
+        .orb-idle { animation: orb-breathe 5s ease-in-out infinite; }
         .orb-active { animation: orb-active 2s ease-in-out infinite; }
         .orb-recording { animation: orb-recording 1s ease-in-out infinite; }
         .orb-processing { animation: orb-shimmer 1.5s ease-in-out infinite; }
@@ -111,8 +114,9 @@ export const OrbMeditationV2 = ({
             `orb-${orbState}`
           )}
           style={{
-            background: 'radial-gradient(circle at 30% 30%, #fbbf24 0%, #f59e0b 50%, #b45309 100%)',
-            filter: 'drop-shadow(0 0 30px rgba(139, 92, 246, 0.4))'
+            background: 'radial-gradient(circle at 35% 35%, #c084fc 0%, #a855f7 25%, #9333ea 50%, #7e22ce 75%, #6b21a8 100%)',
+            boxShadow: 'inset 0 0 30px rgba(255, 255, 255, 0.3), inset 0 0 60px rgba(216, 180, 254, 0.2)',
+            filter: 'drop-shadow(0 0 40px rgba(168, 85, 247, 0.6))'
           }}
         />
       </div>
