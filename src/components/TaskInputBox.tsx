@@ -1,21 +1,26 @@
-import { useState } from "react";
+import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import { processRawInput } from "@/lib/taskProcessing";
 import { getClarification } from "@/lib/clarificationEngine";
 import { runTaskPipeline } from "@/lib/intelligence/taskPipeline";
 import { useTasks } from "@/hooks/useTasks";
 import { useDailyIntelligence } from "@/hooks/useDailyIntelligence";
 import { useCompanionEvents } from "@/hooks/useCompanionEvents";
-import { Loader2, Plus } from "lucide-react";
+import { Loader2, Plus, Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { debounce } from "@/utils/debounce";
+import { useCategorizeTaskMutation } from "@/hooks/useProcessInputMutation";
 
 export const TaskInputBox = () => {
   const [input, setInput] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isPreviewing, setIsPreviewing] = useState(false);
+  const [previewCategory, setPreviewCategory] = useState<string | null>(null);
   const [clarificationMode, setClarificationMode] = useState(false);
   const [clarificationQuestion, setClarificationQuestion] = useState<string | null>(null);
   const [clarificationOptions, setClarificationOptions] = useState<string[]>([]);
@@ -29,6 +34,58 @@ export const TaskInputBox = () => {
   const { toast } = useToast();
   const { refetch } = useDailyIntelligence();
   const { onTaskCreated } = useCompanionEvents();
+  const categorizeMutation = useCategorizeTaskMutation();
+  
+  // Store the last preview text to avoid duplicate calls
+  const lastPreviewText = useRef<string>("");
+
+  // Debounced AI category preview - only calls API 500ms after user stops typing
+  const debouncedCategoryPreview = useMemo(
+    () =>
+      debounce(async (text: string) => {
+        // Only preview if text is substantial and different from last preview
+        if (text.length < 5 || text === lastPreviewText.current) {
+          setPreviewCategory(null);
+          setIsPreviewing(false);
+          return;
+        }
+
+        lastPreviewText.current = text;
+        setIsPreviewing(true);
+
+        try {
+          // Use lightweight categorization (doesn't create task, just previews)
+          const result = await categorizeMutation.mutateAsync({
+            taskId: 'preview', // Dummy ID for preview
+            text: text,
+            previewOnly: true, // Don't update database, just preview
+          });
+
+          if (result.category && result.category !== 'inbox') {
+            setPreviewCategory(result.category);
+          } else {
+            setPreviewCategory(null);
+          }
+        } catch (error) {
+          console.error('Preview categorization failed:', error);
+          setPreviewCategory(null);
+        } finally {
+          setIsPreviewing(false);
+        }
+      }, 500), // Wait 500ms after user stops typing
+    [categorizeMutation]
+  );
+
+  // Call debounced preview when input changes
+  useEffect(() => {
+    if (input.trim()) {
+      debouncedCategoryPreview(input.trim());
+    } else {
+      setPreviewCategory(null);
+      setIsPreviewing(false);
+      lastPreviewText.current = "";
+    }
+  }, [input, debouncedCategoryPreview]);
 
   const handleSubmit = async (e?: React.FormEvent) => {
     e?.preventDefault();
@@ -318,6 +375,24 @@ export const TaskInputBox = () => {
             disabled={isProcessing}
             className="pr-12 bg-background/50 border-border/50 focus:bg-background"
           />
+          
+          {/* AI Preview Badge - shows suggested category as user types */}
+          {(isPreviewing || previewCategory) && (
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
+              {isPreviewing ? (
+                <Badge variant="outline" className="text-xs animate-pulse">
+                  <Sparkles className="h-3 w-3 mr-1" />
+                  Analyzing...
+                </Badge>
+              ) : previewCategory ? (
+                <Badge variant="secondary" className="text-xs">
+                  <Sparkles className="h-3 w-3 mr-1" />
+                  {previewCategory}
+                </Badge>
+              ) : null}
+            </div>
+          )}
+          
           <Button
             type="submit"
             size="icon"
