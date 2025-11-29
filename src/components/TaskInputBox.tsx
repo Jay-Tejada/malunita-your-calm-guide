@@ -11,7 +11,7 @@ import { runTaskPipeline } from "@/lib/intelligence/taskPipeline";
 import { useTasks } from "@/hooks/useTasks";
 import { useDailyIntelligence } from "@/hooks/useDailyIntelligence";
 import { useCompanionEvents } from "@/hooks/useCompanionEvents";
-import { Loader2, Plus, Sparkles } from "lucide-react";
+import { Loader2, Plus, Sparkles, Bold, Italic, Link2, Code } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { debounce } from "@/utils/debounce";
 import { useCategorizeTaskMutation } from "@/hooks/useProcessInputMutation";
@@ -364,47 +364,117 @@ export const TaskInputBox = () => {
     setSelectedTasks(newSelected);
   };
 
+  const insertMarkdown = (prefix: string, suffix: string = '') => {
+    const textarea = document.querySelector('input[type="text"]') as HTMLInputElement;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart || 0;
+    const end = textarea.selectionEnd || 0;
+    const selectedText = input.substring(start, end);
+    const beforeText = input.substring(0, start);
+    const afterText = input.substring(end);
+
+    const newText = beforeText + prefix + selectedText + suffix + afterText;
+    setInput(newText);
+
+    // Set cursor position after inserted markdown
+    setTimeout(() => {
+      textarea.focus();
+      const newCursorPos = start + prefix.length + selectedText.length + suffix.length;
+      textarea.setSelectionRange(newCursorPos, newCursorPos);
+    }, 0);
+  };
+
   return (
     <>
       <form onSubmit={handleSubmit} className="w-full max-w-2xl mx-auto px-4">
-        <div className="relative">
-          <Input
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Type a task..."
-            disabled={isProcessing}
-            className="pr-12 bg-background/50 border-border/50 focus:bg-background"
-          />
-          
-          {/* AI Preview Badge - shows suggested category as user types */}
-          {(isPreviewing || previewCategory) && (
-            <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
-              {isPreviewing ? (
-                <Badge variant="outline" className="text-xs animate-pulse">
-                  <Sparkles className="h-3 w-3 mr-1" />
-                  Analyzing...
-                </Badge>
-              ) : previewCategory ? (
-                <Badge variant="secondary" className="text-xs">
-                  <Sparkles className="h-3 w-3 mr-1" />
-                  {previewCategory}
-                </Badge>
-              ) : null}
-            </div>
-          )}
-          
-          <Button
-            type="submit"
-            size="icon"
-            disabled={isProcessing || !input.trim()}
-            className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8"
-          >
-            {isProcessing ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Plus className="h-4 w-4" />
+        <div className="space-y-2">
+          <div className="relative">
+            <Input
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Type a task... (markdown supported)"
+              disabled={isProcessing}
+              className="pr-12 bg-background/50 border-border/50 focus:bg-background"
+            />
+            
+            {/* AI Preview Badge - shows suggested category as user types */}
+            {(isPreviewing || previewCategory) && (
+              <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                {isPreviewing ? (
+                  <Badge variant="outline" className="text-xs animate-pulse">
+                    <Sparkles className="h-3 w-3 mr-1" />
+                    Analyzing...
+                  </Badge>
+                ) : previewCategory ? (
+                  <Badge variant="secondary" className="text-xs">
+                    <Sparkles className="h-3 w-3 mr-1" />
+                    {previewCategory}
+                  </Badge>
+                ) : null}
+              </div>
             )}
-          </Button>
+            
+            <Button
+              type="submit"
+              size="icon"
+              disabled={isProcessing || !input.trim()}
+              className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8"
+            >
+              {isProcessing ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Plus className="h-4 w-4" />
+              )}
+            </Button>
+          </div>
+
+          {/* Markdown Toolbar - Desktop only */}
+          <div className="hidden md:flex items-center gap-1 px-1">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => insertMarkdown('**', '**')}
+              className="h-7 px-2 text-xs text-foreground-soft hover:text-foreground"
+              title="Bold"
+            >
+              <Bold className="h-3 w-3" />
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => insertMarkdown('*', '*')}
+              className="h-7 px-2 text-xs text-foreground-soft hover:text-foreground"
+              title="Italic"
+            >
+              <Italic className="h-3 w-3" />
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => insertMarkdown('`', '`')}
+              className="h-7 px-2 text-xs text-foreground-soft hover:text-foreground"
+              title="Code"
+            >
+              <Code className="h-3 w-3" />
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => insertMarkdown('[', '](url)')}
+              className="h-7 px-2 text-xs text-foreground-soft hover:text-foreground"
+              title="Link"
+            >
+              <Link2 className="h-3 w-3" />
+            </Button>
+            <span className="text-xs text-foreground-soft ml-2">
+              Supports markdown formatting
+            </span>
+          </div>
         </div>
       </form>
 

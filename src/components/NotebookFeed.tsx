@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { format, isToday, isYesterday, isThisWeek, startOfDay } from 'date-fns';
 import { CheckCircle2, Circle, Trash2, Clock } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
 import { useTasksQuery } from '@/hooks/useTasksQuery';
 import { useTasks } from '@/hooks/useTasks';
 import { Badge } from '@/components/ui/badge';
@@ -301,17 +302,41 @@ function EntryCard({
             )}
           </div>
 
-          <p className={cn(
-            "text-foreground text-sm",
+          <div className={cn(
+            "text-foreground text-sm prose prose-sm dark:prose-invert max-w-none",
             entry.completed && "line-through"
           )}>
-            {entry.title}
-          </p>
+            <ReactMarkdown
+              components={{
+                p: ({ children }) => <p className="mb-0">{children}</p>,
+                strong: ({ children }) => <strong className="font-semibold text-foreground">{children}</strong>,
+                em: ({ children }) => <em className="italic">{children}</em>,
+                code: ({ children }) => <code className="bg-muted px-1 py-0.5 rounded text-xs">{children}</code>,
+                h1: ({ children }) => <span className="font-semibold text-base">{children}</span>,
+                h2: ({ children }) => <span className="font-semibold text-sm">{children}</span>,
+                h3: ({ children }) => <span className="font-medium text-sm">{children}</span>,
+                ul: ({ children }) => <ul className="list-disc list-inside my-0">{children}</ul>,
+                ol: ({ children }) => <ol className="list-decimal list-inside my-0">{children}</ol>,
+                li: ({ children }) => <li className="my-0">{children}</li>,
+              }}
+            >
+              {entry.title}
+            </ReactMarkdown>
+          </div>
 
           {entry.context && (
-            <p className="text-foreground-soft text-xs mt-1">
-              {entry.context}
-            </p>
+            <div className="text-foreground-soft text-xs mt-1 prose prose-xs dark:prose-invert max-w-none">
+              <ReactMarkdown
+                components={{
+                  p: ({ children }) => <p className="mb-0">{children}</p>,
+                  strong: ({ children }) => <strong className="font-medium">{children}</strong>,
+                  em: ({ children }) => <em className="italic">{children}</em>,
+                  code: ({ children }) => <code className="bg-muted px-1 py-0.5 rounded">{children}</code>,
+                }}
+              >
+                {entry.context}
+              </ReactMarkdown>
+            </div>
           )}
         </div>
 
