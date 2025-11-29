@@ -169,6 +169,56 @@ export default {
             transform: "translateY(0)",
           },
         },
+        "fade-out": {
+          "0%": {
+            opacity: "1",
+            transform: "translateY(0)",
+          },
+          "100%": {
+            opacity: "0",
+            transform: "translateY(10px)",
+          },
+        },
+        "scale-in": {
+          "0%": {
+            opacity: "0",
+            transform: "scale(0.95)",
+          },
+          "100%": {
+            opacity: "1",
+            transform: "scale(1)",
+          },
+        },
+        "scale-out": {
+          "0%": {
+            opacity: "1",
+            transform: "scale(1)",
+          },
+          "100%": {
+            opacity: "0",
+            transform: "scale(0.95)",
+          },
+        },
+        "slide-up": {
+          "0%": {
+            opacity: "0",
+            transform: "translateY(20px)",
+          },
+          "100%": {
+            opacity: "1",
+            transform: "translateY(0)",
+          },
+        },
+        "slide-down": {
+          "0%": {
+            opacity: "1",
+            transform: "translateY(0)",
+          },
+          "100%": {
+            opacity: "0",
+            transform: "translateY(20px)",
+          },
+        },
         "pulse-opacity": {
           "0%, 100%": {
             opacity: "0.4",
@@ -195,6 +245,14 @@ export default {
             transform: "rotate(360deg)",
           },
         },
+        "pulse-scale": {
+          "0%, 100%": {
+            transform: "scale(1)",
+          },
+          "50%": {
+            transform: "scale(1.05)",
+          },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -206,7 +264,13 @@ export default {
         "sway-curious": "sway-curious 2s ease-in-out infinite",
         "float-sleepy": "float-sleepy 3s ease-in-out infinite",
         "fade-in": "fade-in 0.3s ease-out",
+        "fade-out": "fade-out 0.3s ease-out",
+        "scale-in": "scale-in 0.2s ease-out",
+        "scale-out": "scale-out 0.2s ease-out",
+        "slide-up": "slide-up 0.3s ease-out",
+        "slide-down": "slide-down 0.3s ease-out",
         "pulse-opacity": "pulse-opacity 2s ease-in-out infinite",
+        "pulse-scale": "pulse-scale 2s ease-in-out infinite",
         "typing-dot": "typing-dot 0.6s ease-in-out infinite",
         "spin-continuous": "spin-continuous 20s linear infinite",
       },

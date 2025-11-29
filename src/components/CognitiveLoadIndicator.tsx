@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { useCognitiveLoad, getLoadColor } from '@/state/cognitiveLoad';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -47,11 +46,7 @@ export const CognitiveLoadIndicator = () => {
   return (
     <>
       {/* Floating indicator */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="fixed bottom-24 left-6 z-40"
-      >
+      <div className="fixed bottom-24 left-6 z-40 animate-slide-up">
         <button
           onClick={() => {
             setShowRecommendations(!showRecommendations);
@@ -69,70 +64,58 @@ export const CognitiveLoadIndicator = () => {
           {getIcon()}
           <span className="text-sm font-medium">{getStatusText()}</span>
           {level === 'HIGH' && (
-            <motion.div
-              animate={{ scale: [1, 1.2, 1] }}
-              transition={{ duration: 1, repeat: Infinity }}
-            >
+            <span className="animate-pulse-scale">
               <Zap className="w-4 h-4" />
-            </motion.div>
+            </span>
           )}
         </button>
-      </motion.div>
+      </div>
 
       {/* Recommendations panel */}
-      <AnimatePresence>
-        {showRecommendations && recommendations.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, x: -100, y: 20 }}
-            animate={{ opacity: 1, x: 0, y: 0 }}
-            exit={{ opacity: 0, x: -100, y: 20 }}
-            className="fixed bottom-40 left-6 z-40 w-80"
-          >
-            <Card className="p-4 shadow-xl backdrop-blur-lg bg-card/95 border-2">
-              <div className="flex items-center gap-2 mb-3">
-                <Brain className={cn("w-5 h-5", getLoadColor(level))} />
-                <h3 className="font-semibold">Recommendations</h3>
-                <button
-                  onClick={() => setShowRecommendations(false)}
-                  className="ml-auto text-muted-foreground hover:text-foreground"
+      {showRecommendations && recommendations.length > 0 && (
+        <div className="fixed bottom-40 left-6 z-40 w-80 animate-slide-up">
+          <Card className="p-4 shadow-xl backdrop-blur-lg bg-card/95 border-2">
+            <div className="flex items-center gap-2 mb-3">
+              <Brain className={cn("w-5 h-5", getLoadColor(level))} />
+              <h3 className="font-semibold">Recommendations</h3>
+              <button
+                onClick={() => setShowRecommendations(false)}
+                className="ml-auto text-muted-foreground hover:text-foreground transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+            
+            <div className="space-y-2">
+              {recommendations.map((rec, index) => (
+                <div
+                  key={index}
+                  className="flex items-start gap-2 text-sm animate-fade-in"
+                  style={{ animationDelay: `${index * 100}ms` }}
                 >
-                  ✕
-                </button>
-              </div>
-              
-              <div className="space-y-2">
-                {recommendations.map((rec, index) => (
-                  <motion.div
-                    key={index}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                    className="flex items-start gap-2 text-sm"
-                  >
-                    <div className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 flex-shrink-0" />
-                    <p className="text-foreground/90">{rec}</p>
-                  </motion.div>
-                ))}
-              </div>
-
-              {level === 'HIGH' && (
-                <div className="mt-4 pt-4 border-t">
-                  <Button
-                    onClick={() => {
-                      // TODO: Navigate to Focus Mode
-                      setShowRecommendations(false);
-                    }}
-                    className="w-full"
-                    variant="default"
-                  >
-                    Start Focus Mode
-                  </Button>
+                  <div className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 flex-shrink-0" />
+                  <p className="text-foreground/90">{rec}</p>
                 </div>
-              )}
-            </Card>
-          </motion.div>
-        )}
-      </AnimatePresence>
+              ))}
+            </div>
+
+            {level === 'HIGH' && (
+              <div className="mt-4 pt-4 border-t">
+                <Button
+                  onClick={() => {
+                    // TODO: Navigate to Focus Mode
+                    setShowRecommendations(false);
+                  }}
+                  className="w-full"
+                  variant="default"
+                >
+                  Start Focus Mode
+                </Button>
+              </div>
+            )}
+          </Card>
+        </div>
+      )}
     </>
   );
 };

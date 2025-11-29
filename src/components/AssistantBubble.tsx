@@ -325,11 +325,8 @@ const AssistantBubble = ({ onOpenChat, className = '', typing = false }: Assista
 
   return (
     <div
-      className={`fixed bottom-6 right-6 z-50 cursor-pointer select-none transition-transform duration-200 hover:scale-105 active:scale-95 ${className}`}
+      className={`fixed bottom-6 right-6 z-50 cursor-pointer select-none transition-transform duration-200 hover:scale-105 active:scale-95 animate-fade-in ${className}`}
       onClick={handleClick}
-      style={{
-        animation: 'fade-in 0.3s ease-out'
-      }}
     >
       {/* Helper bubble */}
       <HelperBubble 
