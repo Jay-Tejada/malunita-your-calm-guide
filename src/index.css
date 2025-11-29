@@ -1750,4 +1750,41 @@ All colors MUST be HSL.
     background-color: hsl(var(--accent));
     color: hsl(var(--accent-foreground));
   }
+
+  /* cmdk styles */
+  [cmdk-root] {
+    font-family: 'IBM Plex Sans', sans-serif;
+  }
+
+  [cmdk-dialog] {
+    z-index: 9999;
+  }
+
+  [cmdk-input] {
+    font-family: 'IBM Plex Sans', sans-serif;
+  }
+
+  [cmdk-group-heading] {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: hsl(var(--foreground-soft));
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  [cmdk-item] {
+    cursor: pointer;
+  }
+
+  [cmdk-item][aria-selected="true"] {
+    background-color: hsl(var(--muted));
+  }
+
+  [cmdk-separator] {
+    height: 1px;
+    width: 100%;
+    background-color: hsl(var(--border));
+    margin: 0.5rem 0;
+  }
 }
