@@ -47,7 +47,18 @@ const Learning = lazy(() => import("./pages/Learning"));
 import { JOURNAL_EVENTS } from "./features/journal/journalEvents";
 import { bondingMeter, BONDING_INCREMENTS } from "./state/bondingMeter";
 
-const queryClient = new QueryClient();
+// Configure React Query with optimized defaults for better caching and performance
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // Data stays fresh for 5 minutes
+      gcTime: 10 * 60 * 1000, // Cache persists for 10 minutes (was cacheTime in v4)
+      refetchOnWindowFocus: false, // Don't refetch when user returns to tab
+      retry: 1, // Only retry failed requests once
+      refetchOnMount: false, // Don't refetch on component mount if data exists
+    },
+  },
+});
 
 const App = () => {
   const { shouldShowRitual, dismissRitual } = useRitualTrigger();
