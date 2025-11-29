@@ -23,6 +23,10 @@ import { LastCapturePreview } from "@/components/LastCapturePreview";
 import { CaptureHistoryModal } from "@/components/CaptureHistoryModal";
 import { useDailyMindstream } from "@/hooks/useDailyMindstream";
 import { PlanningModePanel } from "@/components/planning/PlanningModePanel";
+import { NotebookFeed } from "@/components/NotebookFeed";
+import { QuickCapture } from "@/components/QuickCapture";
+import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
+import { useNavigate } from "react-router-dom";
 
 interface AISummary {
   decisions: string[];
@@ -102,9 +106,24 @@ const Index = () => {
   const [planningMode, setPlanningMode] = useState(false);
   const [planningText, setPlanningText] = useState("");
   const [showThinkWithMe, setShowThinkWithMe] = useState(false);
+  const [quickCaptureOpen, setQuickCaptureOpen] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const navigate = useNavigate();
   
   // Initialize prediction system (runs silently in background)
   usePrimaryFocusPrediction();
+
+  // Initialize keyboard shortcuts
+  useKeyboardShortcuts({
+    onQuickCapture: () => setQuickCaptureOpen(true),
+    onFocusInput: () => inputRef.current?.focus(),
+    onDailyReview: () => navigate('/daily-session'),
+    onCloseModals: () => {
+      setQuickCaptureOpen(false);
+      setShowThinkWithMe(false);
+      setShowCaptureHistory(false);
+    },
+  });
 
   useEffect(() => {
     const {
@@ -335,15 +354,38 @@ const Index = () => {
           planningText={planningText}
           onClosePlanning={() => setPlanningMode(false)}
         >
+          {/* Sacred space - OrbMeditationV2 at top */}
           <OrbMeditationV2
             onCapture={handleCapture}
             onVoiceCapture={() => voiceRef.current?.startRecording()}
             onThinkWithMe={() => setShowThinkWithMe(true)}
             userName={profile?.companion_name || 'there'}
           />
+
+          {/* Notebook feed below orb */}
+          <div className="mt-12">
+            <NotebookFeed
+              onEntryClick={(entry) => {
+                console.log('Entry clicked:', entry);
+              }}
+              onEntryComplete={(id) => {
+                handleTaskCreated();
+              }}
+              onEntryDelete={(id) => {
+                handleTaskCreated();
+              }}
+            />
+          </div>
         </HomeCanvas>
       </HomeShell>
       
+      {/* Quick Capture Modal - triggered by Cmd+K */}
+      <QuickCapture
+        open={quickCaptureOpen}
+        onOpenChange={setQuickCaptureOpen}
+        onCapture={handleCapture}
+      />
+
       {/* Capture history modal */}
       <CaptureHistoryModal
         open={showCaptureHistory}
