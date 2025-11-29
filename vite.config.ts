@@ -20,7 +20,7 @@ export default defineConfig(({ mode }) => ({
         name: 'Malunita - Your Calm Guide',
         short_name: 'Malunita',
         description: 'Minimalist productivity that feels like a conversation. Capture ideas, clarify next actions, and stay focused with your AI thinking partner.',
-        theme_color: '#ffffff',
+        theme_color: '#8B5CF6',
         background_color: '#ffffff',
         display: 'standalone',
         start_url: '/',
@@ -39,20 +39,43 @@ export default defineConfig(({ mode }) => ({
           }
         ]
       },
-      strategies: 'injectManifest',
-      srcDir: 'public',
-      filename: 'sw.js',
-      injectManifest: {
-        injectionPoint: undefined
-      },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,webp,woff,woff2}'],
         runtimeCaching: [
+          {
+            urlPattern: /^https:\/\/.*\.supabase\.co\/.*/i,
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'supabase-cache',
+              networkTimeoutSeconds: 10,
+              expiration: {
+                maxEntries: 50,
+                maxAgeSeconds: 60 * 60 * 24 // 24 hours
+              },
+              cacheableResponse: {
+                statuses: [0, 200]
+              }
+            }
+          },
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
             handler: 'CacheFirst',
             options: {
               cacheName: 'google-fonts-cache',
+              expiration: {
+                maxEntries: 10,
+                maxAgeSeconds: 60 * 60 * 24 * 365 // 1 year
+              },
+              cacheableResponse: {
+                statuses: [0, 200]
+              }
+            }
+          },
+          {
+            urlPattern: /^https:\/\/fonts\.gstatic\.com\/.*/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'google-fonts-static-cache',
               expiration: {
                 maxEntries: 10,
                 maxAgeSeconds: 60 * 60 * 24 * 365 // 1 year
