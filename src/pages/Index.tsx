@@ -1,7 +1,9 @@
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Auth } from "@/components/Auth";
-import { HomeOrb } from "@/components/HomeOrb";
+import { OrbMeditationV2 } from "@/components/OrbMeditationV2";
+import { ThinkWithMe } from "@/components/ThinkWithMe";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { CompanionOnboarding } from "@/components/CompanionOnboarding";
 import { MalunitaVoice, MalunitaVoiceRef } from "@/components/MalunitaVoice";
 import { useProfile } from "@/hooks/useProfile";
@@ -99,6 +101,7 @@ const Index = () => {
   const mindstreamData = useDailyMindstream();
   const [planningMode, setPlanningMode] = useState(false);
   const [planningText, setPlanningText] = useState("");
+  const [showThinkWithMe, setShowThinkWithMe] = useState(false);
   
   // Initialize prediction system (runs silently in background)
   usePrimaryFocusPrediction();
@@ -271,6 +274,44 @@ const Index = () => {
     setPlanningMode(true);
   };
 
+  const handleCapture = async (text: string) => {
+    try {
+      // Get user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Process text input using the processInput API
+      const { data, error } = await supabase.functions.invoke('process-input', {
+        body: { text, userId: user.id }
+      });
+
+      if (error) {
+        toast({
+          title: "Error",
+          description: "Failed to process your input. Please try again.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Trigger task refetch
+      handleTaskCreated();
+      
+      // Show success
+      toast({
+        title: "Captured!",
+        description: "Your thought has been processed.",
+      });
+    } catch (error) {
+      console.error('Error capturing text:', error);
+      toast({
+        title: "Error",
+        description: "Something went wrong. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
   return (
     <>
       <AutoFocusNotification />
@@ -294,14 +335,11 @@ const Index = () => {
           planningText={planningText}
           onClosePlanning={() => setPlanningMode(false)}
         >
-          <HomeOrb
-            onCapture={handleOrbClick} 
-            isRecording={isRecording} 
-            status={getOrbStatus()}
-            recordingDuration={voiceStatus.recordingDuration}
-            onAISummaryUpdate={setAiSummary}
-            onAIPlanUpdate={setAiPlan}
-            onAIAlertsUpdate={setAiAlerts}
+          <OrbMeditationV2
+            onCapture={handleCapture}
+            onVoiceCapture={() => voiceRef.current?.startRecording()}
+            onThinkWithMe={() => setShowThinkWithMe(true)}
+            userName={profile?.companion_name || 'there'}
           />
         </HomeCanvas>
       </HomeShell>
@@ -316,6 +354,15 @@ const Index = () => {
           console.log('Session clicked:', session);
         }}
       />
+      
+      {/* Think With Me - render conditionally */}
+      {showThinkWithMe && (
+        <Dialog open={showThinkWithMe} onOpenChange={setShowThinkWithMe}>
+          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+            <ThinkWithMe />
+          </DialogContent>
+        </Dialog>
+      )}
       
       <MalunitaVoice
         ref={voiceRef} 
