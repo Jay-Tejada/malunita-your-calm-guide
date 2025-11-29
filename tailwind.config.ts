@@ -159,6 +159,42 @@ export default {
             opacity: "0.95",
           },
         },
+        "fade-in": {
+          "0%": {
+            opacity: "0",
+            transform: "translateY(10px)",
+          },
+          "100%": {
+            opacity: "1",
+            transform: "translateY(0)",
+          },
+        },
+        "pulse-opacity": {
+          "0%, 100%": {
+            opacity: "0.4",
+          },
+          "50%": {
+            opacity: "1",
+          },
+        },
+        "typing-dot": {
+          "0%, 100%": {
+            opacity: "0.3",
+            transform: "translateY(0)",
+          },
+          "50%": {
+            opacity: "1",
+            transform: "translateY(-8px)",
+          },
+        },
+        "spin-continuous": {
+          "0%": {
+            transform: "rotate(0deg)",
+          },
+          "100%": {
+            transform: "rotate(360deg)",
+          },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -169,6 +205,10 @@ export default {
         "bounce-excited": "bounce-excited 0.8s ease-in-out infinite",
         "sway-curious": "sway-curious 2s ease-in-out infinite",
         "float-sleepy": "float-sleepy 3s ease-in-out infinite",
+        "fade-in": "fade-in 0.3s ease-out",
+        "pulse-opacity": "pulse-opacity 2s ease-in-out infinite",
+        "typing-dot": "typing-dot 0.6s ease-in-out infinite",
+        "spin-continuous": "spin-continuous 20s linear infinite",
       },
       transitionDuration: {
         '2000': '2000ms',

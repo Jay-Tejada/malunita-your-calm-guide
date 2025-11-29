@@ -1,4 +1,3 @@
-import { motion } from "framer-motion";
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { processInput } from "@/lib/api/processInput";
@@ -177,47 +176,29 @@ export const HomeOrb = ({
       
       {interruptionAlert && (
         <div className="fixed top-32 left-1/2 -translate-x-1/2 z-30">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.5 }}
-            className="text-center"
-          >
+          <div className="text-center animate-fade-in">
             <p className="text-sm text-foreground/80 max-w-md px-4 py-2 bg-background/80 backdrop-blur-sm rounded-lg border border-border">
               {interruptionAlert}
             </p>
-          </motion.div>
+          </div>
         </div>
       )}
 
       {/* Main Orb Container */}
       <div className="flex flex-col items-center">
         {/* Orb - brand icon, no background effects */}
-        <motion.button
+        <button
           onClick={handleOrbClick}
           onTouchStart={handleOrbTouchStart}
           onTouchEnd={handleOrbTouchEnd}
-          onHoverStart={() => setIsHovered(true)}
-          onHoverEnd={() => setIsHovered(false)}
-          className="relative cursor-pointer"
-          whileHover={{ scale: 1.03 }}
-          whileTap={{ scale: 0.97 }}
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
+          className="relative cursor-pointer transition-transform duration-200 hover:scale-[1.03] active:scale-[0.97]"
         >
           {/* Pulsing ring during long press */}
           {isLongPressing && (
-            <motion.div
-              className="absolute inset-0 rounded-full border-4 border-primary"
-              initial={{ scale: 1, opacity: 0.8 }}
-              animate={{ 
-                scale: [1, 1.15, 1],
-                opacity: [0.8, 0.4, 0.8]
-              }}
-              transition={{ 
-                duration: 0.5,
-                repeat: 0,
-                ease: "easeInOut"
-              }}
+            <div
+              className="absolute inset-0 rounded-full border-4 border-primary animate-pulse"
               style={{
                 width: '160px',
                 height: '160px',
@@ -242,7 +223,7 @@ export const HomeOrb = ({
               className="w-full h-full object-cover rounded-full block"
             />
           </div>
-        </motion.button>
+        </button>
 
         {/* Status text - 24px below orb */}
         <div 
@@ -250,9 +231,8 @@ export const HomeOrb = ({
           style={{ marginTop: '24px' }}
         >
           {status !== 'ready' ? (
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
+            <p
+              className="animate-fade-in"
               style={{
                 fontSize: '18px',
                 fontFamily: 'IBM Plex Mono, monospace',
@@ -263,46 +243,45 @@ export const HomeOrb = ({
               {status === 'listening' && 'Listening...'}
               {status === 'processing' && 'Processing...'}
               {status === 'speaking' && 'Speaking...'}
-            </motion.p>
+            </p>
           ) : (
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.2 }}
+            <p
+              className="animate-fade-in"
               style={{
                 fontSize: '18px',
                 fontFamily: 'IBM Plex Mono, monospace',
                 opacity: 0.45,
                 textAlign: 'center',
+                animationDelay: '200ms',
               }}
             >
               What's on your mind?
-            </motion.p>
+            </p>
           )}
           
           {/* Timer for listening state */}
           {status === 'listening' && recordingDuration > 0 && (
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.3 }}
+            <p
+              className="animate-fade-in"
               style={{
                 fontSize: '14px',
                 fontFamily: 'IBM Plex Mono, monospace',
                 opacity: 0.35,
                 marginTop: '8px',
+                animationDelay: '300ms',
               }}
             >
               {Math.floor(recordingDuration / 1000)}s
-            </motion.p>
+            </p>
           )}
 
           {/* Think With Me Button - 24px below text */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.4 }}
-            style={{ marginTop: '24px' }}
+          <div
+            className="animate-fade-in"
+            style={{ 
+              marginTop: '24px',
+              animationDelay: '400ms',
+            }}
           >
             <ThinkWithMe
               trigger={
@@ -316,7 +295,7 @@ export const HomeOrb = ({
                 </Button>
               }
             />
-          </motion.div>
+          </div>
         </div>
       </div>
 

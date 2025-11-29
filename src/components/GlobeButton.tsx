@@ -1,4 +1,3 @@
-import { motion } from "framer-motion";
 import { Globe2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -21,23 +20,15 @@ export const GlobeButton = ({
   };
 
   return (
-    <motion.button
+    <button
       onClick={onClick}
       className={cn(
         positionClasses[position],
-        "z-50 flex items-center justify-center group"
+        "z-50 flex items-center justify-center group",
+        "transition-transform duration-200 hover:scale-110 active:scale-90"
       )}
-      whileHover={{ scale: 1.1 }}
-      whileTap={{ scale: 0.9 }}
     >
-      <motion.div
-        animate={{ rotate: 360 }}
-        transition={{
-          duration: 20,
-          repeat: Infinity,
-          ease: "linear"
-        }}
-      >
+      <div className="animate-spin-continuous">
         <Globe2 
           className={cn(
             "w-8 h-8 transition-colors duration-300",
@@ -45,7 +36,7 @@ export const GlobeButton = ({
             "group-hover:text-primary"
           )}
         />
-      </motion.div>
-    </motion.button>
+      </div>
+    </button>
   );
 };

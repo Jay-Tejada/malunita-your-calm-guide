@@ -1,4 +1,3 @@
-import { motion } from "framer-motion";
 import { Heart } from "lucide-react";
 import { useBondingMeter } from "@/hooks/useBondingMeter";
 import {
@@ -34,12 +33,12 @@ export const BondingMeter = () => {
                 <span className="text-muted-foreground">{score}</span>
               </div>
               <div className="h-1.5 bg-muted rounded-full overflow-hidden">
-                <motion.div
-                  className="h-full rounded-full"
-                  style={{ backgroundColor: tier.color }}
-                  initial={{ width: 0 }}
-                  animate={{ width: `${Math.min(progress, 100)}%` }}
-                  transition={{ duration: 0.5, ease: "easeOut" }}
+                <div
+                  className="h-full rounded-full transition-all duration-500 ease-out"
+                  style={{ 
+                    backgroundColor: tier.color,
+                    width: `${Math.min(progress, 100)}%`
+                  }}
                 />
               </div>
             </div>
