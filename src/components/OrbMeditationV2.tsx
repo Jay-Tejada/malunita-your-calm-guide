@@ -105,12 +105,16 @@ export const OrbMeditationV2 = ({
 
       {/* Orb */}
       <div className="relative">
-        <div className={cn(
-          "text-8xl md:text-9xl drop-shadow-[0_0_20px_rgba(168,85,247,0.4)]",
-          `orb-${orbState}`
-        )}>
-          🌙
-        </div>
+        <div 
+          className={cn(
+            "w-[100px] h-[100px] md:w-[120px] md:h-[120px] rounded-full",
+            `orb-${orbState}`
+          )}
+          style={{
+            background: 'radial-gradient(circle at 30% 30%, #fbbf24 0%, #f59e0b 50%, #b45309 100%)',
+            filter: 'drop-shadow(0 0 30px rgba(139, 92, 246, 0.4))'
+          }}
+        />
       </div>
 
       {/* Greeting */}
@@ -147,16 +151,6 @@ export const OrbMeditationV2 = ({
           className="w-full h-[48px] px-4 rounded-xl bg-white/80 dark:bg-white/10 backdrop-blur-sm border-2 border-border/50 text-foreground placeholder:text-foreground/40 focus:outline-none focus:border-primary/50 transition-colors"
         />
 
-        {/* Think With Me Button */}
-        {onThinkWithMe && (
-          <button
-            onClick={onThinkWithMe}
-            className="flex items-center gap-2 px-6 py-3 rounded-xl bg-card border border-border text-foreground/70 hover:text-foreground hover:bg-card/80 transition-colors"
-          >
-            <Brain className="w-4 h-4" />
-            Think With Me
-          </button>
-        )}
       </div>
 
       {/* Desktop Layout */}
@@ -172,32 +166,6 @@ export const OrbMeditationV2 = ({
           className="w-full h-[56px] px-6 rounded-2xl bg-white/80 dark:bg-white/10 backdrop-blur-sm border-2 border-border/50 text-foreground text-lg placeholder:text-foreground/40 focus:outline-none focus:border-primary/50 transition-colors"
         />
 
-        {/* Hint Text */}
-        <p className="text-sm text-foreground/40">
-          Cmd+K for quick capture
-        </p>
-
-        {/* Action Buttons */}
-        <div className="flex items-center gap-3">
-          {onVoiceCapture && (
-            <button
-              onClick={handleVoice}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-purple-700 text-white hover:shadow-lg transition-shadow"
-            >
-              <Mic className="w-4 h-4" />
-              Voice
-            </button>
-          )}
-          {onThinkWithMe && (
-            <button
-              onClick={onThinkWithMe}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-card border border-border text-foreground/70 hover:text-foreground hover:bg-card/80 transition-colors"
-            >
-              <Brain className="w-4 h-4" />
-              Think With Me
-            </button>
-          )}
-        </div>
       </div>
     </div>
   );
