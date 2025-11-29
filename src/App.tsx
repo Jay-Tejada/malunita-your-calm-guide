@@ -4,7 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
-import { useEffect } from "react";
+import { useEffect, lazy, Suspense } from "react";
 import { startEmotionalMemoryMonitoring } from "@/state/emotionalMemory";
 import { initializeAILearningListeners } from "@/state/aiLearningEvents";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,32 +15,35 @@ import { useRitualTrigger } from "@/hooks/useRitualTrigger";
 import { EveningRitual } from "@/features/rituals/EveningRitual";
 import { questTracker } from "@/lib/questTracker";
 import { Layout } from "@/components/Layout";
-import Index from "./pages/Index";
-import Install from "./pages/Install";
-import NotFound from "./pages/NotFound";
-import Admin from "./pages/Admin";
-import Trends from "./pages/Trends";
-import ResetPassword from "./pages/ResetPassword";
-import TestCore from "./pages/TestCore";
-import TestAll from "./pages/TestAll";
-import Inbox from "./pages/Inbox";
-import Notifications from "./pages/Notifications";
-import Calendar from "./pages/Calendar";
-import DailySession from "./pages/DailySession";
-import WeeklyInsights from "./pages/WeeklyInsights";
-import TinyTaskFiesta from "./pages/TinyTaskFiesta";
-import Reminders from "./pages/Reminders";
-import HatchingGallery from "./pages/HatchingGallery";
-import Backup from "./pages/Backup";
-import Customization from "./pages/Customization";
-import Journal from "./pages/Journal";
-import MonthlyInsights from "./pages/MonthlyInsights";
-import Quests from "./pages/Quests";
-import AmbientWorlds from "./pages/AmbientWorlds";
-import Clusters from "./pages/Clusters";
-import TimeTravel from "./pages/TimeTravel";
-import Learning from "./pages/Learning";
+import { LoadingScreen } from "@/components/LoadingScreen";
 import { useCutsceneManager } from "./features/cutscenes/useCutsceneManager";
+
+// Lazy load all pages
+const Index = lazy(() => import("./pages/Index"));
+const Install = lazy(() => import("./pages/Install"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+const Admin = lazy(() => import("./pages/Admin"));
+const Trends = lazy(() => import("./pages/Trends"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const TestCore = lazy(() => import("./pages/TestCore"));
+const TestAll = lazy(() => import("./pages/TestAll"));
+const Inbox = lazy(() => import("./pages/Inbox"));
+const Notifications = lazy(() => import("./pages/Notifications"));
+const Calendar = lazy(() => import("./pages/Calendar"));
+const DailySession = lazy(() => import("./pages/DailySession"));
+const WeeklyInsights = lazy(() => import("./pages/WeeklyInsights"));
+const TinyTaskFiesta = lazy(() => import("./pages/TinyTaskFiesta"));
+const Reminders = lazy(() => import("./pages/Reminders"));
+const HatchingGallery = lazy(() => import("./pages/HatchingGallery"));
+const Backup = lazy(() => import("./pages/Backup"));
+const Customization = lazy(() => import("./pages/Customization"));
+const Journal = lazy(() => import("./pages/Journal"));
+const MonthlyInsights = lazy(() => import("./pages/MonthlyInsights"));
+const Quests = lazy(() => import("./pages/Quests"));
+const AmbientWorlds = lazy(() => import("./pages/AmbientWorlds"));
+const Clusters = lazy(() => import("./pages/Clusters"));
+const TimeTravel = lazy(() => import("./pages/TimeTravel"));
+const Learning = lazy(() => import("./pages/Learning"));
 import { JOURNAL_EVENTS } from "./features/journal/journalEvents";
 import { bondingMeter, BONDING_INCREMENTS } from "./state/bondingMeter";
 
@@ -191,38 +194,40 @@ const App = () => {
           </AnimatePresence>
 
           <BrowserRouter>
-            <Routes>
-              <Route element={<Layout />}>
-                <Route path="/" element={<Index />} />
-                <Route path="/inbox" element={<Inbox />} />
-                <Route path="/calendar" element={<Calendar />} />
-                <Route path="/daily-session" element={<DailySession />} />
-                <Route path="/weekly-insights" element={<WeeklyInsights />} />
-                <Route path="/hatching-gallery" element={<HatchingGallery />} />
-                <Route path="/tiny-task-fiesta" element={<TinyTaskFiesta />} />
-                <Route path="/notifications" element={<Notifications />} />
-                <Route path="/backup" element={<Backup />} />
-                <Route path="/customization" element={<Customization />} />
-                <Route path="/journal" element={<Journal />} />
-                <Route path="/monthly-insights" element={<MonthlyInsights />} />
-                <Route path="/quests" element={<Quests />} />
-                <Route path="/ambient-worlds" element={<AmbientWorlds />} />
-                <Route path="/clusters" element={<Clusters />} />
-                <Route path="/timetravel" element={<TimeTravel />} />
-                <Route path="/reminders" element={<Reminders />} />
-                <Route path="/learning" element={<Learning />} />
-                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                <Route path="*" element={<NotFound />} />
-              </Route>
-              
-              {/* Routes without planet navigation */}
-              <Route path="/install" element={<Install />} />
-              <Route path="/admin" element={<Admin />} />
-              <Route path="/trends" element={<Trends />} />
-              <Route path="/reset-password" element={<ResetPassword />} />
-              <Route path="/test-core" element={<TestCore />} />
-              <Route path="/test-all" element={<TestAll />} />
-            </Routes>
+            <Suspense fallback={<LoadingScreen />}>
+              <Routes>
+                <Route element={<Layout />}>
+                  <Route path="/" element={<Index />} />
+                  <Route path="/inbox" element={<Inbox />} />
+                  <Route path="/calendar" element={<Calendar />} />
+                  <Route path="/daily-session" element={<DailySession />} />
+                  <Route path="/weekly-insights" element={<WeeklyInsights />} />
+                  <Route path="/hatching-gallery" element={<HatchingGallery />} />
+                  <Route path="/tiny-task-fiesta" element={<TinyTaskFiesta />} />
+                  <Route path="/notifications" element={<Notifications />} />
+                  <Route path="/backup" element={<Backup />} />
+                  <Route path="/customization" element={<Customization />} />
+                  <Route path="/journal" element={<Journal />} />
+                  <Route path="/monthly-insights" element={<MonthlyInsights />} />
+                  <Route path="/quests" element={<Quests />} />
+                  <Route path="/ambient-worlds" element={<AmbientWorlds />} />
+                  <Route path="/clusters" element={<Clusters />} />
+                  <Route path="/timetravel" element={<TimeTravel />} />
+                  <Route path="/reminders" element={<Reminders />} />
+                  <Route path="/learning" element={<Learning />} />
+                  {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                  <Route path="*" element={<NotFound />} />
+                </Route>
+                
+                {/* Routes without planet navigation */}
+                <Route path="/install" element={<Install />} />
+                <Route path="/admin" element={<Admin />} />
+                <Route path="/trends" element={<Trends />} />
+                <Route path="/reset-password" element={<ResetPassword />} />
+                <Route path="/test-core" element={<TestCore />} />
+                <Route path="/test-all" element={<TestAll />} />
+              </Routes>
+            </Suspense>
           </BrowserRouter>
         </TooltipProvider>
       </ThemeProvider>
