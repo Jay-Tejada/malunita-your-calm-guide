@@ -92,7 +92,7 @@ export const useProcessInputMutation = () => {
 /**
  * Hook for categorizing a single task with AI
  * - Lighter weight than full input processing
- * - Useful for re-categorizing existing tasks
+ * - Useful for re-categorizing existing tasks or previewing categories
  */
 export const useCategorizeTaskMutation = () => {
   const queryClient = useQueryClient();
@@ -102,10 +102,12 @@ export const useCategorizeTaskMutation = () => {
     mutationKey: ['categorizeTask'],
     mutationFn: async ({ 
       taskId, 
-      text 
+      text,
+      previewOnly = false,
     }: { 
       taskId: string; 
-      text: string 
+      text: string;
+      previewOnly?: boolean;
     }) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
@@ -119,8 +121,8 @@ export const useCategorizeTaskMutation = () => {
 
       if (error) throw error;
 
-      // Update the task with new category if confidence is high
-      if (data.confidence === 'high' && data.category !== 'inbox') {
+      // Only update the task if not in preview mode and confidence is high
+      if (!previewOnly && data.confidence === 'high' && data.category !== 'inbox') {
         const { error: updateError } = await supabase
           .from('tasks')
           .update({ 
@@ -140,18 +142,22 @@ export const useCategorizeTaskMutation = () => {
       return data;
     },
     onSuccess: async (data, variables) => {
-      // Invalidate tasks to show updated category
-      await queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      // Only invalidate if we actually updated a task
+      if (!variables.previewOnly) {
+        await queryClient.invalidateQueries({ queryKey: ['tasks'] });
 
-      if (data.confidence === 'high') {
-        console.log(`✅ Task ${variables.taskId} auto-categorized as: ${data.category}`);
-      } else {
-        console.log(`⚠️ Low confidence categorization for task ${variables.taskId}`);
+        if (data.confidence === 'high') {
+          console.log(`✅ Task ${variables.taskId} auto-categorized as: ${data.category}`);
+        } else {
+          console.log(`⚠️ Low confidence categorization for task ${variables.taskId}`);
+        }
       }
     },
-    onError: (error: any) => {
-      console.error('❌ Categorization failed:', error);
-      // Silently fail - categorization is optional
+    onError: (error: any, variables) => {
+      // Only show error toast if not in preview mode
+      if (!variables.previewOnly) {
+        console.error('❌ Categorization failed:', error);
+      }
     },
     // Don't retry categorization failures
     retry: false,
