@@ -9,6 +9,8 @@ import { useMoodStore } from '@/state/moodMachine';
 import { useBondingMeter } from '@/hooks/useBondingMeter';
 import { useArtStyleStore } from '@/features/artstyles/useArtStyleStore';
 import { ART_STYLES } from '@/features/artstyles/artStyleConfig';
+import { OptimizedImage } from '@/components/OptimizedImage';
+import { getLQIP } from '@/lib/imageOptimization';
 
 type AnimationMode = 
   | 'floating_idle' 
@@ -428,10 +430,12 @@ export const CreatureSprite = ({
           transition={{ duration: isTransitioning ? 0.3 : 0.25, ease: "easeOut" }}
           className="w-full h-full flex items-center justify-center relative z-10"
         >
-          <img
+          <OptimizedImage
             src={imageSrc}
             alt={`Creature ${emotion} expression (Stage ${evolutionStage})`}
-            className="w-full h-full object-contain"
+            placeholder={getLQIP(imageSrc)}
+            preload={!listening && !typing} // Preload when actively displayed
+            className="object-contain"
             style={{ 
               imageRendering: 'crisp-edges',
               filter: `brightness(${brightness}) ${artStyleConfig.cssFilter || ''}`,

@@ -1,3 +1,8 @@
+// NOTE: Using .png imports for now. To optimize:
+// 1. Convert all .png files to .webp format (use https://squoosh.app/ or imagemin)
+// 2. Replace .png with .webp in all imports below
+// 3. This will reduce image size by 60-80%
+
 import malunitaNeutral from '@/assets/companions/malunita-neutral.png';
 import malunitaHappy from '@/assets/companions/malunita-happy.png';
 import malunitaCalm from '@/assets/companions/malunita-calm.png';

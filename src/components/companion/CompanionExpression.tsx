@@ -1,6 +1,8 @@
 import { motion } from "framer-motion";
 import { memo, useMemo } from "react";
 import { CREATURE_EXPRESSIONS } from "@/constants/expressions";
+import { OptimizedImage } from "@/components/OptimizedImage";
+import { getLQIP } from "@/lib/imageOptimization";
 
 // Import all companion expression images
 import baseExpression from "@/assets/companions/base_expression.png";
@@ -48,11 +50,11 @@ export const CompanionExpression = memo(function CompanionExpression({ expressio
     return expressionImageMap[filename] || baseExpression;
   }, [expression]);
 
+  const placeholder = useMemo(() => getLQIP(imageUrl), [imageUrl]);
+
   return (
-    <motion.img
+    <motion.div
       key={expression}
-      src={imageUrl}
-      alt={`Companion ${expression} expression`}
       initial={{ opacity: 0, y: 0 }}
       animate={{ opacity: 1, y: [-2, 2, -2] }}
       transition={{
@@ -65,6 +67,14 @@ export const CompanionExpression = memo(function CompanionExpression({ expressio
         }
       }}
       className="w-40 h-auto select-none"
-    />
+    >
+      <OptimizedImage
+        src={imageUrl}
+        alt={`Companion ${expression} expression`}
+        placeholder={placeholder}
+        preload={true}
+        className="w-full h-auto"
+      />
+    </motion.div>
   );
 });

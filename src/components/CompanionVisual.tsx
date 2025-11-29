@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { companionAssets, emotionToVisualState, motionToVisualState } from '@/lib/companionAssets';
 import { supabase } from '@/integrations/supabase/client';
+import { OptimizedImage } from '@/components/OptimizedImage';
+import { getLQIP } from '@/lib/imageOptimization';
 import type { EmotionState } from '@/hooks/useCompanionEmotion';
 import type { MotionState } from '@/hooks/useCompanionMotion';
 
@@ -109,14 +111,22 @@ export const CompanionVisual = ({
 
   const animationClass = getAnimationClass();
 
+  // Get LQIP for smooth loading
+  const placeholder = getLQIP(assetSrc);
+  
+  // Preload current companion image for instant display
+  const shouldPreload = emotion !== 'neutral';
+
   return (
     <div 
       className={`relative ${sizeClasses[size]} ${className} ${animationClass}`}
     >
-      <img 
-        src={assetSrc} 
+      <OptimizedImage
+        src={assetSrc}
         alt="Malunita companion"
-        className="w-full h-full object-contain drop-shadow-lg"
+        placeholder={placeholder}
+        preload={shouldPreload}
+        className="object-contain drop-shadow-lg"
       />
     </div>
   );
