@@ -434,7 +434,7 @@ export const CreatureSprite = ({
             src={imageSrc}
             alt={`Creature ${emotion} expression (Stage ${evolutionStage})`}
             placeholder={getLQIP(imageSrc)}
-            preload={!listening && !typing} // Preload when actively displayed
+            preload={true} // Always preload active companion image for instant display
             className="object-contain"
             style={{ 
               imageRendering: 'crisp-edges',
