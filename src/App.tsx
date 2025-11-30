@@ -51,13 +51,37 @@ import { bondingMeter, BONDING_INCREMENTS } from "./state/bondingMeter";
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 5 * 60 * 1000, // Data stays fresh for 5 minutes
-      gcTime: 10 * 60 * 1000, // Cache persists for 10 minutes (was cacheTime in v4)
-      refetchOnWindowFocus: false, // Don't refetch when user returns to tab
-      retry: 1, // Only retry failed requests once
-      refetchOnMount: false, // Don't refetch on component mount if data exists
+      // Cache data for 5 minutes before considering stale
+      staleTime: 5 * 60 * 1000,
+      
+      // Keep unused data in cache for 10 minutes (gcTime is v5 naming, was cacheTime in v4)
+      gcTime: 10 * 60 * 1000,
+      
+      // Don't refetch when window regains focus (annoying on mobile)
+      refetchOnWindowFocus: false,
+      
+      // Don't refetch when component remounts
+      refetchOnMount: false,
+      
+      // Retry failed requests 2 times
+      retry: 2,
+      
+      // Wait 1s between retries
+      retryDelay: 1000,
+      
+      // Use cached data while revalidating in background
+      refetchOnReconnect: 'always',
     },
-  },
+    mutations: {
+      // Retry failed mutations once
+      retry: 1,
+      
+      // Error handling for mutations (toast handled in individual hooks)
+      onError: (error) => {
+        console.error('Mutation failed:', error);
+      }
+    }
+  }
 });
 
 const App = () => {
