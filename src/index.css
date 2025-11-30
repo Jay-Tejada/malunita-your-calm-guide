@@ -11,7 +11,7 @@ All colors MUST be HSL.
 @layer base {
   :root {
     /* Notion-inspired Design System - Warm Neutral Beige */
-    --background: 40 17% 95%; /* #F7F5F1 warm neutral beige */
+    --background: 40 20% 98%; /* #FAF9F7 warm cream, aged notebook paper */
     --foreground: 0 0% 13%; /* #212121 near black for text */
     --foreground-soft: 0 0% 45%; /* #737373 secondary text */
 
@@ -48,7 +48,7 @@ All colors MUST be HSL.
     --surface: 0 0% 100%; /* same as card */
     
     /* Sidebar */
-    --sidebar-bg: 40 17% 95%; /* same as background */
+    --sidebar-bg: 40 20% 98%; /* same as background - warm cream */
     --sidebar-active: 40 14% 97%; /* card-strong */
 
     --radius: 10px; /* rounded corners: 10px */
