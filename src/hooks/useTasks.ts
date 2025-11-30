@@ -13,6 +13,8 @@ import { useCustomizationStore } from "@/features/customization/useCustomization
 import { useOneThingAvoidance } from "./useOneThingAvoidance";
 import { updateBurnoutStatus } from "@/ai/burnoutDetector";
 import { updatePriorityStorms } from "@/ai/priorityStormPredictor";
+import { celebrations, getRandomToast } from "@/lib/celebrations";
+import { useTaskStreak } from "./useTaskStreak";
 
 export interface Task {
   id: string;
@@ -73,6 +75,7 @@ export const useTasks = () => {
   const { isStarfallNight } = useSeasonalEvent();
   const { unlockCosmetic } = useCustomizationStore();
   const { checkAfterTaskCompletion } = useOneThingAvoidance();
+  const { streakCount, isStreakActive, registerCompletion } = useTaskStreak();
 
   const { data: tasks, isLoading } = useQuery({
     queryKey: ['tasks'],
@@ -201,6 +204,33 @@ export const useTasks = () => {
       // Log habit completion when task is marked as completed
       if (data.completed && !data.completed_at) {
         recordTaskCompleted();
+        
+        // Register completion for streak tracking
+        const currentStreak = registerCompletion(data.id);
+        
+        // Trigger appropriate celebration
+        if (data.is_focus) {
+          // ONE thing completed - special celebration
+          celebrations.oneThingComplete();
+          toast({
+            title: getRandomToast('oneThingComplete'),
+            duration: 3000,
+          });
+        } else if (currentStreak >= 3) {
+          // Task streak - multiple tasks in quick succession
+          celebrations.taskStreak(currentStreak);
+          toast({
+            title: getRandomToast('taskStreak', currentStreak),
+            duration: 2000,
+          });
+        } else {
+          // Regular task completion
+          celebrations.taskComplete();
+          toast({
+            title: getRandomToast('taskComplete'),
+            duration: 2000,
+          });
+        }
         
         const category = data.category || data.custom_category_id || 'uncategorized';
         logHabitCompletion(
