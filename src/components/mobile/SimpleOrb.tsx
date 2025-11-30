@@ -15,12 +15,6 @@ export const SimpleOrb = ({
   isRecording = false,
   isProcessing = false
 }: SimpleOrbProps) => {
-  const getOrbColor = () => {
-    if (isRecording) return 'from-red-400 via-red-500 to-red-600';
-    if (isProcessing) return 'from-blue-400 via-blue-500 to-blue-600';
-    return 'from-amber-300 via-amber-400 to-amber-500';
-  };
-
   return (
     <div className="flex flex-col items-center gap-3">
       {/* The Orb */}
@@ -31,9 +25,17 @@ export const SimpleOrb = ({
         whileTap={{ scale: 0.95 }}
         transition={{ duration: 0.2 }}
       >
-        {/* Main orb with gradient */}
+        {/* Main orb with warm golden gradient */}
         <motion.div
-          className={`absolute inset-0 rounded-full bg-gradient-to-br ${getOrbColor()}`}
+          className="absolute inset-0 rounded-full"
+          style={{
+            background: isRecording 
+              ? 'radial-gradient(circle at 40% 40%, #fca5a5, #f87171, #ef4444, #dc2626)'
+              : isProcessing
+              ? 'radial-gradient(circle at 40% 40%, #93c5fd, #60a5fa, #3b82f6, #2563eb)'
+              : 'radial-gradient(circle at 40% 40%, #fef3c7, #fde68a, #fbbf24, #f59e0b)',
+            boxShadow: '0 0 30px rgba(251, 191, 36, 0.4)',
+          }}
           animate={{ 
             opacity: [0.85, 1, 0.85],
             scale: [1, 1.03, 1]
@@ -41,14 +43,13 @@ export const SimpleOrb = ({
           transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
         />
         
-        {/* Glow ring */}
+        {/* Subtle glow ring */}
         <motion.div
           className="absolute inset-0 rounded-full"
           style={{
-            background: 'radial-gradient(circle, rgba(251, 191, 36, 0.4) 0%, transparent 70%)',
-            boxShadow: '0 0 40px rgba(251, 191, 36, 0.3)',
+            background: 'radial-gradient(circle, rgba(251, 191, 36, 0.3) 0%, transparent 70%)',
           }}
-          animate={{ opacity: [0.6, 1, 0.6] }}
+          animate={{ opacity: [0.5, 0.8, 0.5] }}
           transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
         />
         
