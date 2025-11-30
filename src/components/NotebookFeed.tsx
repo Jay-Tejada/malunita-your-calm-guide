@@ -7,6 +7,8 @@ import { useTasks } from '@/hooks/useTasks';
 import { Badge } from '@/components/ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { cn } from '@/lib/utils';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { SwipeableEntry } from '@/components/mobile/SwipeableEntry';
 
 interface NotebookFeedProps {
   onEntryClick?: (entry: Entry) => void;
@@ -59,6 +61,7 @@ const groupByDay = (entries: Entry[]) => {
 export function NotebookFeed({ onEntryClick, onEntryComplete, onEntryDelete }: NotebookFeedProps) {
   const { tasks, isLoading } = useTasksQuery();
   const { updateTask, deleteTask } = useTasks();
+  const isMobile = useIsMobile();
   const [visibleCount, setVisibleCount] = useState(20);
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
     today: true,
@@ -155,6 +158,7 @@ export function NotebookFeed({ onEntryClick, onEntryComplete, onEntryDelete }: N
                 onComplete={handleComplete}
                 onDelete={handleDelete}
                 onClick={onEntryClick}
+                isMobile={isMobile}
               />
             ))}
           </div>
@@ -178,6 +182,7 @@ export function NotebookFeed({ onEntryClick, onEntryComplete, onEntryDelete }: N
                 onComplete={handleComplete}
                 onDelete={handleDelete}
                 onClick={onEntryClick}
+                isMobile={isMobile}
               />
             ))}
           </CollapsibleContent>
@@ -201,6 +206,7 @@ export function NotebookFeed({ onEntryClick, onEntryComplete, onEntryDelete }: N
                 onComplete={handleComplete}
                 onDelete={handleDelete}
                 onClick={onEntryClick}
+                isMobile={isMobile}
               />
             ))}
           </CollapsibleContent>
@@ -224,6 +230,7 @@ export function NotebookFeed({ onEntryClick, onEntryComplete, onEntryDelete }: N
                 onComplete={handleComplete}
                 onDelete={handleDelete}
                 onClick={onEntryClick}
+                isMobile={isMobile}
               />
             ))}
           </CollapsibleContent>
@@ -248,18 +255,20 @@ function EntryCard({
   entry, 
   onComplete, 
   onDelete, 
-  onClick 
+  onClick,
+  isMobile = false,
 }: { 
   entry: Entry; 
   onComplete: (id: string) => void; 
   onDelete: (id: string) => void;
   onClick?: (entry: Entry) => void;
+  isMobile?: boolean;
 }) {
   const borderColor = entry.category 
     ? categoryColors[entry.category.toLowerCase()] || 'border-l-muted'
     : 'border-l-muted';
 
-  return (
+  const cardContent = (
     <div
       className={cn(
         "entry-card bg-card border-l-4 rounded-r-card shadow-sm p-4",
@@ -354,4 +363,19 @@ function EntryCard({
       </div>
     </div>
   );
+
+  // Wrap with SwipeableEntry on mobile
+  if (isMobile) {
+    return (
+      <SwipeableEntry
+        onComplete={() => onComplete(entry.id)}
+        onDelete={() => onDelete(entry.id)}
+        disabled={entry.completed}
+      >
+        {cardContent}
+      </SwipeableEntry>
+    );
+  }
+
+  return cardContent;
 }
