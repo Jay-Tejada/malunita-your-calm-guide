@@ -17,6 +17,10 @@ import { questTracker } from "@/lib/questTracker";
 import { Layout } from "@/components/Layout";
 import { LoadingScreen } from "@/components/LoadingScreen";
 import { useCutsceneManager } from "./features/cutscenes/useCutsceneManager";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { DevTools } from "@/components/DevTools";
+import { initPerformanceMonitoring } from "@/lib/performance";
+import { NetworkStatusBanner } from "@/components/NetworkStatusBanner";
 
 // Lazy load all pages
 const Index = lazy(() => import("./pages/Index"));
@@ -134,6 +138,16 @@ const App = () => {
 
   // Initialize emotional memory monitoring and AI learning listeners on app start
   useEffect(() => {
+    // Initialize performance monitoring
+    initPerformanceMonitoring();
+    
+    // Track session start
+    localStorage.setItem('session_start', Date.now().toString());
+    
+    // Increment app opens
+    const opens = parseInt(localStorage.getItem('app_opens') || '0') + 1;
+    localStorage.setItem('app_opens', opens.toString());
+    
     const cleanupEmotional = startEmotionalMemoryMonitoring();
     const cleanupAILearning = initializeAILearningListeners();
     
@@ -212,11 +226,14 @@ const App = () => {
   }, []);
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <NetworkStatusBanner />
+            <DevTools />
           
           {/* Ritual overlays */}
           <AnimatePresence>
@@ -267,6 +284,7 @@ const App = () => {
         </TooltipProvider>
       </ThemeProvider>
     </QueryClientProvider>
+    </ErrorBoundary>
   );
 };
 
