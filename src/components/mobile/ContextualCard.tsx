@@ -28,7 +28,7 @@ export const ContextualCard = ({
       </motion.h2>
       
       {subtitle && (
-        <p className="text-sm font-mono text-muted-foreground/60">
+        <p className="text-xs font-mono text-muted-foreground/40 uppercase tracking-widest mt-3">
           {subtitle}
         </p>
       )}
