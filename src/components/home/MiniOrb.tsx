@@ -41,8 +41,16 @@ export const MiniOrb = ({ onClick, label, position }: MiniOrbProps) => {
           <img 
             src={malunitaNeutral} 
             alt="" 
-            className="w-4 h-4 opacity-40 hover:opacity-60 transition-opacity"
-            style={{ filter: 'brightness(0.8)' }}
+            className="w-6 h-6 transition-all duration-300"
+            style={{ 
+              filter: 'brightness(0) invert(0.6) opacity(0.4)',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.filter = 'brightness(0) invert(0.6) opacity(0.6)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.filter = 'brightness(0) invert(0.6) opacity(0.4)';
+            }}
           />
         )}
       </button>
