@@ -73,7 +73,7 @@ export function MindstreamPanel() {
   if (mindstream.isLoading) {
     return (
       <div className="w-full max-w-4xl mx-auto px-4 mb-6 animate-fade-in">
-        <Card className="bg-background/95 backdrop-blur-sm border-border/50 shadow-lg">
+        <Card className="bg-transparent border-transparent shadow-none rounded-xl">
           <CardContent className="p-6 space-y-4">
             <Skeleton className="h-6 w-48" />
             <Skeleton className="h-20 w-full" />
@@ -104,9 +104,9 @@ export function MindstreamPanel() {
       onClick={handleInteraction}
     >
       <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-        <Card className="bg-background/95 backdrop-blur-sm border-border/50 shadow-lg rounded-lg overflow-hidden">
+        <Card className="bg-transparent border-transparent shadow-none rounded-xl overflow-hidden">
           <CollapsibleTrigger className="w-full" onClick={handleInteraction}>
-            <div className="flex items-center justify-between p-4 hover:bg-accent/50 transition-colors">
+            <div className="flex items-center justify-between p-4 hover:bg-foreground/[0.02] transition-colors rounded-xl">
               <div className="flex items-center gap-3">
                 <Brain className="h-5 w-5 text-primary" />
                 <h2 className="text-lg font-semibold font-mono">Malunita Mindstream</h2>

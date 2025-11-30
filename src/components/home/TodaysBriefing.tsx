@@ -48,9 +48,9 @@ export const TodaysBriefing = memo(function TodaysBriefing({
       <button
         onClick={() => setIsExpanded(!isExpanded)}
         className={cn(
-          "w-full flex items-center justify-between gap-3 px-4 py-3 rounded-lg",
-          "border border-border/40 bg-background/50 backdrop-blur-sm",
-          "hover:bg-accent/5 hover:border-border/60 transition-all duration-200",
+          "w-full flex items-center justify-between gap-3 px-4 py-3 rounded-xl",
+          "border border-transparent bg-transparent",
+          "hover:bg-foreground/[0.02] transition-all duration-200",
           "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/20"
         )}
       >
@@ -87,11 +87,11 @@ export const TodaysBriefing = memo(function TodaysBriefing({
             transition={{ duration: 0.2 }}
             className="overflow-hidden"
           >
-            <div className="mt-3 px-4 py-4 rounded-lg border border-border/40 bg-background/50 backdrop-blur-sm space-y-4">
+            <div className="mt-3 px-4 py-4 rounded-xl border border-transparent bg-foreground/[0.02] space-y-4">
               
               {/* Yesterday's Progress */}
               {yesterdayDone && yesterdayDone.length > 0 && (
-                <div className="pb-4 border-b border-border/30">
+                <div className="pb-4 border-b border-foreground/5">
                   <p className="text-xs text-muted-foreground mb-2">
                     ✅ Yesterday, you completed {yesterdayDone.length} task{yesterdayDone.length > 1 ? 's' : ''}
                   </p>

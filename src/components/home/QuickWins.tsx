@@ -101,9 +101,9 @@ export function QuickWins({ data, onTaskCreated }: QuickWinsProps) {
             <button
               key={win.id}
               onClick={() => handleConvertToTask(win)}
-              className="w-full flex items-center gap-2 p-3 rounded-lg bg-background/50 hover:bg-accent/50 transition-colors text-left group"
+              className="w-full flex items-center gap-2 p-3 rounded-xl bg-transparent hover:bg-foreground/[0.02] transition-colors text-left group"
             >
-              <div className="w-4 h-4 rounded-full border border-border flex items-center justify-center group-hover:border-primary transition-colors">
+              <div className="w-4 h-4 rounded-full border border-foreground/10 flex items-center justify-center group-hover:border-primary transition-colors">
                 <Check className="w-3 h-3 text-muted-foreground group-hover:text-primary transition-colors" />
               </div>
               <span className="text-sm font-mono text-foreground/80 group-hover:text-foreground transition-colors">

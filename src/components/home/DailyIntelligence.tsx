@@ -69,7 +69,7 @@ export function DailyIntelligence({ summary, quickWins, focusMessage, oneThing }
 
   return (
     <>
-      <Card className="p-6 space-y-6">
+      <Card className="p-6 space-y-6 bg-transparent border-transparent shadow-none rounded-xl">
         {/* Build Plan Button */}
         <Button
           onClick={buildFullQuest}
