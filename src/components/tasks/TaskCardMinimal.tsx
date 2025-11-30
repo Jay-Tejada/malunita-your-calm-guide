@@ -9,6 +9,7 @@ import { TaskCorrectionPanel } from "./TaskCorrectionPanel";
 import { TaskActionSheet } from "./TaskActionSheet";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
 
 interface TaskCardMinimalProps {
   task: {
@@ -197,21 +198,16 @@ export function TaskCardMinimal({ task, fullTask, isPrimaryFocus }: TaskCardMini
       <button
         onClick={handleComplete}
         disabled={isCompleting}
-        className="flex-shrink-0 mt-0.5"
-        style={{
-          width: "20px",
-          height: "20px",
-          border: "2px solid #B5A89A",
-          borderRadius: "4px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          backgroundColor: isCompleting ? "#E5D7C2" : "transparent",
-          cursor: isCompleting ? "default" : "pointer",
-          transition: "all 0.2s",
-        }}
+        className={cn(
+          "flex-shrink-0 mt-0.5 w-5 h-5 rounded-full flex items-center justify-center transition-all",
+          isCompleting
+            ? "bg-foreground/10 border border-foreground/20"
+            : "bg-transparent border border-foreground/20 hover:border-foreground/40"
+        )}
       >
-        {isCompleting && <Check size={14} style={{ color: "#3B352B" }} />}
+        {isCompleting && (
+          <Check className="w-3 h-3 text-foreground/60" />
+        )}
       </button>
 
       <div className="flex-1">
