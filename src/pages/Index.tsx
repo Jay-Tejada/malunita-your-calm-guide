@@ -28,6 +28,7 @@ import { useNavigate } from "react-router-dom";
 import { FloatingCompanion } from "@/components/mobile/FloatingCompanion";
 import { useCompanionMessages } from "@/hooks/useCompanionMessages";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { ActionableBanner } from "@/components/home/ActionableBanner";
 import { OfflineIndicator } from "@/components/OfflineIndicator";
 import { VoiceSheet } from "@/components/mobile/VoiceSheet";
 import { useOfflineStatus } from "@/hooks/useOfflineStatus";
@@ -372,6 +373,7 @@ const Index = () => {
 
   return (
     <>
+      <ActionableBanner />
       <OfflineIndicator />
       
       {isMobile ? (
