@@ -34,8 +34,8 @@ import { OfflineIndicator } from "@/components/OfflineIndicator";
 import { VoiceSheet } from "@/components/mobile/VoiceSheet";
 import { useOfflineStatus } from "@/hooks/useOfflineStatus";
 import { ContextualCard } from "@/components/mobile/ContextualCard";
-import { MobileOrb } from "@/components/mobile/MobileOrb";
-import { useContextualCard } from "@/hooks/useContextualCard";
+import { SimpleOrb } from "@/components/mobile/SimpleOrb";
+import { useContextualPrompt } from "@/hooks/useContextualPrompt";
 
 interface AISummary {
   decisions: string[];
@@ -130,8 +130,8 @@ const Index = () => {
   // Mobile-specific state
   const [voiceSheetOpen, setVoiceSheetOpen] = useState(false);
   
-  // Contextual card for mobile
-  const contextualCard = useContextualCard();
+  // Contextual prompt for mobile
+  const contextualPrompt = useContextualPrompt();
 
   // Initialize keyboard shortcuts
   useKeyboardShortcuts({
@@ -377,30 +377,30 @@ const Index = () => {
       <OfflineIndicator />
       
       {isMobile ? (
-        /* MOBILE LAYOUT - Thumb-Optimized with Contextual Intelligence */
-        <div className="min-h-screen bg-background flex flex-col">
+        /* MOBILE LAYOUT - Minimal & Thumb-Optimized */
+        <div className="mobile-home min-h-screen bg-background flex flex-col px-4">
           {/* Offline banner */}
           {!isOnline && (
-            <div className="sticky top-0 z-50 bg-destructive/90 backdrop-blur-sm text-destructive-foreground text-center py-2 text-sm">
+            <div className="sticky top-0 -mx-4 z-50 bg-destructive/90 backdrop-blur-sm text-destructive-foreground text-center py-2 text-sm">
               📴 Offline - Changes will sync when connected
             </div>
           )}
 
-          {/* CENTER STAGE - Contextual Card (60% of screen) */}
-          <div className="flex-1 flex items-center justify-center px-4 pt-8 pb-4">
+          {/* CENTER STAGE - Contextual Card (takes 60% of vertical space) */}
+          <div className="contextual-section flex-[6] flex items-center justify-center pt-[15vh]">
             <ContextualCard
-              title={contextualCard.title}
-              subtitle={contextualCard.subtitle}
-              icon={contextualCard.icon}
-              onClick={contextualCard.action}
+              title={contextualPrompt.title}
+              subtitle={contextualPrompt.subtitle}
+              icon={contextualPrompt.icon}
+              onTap={contextualPrompt.action || undefined}
+              priority={contextualPrompt.priority}
             />
           </div>
 
-          {/* BOTTOM ZONE - Orb in Thumb Reach (40% of screen) */}
-          <div className="flex items-center justify-center pb-12 pt-8">
-            <MobileOrb
+          {/* BOTTOM ZONE - Orb in Thumb Reach (takes 40% of vertical space) */}
+          <div className="orb-section flex-[4] flex items-center justify-center pb-12">
+            <SimpleOrb
               onTap={handleVoiceCapture}
-              onLongPress={handleVoiceCapture}
               isRecording={voiceStatus.isListening}
               isProcessing={voiceStatus.isProcessing}
             />
@@ -412,7 +412,6 @@ const Index = () => {
             onOpenChange={setVoiceSheetOpen}
             onStartRecording={() => voiceRef.current?.startRecording()}
             onStopRecording={() => {
-              // Voice ref handles stopping automatically
               setVoiceSheetOpen(false);
             }}
             isRecording={voiceStatus.isListening}
@@ -420,7 +419,7 @@ const Index = () => {
             recordingDuration={voiceStatus.recordingDuration}
           />
 
-          {/* Floating companion - minimal */}
+          {/* Floating companion - minimal (drawer only) */}
           <FloatingCompanion
             message={companionMessage}
             action={companionAction}
