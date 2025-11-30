@@ -1,4 +1,4 @@
-import { CheckCircle2, Circle, Clock, GripVertical, Target, Settings, Split, CalendarPlus, Zap, Lightbulb } from "lucide-react";
+import { CheckCircle2, Circle, Clock, GripVertical, Target, Settings, Split, CalendarPlus, Zap, Lightbulb, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -242,12 +242,15 @@ export const TaskCard = ({ id, title, time, context, completed, selected, onTogg
           e.stopPropagation();
           handleToggle();
         }}
-        className="flex-shrink-0 mt-0.5 transition-transform hover:scale-110"
+        className={cn(
+          "flex-shrink-0 mt-0.5 w-5 h-5 rounded-full flex items-center justify-center transition-all",
+          completed
+            ? "bg-foreground/10 border border-foreground/20"
+            : "bg-transparent border border-foreground/20 hover:border-foreground/40"
+        )}
       >
-        {completed ? (
-          <CheckCircle2 className="w-5 h-5 text-success" />
-        ) : (
-          <Circle className="w-5 h-5 text-muted-foreground group-hover:text-accent" />
+        {completed && (
+          <Check className="w-3 h-3 text-foreground/60" />
         )}
       </button>
 

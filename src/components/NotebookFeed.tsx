@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { format, isToday, isYesterday, isThisWeek, startOfDay } from 'date-fns';
-import { CheckCircle2, Circle, Trash2, Clock } from 'lucide-react';
+import { CheckCircle2, Circle, Trash2, Clock, Check } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { useTasksQuery } from '@/hooks/useTasksQuery';
 import { useTasks } from '@/hooks/useTasks';
@@ -283,12 +283,15 @@ function EntryCard({
             e.stopPropagation();
             onComplete(entry.id);
           }}
-          className="mt-0.5 text-foreground-soft hover:text-foreground transition-colors"
+          className={cn(
+            "mt-0.5 w-5 h-5 rounded-full flex items-center justify-center transition-all",
+            entry.completed
+              ? "bg-foreground/10 border border-foreground/20"
+              : "bg-transparent border border-foreground/20 hover:border-foreground/40"
+          )}
         >
-          {entry.completed ? (
-            <CheckCircle2 className="w-5 h-5" />
-          ) : (
-            <Circle className="w-5 h-5" />
+          {entry.completed && (
+            <Check className="w-3 h-3 text-foreground/60" />
           )}
         </button>
 

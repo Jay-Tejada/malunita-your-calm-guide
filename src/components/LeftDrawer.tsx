@@ -759,16 +759,14 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
                                 <button
                                   onClick={() => handleTaskToggle(task.id, task.completed || false)}
                                   className={cn(
-                                    "flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center mt-0.5 transition-all duration-300 ease-out",
+                                    "flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center mt-0.5 transition-all",
                                     task.completed
-                                      ? "bg-foreground/90 border-2 border-foreground/90 scale-100 shadow-[0_0_12px_rgba(0,0,0,0.3)]"
-                                      : "border-2 border-foreground/20 hover:border-foreground/40 hover:scale-110 hover:shadow-[0_0_8px_rgba(0,0,0,0.15)]"
+                                      ? "bg-foreground/10 border border-foreground/20"
+                                      : "bg-transparent border border-foreground/20 hover:border-foreground/40"
                                   )}
                                 >
-                                  {task.completed ? (
-                                    <Check className="w-3 h-3 text-background animate-in fade-in zoom-in duration-200" />
-                                  ) : (
-                                    <Circle className="w-2 h-2 text-foreground/20 transition-all duration-200" />
+                                  {task.completed && (
+                                    <Check className="w-3 h-3 text-foreground/60" />
                                   )}
                                 </button>
                                 <span className={cn(
