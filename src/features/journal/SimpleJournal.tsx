@@ -141,7 +141,8 @@ export const SimpleJournal = () => {
         <div className="flex justify-end">
           <Button
             onClick={handleNewEntry}
-            className="gap-2"
+            variant="outline"
+            className="gap-2 bg-transparent border-foreground/20 text-foreground/60 hover:border-foreground/40 hover:text-foreground/80 hover:bg-transparent"
           >
             <Plus className="w-4 h-4" />
             New Entry
@@ -152,7 +153,7 @@ export const SimpleJournal = () => {
         {Object.keys(groupedEntries).length === 0 ? (
           <div className="text-center py-20">
             <p className="text-muted-foreground mb-4">No journal entries yet.</p>
-            <Button onClick={handleNewEntry} variant="outline" className="gap-2">
+            <Button onClick={handleNewEntry} variant="outline" className="gap-2 bg-transparent border-foreground/20 text-foreground/60 hover:border-foreground/40 hover:text-foreground/80 hover:bg-transparent">
               <Plus className="w-4 h-4" />
               Create your first entry
             </Button>
