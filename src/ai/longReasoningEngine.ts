@@ -1,5 +1,6 @@
 import { supabase } from '@/integrations/supabase/client';
 import { persona } from './persona';
+import { retry } from '@/lib/gracefulFallback';
 
 interface LongReasoningResult {
   answer: string;
@@ -18,7 +19,8 @@ export async function runLongReasoning(
   input: string,
   context: Record<string, any> = {}
 ): Promise<LongReasoningResult> {
-  try {
+  // Use retry with exponential backoff for network resilience
+  return retry(async () => {
     const { data, error } = await supabase.functions.invoke('long-reasoning', {
       body: {
         input,
@@ -44,8 +46,5 @@ export async function runLongReasoning(
       reasoning: 'hidden', // Chain of thought is never exposed
       steps: data.steps || [],
     };
-  } catch (error) {
-    console.error('Error in runLongReasoning:', error);
-    throw error;
-  }
+  }, 3, 2000); // 3 retries, starting with 2 second delay
 }
