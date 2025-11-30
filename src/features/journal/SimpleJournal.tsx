@@ -23,7 +23,7 @@ export const SimpleJournal = () => {
   const queryClient = useQueryClient();
 
   // Fetch journal entries
-  const { data: entries, isLoading } = useQuery({
+  const { data: entries, isLoading, error, refetch } = useQuery({
     queryKey: ['journal-entries'],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -119,6 +119,17 @@ export const SimpleJournal = () => {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <p className="text-muted-foreground">Loading journal...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
+        <p className="text-muted-foreground">Failed to load journal entries</p>
+        <Button onClick={() => refetch()} variant="outline">
+          Retry
+        </Button>
       </div>
     );
   }
