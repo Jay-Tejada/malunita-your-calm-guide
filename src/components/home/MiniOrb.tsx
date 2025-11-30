@@ -1,6 +1,5 @@
-import { useState } from 'react';
+import { Menu } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import malunitaNeutral from '@/assets/companions/malunita-neutral.png';
 
 interface MiniOrbProps {
   onClick: () => void;
@@ -9,57 +8,25 @@ interface MiniOrbProps {
 }
 
 /**
- * MiniOrb - Small pearl orb for corner navigation
- * Matches the main orb's visual language with subtle breathing
+ * MiniOrb - Simple hamburger menu icon for drawer toggles
  */
 export const MiniOrb = ({ onClick, label, position }: MiniOrbProps) => {
-  const [isHovered, setIsHovered] = useState(false);
-
   const positionClasses = {
     left: 'fixed top-6 left-6',
     right: 'fixed top-6 right-6',
   };
 
   return (
-    <div className={cn(positionClasses[position], 'z-50 flex flex-col items-center gap-2')}>
-      <button
-        onClick={onClick}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
-        className={cn(
-          'w-8 h-8 rounded-full transition-transform duration-300 relative flex items-center justify-center',
-          'hover:scale-110 active:scale-95',
-          'animate-breathing'
-        )}
-        style={{
-          background: 'radial-gradient(circle at 30% 30%, #fffbf0, #e8c88a)',
-          boxShadow: '0 4px 12px rgba(200, 170, 120, 0.2)',
-          animationDuration: '8s',
-        }}
-      >
-        {label === 'companion' && (
-          <img 
-            src={malunitaNeutral} 
-            alt="" 
-            className="w-6 h-6 transition-all duration-300"
-            style={{ 
-              filter: 'brightness(0) invert(0.6) opacity(0.4)',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.filter = 'brightness(0) invert(0.6) opacity(0.6)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.filter = 'brightness(0) invert(0.6) opacity(0.4)';
-            }}
-          />
-        )}
-      </button>
-      
-      {isHovered && (
-        <span className="text-[10px] text-muted-foreground/40 uppercase tracking-widest absolute top-12 animate-fade-in">
-          {label}
-        </span>
+    <button
+      onClick={onClick}
+      className={cn(
+        positionClasses[position],
+        'z-50 transition-opacity duration-300',
+        'text-foreground/20 hover:text-foreground/40'
       )}
-    </div>
+      aria-label={label}
+    >
+      <Menu className="w-5 h-5" strokeWidth={1.5} />
+    </button>
   );
 };
