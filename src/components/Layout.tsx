@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate, Outlet, useLocation } from "react-router-dom";
-import { GlobeButton } from "@/components/GlobeButton";
+import { MiniOrb } from "@/components/home/MiniOrb";
 import { LeftDrawer } from "@/components/LeftDrawer";
 import { RightDrawer } from "@/components/RightDrawer";
 import { QuickCapture } from "@/components/QuickCapture";
@@ -72,20 +72,18 @@ export const Layout = () => {
 
   return (
     <>
-      {/* Top-Left Planet - Tasks Drawer */}
-      <GlobeButton
-        position="top-left"
-        variant="menu"
+      {/* Top-Left Mini Orb - Notebook Drawer */}
+      <MiniOrb
+        position="left"
+        label="notebook"
         onClick={() => setLeftDrawerOpen(!leftDrawerOpen)}
-        isActive={leftDrawerOpen}
       />
 
-      {/* Top-Right Planet - Companion Drawer */}
-      <GlobeButton
-        position="top-right"
-        variant="home"
+      {/* Top-Right Mini Orb - Companion Drawer */}
+      <MiniOrb
+        position="right"
+        label="companion"
         onClick={() => setRightDrawerOpen(!rightDrawerOpen)}
-        isActive={rightDrawerOpen}
       />
 
       {/* Left Tasks Drawer */}
