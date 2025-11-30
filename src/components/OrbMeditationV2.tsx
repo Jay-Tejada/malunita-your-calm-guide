@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Mic, Brain } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useCompanionIdentity } from '@/hooks/useCompanionIdentity';
 
 interface OrbMeditationV2Props {
   onCapture?: (text: string) => void;
@@ -25,6 +26,7 @@ export const OrbMeditationV2 = ({
   const [orbState, setOrbState] = useState<OrbState>('idle');
   const inputRef = useRef<HTMLInputElement>(null);
   const debounceTimeoutRef = useRef<NodeJS.Timeout>();
+  const { companion } = useCompanionIdentity();
 
   // Auto-focus input on desktop
   useEffect(() => {
@@ -86,56 +88,67 @@ export const OrbMeditationV2 = ({
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[70vh] px-4 gap-6 md:gap-8">
-      <style>{`
-        @keyframes orb-breathe {
-          0%, 100% { transform: scale(1); }
-          50% { transform: scale(1.03); }
-        }
-        @keyframes orb-active {
-          0%, 100% { transform: scale(1); }
-          50% { transform: scale(1.08); }
-        }
-        @keyframes orb-recording {
-          0%, 100% { transform: scale(1) rotate(0deg); }
-          25% { transform: scale(1.02) rotate(-2deg); }
-          75% { transform: scale(1.02) rotate(2deg); }
-        }
-        @keyframes orb-shimmer {
-          0%, 100% { opacity: 0.95; }
-          50% { opacity: 1; }
-        }
-        @keyframes orb-success {
-          0%, 100% { transform: scale(1); }
-          50% { transform: scale(1.15); }
-        }
-        .orb-idle { animation: orb-breathe 5s ease-in-out infinite; }
-        .orb-active { animation: orb-active 2s ease-in-out infinite; }
-        .orb-recording { animation: orb-recording 1s ease-in-out infinite; }
-        .orb-processing { animation: orb-shimmer 1.5s ease-in-out infinite; }
-        .orb-success { animation: orb-success 0.6s ease-out; }
-      `}</style>
+    <div className="flex flex-col items-center justify-center min-h-[70vh] px-4 gap-12 md:gap-16">
+      {/* Minimal Orb with Concentric Circles */}
+      <div className="relative flex flex-col items-center justify-center gap-8">
+        {/* The Orb - minimal concentric circles design */}
+        <div className="relative flex items-center justify-center w-56 h-56 md:w-64 md:h-64">
+          {/* Outer ring - thinnest */}
+          <div 
+            className={cn(
+              "absolute inset-0 rounded-full",
+              "border border-foreground/8",
+              "transition-all duration-500",
+              orbState === 'recording' && "scale-105 border-foreground/15",
+              orbState === 'processing' && "animate-spin border-foreground/12"
+            )}
+            style={{ animationDuration: '3s' }}
+          />
+          
+          {/* Middle ring */}
+          <div 
+            className={cn(
+              "absolute inset-4 rounded-full",
+              "border border-foreground/12",
+              "transition-all duration-500",
+              orbState === 'recording' && "scale-105 border-foreground/20",
+              orbState === 'processing' && "animate-pulse"
+            )}
+          />
+          
+          {/* Inner ring */}
+          <div 
+            className={cn(
+              "absolute inset-8 rounded-full",
+              "border border-foreground/15",
+              "transition-all duration-500",
+              orbState === 'recording' && "scale-105 border-foreground/25"
+            )}
+          />
+          
+          {/* Core dot */}
+          <div 
+            className={cn(
+              "w-3 h-3 rounded-full",
+              "bg-foreground/30",
+              "transition-all duration-300",
+              orbState === 'recording' && "scale-150 bg-foreground/40",
+              orbState === 'processing' && "animate-pulse bg-foreground/35",
+              orbState === 'success' && "scale-125 bg-success/60"
+            )}
+          />
+        </div>
 
-      {/* Orb */}
-      <div className="relative">
-        <div 
-          className={cn(
-            "w-[100px] h-[100px] md:w-[120px] md:h-[120px] rounded-full",
-            `orb-${orbState}`
-          )}
-          style={{
-            background: 'radial-gradient(circle at 40% 40%, #fef3c7 0%, #fde68a 30%, #fbbf24 60%, #f59e0b 100%)',
-            border: '2px solid rgba(251, 191, 36, 0.3)',
-            boxShadow: 'inset 0 0 20px rgba(254, 243, 199, 0.5)',
-            filter: 'drop-shadow(0 0 40px rgba(251, 191, 36, 0.2))'
-          }}
-        />
+        {/* Text labels */}
+        <div className="flex flex-col items-center gap-1">
+          <p className="text-xl md:text-2xl font-light text-foreground/70 tracking-wide">
+            {companion?.name || 'malunita'}
+          </p>
+          <p className="text-sm font-light text-foreground/40 tracking-wider">
+            capture mode
+          </p>
+        </div>
       </div>
-
-      {/* Greeting */}
-      <h1 className="text-xl md:text-2xl font-light text-foreground/80">
-        {getGreeting()}
-      </h1>
 
       {/* Mobile Layout */}
       <div className="flex flex-col items-center gap-4 w-full max-w-md md:hidden">
