@@ -1,4 +1,4 @@
-import { Globe2 } from "lucide-react";
+import { Menu, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface GlobeButtonProps {
@@ -19,24 +19,24 @@ export const GlobeButton = ({
     "top-right": "fixed top-6 right-6",
   };
 
+  const Icon = variant === "menu" ? Menu : User;
+
   return (
     <button
       onClick={onClick}
       className={cn(
         positionClasses[position],
-        "z-50 flex items-center justify-center group",
-        "transition-transform duration-200 hover:scale-110 active:scale-90"
+        "z-50 flex items-center justify-center",
+        "transition-opacity duration-300"
       )}
     >
-      <div className="animate-spin-continuous">
-        <Globe2 
-          className={cn(
-            "w-8 h-8 transition-colors duration-300",
-            isActive ? "text-primary" : "text-foreground/60",
-            "group-hover:text-primary"
-          )}
-        />
-      </div>
+      <Icon 
+        className={cn(
+          "w-6 h-6 transition-opacity duration-300",
+          isActive ? "text-muted-foreground/50" : "text-muted-foreground/30",
+          "hover:text-muted-foreground/50"
+        )}
+      />
     </button>
   );
 };
