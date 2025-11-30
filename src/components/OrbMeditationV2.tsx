@@ -2,6 +2,9 @@ import { useState, useRef, useEffect } from 'react';
 import { Mic, Brain } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useCompanionIdentity } from '@/hooks/useCompanionIdentity';
+import { Canvas } from '@react-three/fiber';
+import { Sphere, MeshDistortMaterial } from '@react-three/drei';
+import * as THREE from 'three';
 
 interface OrbMeditationV2Props {
   onCapture?: (text: string) => void;
@@ -89,10 +92,30 @@ export const OrbMeditationV2 = ({
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[70vh] px-4 gap-12 md:gap-16">
-      {/* Minimal Orb with Concentric Circles */}
+      {/* Minimal Orb with Concentric Circles and 3D Sphere */}
       <div className="relative flex flex-col items-center justify-center gap-8">
         {/* The Orb - minimal concentric circles design */}
         <div className="relative flex items-center justify-center w-56 h-56 md:w-64 md:h-64">
+          {/* 3D Rotating Sphere in the center */}
+          <div className="absolute inset-0 rounded-full overflow-hidden">
+            <Canvas camera={{ position: [0, 0, 3], fov: 50 }}>
+              <ambientLight intensity={0.5} />
+              <directionalLight position={[10, 10, 5]} intensity={1} />
+              <Sphere args={[1, 64, 64]}>
+                <MeshDistortMaterial
+                  color={orbState === 'recording' ? '#a78bfa' : orbState === 'processing' ? '#60a5fa' : '#e5e5e5'}
+                  attach="material"
+                  distort={0.3}
+                  speed={orbState === 'recording' ? 2 : orbState === 'processing' ? 3 : 1}
+                  roughness={0.4}
+                  metalness={0.1}
+                  transparent
+                  opacity={0.15}
+                />
+              </Sphere>
+            </Canvas>
+          </div>
+          
           {/* Outer ring - thinnest */}
           <div 
             className={cn(
