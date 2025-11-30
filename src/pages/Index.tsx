@@ -8,8 +8,6 @@ import { MalunitaVoice, MalunitaVoiceRef } from "@/components/MalunitaVoice";
 import { useProfile } from "@/hooks/useProfile";
 import { useCompanionIdentity, PersonalityType } from "@/hooks/useCompanionIdentity";
 import { useToast } from "@/hooks/use-toast";
-import { HomeShell } from "@/layouts/HomeShell";
-import { HomeCanvas } from "@/components/home/HomeCanvas";
 import { DailyPriorityPrompt, DailyPriorityPromptRef } from "@/components/DailyPriorityPrompt";
 import { useDailyReset } from "@/hooks/useDailyReset";
 import { usePrimaryFocusPrediction } from "@/hooks/usePrimaryFocusPrediction";
@@ -18,14 +16,11 @@ import { CompanionContextMessage } from "@/components/CompanionContextMessage";
 import { fetchDailyPlan, DailyPlan } from "@/lib/ai/fetchDailyPlan";
 import { fetchDailyAlerts, DailyAlerts } from "@/lib/ai/fetchDailyAlerts";
 import { useCaptureSessions } from "@/hooks/useCaptureSessions";
-import { LastCapturePreview } from "@/components/LastCapturePreview";
 import { CaptureHistoryModal } from "@/components/CaptureHistoryModal";
 import { useDailyMindstream } from "@/hooks/useDailyMindstream";
-import { PlanningModePanel } from "@/components/planning/PlanningModePanel";
 import { QuickCapture } from "@/components/QuickCapture";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { useNavigate } from "react-router-dom";
-import { FloatingCompanion } from "@/components/mobile/FloatingCompanion";
 import { useCompanionMessages } from "@/hooks/useCompanionMessages";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { OfflineIndicator } from "@/components/OfflineIndicator";
@@ -87,7 +82,6 @@ const Index = () => {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isRecording, setIsRecording] = useState(false);
-  const [activeCategory, setActiveCategory] = useState<string | null>("today");
   const [aiSummary, setAiSummary] = useState<AISummary | null>(null);
   const [aiPlan, setAiPlan] = useState<DailyPlan | null>(null);
   const [aiAlerts, setAiAlerts] = useState<DailyAlerts | null>(null);
@@ -289,29 +283,8 @@ const Index = () => {
     return 'ready';
   };
 
-  // Stub handlers for HomeShell
   const handleSettingsClick = () => {
     navigate('/settings');
-  };
-
-  const handleCategoryClick = (category: string) => {
-    setActiveCategory(category);
-  };
-
-  const handleFocusModeClick = () => {
-    console.log("Focus mode clicked");
-  };
-
-  const handleWorldMapClick = () => {
-    console.log("World map clicked");
-  };
-
-  const handleShareMalunitaClick = () => {
-    console.log("Share Malunita clicked");
-  };
-
-  const handleDreamModeClick = () => {
-    console.log("Dream mode clicked");
   };
 
   const handleTaskCreated = () => {
@@ -373,38 +346,58 @@ const Index = () => {
   return (
     <>
       <OfflineIndicator />
+      <AutoFocusNotification />
+      <CompanionContextMessage />
       
-      {isMobile ? (
-        /* MOBILE LAYOUT - Minimal & Thumb-Optimized */
-        <div className="mobile-home min-h-screen bg-background flex flex-col px-4">
-          {/* Offline banner */}
-          {!isOnline && (
-            <div className="sticky top-0 -mx-4 z-50 bg-destructive/90 backdrop-blur-sm text-destructive-foreground text-center py-2 text-sm">
-              📴 Offline - Changes will sync when connected
-            </div>
-          )}
-
-          {/* CENTER STAGE - Contextual Card (takes 60% of vertical space) */}
-          <div className="contextual-section flex-[6] flex items-center justify-center pt-[15vh]">
-            <ContextualCard
-              title={contextualPrompt.title}
-              subtitle={contextualPrompt.subtitle}
-              icon={contextualPrompt.icon}
-              onTap={contextualPrompt.action || undefined}
-              priority={contextualPrompt.priority}
-            />
+      {/* UNIFIED MINIMAL HOME - Same for mobile and desktop */}
+      <div className="home-screen">
+        {/* Nav icons */}
+        <div className="nav-icons">
+          <button 
+            className="nav-button"
+            onClick={() => navigate('/settings')}
+            aria-label="Menu"
+          >
+            ☰
+          </button>
+          <button 
+            className="nav-button"
+            onClick={handleSettingsClick}
+            aria-label="Settings"
+          >
+            ⚙️
+          </button>
+        </div>
+        
+        {/* Offline banner */}
+        {!isOnline && (
+          <div className="offline-banner">
+            📴 Offline - Changes will sync when connected
           </div>
-
-          {/* BOTTOM ZONE - Orb in Thumb Reach (takes 40% of vertical space) */}
-          <div className="orb-section flex-[4] flex items-center justify-center pb-12">
-            <SimpleOrb
-              onTap={handleVoiceCapture}
-              isRecording={voiceStatus.isListening}
-              isProcessing={voiceStatus.isProcessing}
-            />
-          </div>
-
-           {/* Voice sheet */}
+        )}
+        
+        {/* Center content - Contextual card */}
+        <div className="center-content">
+          <ContextualCard
+            title={contextualPrompt.title}
+            subtitle={contextualPrompt.subtitle}
+            icon={contextualPrompt.icon}
+            onTap={contextualPrompt.action || undefined}
+            priority={contextualPrompt.priority}
+          />
+        </div>
+        
+        {/* Golden orb at bottom */}
+        <div className="orb-zone">
+          <SimpleOrb
+            onTap={handleVoiceCapture}
+            isRecording={voiceStatus.isListening}
+            isProcessing={voiceStatus.isProcessing}
+          />
+        </div>
+        
+        {/* Voice sheet for mobile */}
+        {isMobile && (
           <VoiceSheet
             open={voiceSheetOpen}
             onOpenChange={setVoiceSheetOpen}
@@ -416,57 +409,8 @@ const Index = () => {
             isProcessing={voiceStatus.isProcessing}
             recordingDuration={voiceStatus.recordingDuration}
           />
-        </div>
-      ) : (
-        /* DESKTOP LAYOUT - Minimal & Focused */
-        <>
-          <AutoFocusNotification />
-          <CompanionContextMessage />
-          
-          <HomeShell
-            onSettingsClick={handleSettingsClick}
-            onCategoryClick={handleCategoryClick}
-            onFocusModeClick={handleFocusModeClick}
-            onWorldMapClick={handleWorldMapClick}
-            onShareMalunitaClick={handleShareMalunitaClick}
-            onDreamModeClick={handleDreamModeClick}
-            activeCategory={activeCategory}
-          >
-            {/* Modals and prompts - not visible on main canvas */}
-            <DailyPriorityPrompt ref={dailyPriorityRef} onTaskCreated={handleTaskCreated} />
-            
-            <HomeCanvas
-              oneThingFocus={mindstreamData.oneThingFocus}
-              planningMode={planningMode}
-              planningText={planningText}
-              onClosePlanning={() => setPlanningMode(false)}
-            >
-              {/* Minimal desktop home - clean & focused */}
-              <div className="flex flex-col items-center justify-center min-h-[85vh] gap-24">
-                {/* CENTER STAGE - Contextual Card */}
-                <div className="w-full max-w-md">
-                  <ContextualCard
-                    title={contextualPrompt.title}
-                    subtitle={contextualPrompt.subtitle}
-                    icon={contextualPrompt.icon}
-                    onTap={contextualPrompt.action || undefined}
-                    priority={contextualPrompt.priority}
-                  />
-                </div>
-
-                {/* BOTTOM - Orb with breathing room */}
-                <div className="pb-12">
-                  <SimpleOrb
-                    onTap={() => voiceRef.current?.startRecording()}
-                    isRecording={voiceStatus.isListening}
-                    isProcessing={voiceStatus.isProcessing}
-                  />
-                </div>
-              </div>
-            </HomeCanvas>
-          </HomeShell>
-        </>
-      )}
+        )}
+      </div>
       
       {/* Quick Capture Modal - triggered by Cmd+K (desktop only) */}
       {!isMobile && (

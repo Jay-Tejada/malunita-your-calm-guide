@@ -20,9 +20,9 @@ export const ContextualCard = ({
   priority = 'normal'
 }: ContextualCardProps) => {
   const priorityStyles = {
-    urgent: 'border-destructive/20',
-    normal: 'border-primary/20',
-    calm: 'border-success/20'
+    urgent: 'border-destructive/30',
+    normal: 'border-border',
+    calm: 'border-success/30'
   };
 
   return (
@@ -33,20 +33,23 @@ export const ContextualCard = ({
       onClick={onTap}
       className={cn(
         "contextual-card",
-        "relative w-full max-w-md rounded-3xl",
+        "relative w-full max-w-[500px] rounded-3xl",
         "border-2 p-8",
         "min-h-[200px]",
         "flex flex-col items-center justify-center text-center",
         "cursor-pointer transition-all",
-        "backdrop-blur-md",
         priorityStyles[priority],
         onTap && "active:scale-[0.98]"
       )}
       style={{
-        background: 'rgba(255, 255, 255, 0.8)',
-        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)'
+        background: 'white',
+        boxShadow: '0 4px 24px rgba(0, 0, 0, 0.08)'
       }}
-      whileHover={{ scale: onTap ? 1.02 : 1 }}
+      whileHover={{ 
+        scale: onTap ? 1.02 : 1,
+        y: onTap ? -4 : 0,
+        boxShadow: onTap ? '0 8px 32px rgba(0, 0, 0, 0.12)' : '0 4px 24px rgba(0, 0, 0, 0.08)'
+      }}
       whileTap={{ scale: 0.98 }}
     >
       {/* Breathing animation overlay */}
