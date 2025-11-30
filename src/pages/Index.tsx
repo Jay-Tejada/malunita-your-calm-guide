@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Auth } from "@/components/Auth";
-import { OrbMeditationV2 } from "@/components/OrbMeditationV2";
 import { ThinkWithMe } from "@/components/ThinkWithMe";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { CompanionOnboarding } from "@/components/CompanionOnboarding";
@@ -23,7 +22,6 @@ import { LastCapturePreview } from "@/components/LastCapturePreview";
 import { CaptureHistoryModal } from "@/components/CaptureHistoryModal";
 import { useDailyMindstream } from "@/hooks/useDailyMindstream";
 import { PlanningModePanel } from "@/components/planning/PlanningModePanel";
-import { NotebookFeed } from "@/components/NotebookFeed";
 import { QuickCapture } from "@/components/QuickCapture";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { useNavigate } from "react-router-dom";
@@ -420,54 +418,52 @@ const Index = () => {
           />
         </div>
       ) : (
-        /* DESKTOP LAYOUT */
+        /* DESKTOP LAYOUT - Minimal & Focused */
         <>
           <AutoFocusNotification />
           <CompanionContextMessage />
           
           <HomeShell
-        onSettingsClick={handleSettingsClick}
-        onCategoryClick={handleCategoryClick}
-        onFocusModeClick={handleFocusModeClick}
-        onWorldMapClick={handleWorldMapClick}
-        onShareMalunitaClick={handleShareMalunitaClick}
-        onDreamModeClick={handleDreamModeClick}
-        activeCategory={activeCategory}
-      >
-        {/* Modals and prompts - not visible on main canvas */}
-        <DailyPriorityPrompt ref={dailyPriorityRef} onTaskCreated={handleTaskCreated} />
-        
-        <HomeCanvas
-          oneThingFocus={mindstreamData.oneThingFocus}
-          planningMode={planningMode}
-          planningText={planningText}
-          onClosePlanning={() => setPlanningMode(false)}
-        >
-          {/* Sacred space - OrbMeditationV2 at top */}
-          <OrbMeditationV2
-            onCapture={handleCapture}
-            onVoiceCapture={() => voiceRef.current?.startRecording()}
-            onThinkWithMe={() => setShowThinkWithMe(true)}
-            userName={profile?.companion_name || 'there'}
-            isRecording={voiceStatus.isListening}
-            isProcessing={voiceStatus.isProcessing}
-          />
+            onSettingsClick={handleSettingsClick}
+            onCategoryClick={handleCategoryClick}
+            onFocusModeClick={handleFocusModeClick}
+            onWorldMapClick={handleWorldMapClick}
+            onShareMalunitaClick={handleShareMalunitaClick}
+            onDreamModeClick={handleDreamModeClick}
+            activeCategory={activeCategory}
+          >
+            {/* Modals and prompts - not visible on main canvas */}
+            <DailyPriorityPrompt ref={dailyPriorityRef} onTaskCreated={handleTaskCreated} />
+            
+            <HomeCanvas
+              oneThingFocus={mindstreamData.oneThingFocus}
+              planningMode={planningMode}
+              planningText={planningText}
+              onClosePlanning={() => setPlanningMode(false)}
+            >
+              {/* Minimal desktop home - same as mobile */}
+              <div className="flex flex-col items-center justify-center min-h-[80vh] gap-16">
+                {/* CENTER STAGE - Contextual Card */}
+                <div className="w-full max-w-md">
+                  <ContextualCard
+                    title={contextualPrompt.title}
+                    subtitle={contextualPrompt.subtitle}
+                    icon={contextualPrompt.icon}
+                    onTap={contextualPrompt.action || undefined}
+                    priority={contextualPrompt.priority}
+                  />
+                </div>
 
-          {/* Notebook feed below orb */}
-          <div className="mt-12">
-            <NotebookFeed
-              onEntryClick={(entry) => {
-                console.log('Entry clicked:', entry);
-              }}
-              onEntryComplete={(id) => {
-                handleTaskCreated();
-              }}
-              onEntryDelete={(id) => {
-                handleTaskCreated();
-              }}
-            />
-          </div>
-        </HomeCanvas>
+                {/* BOTTOM - Orb */}
+                <div className="pb-8">
+                  <SimpleOrb
+                    onTap={() => voiceRef.current?.startRecording()}
+                    isRecording={voiceStatus.isListening}
+                    isProcessing={voiceStatus.isProcessing}
+                  />
+                </div>
+              </div>
+            </HomeCanvas>
           </HomeShell>
         </>
       )}
