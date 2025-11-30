@@ -15,6 +15,7 @@ import { Loader2, Plus, Sparkles, Bold, Italic, Link2, Code } from "lucide-react
 import { useToast } from "@/hooks/use-toast";
 import { debounce } from "@/utils/debounce";
 import { useCategorizeTaskMutation } from "@/hooks/useProcessInputMutation";
+import { copy } from "@/lib/copy";
 
 export const TaskInputBox = () => {
   const [input, setInput] = useState("");
@@ -98,8 +99,8 @@ export const TaskInputBox = () => {
       // Check if we got results
       if (!result || result.tasks.length === 0) {
         toast({
-          title: "No tasks found",
-          description: "Couldn't extract any tasks from that input.",
+          title: "Hmm...",
+          description: "Couldn't find any tasks in there. Try rephrasing?",
           variant: "destructive",
         });
         setIsProcessing(false);
@@ -186,8 +187,8 @@ export const TaskInputBox = () => {
     } catch (error) {
       console.error("Task processing error:", error);
       toast({
-        title: "Error processing task",
-        description: "Failed to process your input. Please try again.",
+        title: "Oops",
+        description: "Had trouble saving that. Mind trying again?",
         variant: "destructive",
       });
     } finally {
@@ -269,8 +270,8 @@ export const TaskInputBox = () => {
     } catch (error) {
       console.error("Clarification processing error:", error);
       toast({
-        title: "Error",
-        description: "Failed to process clarification.",
+        title: "Hmm",
+        description: "Couldn't process that. Try again?",
         variant: "destructive",
       });
     } finally {
@@ -345,8 +346,8 @@ export const TaskInputBox = () => {
     } catch (error) {
       console.error("Multi-task creation error:", error);
       toast({
-        title: "Error",
-        description: "Failed to create tasks.",
+        title: "Oops",
+        description: "Couldn't create those tasks. Try again?",
         variant: "destructive",
       });
     } finally {
@@ -393,7 +394,7 @@ export const TaskInputBox = () => {
             <Input
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Type a task... (markdown supported)"
+              placeholder={copy.placeholders.task}
               disabled={isProcessing}
               className="pr-12 bg-background/50 border-border/50 focus:bg-background"
             />
@@ -404,7 +405,7 @@ export const TaskInputBox = () => {
                 {isPreviewing ? (
                   <Badge variant="outline" className="text-xs animate-pulse">
                     <Sparkles className="h-3 w-3 mr-1" />
-                    Analyzing...
+                    {copy.loading.thinking}
                   </Badge>
                 ) : previewCategory ? (
                   <Badge variant="secondary" className="text-xs">
@@ -472,7 +473,7 @@ export const TaskInputBox = () => {
               <Link2 className="h-3 w-3" />
             </Button>
             <span className="text-xs text-foreground-soft ml-2">
-              Supports markdown formatting
+              {copy.help.markdown}
             </span>
           </div>
         </div>
