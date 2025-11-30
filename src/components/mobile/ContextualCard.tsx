@@ -2,7 +2,7 @@ import { motion } from 'framer-motion';
 
 interface ContextualCardProps {
   title: string;
-  subtitle?: string;
+  subtitle?: string | null;
   onTap?: () => void;
 }
 

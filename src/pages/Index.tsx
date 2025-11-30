@@ -386,11 +386,13 @@ const Index = () => {
 
           {/* CENTER STAGE - Contextual Card (takes 60% of vertical space) */}
           <div className="contextual-section flex-[6] flex items-center justify-center pt-[15vh]">
-            <ContextualCard
-              title={contextualPrompt.title}
-              subtitle={contextualPrompt.subtitle}
-              onTap={contextualPrompt.action || undefined}
-            />
+            {contextualPrompt.title && (
+              <ContextualCard
+                title={contextualPrompt.title}
+                subtitle={contextualPrompt.subtitle}
+                onTap={contextualPrompt.action || undefined}
+              />
+            )}
           </div>
 
           {/* BOTTOM ZONE - Orb in Thumb Reach (takes 40% of vertical space) */}
@@ -442,13 +444,15 @@ const Index = () => {
               {/* Minimal desktop home - clean & focused */}
               <div className="flex flex-col items-center justify-center min-h-[85vh] gap-24">
                 {/* CENTER STAGE - Contextual Card */}
-                <div className="w-full max-w-md">
-                  <ContextualCard
-                    title={contextualPrompt.title}
-                    subtitle={contextualPrompt.subtitle}
-                    onTap={contextualPrompt.action || undefined}
-                  />
-                </div>
+                {contextualPrompt.title && (
+                  <div className="w-full max-w-md">
+                    <ContextualCard
+                      title={contextualPrompt.title}
+                      subtitle={contextualPrompt.subtitle}
+                      onTap={contextualPrompt.action || undefined}
+                    />
+                  </div>
+                )}
 
                 {/* BOTTOM - Orb with breathing room */}
                 <div className="pb-12">
