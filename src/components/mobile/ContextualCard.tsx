@@ -20,9 +20,9 @@ export const ContextualCard = ({
   priority = 'normal'
 }: ContextualCardProps) => {
   const priorityStyles = {
-    urgent: 'border-destructive/20 bg-destructive/5',
-    normal: 'border-primary/20 bg-card',
-    calm: 'border-success/20 bg-success/5'
+    urgent: 'border-destructive/20',
+    normal: 'border-primary/20',
+    calm: 'border-success/20'
   };
 
   return (
@@ -38,9 +38,14 @@ export const ContextualCard = ({
         "min-h-[200px]",
         "flex flex-col items-center justify-center text-center",
         "cursor-pointer transition-all",
+        "backdrop-blur-md",
         priorityStyles[priority],
         onTap && "active:scale-[0.98]"
       )}
+      style={{
+        background: 'rgba(255, 255, 255, 0.8)',
+        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)'
+      }}
       whileHover={{ scale: onTap ? 1.02 : 1 }}
       whileTap={{ scale: 0.98 }}
     >

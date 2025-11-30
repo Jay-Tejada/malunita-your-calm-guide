@@ -441,8 +441,8 @@ const Index = () => {
               planningText={planningText}
               onClosePlanning={() => setPlanningMode(false)}
             >
-              {/* Minimal desktop home - same as mobile */}
-              <div className="flex flex-col items-center justify-center min-h-[80vh] gap-16">
+              {/* Minimal desktop home - clean & focused */}
+              <div className="flex flex-col items-center justify-center min-h-[85vh] gap-24">
                 {/* CENTER STAGE - Contextual Card */}
                 <div className="w-full max-w-md">
                   <ContextualCard
@@ -454,8 +454,8 @@ const Index = () => {
                   />
                 </div>
 
-                {/* BOTTOM - Orb */}
-                <div className="pb-8">
+                {/* BOTTOM - Orb with breathing room */}
+                <div className="pb-12">
                   <SimpleOrb
                     onTap={() => voiceRef.current?.startRecording()}
                     isRecording={voiceStatus.isListening}
