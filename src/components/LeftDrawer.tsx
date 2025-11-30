@@ -483,7 +483,7 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
 
                     {/* CORE Section */}
                     <div className="mb-6">
-                      <h3 className="font-['IBM_Plex_Mono'] text-[11px] uppercase tracking-wider mb-3" style={{ color: '#777' }}>
+                      <h3 className="font-mono font-normal text-[10px] text-muted-foreground/40 uppercase tracking-widest mt-8 mb-3">
                         Core
                       </h3>
                       <div className="flex flex-col gap-1">
@@ -504,7 +504,7 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
 
                     {/* SPACES Section */}
                     <div className="mb-6">
-                      <h3 className="font-['IBM_Plex_Mono'] text-[11px] uppercase tracking-wider mb-3" style={{ color: '#777' }}>
+                      <h3 className="font-mono font-normal text-[10px] text-muted-foreground/40 uppercase tracking-widest mt-8 mb-3">
                         Spaces
                       </h3>
                       <div className="flex flex-col gap-1">
@@ -526,7 +526,7 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
                     {/* PROJECTS Section */}
                     <div className="mb-6">
                       <div className="flex items-center justify-between mb-3">
-                        <h3 className="font-['IBM_Plex_Mono'] text-[11px] uppercase tracking-wider" style={{ color: '#777' }}>
+                        <h3 className="font-mono font-normal text-[10px] text-muted-foreground/40 uppercase tracking-widest mt-8">
                           Projects
                         </h3>
                         <button
