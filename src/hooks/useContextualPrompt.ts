@@ -3,8 +3,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 
 export interface ContextualPrompt {
-  title: string;
-  subtitle?: string;
+  title: string | null;
+  subtitle?: string | null;
   icon?: string;
   priority: 'normal' | 'urgent' | 'calm';
   action: (() => void) | null;
@@ -13,44 +13,30 @@ export interface ContextualPrompt {
 /**
  * useContextualPrompt - Returns the most relevant prompt to show right now
  * 
- * Priority system:
- * 1. Overdue tasks (highest)
- * 2. Large inbox
- * 3. No "one thing" set in morning
- * 4. Quick wins available midday
- * 5. Evening reflection
- * 6. Default state (lowest)
+ * Only shows prompts when there's something actionable:
+ * 1. Overdue tasks
+ * 2. Tasks due soon (within 2 hours)
+ * 3. Today's focus task exists
+ * 
+ * Returns null title/subtitle when nothing actionable
  */
 export function useContextualPrompt(): ContextualPrompt {
-  const [inboxCount, setInboxCount] = useState(0);
   const [overdueTasks, setOverdueTasks] = useState(0);
-  const [quickWinsCount, setQuickWinsCount] = useState(0);
-  const [todaysOneThing, setTodaysOneThing] = useState<string | null>(null);
-  const [todaysJournal, setTodaysJournal] = useState<string | null>(null);
+  const [tasksDueSoon, setTasksDueSoon] = useState(0);
+  const [todaysFocusTask, setTodaysFocusTask] = useState<string | null>(null);
   const navigate = useNavigate();
   
-  const hour = new Date().getHours();
   
-  // Fetch counts from database
+  // Fetch actionable data from database
   useEffect(() => {
     const fetchData = async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
         
-        const now = new Date().toISOString();
-        const today = new Date().toISOString().split('T')[0];
-        
-        // Count inbox items (no category assigned)
-        const { count: inbox } = await supabase
-          .from('tasks')
-          .select('*', { count: 'exact', head: true })
-          .eq('user_id', user.id)
-          .eq('completed', false)
-          .is('category', null)
-          .is('custom_category_id', null);
-        
-        setInboxCount(inbox || 0);
+        const now = new Date();
+        const today = now.toISOString().split('T')[0];
+        const twoHoursFromNow = new Date(now.getTime() + 2 * 60 * 60 * 1000).toISOString();
         
         // Count overdue tasks (reminder_time in past)
         const { count: overdue } = await supabase
@@ -59,40 +45,33 @@ export function useContextualPrompt(): ContextualPrompt {
           .eq('user_id', user.id)
           .eq('completed', false)
           .not('reminder_time', 'is', null)
-          .lt('reminder_time', now);
+          .lt('reminder_time', now.toISOString());
         
         setOverdueTasks(overdue || 0);
         
-        // Count quick wins (tiny tasks)
-        const { count: quickWins } = await supabase
+        // Count tasks due within 2 hours
+        const { count: dueSoon } = await supabase
           .from('tasks')
           .select('*', { count: 'exact', head: true })
           .eq('user_id', user.id)
           .eq('completed', false)
-          .eq('is_tiny_task', true);
+          .not('reminder_time', 'is', null)
+          .gte('reminder_time', now.toISOString())
+          .lt('reminder_time', twoHoursFromNow);
         
-        setQuickWinsCount(quickWins || 0);
+        setTasksDueSoon(dueSoon || 0);
         
-        // Check if "one thing" is set for today
-        const { data: oneThing } = await supabase
-          .from('daily_one_thing')
-          .select('text')
+        // Check if there's a focus task for today
+        const { data: focusTask } = await supabase
+          .from('tasks')
+          .select('title')
           .eq('user_id', user.id)
-          .eq('date', today)
+          .eq('completed', false)
+          .eq('is_focus', true)
+          .eq('focus_date', today)
           .maybeSingle();
         
-        setTodaysOneThing(oneThing?.text || null);
-        
-        // Check if journal entry exists for today
-        const { data: journal } = await supabase
-          .from('journal_entries')
-          .select('id')
-          .eq('user_id', user.id)
-          .gte('created_at', `${today}T00:00:00`)
-          .lt('created_at', `${today}T23:59:59`)
-          .maybeSingle();
-        
-        setTodaysJournal(journal?.id || null);
+        setTodaysFocusTask(focusTask?.title || null);
         
       } catch (error) {
         console.error('Error fetching contextual data:', error);
@@ -106,9 +85,9 @@ export function useContextualPrompt(): ContextualPrompt {
     return () => clearInterval(interval);
   }, []);
   
-  // Determine what to show (priority order)
+  // Only show prompts for actionable items
   const getPrompt = (): ContextualPrompt => {
-    // URGENT: Overdue tasks
+    // 1. Overdue tasks (urgent)
     if (overdueTasks > 0) {
       return {
         title: `${overdueTasks} task${overdueTasks > 1 ? 's' : ''} overdue`,
@@ -119,57 +98,33 @@ export function useContextualPrompt(): ContextualPrompt {
       };
     }
     
-    // HIGH: Inbox getting full
-    if (inboxCount > 5) {
+    // 2. Tasks due soon (within 2 hours)
+    if (tasksDueSoon > 0) {
       return {
-        title: `${inboxCount} items in inbox`,
-        subtitle: 'Time to organize',
-        icon: '📥',
+        title: `${tasksDueSoon} task${tasksDueSoon > 1 ? 's' : ''} due soon`,
+        subtitle: 'Within the next 2 hours',
+        icon: '⏰',
         priority: 'normal',
-        action: () => navigate('/inbox')
+        action: () => navigate('/tasks')
       };
     }
     
-    // MORNING: Set ONE thing
-    if (!todaysOneThing && hour >= 6 && hour < 12) {
+    // 3. Today's focus task
+    if (todaysFocusTask) {
       return {
-        title: "What's your ONE thing today?",
-        subtitle: 'Choose your main focus',
+        title: todaysFocusTask,
+        subtitle: "Today's main focus",
         icon: '🎯',
-        priority: 'normal',
-        action: () => {
-          window.dispatchEvent(new CustomEvent('open-daily-priority'));
-        }
-      };
-    }
-    
-    // MIDDAY: Quick wins
-    if (quickWinsCount > 0 && hour >= 12 && hour < 17) {
-      return {
-        title: `${quickWinsCount} quick win${quickWinsCount > 1 ? 's' : ''} ready`,
-        subtitle: 'Knock them out in 15 mins',
-        icon: '⚡',
-        priority: 'normal',
-        action: () => navigate('/tiny-task-fiesta')
-      };
-    }
-    
-    // EVENING: Journal
-    if (!todaysJournal && hour >= 18 && hour < 22) {
-      return {
-        title: 'How did today go?',
-        subtitle: 'Take a moment to reflect',
-        icon: '📓',
         priority: 'calm',
-        action: () => navigate('/journal')
+        action: () => navigate('/tasks')
       };
     }
     
-    // DEFAULT: All clear
+    // No actionable items - return empty
     return {
-      title: 'All clear ✨',
-      subtitle: 'Tap the orb below to capture',
-      icon: '🌟',
+      title: null,
+      subtitle: null,
+      icon: undefined,
       priority: 'calm',
       action: null
     };
