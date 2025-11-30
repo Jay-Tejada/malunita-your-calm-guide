@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
+import malunitaNeutral from '@/assets/companions/malunita-neutral.png';
 
 interface MiniOrbProps {
   onClick: () => void;
@@ -26,7 +27,7 @@ export const MiniOrb = ({ onClick, label, position }: MiniOrbProps) => {
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
         className={cn(
-          'w-8 h-8 rounded-full transition-transform duration-300',
+          'w-8 h-8 rounded-full transition-transform duration-300 relative flex items-center justify-center',
           'hover:scale-110 active:scale-95',
           'animate-breathing'
         )}
@@ -35,7 +36,16 @@ export const MiniOrb = ({ onClick, label, position }: MiniOrbProps) => {
           boxShadow: '0 4px 12px rgba(200, 170, 120, 0.2)',
           animationDuration: '8s',
         }}
-      />
+      >
+        {label === 'companion' && (
+          <img 
+            src={malunitaNeutral} 
+            alt="" 
+            className="w-4 h-4 opacity-40 hover:opacity-60 transition-opacity"
+            style={{ filter: 'brightness(0.8)' }}
+          />
+        )}
+      </button>
       
       {isHovered && (
         <span className="text-[10px] text-muted-foreground/40 uppercase tracking-widest absolute top-12 animate-fade-in">
