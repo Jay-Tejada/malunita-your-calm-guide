@@ -20,7 +20,7 @@ export const ContextualCard = ({
       className="flex flex-col items-center justify-center text-center gap-2 cursor-pointer"
     >
       <motion.h2 
-        className="text-2xl font-light text-foreground/80 leading-tight"
+        className="text-2xl font-mono font-light text-foreground/80 leading-tight"
         animate={{ opacity: [0.7, 1, 0.7] }}
         transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
       >
@@ -28,7 +28,7 @@ export const ContextualCard = ({
       </motion.h2>
       
       {subtitle && (
-        <p className="text-sm text-muted-foreground/60">
+        <p className="text-sm font-mono text-muted-foreground/60">
           {subtitle}
         </p>
       )}

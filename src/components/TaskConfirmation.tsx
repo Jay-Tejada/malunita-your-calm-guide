@@ -156,7 +156,7 @@ export const TaskConfirmation: React.FC<TaskConfirmationProps> = ({ tasks, origi
           {tasks.map((task, index) => (
             <div key={index} className="space-y-3 p-4 rounded-lg border border-secondary">
               <div>
-                <p className="font-normal mb-1">{task.title}</p>
+                <p className="font-mono mb-1">{task.title}</p>
                 <p className="text-xs text-muted-foreground">{task.confirmation_prompt}</p>
               </div>
 

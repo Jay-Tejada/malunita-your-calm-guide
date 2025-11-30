@@ -55,7 +55,7 @@ export const FocusCard = ({ task, onToggle, onDelete, onRemoveFromFocus }: Focus
           />
           
           <div className="flex-1 min-w-0">
-            <h3 className={`text-lg font-normal mb-1 transition-calm ${task.completed ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
+            <h3 className={`text-lg font-mono font-light mb-1 transition-calm ${task.completed ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
               {task.title}
             </h3>
             

@@ -259,7 +259,7 @@ export const TaskCard = ({ id, title, time, context, completed, selected, onTogg
         <div className="flex items-start gap-2">
           <h3
             className={cn(
-              "text-sm font-normal transition-all flex-1",
+              "text-sm font-mono transition-all flex-1",
               completed ? "text-muted-foreground line-through" : "text-foreground"
             )}
           >

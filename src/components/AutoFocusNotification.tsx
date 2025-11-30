@@ -43,7 +43,7 @@ export const AutoFocusNotification = () => {
                 <p className="text-sm font-medium text-foreground mb-1">
                   I picked today's ONE thing to help you stay on track.
                 </p>
-                <p className="text-xs text-muted-foreground line-clamp-2">
+                <p className="text-xs font-mono text-muted-foreground line-clamp-2">
                   "{autoFocusTask.title}"
                 </p>
                 {autoFocusTask.reasons && autoFocusTask.reasons.length > 0 && (

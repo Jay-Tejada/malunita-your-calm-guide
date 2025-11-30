@@ -151,7 +151,7 @@ export function TaskActionSheet({ task, onUpdate, onDelete, onBreakDown }: TaskA
         <SheetContent side="bottom" className="h-auto max-h-[80vh]">
           <SheetHeader>
             <SheetTitle>Task Actions</SheetTitle>
-            <SheetDescription className="text-sm line-clamp-2">
+            <SheetDescription className="text-sm font-mono line-clamp-2">
               {task.title}
             </SheetDescription>
           </SheetHeader>
