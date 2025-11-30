@@ -72,15 +72,6 @@ export const SimpleOrb = ({
           )}
         </div>
       </motion.button>
-
-      {/* Label */}
-      <motion.p 
-        className="text-sm text-muted-foreground font-light"
-        animate={{ opacity: [0.6, 1, 0.6] }}
-        transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-      >
-        What's on your mind?
-      </motion.p>
     </div>
   );
 };
