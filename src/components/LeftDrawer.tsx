@@ -475,7 +475,7 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
                         onNavigate("/");
                         onClose();
                       }}
-                      className="w-full h-14 rounded-full bg-[#111111] hover:bg-[#1a1a1a] text-white font-mono text-[15px] flex items-center justify-center gap-2 transition-all hover:-translate-y-0.5 mb-8"
+                      className="w-full h-14 rounded-full bg-transparent border border-foreground/20 text-foreground/60 hover:border-foreground/40 hover:text-foreground/80 font-mono text-[15px] flex items-center justify-center gap-2 transition-all mb-8"
                     >
                       <Plus className="w-4 h-4" />
                       Add new task
