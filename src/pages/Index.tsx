@@ -293,7 +293,7 @@ const Index = () => {
 
   // Stub handlers for HomeShell
   const handleSettingsClick = () => {
-    console.log("Settings clicked");
+    navigate('/settings');
   };
 
   const handleCategoryClick = (category: string) => {
