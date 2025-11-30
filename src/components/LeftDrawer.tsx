@@ -546,9 +546,9 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
                       </div>
                       <div className="flex flex-col gap-1">
                         {!projectTasks || projectTasks.length === 0 ? (
-                          <p className="text-left py-2 px-3 font-mono text-[13px]" style={{ color: '#999' }}>
-                            No projects yet
-                          </p>
+                          <div className="text-center py-12">
+                            <p className="text-muted-foreground/40 text-sm">Nothing here yet</p>
+                          </div>
                         ) : (
                           projectTasks.map((project) => (
                             <button
@@ -654,9 +654,9 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
                     {drawerMode === 'calendar' ? (
                       <div className="flex-1">
                         {!hasEvents ? (
-                          <p className="font-mono text-[14px] text-center py-16" style={{ color: '#999' }}>
-                            No upcoming events
-                          </p>
+                          <div className="text-center py-16">
+                            <p className="text-muted-foreground/40 text-sm">Nothing here yet</p>
+                          </div>
                         ) : (
                           <div className="space-y-8">
                             {Object.entries(groupedEvents).map(([dateKey, dayEvents]) => {
@@ -733,9 +733,9 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
                     ) : (
                       <div className="flex-1 space-y-2">
                         {categoryTasks.length === 0 ? (
-                          <p className="font-mono text-[14px] text-foreground/40 text-center py-8">
-                            No tasks in {currentCategoryLabel}
-                          </p>
+                          <div className="text-center py-12">
+                            <p className="text-muted-foreground/40 text-sm">No tasks yet</p>
+                          </div>
                         ) : (
                           categoryTasks.map((task) => {
                             const isCompleting = completingTaskIds.has(task.id);

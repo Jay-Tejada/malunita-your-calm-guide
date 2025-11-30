@@ -204,9 +204,9 @@ export const TaskList = ({ category: externalCategory, onPlanThis }: TaskListPro
           customCategories={categories || []}
           onCreateCategory={handleCreateCategory}
         />
-        <Card className="p-8 text-center text-muted-foreground mt-4">
-          <p>No tasks yet. Start by speaking into Malunita.</p>
-        </Card>
+        <div className="text-center py-12">
+          <p className="text-muted-foreground/40 text-sm">No tasks yet</p>
+        </div>
       </DndContext>
     );
   }
@@ -457,9 +457,9 @@ export const TaskList = ({ category: externalCategory, onPlanThis }: TaskListPro
         )}
         
         {filteredTasks.length === 0 ? (
-          <Card className="p-8 text-center text-muted-foreground">
-            <p>No {selectedDomain} tasks yet.</p>
-          </Card>
+          <div className="text-center py-12">
+            <p className="text-muted-foreground/40 text-sm">No tasks yet</p>
+          </div>
         ) : (
           <SortableContext items={filteredTasks.map((t) => t.id)} strategy={verticalListSortingStrategy}>
             <div className="space-y-3">
