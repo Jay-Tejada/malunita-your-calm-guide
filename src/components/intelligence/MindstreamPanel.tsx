@@ -116,7 +116,7 @@ export function MindstreamPanel() {
           </CollapsibleTrigger>
 
           <CollapsibleContent>
-            <CardContent className="p-6 space-y-6 animate-fade-in">
+            <CardContent className="p-6 space-y-8 animate-fade-in font-mono leading-relaxed">
               {/* Your One Thing */}
               {mindstream.oneThing && (
                 <div className="space-y-2">
@@ -146,7 +146,7 @@ export function MindstreamPanel() {
                     <TrendingUp className="h-4 w-4 text-primary" />
                     <h3 className="font-mono text-sm font-semibold">Quick Wins</h3>
                   </div>
-                  <div className="space-y-1 pl-6">
+                  <div className="space-y-2 pl-6">
                     {mindstream.quickWins.map((win, i) => (
                       <div key={win.id || i} className="text-sm text-foreground/80">
                         • {win.title}
@@ -163,14 +163,14 @@ export function MindstreamPanel() {
                     <Activity className="h-4 w-4 text-primary" />
                     <h3 className="font-mono text-sm font-semibold">Predicted Habits</h3>
                   </div>
-                  <div className="space-y-1 pl-6">
+                  <div className="space-y-2 pl-6">
                     {mindstream.predictedHabits.slice(0, 3).map((habit, i) => (
                       <div key={i} className="text-sm text-foreground/80 flex items-center gap-2">
                         <span className="font-mono text-xs text-muted-foreground">{habit.time}</span>
                         <span>{habit.task}</span>
-                        <Badge variant="outline" className="ml-auto text-xs">
+                        <span className="ml-auto text-xs text-muted-foreground">
                           {Math.round(habit.confidence * 100)}%
-                        </Badge>
+                        </span>
                       </div>
                     ))}
                   </div>
@@ -199,27 +199,17 @@ export function MindstreamPanel() {
               )}
 
               {/* Energy & Load */}
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <div className="flex items-center gap-2">
                   <Activity className="h-4 w-4 text-primary" />
                   <h3 className="font-mono text-sm font-semibold">Energy & Load</h3>
                 </div>
-                <div className="grid grid-cols-2 gap-4 pl-6">
-                  <div className="space-y-1">
-                    <div className="text-xs text-muted-foreground">Cognitive Load</div>
-                    <div className="flex items-center gap-2">
-                      <Badge variant={mindstream.cognitiveLoad.level === 'HIGH' ? 'destructive' : mindstream.cognitiveLoad.level === 'MEDIUM' ? 'secondary' : 'outline'}>
-                        {mindstream.cognitiveLoad.level}
-                      </Badge>
-                      <span className="text-xs text-muted-foreground">{mindstream.cognitiveLoad.score}%</span>
-                    </div>
+                <div className="space-y-2 pl-6 text-sm text-foreground/80">
+                  <div>
+                    Cognitive load: {mindstream.cognitiveLoad.level.toLowerCase()}
                   </div>
-                  <div className="space-y-1">
-                    <div className="text-xs text-muted-foreground">Emotional State</div>
-                    <div className="flex gap-1">
-                      <Badge variant="outline" className="text-xs">Joy {mindstream.emotionalState.joy}</Badge>
-                      <Badge variant="outline" className="text-xs">Stress {mindstream.emotionalState.stress}</Badge>
-                    </div>
+                  <div>
+                    Mood: {mindstream.emotionalState.joy > 60 ? 'positive' : mindstream.emotionalState.stress > 60 ? 'stressed' : 'balanced'}
                   </div>
                 </div>
               </div>
@@ -243,13 +233,13 @@ export function MindstreamPanel() {
 
               {/* Mini Summary */}
               {mindstream.summaryMarkdown && (
-                <div className="space-y-2">
+                <div className="space-y-3">
                   <div className="flex items-center gap-2">
                     <FileText className="h-4 w-4 text-primary" />
                     <h3 className="font-mono text-sm font-semibold">Mini Summary</h3>
                   </div>
-                  <div className="text-sm text-foreground/80 pl-6 prose prose-sm max-w-none">
-                    {mindstream.summaryMarkdown}
+                  <div className="text-sm text-foreground/80 pl-6 leading-relaxed whitespace-pre-line">
+                    {mindstream.summaryMarkdown.replace(/[^\w\s\-.,;:()]/g, '')}
                   </div>
                 </div>
               )}
