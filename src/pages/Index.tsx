@@ -386,25 +386,36 @@ const Index = () => {
             </div>
           )}
 
-          {/* CENTER STAGE - Contextual Card (takes 60% of vertical space) */}
-          <div className="contextual-section flex-[6] flex items-center justify-center pt-[15vh]">
-            {contextualPrompt.title && (
-              <ContextualCard
-                title={contextualPrompt.title}
-                subtitle={contextualPrompt.subtitle}
-                onTap={contextualPrompt.action || undefined}
-              />
-            )}
-          </div>
+          {contextualPrompt.title ? (
+            <>
+              {/* CENTER STAGE - Contextual Card (takes 60% of vertical space) */}
+              <div className="contextual-section flex-[6] flex items-center justify-center pt-[15vh]">
+                <ContextualCard
+                  title={contextualPrompt.title}
+                  subtitle={contextualPrompt.subtitle}
+                  onTap={contextualPrompt.action || undefined}
+                />
+              </div>
 
-          {/* BOTTOM ZONE - Orb in Thumb Reach (takes 40% of vertical space) */}
-          <div className="orb-section flex-[4] flex items-center justify-center pb-12">
-            <SimpleOrb
-              onTap={handleVoiceCapture}
-              isRecording={voiceStatus.isListening}
-              isProcessing={voiceStatus.isProcessing}
-            />
-          </div>
+              {/* BOTTOM ZONE - Orb in Thumb Reach (takes 40% of vertical space) */}
+              <div className="orb-section flex-[4] flex items-center justify-center pb-12">
+                <SimpleOrb
+                  onTap={handleVoiceCapture}
+                  isRecording={voiceStatus.isListening}
+                  isProcessing={voiceStatus.isProcessing}
+                />
+              </div>
+            </>
+          ) : (
+            /* No contextual card - center the orb perfectly */
+            <div className="flex-1 flex items-center justify-center">
+              <SimpleOrb
+                onTap={handleVoiceCapture}
+                isRecording={voiceStatus.isListening}
+                isProcessing={voiceStatus.isProcessing}
+              />
+            </div>
+          )}
 
            {/* Voice sheet */}
           <VoiceSheet
@@ -444,9 +455,9 @@ const Index = () => {
               onClosePlanning={() => setPlanningMode(false)}
             >
               {/* Minimal desktop home - clean & focused */}
-              <div className="flex flex-col items-center justify-center min-h-[85vh] gap-24">
-                {/* CENTER STAGE - Contextual Card */}
-                {contextualPrompt.title && (
+              {contextualPrompt.title ? (
+                <div className="flex flex-col items-center justify-center min-h-[85vh] gap-24">
+                  {/* CENTER STAGE - Contextual Card */}
                   <div className="w-full max-w-md">
                     <ContextualCard
                       title={contextualPrompt.title}
@@ -454,17 +465,26 @@ const Index = () => {
                       onTap={contextualPrompt.action || undefined}
                     />
                   </div>
-                )}
 
-                {/* BOTTOM - Orb with breathing room */}
-                <div className="pb-12">
+                  {/* BOTTOM - Orb with breathing room */}
+                  <div className="pb-12">
+                    <SimpleOrb
+                      onTap={() => voiceRef.current?.startRecording()}
+                      isRecording={voiceStatus.isListening}
+                      isProcessing={voiceStatus.isProcessing}
+                    />
+                  </div>
+                </div>
+              ) : (
+                /* No contextual card - center the orb perfectly */
+                <div className="flex items-center justify-center min-h-[85vh]">
                   <SimpleOrb
                     onTap={() => voiceRef.current?.startRecording()}
                     isRecording={voiceStatus.isListening}
                     isProcessing={voiceStatus.isProcessing}
                   />
                 </div>
-              </div>
+              )}
             </HomeCanvas>
           </HomeShell>
         </>
