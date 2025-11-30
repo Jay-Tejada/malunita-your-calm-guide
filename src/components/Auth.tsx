@@ -14,6 +14,7 @@ import {
   resetLoginAttempts,
   getAttemptsRemaining 
 } from "@/lib/authValidation";
+import { copy } from "@/lib/copy";
 
 interface AuthProps {
   onAuthSuccess?: () => void;
@@ -42,8 +43,8 @@ export const Auth = ({ onAuthSuccess }: AuthProps) => {
     if (!isForgotPassword && isLockedOut(email)) {
       const minutesRemaining = getLockoutTimeRemaining(email);
       toast({
-        title: "Account Temporarily Locked",
-        description: `Too many failed login attempts. Please try again in ${minutesRemaining} minute${minutesRemaining !== 1 ? 's' : ''}.`,
+        title: "Hold on",
+        description: `Too many tries. Give it ${minutesRemaining} minute${minutesRemaining !== 1 ? 's' : ''} and try again?`,
         variant: "destructive",
       });
       return;
@@ -55,8 +56,8 @@ export const Auth = ({ onAuthSuccess }: AuthProps) => {
       if (!validation.success) {
         setValidationErrors(validation.errors || []);
         toast({
-          title: "Invalid Input",
-          description: "Please check the requirements below.",
+          title: "Hmm...",
+          description: "Check the requirements below",
           variant: "destructive",
         });
         return;
@@ -74,8 +75,8 @@ export const Auth = ({ onAuthSuccess }: AuthProps) => {
         if (error) throw error;
 
         toast({
-          title: "Password reset email sent",
-          description: "Check your inbox for a password reset link.",
+          title: copy.success.emailSent,
+          description: "Check your inbox for a reset link",
         });
         
         setIsForgotPassword(false);
@@ -92,8 +93,8 @@ export const Auth = ({ onAuthSuccess }: AuthProps) => {
         if (error) throw error;
 
         toast({
-          title: "Welcome to Malunita!",
-          description: "Your account has been created. You can now start using the app.",
+          title: "Welcome!",
+          description: "Your account is ready. Let's get started.",
         });
       } else {
         const { error } = await supabase.auth.signInWithPassword({
@@ -108,8 +109,8 @@ export const Auth = ({ onAuthSuccess }: AuthProps) => {
           
           if (attemptsRemaining > 0) {
             toast({
-              title: "Login Failed",
-              description: `Invalid credentials. ${attemptsRemaining} attempt${attemptsRemaining !== 1 ? 's' : ''} remaining before temporary lockout.`,
+              title: "Nope",
+              description: `Wrong password. ${attemptsRemaining} more tr${attemptsRemaining !== 1 ? 'ies' : 'y'} before lockout.`,
               variant: "destructive",
             });
           }
@@ -129,16 +130,16 @@ export const Auth = ({ onAuthSuccess }: AuthProps) => {
         }
 
         toast({
-          title: "Welcome back!",
-          description: "You've successfully signed in.",
+          title: copy.success.signedIn,
+          description: "Good to see you again",
         });
       }
 
       onAuthSuccess?.();
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: error.message,
+        title: "Oops",
+        description: error.message || copy.error.generic,
         variant: "destructive",
       });
     } finally {
@@ -159,8 +160,8 @@ export const Auth = ({ onAuthSuccess }: AuthProps) => {
       if (error) throw error;
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: error.message,
+        title: "Hmm",
+        description: error.message || copy.error.generic,
         variant: "destructive",
       });
       setLoading(false);
@@ -181,7 +182,7 @@ export const Auth = ({ onAuthSuccess }: AuthProps) => {
 
         <div className="bg-card rounded-3xl p-8 border border-secondary shadow-lg">
           <h2 className="text-2xl font-light text-center mb-6">
-            {isForgotPassword ? "Reset Password" : isSignUp ? "Create Account" : "Sign In"}
+            {isForgotPassword ? "Reset your password" : isSignUp ? "Create your account" : "Sign in"}
           </h2>
 
           <form onSubmit={handleAuth} className="space-y-4">
@@ -191,14 +192,14 @@ export const Auth = ({ onAuthSuccess }: AuthProps) => {
               </label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="pl-10"
-                  placeholder="you@example.com"
-                  required
-                />
+                  <Input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="pl-10"
+                    placeholder={copy.placeholders.email}
+                    required
+                  />
               </div>
             </div>
 
@@ -214,7 +215,7 @@ export const Auth = ({ onAuthSuccess }: AuthProps) => {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="pl-10"
-                    placeholder="••••••••"
+                    placeholder={copy.placeholders.password}
                     required
                   />
                 </div>
@@ -223,7 +224,7 @@ export const Auth = ({ onAuthSuccess }: AuthProps) => {
                     <div className="flex items-start gap-2 text-xs text-muted-foreground">
                       <Shield className="w-3 h-3 mt-0.5 flex-shrink-0" />
                       <div>
-                        <p className="font-medium mb-1">Password Requirements:</p>
+                        <p className="font-medium mb-1">Password needs:</p>
                         <ul className="space-y-0.5 list-disc list-inside">
                           <li>At least 10 characters</li>
                           <li>One uppercase letter</li>
@@ -267,7 +268,7 @@ export const Auth = ({ onAuthSuccess }: AuthProps) => {
                   onClick={() => setIsForgotPassword(true)}
                   className="text-xs text-muted-foreground hover:text-foreground transition-colors"
                 >
-                  Forgot password?
+                  {copy.auth.forgotPassword}
                 </button>
               </div>
             )}
@@ -278,12 +279,12 @@ export const Auth = ({ onAuthSuccess }: AuthProps) => {
               disabled={loading}
             >
               {loading 
-                ? "Loading..." 
+                ? copy.loading.default
                 : isForgotPassword 
-                ? "Send Reset Link" 
+                ? "Send reset link" 
                 : isSignUp 
-                ? "Sign Up" 
-                : "Sign In"}
+                ? "Create account" 
+                : "Sign in"}
             </Button>
           </form>
 
@@ -340,8 +341,8 @@ export const Auth = ({ onAuthSuccess }: AuthProps) => {
                 className="w-full mt-4 text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
                 {isSignUp
-                  ? "Already have an account? Sign in"
-                  : "Don't have an account? Sign up"}
+                  ? copy.auth.hasAccount
+                  : copy.auth.noAccount}
               </button>
             </>
           )}
