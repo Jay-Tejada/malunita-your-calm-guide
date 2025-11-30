@@ -293,6 +293,26 @@ All colors MUST be HSL.
     animation: breathing 3s ease-in-out infinite;
   }
 
+  /* Mobile Home Screen Styles */
+  .mobile-home {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .contextual-section {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .orb-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+  }
+
   /* Mobile-specific utilities */
   @media (max-width: 640px) {
     .mobile-compact {

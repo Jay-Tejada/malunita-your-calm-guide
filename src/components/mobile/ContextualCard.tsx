@@ -1,62 +1,50 @@
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { Inbox, AlertCircle, Target, CheckCircle2, BookOpen, Sparkles } from 'lucide-react';
 
 interface ContextualCardProps {
   title: string;
-  subtitle: string;
-  icon?: 'inbox' | 'alert' | 'target' | 'check' | 'journal' | 'sparkles';
-  onClick?: () => void;
-  className?: string;
+  subtitle?: string;
+  icon?: string;
+  onTap?: () => void;
+  priority?: 'normal' | 'urgent' | 'calm';
 }
 
-const iconMap = {
-  inbox: Inbox,
-  alert: AlertCircle,
-  target: Target,
-  check: CheckCircle2,
-  journal: BookOpen,
-  sparkles: Sparkles,
-};
-
 /**
- * ContextualCard - Intelligent card that shows what matters right now
- * 
- * Shows different content based on:
- * - Time of day
- * - Pending tasks
- * - User patterns
- * - System state
+ * ContextualCard - Minimal, intelligent card that shows what matters right now
  */
 export const ContextualCard = ({ 
   title, 
   subtitle, 
-  icon = 'sparkles',
-  onClick,
-  className 
+  icon,
+  onTap,
+  priority = 'normal'
 }: ContextualCardProps) => {
-  const Icon = iconMap[icon];
+  const priorityStyles = {
+    urgent: 'border-destructive/20 bg-destructive/5',
+    normal: 'border-primary/20 bg-card',
+    calm: 'border-success/20 bg-success/5'
+  };
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
+      onClick={onTap}
       className={cn(
-        "relative min-h-[140px] w-full rounded-3xl",
-        "bg-gradient-to-br from-card via-card-strong to-card",
-        "border border-border/50",
-        "shadow-lg shadow-primary/5",
-        "p-6",
-        "cursor-pointer active:scale-[0.98] transition-transform",
-        onClick && "hover:shadow-xl hover:shadow-primary/10",
-        className
+        "contextual-card",
+        "relative w-full max-w-md rounded-3xl",
+        "border-2 p-8",
+        "min-h-[200px]",
+        "flex flex-col items-center justify-center text-center",
+        "cursor-pointer transition-all",
+        priorityStyles[priority],
+        onTap && "active:scale-[0.98]"
       )}
-      onClick={onClick}
-      whileHover={{ scale: 1.01 }}
+      whileHover={{ scale: onTap ? 1.02 : 1 }}
       whileTap={{ scale: 0.98 }}
     >
-      {/* Breathing animation background */}
+      {/* Breathing animation overlay */}
       <motion.div
         className="absolute inset-0 rounded-3xl bg-gradient-to-br from-primary/5 via-transparent to-transparent"
         animate={{ opacity: [0.3, 0.6, 0.3] }}
@@ -64,21 +52,32 @@ export const ContextualCard = ({
       />
 
       {/* Content */}
-      <div className="relative flex flex-col gap-3">
-        {/* Icon */}
-        <div className="flex items-center justify-center w-12 h-12 rounded-2xl bg-primary/10">
-          <Icon className="w-6 h-6 text-primary" />
-        </div>
-
-        {/* Text */}
-        <div className="space-y-1">
-          <h3 className="text-xl font-semibold text-foreground leading-tight">
-            {title}
-          </h3>
-          <p className="text-sm text-foreground/60 leading-relaxed">
+      <div className="relative flex flex-col items-center gap-3">
+        {icon && (
+          <div className="text-5xl mb-2">
+            {icon}
+          </div>
+        )}
+        
+        <h2 className="text-2xl font-semibold text-foreground leading-tight">
+          {title}
+        </h2>
+        
+        {subtitle && (
+          <p className="text-base text-muted-foreground">
             {subtitle}
           </p>
-        </div>
+        )}
+        
+        {onTap && (
+          <motion.p 
+            className="text-sm text-muted-foreground/50 mt-2"
+            animate={{ opacity: [0.3, 0.6, 0.3] }}
+            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+          >
+            Tap to continue
+          </motion.p>
+        )}
       </div>
     </motion.div>
   );
