@@ -491,8 +491,7 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
                           <button
                             key={category.id}
                             onClick={() => handleCategoryClick(category.id as DrawerMode)}
-                            className="text-left py-2 px-3 font-mono text-[14px] hover:bg-muted/30 rounded-md transition-colors"
-                            style={{ color: '#666' }}
+                            className="text-left py-2 px-0 font-mono text-sm text-foreground/60 hover:text-foreground/90 transition-colors"
                           >
                             {category.label}
                           </button>
@@ -512,8 +511,7 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
                           <button
                             key={category.id}
                             onClick={() => handleCategoryClick(category.id as DrawerMode)}
-                            className="text-left py-2 px-3 font-mono text-[14px] hover:bg-muted/30 rounded-md transition-colors"
-                            style={{ color: '#666' }}
+                            className="text-left py-2 px-0 font-mono text-sm text-foreground/60 hover:text-foreground/90 transition-colors"
                           >
                             {category.label}
                           </button>
@@ -554,8 +552,7 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
                             <button
                               key={project.id}
                               onClick={() => handleCategoryClick(`project-${project.id}` as DrawerMode)}
-                              className="text-left py-2 px-3 font-mono text-[14px] hover:bg-muted/30 rounded-md transition-colors"
-                              style={{ color: '#666' }}
+                              className="text-left py-2 px-0 font-mono text-sm text-foreground/60 hover:text-foreground/90 transition-colors"
                             >
                               {project.title}
                             </button>
@@ -573,8 +570,7 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
                       </h3>
                       <button
                         onClick={() => handleCategoryClick("calendar")}
-                        className="text-left py-2 px-3 font-mono text-[14px] hover:bg-muted/30 rounded-md transition-colors w-full"
-                        style={{ color: '#666' }}
+                        className="text-left py-2 px-0 font-mono text-sm text-foreground/60 hover:text-foreground/90 transition-colors w-full"
                       >
                         Calendar
                       </button>
