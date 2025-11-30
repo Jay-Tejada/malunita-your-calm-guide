@@ -27,6 +27,9 @@ import { NotebookFeed } from "@/components/NotebookFeed";
 import { QuickCapture } from "@/components/QuickCapture";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { useNavigate } from "react-router-dom";
+import { FloatingCompanion } from "@/components/mobile/FloatingCompanion";
+import { useCompanionMessages } from "@/hooks/useCompanionMessages";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface AISummary {
   decisions: string[];
@@ -112,6 +115,10 @@ const Index = () => {
   
   // Initialize prediction system (runs silently in background)
   usePrimaryFocusPrediction();
+
+  // Initialize companion messages (contextual)
+  const { message: companionMessage, action: companionAction, dismissMessage } = useCompanionMessages();
+  const isMobile = useIsMobile();
 
   // Initialize keyboard shortcuts
   useKeyboardShortcuts({
@@ -414,6 +421,16 @@ const Index = () => {
         onStatusChange={setVoiceStatus}
         onPlanningModeActivated={handlePlanningModeActivated}
       />
+
+      {/* Floating companion for mobile */}
+      {isMobile && (
+        <FloatingCompanion
+          message={companionMessage}
+          action={companionAction}
+          onDismiss={dismissMessage}
+          visible={!needsOnboarding}
+        />
+      )}
     </>
   );
 };
