@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { offlineQueue } from "@/lib/offline/OfflineQueue";
 import { logHabitCompletion } from "@/ai/habitPredictor";
 import { useCognitiveLoad } from "@/state/cognitiveLoad";
 import { recordPrimaryFocusCompleted } from "@/state/cognitiveLoad";
@@ -100,6 +101,18 @@ export const useTasks = () => {
         user_id: user.id,
       }));
 
+      // If offline, queue the actions
+      if (!offlineQueue.isOnline()) {
+        tasksWithUser.forEach(task => {
+          offlineQueue.addAction('create_task', task);
+        });
+        toast({
+          title: "Saved offline",
+          description: "Tasks will sync when you're back online",
+        });
+        return tasksWithUser as any;
+      }
+
       const { data, error } = await supabase
         .from('tasks')
         .insert(tasksWithUser)
@@ -137,6 +150,16 @@ export const useTasks = () => {
 
   const updateTask = useMutation({
     mutationFn: async ({ id, updates }: { id: string; updates: Partial<Task> }) => {
+      // If offline, queue the action
+      if (!offlineQueue.isOnline()) {
+        offlineQueue.addAction('update_task', { id, ...updates });
+        toast({
+          title: "Saved offline",
+          description: "Changes will sync when you're back online",
+        });
+        return { id, ...updates } as Task;
+      }
+
       const { data, error } = await supabase
         .from('tasks')
         .update(updates)
@@ -341,6 +364,16 @@ export const useTasks = () => {
 
   const deleteTask = useMutation({
     mutationFn: async (id: string) => {
+      // If offline, queue the action
+      if (!offlineQueue.isOnline()) {
+        offlineQueue.addAction('delete_task', { id });
+        toast({
+          title: "Saved offline",
+          description: "Deletion will sync when you're back online",
+        });
+        return;
+      }
+
       const { error } = await supabase
         .from('tasks')
         .delete()

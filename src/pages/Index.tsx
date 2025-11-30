@@ -30,6 +30,7 @@ import { useNavigate } from "react-router-dom";
 import { FloatingCompanion } from "@/components/mobile/FloatingCompanion";
 import { useCompanionMessages } from "@/hooks/useCompanionMessages";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { OfflineIndicator } from "@/components/OfflineIndicator";
 
 interface AISummary {
   decisions: string[];
@@ -340,6 +341,7 @@ const Index = () => {
 
   return (
     <>
+      <OfflineIndicator />
       <AutoFocusNotification />
       <CompanionContextMessage />
       
