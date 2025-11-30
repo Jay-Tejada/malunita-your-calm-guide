@@ -29,15 +29,15 @@ export const SimpleOrb = ({
       }}
       style={{
         background: isRecording 
-          ? 'radial-gradient(circle at 40% 40%, #fca5a5 0%, #f87171 30%, #ef4444 60%, #dc2626 100%)'
+          ? 'radial-gradient(circle at 35% 35%, #fca5a5 0%, #f87171 25%, #ef4444 50%, #dc2626 75%, #b91c1c 100%)'
           : isProcessing
-          ? 'radial-gradient(circle at 40% 40%, #93c5fd 0%, #60a5fa 30%, #3b82f6 60%, #2563eb 100%)'
-          : 'radial-gradient(circle at 40% 40%, #fef3c7 0%, #fde68a 30%, #fbbf24 60%, #f59e0b 100%)',
+          ? 'radial-gradient(circle at 35% 35%, #93c5fd 0%, #60a5fa 25%, #3b82f6 50%, #2563eb 75%, #1e40af 100%)'
+          : 'radial-gradient(circle at 35% 35%, #fef3c7 0%, #fde68a 25%, #fbbf24 50%, #f59e0b 75%, #d97706 100%)',
         boxShadow: isRecording
-          ? '0 0 40px rgba(239, 68, 68, 0.5), inset 0 0 20px rgba(252, 165, 165, 0.3)'
+          ? '0 8px 24px rgba(239, 68, 68, 0.3), inset 0 2px 8px rgba(255, 255, 255, 0.4)'
           : isProcessing
-          ? '0 0 40px rgba(59, 130, 246, 0.5), inset 0 0 20px rgba(147, 197, 253, 0.3)'
-          : '0 0 30px rgba(251, 191, 36, 0.4), inset 0 0 20px rgba(254, 243, 199, 0.3)',
+          ? '0 8px 24px rgba(59, 130, 246, 0.3), inset 0 2px 8px rgba(255, 255, 255, 0.4)'
+          : '0 8px 24px rgba(251, 191, 36, 0.3), inset 0 2px 8px rgba(255, 255, 255, 0.4)',
       }}
     >
       {/* Recording indicator - small pulsing dot */}
