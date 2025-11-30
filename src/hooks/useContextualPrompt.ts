@@ -20,6 +20,12 @@ export interface ContextualPrompt {
  * 
  * Returns null title/subtitle when nothing actionable
  */
+
+// Helper function to strip all emojis from text
+function stripEmojis(text: string): string {
+  return text.replace(/[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]|[\u{1F900}-\u{1F9FF}]|[\u{1FA70}-\u{1FAFF}]|[\u{1F018}-\u{1F270}]|[\u{238C}-\u{2454}]|[\u{20D0}-\u{20FF}]|[\u{FE00}-\u{FE0F}]|[\u{E0020}-\u{E007F}]|[\u{1F000}-\u{1F02F}]|[\u{1F0A0}-\u{1F0FF}]|[\u{1F100}-\u{1F64F}]|[\u{1F910}-\u{1F96B}]|[\u{1F980}-\u{1F9E0}]/gu, '').trim();
+}
+
 export function useContextualPrompt(): ContextualPrompt {
   const [overdueTasks, setOverdueTasks] = useState(0);
   const [tasksDueSoon, setTasksDueSoon] = useState(0);
@@ -90,9 +96,8 @@ export function useContextualPrompt(): ContextualPrompt {
     // 1. Overdue tasks (urgent)
     if (overdueTasks > 0) {
       return {
-        title: `${overdueTasks} task${overdueTasks > 1 ? 's' : ''} overdue`,
-        subtitle: "Let's tackle them",
-        icon: '⚠️',
+        title: stripEmojis(`${overdueTasks} task${overdueTasks > 1 ? 's' : ''} overdue`),
+        subtitle: stripEmojis("Let's tackle them"),
         priority: 'urgent',
         action: () => navigate('/tasks?filter=overdue')
       };
@@ -101,9 +106,8 @@ export function useContextualPrompt(): ContextualPrompt {
     // 2. Tasks due soon (within 2 hours)
     if (tasksDueSoon > 0) {
       return {
-        title: `${tasksDueSoon} task${tasksDueSoon > 1 ? 's' : ''} due soon`,
-        subtitle: 'Within the next 2 hours',
-        icon: '⏰',
+        title: stripEmojis(`${tasksDueSoon} task${tasksDueSoon > 1 ? 's' : ''} due soon`),
+        subtitle: stripEmojis('Within the next 2 hours'),
         priority: 'normal',
         action: () => navigate('/tasks')
       };
@@ -112,9 +116,8 @@ export function useContextualPrompt(): ContextualPrompt {
     // 3. Today's focus task
     if (todaysFocusTask) {
       return {
-        title: todaysFocusTask,
-        subtitle: "Today's main focus",
-        icon: '🎯',
+        title: stripEmojis(todaysFocusTask),
+        subtitle: stripEmojis("Today's main focus"),
         priority: 'calm',
         action: () => navigate('/tasks')
       };
@@ -124,7 +127,6 @@ export function useContextualPrompt(): ContextualPrompt {
     return {
       title: null,
       subtitle: null,
-      icon: undefined,
       priority: 'calm',
       action: null
     };
