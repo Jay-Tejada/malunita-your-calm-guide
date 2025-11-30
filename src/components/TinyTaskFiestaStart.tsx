@@ -201,7 +201,7 @@ export const TinyTaskFiestaStart = () => {
                         className="mt-1 pointer-events-none"
                       />
                       <div className="flex-1 space-y-1">
-                        <p className="font-light leading-relaxed">{task.title}</p>
+                        <p className="font-mono font-light leading-relaxed">{task.title}</p>
                         {task.context && (
                           <p className="text-sm text-muted-foreground font-light line-clamp-2">
                             {task.context}

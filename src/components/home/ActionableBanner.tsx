@@ -15,7 +15,7 @@ export const ActionableBanner = () => {
           onClick={actionable.action}
           className="fixed top-0 left-0 right-0 z-50 px-4 py-3 text-center cursor-pointer hover:opacity-80 transition-opacity"
         >
-          <p className="text-sm text-muted-foreground/70">
+          <p className="text-sm font-mono text-muted-foreground/70">
             {actionable.message}
           </p>
         </motion.div>

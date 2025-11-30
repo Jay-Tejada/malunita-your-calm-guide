@@ -48,7 +48,7 @@ export const TinyTaskFiestaTaskList = ({
               />
               <label 
                 htmlFor={task.id} 
-                className="flex-1 text-sm cursor-pointer"
+                className="flex-1 text-sm font-mono cursor-pointer"
               >
                 {task.title}
               </label>
