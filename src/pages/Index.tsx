@@ -31,6 +31,8 @@ import { FloatingCompanion } from "@/components/mobile/FloatingCompanion";
 import { useCompanionMessages } from "@/hooks/useCompanionMessages";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { OfflineIndicator } from "@/components/OfflineIndicator";
+import { VoiceSheet } from "@/components/mobile/VoiceSheet";
+import { useOfflineStatus } from "@/hooks/useOfflineStatus";
 
 interface AISummary {
   decisions: string[];
@@ -120,6 +122,10 @@ const Index = () => {
   // Initialize companion messages (contextual)
   const { message: companionMessage, action: companionAction, dismissMessage } = useCompanionMessages();
   const isMobile = useIsMobile();
+  const { isOnline } = useOfflineStatus();
+  
+  // Mobile-specific state
+  const [voiceSheetOpen, setVoiceSheetOpen] = useState(false);
 
   // Initialize keyboard shortcuts
   useKeyboardShortcuts({
@@ -339,13 +345,85 @@ const Index = () => {
     }
   };
 
+  const handleVoiceCapture = () => {
+    if (isMobile) {
+      setVoiceSheetOpen(true);
+    } else {
+      voiceRef.current?.startRecording();
+    }
+  };
+
   return (
     <>
       <OfflineIndicator />
-      <AutoFocusNotification />
-      <CompanionContextMessage />
       
-      <HomeShell
+      {isMobile ? (
+        /* MOBILE LAYOUT */
+        <div className="min-h-screen bg-background pb-20">
+          {/* Offline banner */}
+          {!isOnline && (
+            <div className="sticky top-0 z-50 bg-destructive/90 backdrop-blur-sm text-destructive-foreground text-center py-2 text-sm">
+              📴 Offline - Changes will sync when connected
+            </div>
+          )}
+
+          {/* Main content */}
+          <div className="px-4 pt-6 pb-4">
+            {/* Simplified orb */}
+            <div className="mb-8">
+              <OrbMeditationV2
+                onCapture={handleCapture}
+                onVoiceCapture={handleVoiceCapture}
+                onThinkWithMe={() => setShowThinkWithMe(true)}
+                userName={profile?.companion_name || 'there'}
+                isRecording={voiceStatus.isListening}
+                isProcessing={voiceStatus.isProcessing}
+              />
+            </div>
+
+            {/* Feed with swipeable entries */}
+            <NotebookFeed
+              onEntryClick={(entry) => {
+                console.log('Entry clicked:', entry);
+              }}
+              onEntryComplete={(id) => {
+                handleTaskCreated();
+              }}
+              onEntryDelete={(id) => {
+                handleTaskCreated();
+              }}
+            />
+          </div>
+
+          {/* Voice sheet */}
+          <VoiceSheet
+            open={voiceSheetOpen}
+            onOpenChange={setVoiceSheetOpen}
+            onStartRecording={() => voiceRef.current?.startRecording()}
+            onStopRecording={() => {
+              // Voice ref handles stopping automatically
+              setVoiceSheetOpen(false);
+            }}
+            isRecording={voiceStatus.isListening}
+            isProcessing={voiceStatus.isProcessing}
+            recordingDuration={voiceStatus.recordingDuration}
+          />
+
+          {/* Floating companion */}
+          <FloatingCompanion
+            message={companionMessage}
+            action={companionAction}
+            onDismiss={dismissMessage}
+            visible={!needsOnboarding}
+          />
+        </div>
+      ) : (
+        /* DESKTOP LAYOUT */
+        <>
+          <AutoFocusNotification />
+          <CompanionContextMessage />
+          
+          <HomeShell
         onSettingsClick={handleSettingsClick}
         onCategoryClick={handleCategoryClick}
         onFocusModeClick={handleFocusModeClick}
@@ -388,27 +466,33 @@ const Index = () => {
             />
           </div>
         </HomeCanvas>
-      </HomeShell>
+          </HomeShell>
+        </>
+      )}
       
-      {/* Quick Capture Modal - triggered by Cmd+K */}
-      <QuickCapture
+      {/* Quick Capture Modal - triggered by Cmd+K (desktop only) */}
+      {!isMobile && (
+        <QuickCapture
         open={quickCaptureOpen}
         onOpenChange={setQuickCaptureOpen}
-        onCapture={handleCapture}
-      />
+          onCapture={handleCapture}
+        />
+      )}
 
-      {/* Capture history modal */}
-      <CaptureHistoryModal
+      {/* Capture history modal (desktop only) */}
+      {!isMobile && (
+        <CaptureHistoryModal
         open={showCaptureHistory}
         onOpenChange={setShowCaptureHistory}
         sessions={sessions || []}
         onSessionClick={(session) => {
           // Could add logic to highlight related tasks in the task list
-          console.log('Session clicked:', session);
-        }}
-      />
+            console.log('Session clicked:', session);
+          }}
+        />
+      )}
       
-      {/* Think With Me - render conditionally */}
+      {/* Think With Me - render conditionally (desktop only) */}
       {showThinkWithMe && (
         <Dialog open={showThinkWithMe} onOpenChange={setShowThinkWithMe}>
           <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
@@ -417,20 +501,13 @@ const Index = () => {
         </Dialog>
       )}
       
-      <MalunitaVoice
-        ref={voiceRef} 
-        onRecordingStateChange={setIsRecording}
-        onStatusChange={setVoiceStatus}
-        onPlanningModeActivated={handlePlanningModeActivated}
-      />
-
-      {/* Floating companion for mobile */}
-      {isMobile && (
-        <FloatingCompanion
-          message={companionMessage}
-          action={companionAction}
-          onDismiss={dismissMessage}
-          visible={!needsOnboarding}
+      {/* Voice system (desktop only) */}
+      {!isMobile && (
+        <MalunitaVoice
+          ref={voiceRef} 
+          onRecordingStateChange={setIsRecording}
+          onStatusChange={setVoiceStatus}
+          onPlanningModeActivated={handlePlanningModeActivated}
         />
       )}
     </>
