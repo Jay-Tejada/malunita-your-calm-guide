@@ -18,7 +18,6 @@ import { Layout } from "@/components/Layout";
 import { LoadingScreen } from "@/components/LoadingScreen";
 import { useCutsceneManager } from "./features/cutscenes/useCutsceneManager";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
-import { DevTools } from "@/components/DevTools";
 import { initPerformanceMonitoring } from "@/lib/performance";
 import { NetworkStatusBanner } from "@/components/NetworkStatusBanner";
 
@@ -48,6 +47,7 @@ const AmbientWorlds = lazy(() => import("./pages/AmbientWorlds"));
 const Clusters = lazy(() => import("./pages/Clusters"));
 const TimeTravel = lazy(() => import("./pages/TimeTravel"));
 const Learning = lazy(() => import("./pages/Learning"));
+const Settings = lazy(() => import("./pages/Settings"));
 import { JOURNAL_EVENTS } from "./features/journal/journalEvents";
 import { bondingMeter, BONDING_INCREMENTS } from "./state/bondingMeter";
 
@@ -233,7 +233,6 @@ const App = () => {
             <Toaster />
             <Sonner />
             <NetworkStatusBanner />
-            <DevTools />
           
           {/* Ritual overlays */}
           <AnimatePresence>
@@ -267,6 +266,7 @@ const App = () => {
                   <Route path="/timetravel" element={<TimeTravel />} />
                   <Route path="/reminders" element={<Reminders />} />
                   <Route path="/learning" element={<Learning />} />
+                  <Route path="/settings" element={<Settings />} />
                   {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                   <Route path="*" element={<NotFound />} />
                 </Route>
