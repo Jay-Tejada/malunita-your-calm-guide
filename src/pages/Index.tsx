@@ -406,7 +406,7 @@ const Index = () => {
             />
           </div>
 
-          {/* Voice sheet */}
+           {/* Voice sheet */}
           <VoiceSheet
             open={voiceSheetOpen}
             onOpenChange={setVoiceSheetOpen}
@@ -417,14 +417,6 @@ const Index = () => {
             isRecording={voiceStatus.isListening}
             isProcessing={voiceStatus.isProcessing}
             recordingDuration={voiceStatus.recordingDuration}
-          />
-
-          {/* Floating companion - minimal (drawer only) */}
-          <FloatingCompanion
-            message={companionMessage}
-            action={companionAction}
-            onDismiss={dismissMessage}
-            visible={!needsOnboarding && !!companionMessage}
           />
         </div>
       ) : (
