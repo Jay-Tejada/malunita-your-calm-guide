@@ -793,7 +793,7 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
 
       {/* Event Details Dialog */}
       <Dialog open={isEventDetailsOpen} onOpenChange={setIsEventDetailsOpen}>
-        <DialogContent className="sm:max-w-[425px] rounded-lg" style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.06)' }}>
+        <DialogContent className="sm:max-w-[425px] rounded-xl shadow-sm border-foreground/5" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }}>
           <DialogHeader>
             <DialogTitle className="font-mono text-[16px]">Event Details</DialogTitle>
           </DialogHeader>
@@ -826,7 +826,7 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
                     {selectedEvent.location_lat && selectedEvent.location_lng && mapboxToken && (
                       <button
                         onClick={() => setIsMapFullScreenOpen(true)}
-                        className="w-full h-[120px] rounded-lg overflow-hidden border border-border hover:border-primary transition-colors relative group"
+                        className="w-full h-[120px] rounded-xl overflow-hidden border border-foreground/5 hover:border-foreground/10 transition-colors relative group"
                       >
                         <img
                           src={`https://api.mapbox.com/styles/v1/mapbox/light-v11/static/pin-s+3b82f6(${selectedEvent.location_lng},${selectedEvent.location_lat})/${selectedEvent.location_lng},${selectedEvent.location_lat},13,0/600x240@2x?access_token=${mapboxToken}`}
@@ -874,7 +874,7 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
 
       {/* New Event Dialog */}
       <Dialog open={isNewEventDialogOpen} onOpenChange={setIsNewEventDialogOpen}>
-        <DialogContent className="sm:max-w-[425px] rounded-lg" style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.06)' }}>
+        <DialogContent className="sm:max-w-[425px] rounded-xl shadow-sm border-foreground/5" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }}>
           <DialogHeader>
             <DialogTitle className="font-mono text-[16px]">{selectedEvent ? 'Reschedule Event' : 'Create New Event'}</DialogTitle>
           </DialogHeader>
@@ -950,7 +950,7 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
             {newEventLocationLat && newEventLocationLng && mapboxToken && (
               <button
                 onClick={() => setIsMapFullScreenOpen(true)}
-                className="w-full h-[120px] rounded-lg overflow-hidden border border-border hover:border-primary transition-colors relative group"
+                className="w-full h-[120px] rounded-xl overflow-hidden border border-foreground/5 hover:border-foreground/10 transition-colors relative group"
               >
                 <img
                   src={`https://api.mapbox.com/styles/v1/mapbox/light-v11/static/pin-s+3b82f6(${newEventLocationLng},${newEventLocationLat})/${newEventLocationLng},${newEventLocationLat},13,0/600x240@2x?access_token=${mapboxToken}`}
