@@ -33,6 +33,9 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { OfflineIndicator } from "@/components/OfflineIndicator";
 import { VoiceSheet } from "@/components/mobile/VoiceSheet";
 import { useOfflineStatus } from "@/hooks/useOfflineStatus";
+import { ContextualCard } from "@/components/mobile/ContextualCard";
+import { MobileOrb } from "@/components/mobile/MobileOrb";
+import { useContextualCard } from "@/hooks/useContextualCard";
 
 interface AISummary {
   decisions: string[];
@@ -126,6 +129,9 @@ const Index = () => {
   
   // Mobile-specific state
   const [voiceSheetOpen, setVoiceSheetOpen] = useState(false);
+  
+  // Contextual card for mobile
+  const contextualCard = useContextualCard();
 
   // Initialize keyboard shortcuts
   useKeyboardShortcuts({
@@ -138,6 +144,19 @@ const Index = () => {
       setShowCaptureHistory(false);
     },
   });
+  
+  // Listen for contextual card actions
+  useEffect(() => {
+    const handleOpenDailyPriority = () => {
+      if (dailyPriorityRef.current) {
+        // Trigger daily priority prompt
+        dailyPriorityRef.current.openDialog();
+      }
+    };
+    
+    window.addEventListener('open-daily-priority', handleOpenDailyPriority);
+    return () => window.removeEventListener('open-daily-priority', handleOpenDailyPriority);
+  }, []);
 
   useEffect(() => {
     const {
@@ -358,8 +377,8 @@ const Index = () => {
       <OfflineIndicator />
       
       {isMobile ? (
-        /* MOBILE LAYOUT */
-        <div className="min-h-screen bg-background pb-20">
+        /* MOBILE LAYOUT - Thumb-Optimized with Contextual Intelligence */
+        <div className="min-h-screen bg-background flex flex-col">
           {/* Offline banner */}
           {!isOnline && (
             <div className="sticky top-0 z-50 bg-destructive/90 backdrop-blur-sm text-destructive-foreground text-center py-2 text-sm">
@@ -367,31 +386,23 @@ const Index = () => {
             </div>
           )}
 
-          {/* Main content */}
-          <div className="px-4 pt-6 pb-4">
-            {/* Simplified orb */}
-            <div className="mb-8">
-              <OrbMeditationV2
-                onCapture={handleCapture}
-                onVoiceCapture={handleVoiceCapture}
-                onThinkWithMe={() => setShowThinkWithMe(true)}
-                userName={profile?.companion_name || 'there'}
-                isRecording={voiceStatus.isListening}
-                isProcessing={voiceStatus.isProcessing}
-              />
-            </div>
+          {/* CENTER STAGE - Contextual Card (60% of screen) */}
+          <div className="flex-1 flex items-center justify-center px-4 pt-8 pb-4">
+            <ContextualCard
+              title={contextualCard.title}
+              subtitle={contextualCard.subtitle}
+              icon={contextualCard.icon}
+              onClick={contextualCard.action}
+            />
+          </div>
 
-            {/* Feed with swipeable entries */}
-            <NotebookFeed
-              onEntryClick={(entry) => {
-                console.log('Entry clicked:', entry);
-              }}
-              onEntryComplete={(id) => {
-                handleTaskCreated();
-              }}
-              onEntryDelete={(id) => {
-                handleTaskCreated();
-              }}
+          {/* BOTTOM ZONE - Orb in Thumb Reach (40% of screen) */}
+          <div className="flex items-center justify-center pb-12 pt-8">
+            <MobileOrb
+              onTap={handleVoiceCapture}
+              onLongPress={handleVoiceCapture}
+              isRecording={voiceStatus.isListening}
+              isProcessing={voiceStatus.isProcessing}
             />
           </div>
 
@@ -409,12 +420,12 @@ const Index = () => {
             recordingDuration={voiceStatus.recordingDuration}
           />
 
-          {/* Floating companion */}
+          {/* Floating companion - minimal */}
           <FloatingCompanion
             message={companionMessage}
             action={companionAction}
             onDismiss={dismissMessage}
-            visible={!needsOnboarding}
+            visible={!needsOnboarding && !!companionMessage}
           />
         </div>
       ) : (
