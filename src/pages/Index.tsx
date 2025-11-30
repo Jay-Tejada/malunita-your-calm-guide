@@ -386,36 +386,25 @@ const Index = () => {
             </div>
           )}
 
-          {contextualPrompt.title ? (
-            <>
-              {/* CENTER STAGE - Contextual Card (takes 60% of vertical space) */}
-              <div className="contextual-section flex-[6] flex items-center justify-center pt-[15vh]">
-                <ContextualCard
-                  title={contextualPrompt.title}
-                  subtitle={contextualPrompt.subtitle}
-                  onTap={contextualPrompt.action || undefined}
-                />
-              </div>
-
-              {/* BOTTOM ZONE - Orb in Thumb Reach (takes 40% of vertical space) */}
-              <div className="orb-section flex-[4] flex items-center justify-center pb-12">
-                <SimpleOrb
-                  onTap={handleVoiceCapture}
-                  isRecording={voiceStatus.isListening}
-                  isProcessing={voiceStatus.isProcessing}
-                />
-              </div>
-            </>
-          ) : (
-            /* No contextual card - center the orb perfectly */
-            <div className="flex-1 flex items-center justify-center">
-              <SimpleOrb
-                onTap={handleVoiceCapture}
-                isRecording={voiceStatus.isListening}
-                isProcessing={voiceStatus.isProcessing}
+          {/* CENTER STAGE - Focus text floats in center */}
+          {contextualPrompt.title && (
+            <div className="pt-[35vh] flex items-center justify-center">
+              <ContextualCard
+                title={contextualPrompt.title}
+                subtitle={contextualPrompt.subtitle}
+                onTap={contextualPrompt.action || undefined}
               />
             </div>
           )}
+
+          {/* BOTTOM ZONE - Orb grounded in bottom third */}
+          <div className="mt-auto pb-24 flex items-center justify-center">
+            <SimpleOrb
+              onTap={handleVoiceCapture}
+              isRecording={voiceStatus.isListening}
+              isProcessing={voiceStatus.isProcessing}
+            />
+          </div>
 
            {/* Voice sheet */}
           <VoiceSheet
@@ -455,36 +444,29 @@ const Index = () => {
               onClosePlanning={() => setPlanningMode(false)}
             >
               {/* Minimal desktop home - clean & focused */}
-              {contextualPrompt.title ? (
-                <div className="flex flex-col items-center justify-center min-h-[85vh] gap-24">
-                  {/* CENTER STAGE - Contextual Card */}
-                  <div className="w-full max-w-md">
-                    <ContextualCard
-                      title={contextualPrompt.title}
-                      subtitle={contextualPrompt.subtitle}
-                      onTap={contextualPrompt.action || undefined}
-                    />
+              <div className="relative min-h-[85vh] flex flex-col">
+                {/* CENTER STAGE - Focus text floats in center */}
+                {contextualPrompt.title && (
+                  <div className="pt-[35vh] flex items-center justify-center">
+                    <div className="w-full max-w-md">
+                      <ContextualCard
+                        title={contextualPrompt.title}
+                        subtitle={contextualPrompt.subtitle}
+                        onTap={contextualPrompt.action || undefined}
+                      />
+                    </div>
                   </div>
+                )}
 
-                  {/* BOTTOM - Orb with breathing room */}
-                  <div className="pb-12">
-                    <SimpleOrb
-                      onTap={() => voiceRef.current?.startRecording()}
-                      isRecording={voiceStatus.isListening}
-                      isProcessing={voiceStatus.isProcessing}
-                    />
-                  </div>
-                </div>
-              ) : (
-                /* No contextual card - center the orb perfectly */
-                <div className="flex items-center justify-center min-h-[85vh]">
+                {/* BOTTOM - Orb grounded in bottom third */}
+                <div className="mt-auto pb-16 flex items-center justify-center">
                   <SimpleOrb
                     onTap={() => voiceRef.current?.startRecording()}
                     isRecording={voiceStatus.isListening}
                     isProcessing={voiceStatus.isProcessing}
                   />
                 </div>
-              )}
+              </div>
             </HomeCanvas>
           </HomeShell>
         </>
