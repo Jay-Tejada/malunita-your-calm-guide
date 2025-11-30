@@ -389,9 +389,7 @@ const Index = () => {
             <ContextualCard
               title={contextualPrompt.title}
               subtitle={contextualPrompt.subtitle}
-              icon={contextualPrompt.icon}
               onTap={contextualPrompt.action || undefined}
-              priority={contextualPrompt.priority}
             />
           </div>
 
@@ -448,9 +446,7 @@ const Index = () => {
                   <ContextualCard
                     title={contextualPrompt.title}
                     subtitle={contextualPrompt.subtitle}
-                    icon={contextualPrompt.icon}
                     onTap={contextualPrompt.action || undefined}
-                    priority={contextualPrompt.priority}
                   />
                 </div>
 
