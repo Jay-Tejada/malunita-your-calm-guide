@@ -18,6 +18,8 @@ import {
 interface InboxActionsProps {
   tasks: Task[];
   onSuggestionsGenerated?: (suggestions: TaskSuggestion[]) => void;
+  suggestions: TaskSuggestion[];
+  onApplyAll: () => void;
 }
 
 interface TaskSuggestion {
@@ -27,7 +29,7 @@ interface TaskSuggestion {
   reason?: string;
 }
 
-export function InboxActions({ tasks, onSuggestionsGenerated }: InboxActionsProps) {
+export function InboxActions({ tasks, onSuggestionsGenerated, suggestions, onApplyAll }: InboxActionsProps) {
   const { updateTask } = useTasks();
   const { toast } = useToast();
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
@@ -238,24 +240,36 @@ export function InboxActions({ tasks, onSuggestionsGenerated }: InboxActionsProp
         )}
 
         {/* Organize Inbox */}
-        <Button
-          onClick={handleBatchCategorize}
-          disabled={isOrganizing}
-          variant="ghost"
-          className="inline-flex items-center gap-2 text-sm text-foreground/50 hover:text-foreground/70 border border-foreground/15 rounded-lg px-3 py-1.5 bg-transparent hover:bg-transparent"
-        >
-          {isOrganizing ? (
-            <>
-              <Loader2 className="w-4 h-4 animate-spin" />
-              Organizing...
-            </>
-          ) : (
-            <>
-              <Sparkles className="w-4 h-4" />
-              Organize
-            </>
+        <div className="inline-flex items-center gap-3">
+          <Button
+            onClick={handleBatchCategorize}
+            disabled={isOrganizing}
+            variant="ghost"
+            className="inline-flex items-center gap-2 text-sm text-foreground/50 hover:text-foreground/70 border border-foreground/15 rounded-lg px-3 py-1.5 bg-transparent hover:bg-transparent"
+          >
+            {isOrganizing ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Organizing...
+              </>
+            ) : (
+              <>
+                <Sparkles className="w-4 h-4" />
+                Organize
+              </>
+            )}
+          </Button>
+          
+          {/* Apply All Link */}
+          {suggestions.length > 0 && (
+            <button
+              onClick={onApplyAll}
+              className="text-xs text-muted-foreground/40 hover:text-muted-foreground/60 transition-colors font-mono"
+            >
+              Apply all ({suggestions.length})
+            </button>
           )}
-        </Button>
+        </div>
       </div>
 
       {/* Ambiguous Tasks Confirmation Dialog */}
