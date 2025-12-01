@@ -21,6 +21,7 @@ import { DndContext, DragEndEvent, DragOverlay, PointerSensor, useSensor, useSen
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { TaskCard } from "@/components/TaskCard";
 import { TaskCategoryFeedback } from "@/components/TaskCategoryFeedback";
+import { InboxSuggestionChip } from "@/components/InboxSuggestionChip";
 import { TaskEditDialog } from "@/components/TaskEditDialog";
 import { useToast } from "@/hooks/use-toast";
 import { checkAndHandlePrediction } from "@/utils/predictionChecker";
@@ -40,12 +41,21 @@ import {
   DrawerTitle,
 } from "@/components/ui/drawer";
 
+interface TaskSuggestion {
+  taskId: string;
+  suggestion: 'today' | 'someday' | 'work' | 'home' | 'gym';
+  confidence: number;
+  reason?: string;
+}
+
 interface TaskListProps {
   category?: string;
   onPlanThis?: (title: string) => void;
+  suggestions?: TaskSuggestion[];
+  onClearSuggestions?: () => void;
 }
 
-export const TaskList = ({ category: externalCategory, onPlanThis }: TaskListProps = {}) => {
+export const TaskList = ({ category: externalCategory, onPlanThis, suggestions = [], onClearSuggestions }: TaskListProps = {}) => {
   const { tasks, isLoading, updateTask, deleteTask, createTasks } = useTasks();
   const { categories, createCategory } = useCustomCategories();
   const growth = useCompanionGrowth();
@@ -367,6 +377,49 @@ export const TaskList = ({ category: externalCategory, onPlanThis }: TaskListPro
     });
   };
 
+  const handleApplyInboxSuggestion = async (taskId: string, suggestion: string) => {
+    await handleMoveToDestination(taskId, suggestion);
+    // Remove the suggestion from the list
+    if (onClearSuggestions && suggestions) {
+      const remaining = suggestions.filter(s => s.taskId !== taskId);
+      if (remaining.length === 0) {
+        onClearSuggestions();
+      }
+    }
+  };
+
+  const handleDismissInboxSuggestion = (taskId: string) => {
+    if (onClearSuggestions && suggestions) {
+      const remaining = suggestions.filter(s => s.taskId !== taskId);
+      if (remaining.length === 0) {
+        onClearSuggestions();
+      }
+    }
+  };
+
+  const handleApplyAllSuggestions = async () => {
+    if (suggestions.length === 0) return;
+    
+    try {
+      await Promise.all(
+        suggestions.map(s => handleMoveToDestination(s.taskId, s.suggestion))
+      );
+      
+      toast({
+        title: `Moved ${suggestions.length} tasks`,
+        description: "All suggestions applied",
+      });
+      
+      onClearSuggestions?.();
+    } catch (error) {
+      console.error('Failed to apply all suggestions:', error);
+      toast({
+        title: "Failed to apply suggestions",
+        variant: "destructive",
+      });
+    }
+  };
+
   const getCategoryLabel = (cat: string) => {
     if (cat.startsWith("custom-")) {
       const categoryId = cat.replace('custom-', '');
@@ -514,6 +567,18 @@ export const TaskList = ({ category: externalCategory, onPlanThis }: TaskListPro
           tasks={tasks}
           onApplySuggestion={handleApplySuggestion}
         />
+        
+        {/* Apply All Suggestions Button */}
+        {suggestions.length > 0 && selectedDomain === 'inbox' && (
+          <div className="flex items-center justify-center">
+            <button
+              onClick={handleApplyAllSuggestions}
+              className="text-xs text-muted-foreground/50 hover:text-muted-foreground/70 transition-colors"
+            >
+              Apply all {suggestions.length} suggestions
+            </button>
+          </div>
+        )}
         
         {/* Keyboard shortcuts hint */}
         {filteredTasks.length > 0 && (
@@ -764,6 +829,21 @@ export const TaskList = ({ category: externalCategory, onPlanThis }: TaskListPro
                               <Trash2 className="w-4 h-4" />
                             </Button>
                           </div>
+                          
+                          {/* Show AI suggestion chip for inbox tasks */}
+                          {selectedDomain === 'inbox' && (() => {
+                            const taskSuggestion = suggestions.find(s => s.taskId === task.id);
+                            return taskSuggestion ? (
+                              <div className="pl-6 mt-1">
+                                <InboxSuggestionChip
+                                  suggestion={taskSuggestion.suggestion}
+                                  confidence={taskSuggestion.confidence}
+                                  onApply={() => handleApplyInboxSuggestion(task.id, taskSuggestion.suggestion)}
+                                  onDismiss={() => handleDismissInboxSuggestion(task.id)}
+                                />
+                              </div>
+                            ) : null;
+                          })()}
                           
                           {/* Show feedback component for voice-created tasks */}
                           {task.input_method === 'voice' && !task.completed && (
