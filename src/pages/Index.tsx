@@ -141,6 +141,33 @@ const Index = () => {
   const [focusTaskData, setFocusTaskData] = useState<{ id: string; reminderTime: string | null } | null>(null);
   const isFocusTask = contextualPrompt.subtitle === "Today's main focus";
   
+  // Quick capture state (mobile swipe-up on orb)
+  const [showQuickCapture, setShowQuickCapture] = useState(false);
+  const [captureText, setCaptureText] = useState("");
+  const captureInputRef = useRef<HTMLInputElement>(null);
+  
+  // Auto-focus quick capture input when shown
+  useEffect(() => {
+    if (showQuickCapture && captureInputRef.current) {
+      captureInputRef.current.focus();
+    }
+  }, [showQuickCapture]);
+
+  // Close quick capture on click outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (showQuickCapture && captureInputRef.current && !captureInputRef.current.contains(e.target as Node)) {
+        setShowQuickCapture(false);
+        setCaptureText("");
+      }
+    };
+    
+    if (showQuickCapture) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [showQuickCapture]);
+
   // Fetch focus task data when needed
   useEffect(() => {
     if (isFocusTask && user) {
@@ -417,6 +444,14 @@ const Index = () => {
     }
   };
 
+  const handleQuickCaptureSubmit = async () => {
+    if (!captureText.trim()) return;
+    
+    await handleCapture(captureText);
+    setCaptureText("");
+    setShowQuickCapture(false);
+  };
+
   const handleVoiceCapture = () => {
     if (isMobile) {
       setVoiceSheetOpen(true);
@@ -557,12 +592,37 @@ const Index = () => {
           )}
 
           {/* BOTTOM ZONE - Orb grounded in bottom third */}
-          <div className="mt-auto pb-24 flex items-center justify-center">
-            <SimpleOrb
-              onTap={handleVoiceCapture}
-              isRecording={voiceStatus.isListening}
-              isProcessing={voiceStatus.isProcessing}
-            />
+          <div className="mt-auto pb-24 flex flex-col items-center justify-center relative">
+            {/* Quick capture input - appears above orb on swipe up */}
+            {showQuickCapture && (
+              <div className="absolute bottom-32 left-1/2 -translate-x-1/2 w-[80%] max-w-md animate-fade-in">
+                <input
+                  ref={captureInputRef}
+                  type="text"
+                  value={captureText}
+                  onChange={(e) => setCaptureText(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      handleQuickCaptureSubmit();
+                    } else if (e.key === 'Escape') {
+                      setShowQuickCapture(false);
+                      setCaptureText("");
+                    }
+                  }}
+                  placeholder="Capture a thought..."
+                  className="w-full text-center text-sm font-mono text-foreground/80 bg-background/80 backdrop-blur-sm border-b border-foreground/20 px-4 py-2 focus:outline-none focus:border-foreground/40 placeholder:text-muted-foreground/50"
+                />
+              </div>
+            )}
+            
+            <div className={`transition-transform duration-200 ${showQuickCapture ? 'translate-y-5' : ''}`}>
+              <SimpleOrb
+                onTap={handleVoiceCapture}
+                onSwipeUp={() => setShowQuickCapture(true)}
+                isRecording={voiceStatus.isListening}
+                isProcessing={voiceStatus.isProcessing}
+              />
+            </div>
           </div>
 
            {/* Voice sheet */}
