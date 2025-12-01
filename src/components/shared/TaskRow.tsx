@@ -21,17 +21,17 @@ export const TaskRow = ({ task, onComplete, onDelete, onEdit }: TaskRowProps) =>
 
   const handleComplete = async () => {
     setIsCompleting(true);
-    await onComplete(task.id);
     
-    // Brief delay for animation, then the row will be filtered out by parent
-    setTimeout(() => {
+    // Wait for animation
+    setTimeout(async () => {
+      await onComplete(task.id);
       setIsCompleting(false);
-    }, 300);
+    }, 400);
   };
 
   return (
     <div
-      className="flex items-start py-3 group"
+      className={`flex items-start py-3 group ${isCompleting ? 'task-completing' : ''}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >

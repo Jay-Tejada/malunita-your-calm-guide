@@ -496,6 +496,36 @@ All colors MUST be HSL.
     }
   }
 
+  /* Task completion strikethrough animation */
+  @keyframes strikethrough {
+    from {
+      width: 0;
+    }
+    to {
+      width: 100%;
+    }
+  }
+
+  .task-completing {
+    position: relative;
+  }
+
+  .task-completing::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    height: 1px;
+    background: currentColor;
+    opacity: 0.4;
+    animation: strikethrough 300ms ease-out forwards;
+  }
+
+  .task-completing span {
+    opacity: 0.4;
+    transition: opacity 300ms ease-out;
+  }
+
   /* Emotion-based pulse animations */
   @keyframes emotion-pulse {
     0%, 100% {

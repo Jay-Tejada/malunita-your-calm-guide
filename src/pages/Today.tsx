@@ -12,6 +12,7 @@ const Today = () => {
   const [focusInput, setFocusInput] = useState('');
   const [quickAddInput, setQuickAddInput] = useState('');
   const [showCompleted, setShowCompleted] = useState(false);
+  const [completingTasks, setCompletingTasks] = useState<Set<string>>(new Set());
   
   const todayTasks = tasks?.filter(t => 
     t.scheduled_bucket === 'today' && !t.completed
@@ -76,13 +77,22 @@ const Today = () => {
   };
 
   const handleCompleteTask = async (taskId: string) => {
-    await updateTask({ 
-      id: taskId, 
-      updates: { completed: true } 
-    });
-    toast({
-      description: "Completed",
-    });
+    setCompletingTasks(prev => new Set(prev).add(taskId));
+    
+    setTimeout(async () => {
+      await updateTask({ 
+        id: taskId, 
+        updates: { completed: true } 
+      });
+      toast({
+        description: "Completed",
+      });
+      setCompletingTasks(prev => {
+        const next = new Set(prev);
+        next.delete(taskId);
+        return next;
+      });
+    }, 400);
   };
 
   return (
@@ -104,9 +114,9 @@ const Today = () => {
         <div className="mb-8">
           {focusTask ? (
             // Show focus task
-            <div className="flex items-start gap-3 py-4">
+            <div className={`flex items-start gap-3 py-4 ${completingTasks.has(focusTask.id) ? 'task-completing' : ''}`}>
               <button
-                onClick={() => updateTask({ id: focusTask.id, updates: { completed: true } })}
+                onClick={() => handleCompleteTask(focusTask.id)}
                 className="w-6 h-6 rounded-full border-2 border-foreground/30 hover:border-foreground/50 flex-shrink-0 mt-0.5"
               />
               <span className="font-mono text-base text-foreground/90 font-medium">{focusTask.title}</span>
@@ -137,9 +147,9 @@ const Today = () => {
             </h3>
             <div className="space-y-2">
               {regularTasks.map(task => (
-                <div key={task.id} className="flex items-start gap-3 py-3">
+                <div key={task.id} className={`flex items-start gap-3 py-3 ${completingTasks.has(task.id) ? 'task-completing' : ''}`}>
                   <button
-                    onClick={() => updateTask({ id: task.id, updates: { completed: true } })}
+                    onClick={() => handleCompleteTask(task.id)}
                     className="w-5 h-5 rounded-full border border-foreground/20 hover:border-foreground/40 flex-shrink-0 mt-0.5"
                   />
                   <span className="font-mono text-sm text-foreground/80">{task.title}</span>
