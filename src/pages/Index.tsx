@@ -36,6 +36,7 @@ import { ContextualCard } from "@/components/mobile/ContextualCard";
 import { SimpleOrb } from "@/components/mobile/SimpleOrb";
 import { useContextualPrompt } from "@/hooks/useContextualPrompt";
 import { Check, Clock, Pencil } from "lucide-react";
+import CompanionMessage from "@/components/CompanionMessage";
 
 interface AISummary {
   decisions: string[];
@@ -601,7 +602,7 @@ const Index = () => {
           )}
 
           {/* BOTTOM ZONE - Orb grounded in bottom third */}
-          <div className="mt-auto pb-24 flex flex-col items-center justify-center relative">
+          <div className="mt-auto pb-24 flex flex-col items-center justify-center relative gap-6">
             <div className={`transition-transform duration-200 ${showQuickCapture ? 'translate-y-5' : ''}`}>
               <SimpleOrb
                 onTap={handleVoiceCapture}
@@ -609,6 +610,11 @@ const Index = () => {
                 isRecording={voiceStatus.isListening}
                 isProcessing={voiceStatus.isProcessing}
               />
+            </div>
+            
+            {/* Companion message - below orb */}
+            <div className="min-h-[20px]">
+              <CompanionMessage />
             </div>
           </div>
 
@@ -783,6 +789,11 @@ const Index = () => {
                       Click orb or press Q to capture
                     </p>
                   )}
+                  
+                  {/* Companion message - below orb */}
+                  <div className="min-h-[20px]">
+                    <CompanionMessage />
+                  </div>
                 </div>
               </div>
             </HomeCanvas>
