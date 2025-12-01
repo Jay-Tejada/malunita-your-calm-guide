@@ -108,13 +108,20 @@ export const QuickCapture = ({ isOpen, onClose, variant, onCapture }: QuickCaptu
   };
   
   const handleKeyDown = (e: React.KeyboardEvent) => {
+    console.log('QuickCapture: handleKeyDown fired, key:', e.key, 'shiftKey:', e.shiftKey);
+    
     if (e.key === 'Enter' && !e.shiftKey) {
+      console.log('QuickCapture: Enter pressed, calling handleSubmit');
       e.preventDefault();
+      e.stopPropagation();
       handleSubmit(false);
     } else if (e.key === 'Enter' && e.shiftKey && variant === 'desktop') {
+      console.log('QuickCapture: Shift+Enter pressed, calling handleSubmit with keepOpen');
       e.preventDefault();
+      e.stopPropagation();
       handleSubmit(true);
     } else if (e.key === 'Escape') {
+      console.log('QuickCapture: Escape pressed, closing');
       onClose();
       setInput('');
     }
