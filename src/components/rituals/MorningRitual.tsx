@@ -77,10 +77,17 @@ const getSmartInboxPicks = (tasks: Task[] | undefined) => {
 const MorningRitual = ({ onComplete, onDismiss }: MorningRitualProps) => {
   const [step, setStep] = useState(1);
   const [focusInput, setFocusInput] = useState('');
+  const [showAll, setShowAll] = useState(false);
   const { tasks, updateTask } = useTasks();
   
   // Get smart inbox picks with reasoning
   const smartPicks = getSmartInboxPicks(tasks);
+  
+  // Get all inbox items
+  const allInbox = tasks?.filter(t => (t.category === 'inbox' || !t.category) && !t.completed) || [];
+  
+  // Determine which tasks to display
+  const displayedTasks = showAll ? allInbox : smartPicks;
   
   const carryOver = tasks?.filter(t => 
     t.scheduled_bucket === 'today' && !t.completed
@@ -189,12 +196,12 @@ const MorningRitual = ({ onComplete, onDismiss }: MorningRitualProps) => {
             )}
             
             {/* Smart inbox picks with reasoning */}
-            {smartPicks.length > 0 && (
+            {displayedTasks.length > 0 && (
               <div className="mb-6">
                 <p className="text-[10px] uppercase tracking-widest text-muted-foreground/40 mb-3">
                   From your inbox
                 </p>
-                {smartPicks.map(task => (
+                {displayedTasks.map(task => (
                   <div key={task.id} className="py-3 border-b border-foreground/5">
                     {/* Task text */}
                     <p className="text-sm text-foreground/60 font-mono mb-1">
@@ -204,7 +211,7 @@ const MorningRitual = ({ onComplete, onDismiss }: MorningRitualProps) => {
                     {/* Reason tag + action */}
                     <div className="flex items-center justify-between">
                       <span className="text-[10px] text-muted-foreground/40">
-                        {task.reason}
+                        {showAll ? 'From your inbox' : (task as any).reason}
                       </span>
                       <button
                         onClick={() => handleMoveToToday(task.id)}
@@ -215,6 +222,16 @@ const MorningRitual = ({ onComplete, onDismiss }: MorningRitualProps) => {
                     </div>
                   </div>
                 ))}
+                
+                {/* Toggle to show all inbox items */}
+                {allInbox.length > 3 && (
+                  <button
+                    onClick={() => setShowAll(!showAll)}
+                    className="w-full text-center text-xs text-muted-foreground/40 hover:text-muted-foreground/60 py-2 mt-2"
+                  >
+                    {showAll ? 'Show less' : `View all ${allInbox.length} inbox items`}
+                  </button>
+                )}
               </div>
             )}
             
