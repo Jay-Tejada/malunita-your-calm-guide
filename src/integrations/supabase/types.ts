@@ -1590,6 +1590,30 @@ export type Database = {
         }
         Relationships: []
       }
+      user_patterns: {
+        Row: {
+          id: string
+          pattern_data: Json
+          pattern_type: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          pattern_data?: Json
+          pattern_type: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          id?: string
+          pattern_data?: Json
+          pattern_type?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_preferences: {
         Row: {
           preferences: Json
@@ -1729,6 +1753,10 @@ export type Database = {
           unlocks_count: number
           user_id: string
         }[]
+      }
+      update_user_pattern: {
+        Args: { p_data: Json; p_pattern_type: string; p_user_id: string }
+        Returns: undefined
       }
     }
     Enums: {

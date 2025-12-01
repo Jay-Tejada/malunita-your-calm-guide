@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { useTasks } from './useTasks';
+import { useUserPatterns, getPeakCompletionHour } from './useUserPatterns';
 
 interface CompanionMessage {
   text: string;
@@ -8,6 +9,7 @@ interface CompanionMessage {
 
 export const useCompanionMessage = (): CompanionMessage | null => {
   const { tasks } = useTasks();
+  const { data: patterns } = useUserPatterns();
   
   return useMemo(() => {
     const now = new Date();
@@ -112,6 +114,15 @@ export const useCompanionMessage = (): CompanionMessage | null => {
       return { 
         text: `Still focused on "${focusTask.title.slice(0, 25)}${focusTask.title.length > 25 ? '...' : ''}"?`, 
         type: 'nudge' 
+      };
+    }
+    
+    // 4.5. PATTERN-BASED POWER HOUR DETECTION
+    const peakHour = getPeakCompletionHour(patterns);
+    if (peakHour !== null && hour === peakHour && completedToday === 0 && remainingToday > 0) {
+      return {
+        text: "This is usually your power hour. Ready?",
+        type: 'nudge'
       };
     }
     
@@ -227,5 +238,5 @@ export const useCompanionMessage = (): CompanionMessage | null => {
       type: 'greeting' 
     };
     
-  }, [tasks]);
+  }, [tasks, patterns]);
 };
