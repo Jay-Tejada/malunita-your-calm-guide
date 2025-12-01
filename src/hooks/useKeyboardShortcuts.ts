@@ -88,6 +88,14 @@ export function useKeyboardShortcuts(options: KeyboardShortcutsOptions = {}) {
       // Don't trigger shortcuts when typing (except Escape handled above)
       if (isTyping(target)) return;
 
+      // Quick Capture: Q key (standalone)
+      if (e.key === 'q' && !modKey && !e.shiftKey) {
+        e.preventDefault();
+        options.onQuickCapture?.();
+        showHintOnce('quick-capture-q', `Press Q anytime to quickly capture tasks`);
+        return;
+      }
+
       // Quick Capture: Cmd/Ctrl + K
       if (modKey && e.key === 'k') {
         e.preventDefault();
