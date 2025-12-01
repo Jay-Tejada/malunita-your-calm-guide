@@ -21,13 +21,13 @@ export const PageHeader = ({ title, onBack, onCompanionClick }: PageHeaderProps)
   return (
     <header className="fixed top-0 left-0 right-0 h-14 bg-background border-b border-foreground/5 z-10">
       <div className="flex items-center justify-between px-4 h-14">
-        {/* Left: Back arrow only */}
+        {/* Left: Back arrow only - larger tap target */}
         <button 
           onClick={handleBack} 
-          className="text-foreground/30 hover:text-foreground/50 p-2 -ml-2 transition-colors"
+          className="text-foreground/30 hover:text-foreground/50 p-3 -ml-3 transition-colors"
           aria-label="Go back"
         >
-          <ChevronLeft className="w-5 h-5" />
+          <ChevronLeft className="w-6 h-6" />
         </button>
         
         {/* Center: Page title - absolutely centered */}
@@ -36,7 +36,7 @@ export const PageHeader = ({ title, onBack, onCompanionClick }: PageHeaderProps)
         </span>
         
         {/* Right: Empty spacer for alignment */}
-        <div className="w-9" />
+        <div className="w-10" />
       </div>
     </header>
   );

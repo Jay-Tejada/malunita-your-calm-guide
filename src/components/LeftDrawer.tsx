@@ -449,7 +449,7 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate, onSearchOpen }: LeftDr
                         onSearchOpen?.();
                         onClose();
                       }}
-                      className="w-full flex items-center gap-3 px-4 py-3 text-foreground/50 hover:text-foreground/70 hover:bg-foreground/[0.03] transition-colors rounded-lg"
+                      className="w-full flex items-center gap-3 px-4 py-4 text-foreground/50 hover:text-foreground/70 hover:bg-foreground/[0.03] transition-colors rounded-lg min-h-[48px]"
                     >
                       <SearchIcon className="w-4 h-4" />
                       <span className="font-mono text-sm">Search</span>
@@ -481,7 +481,7 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate, onSearchOpen }: LeftDr
                           <button
                             key={category.id}
                             onClick={() => handleCategoryClick(category.id, category.route)}
-                            className="text-left py-2 px-0 font-mono text-sm text-foreground/60 hover:text-foreground/90 transition-colors"
+                            className="text-left py-4 px-4 font-mono text-sm text-foreground/60 hover:text-foreground/90 hover:bg-foreground/[0.03] transition-colors rounded-lg min-h-[48px]"
                           >
                             {category.label}
                           </button>
@@ -501,7 +501,7 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate, onSearchOpen }: LeftDr
                           <button
                             key={category.id}
                             onClick={() => handleCategoryClick(category.id, category.route)}
-                            className="text-left py-2 px-0 font-mono text-sm text-foreground/60 hover:text-foreground/90 transition-colors"
+                            className="text-left py-4 px-4 font-mono text-sm text-foreground/60 hover:text-foreground/90 hover:bg-foreground/[0.03] transition-colors rounded-lg min-h-[48px]"
                           >
                             {category.label}
                           </button>
@@ -548,7 +548,7 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate, onSearchOpen }: LeftDr
                                   onNavigate(`/project/${project.id}`);
                                 });
                               }}
-                              className="text-left py-2 px-0 font-mono text-sm text-foreground/60 hover:text-foreground/90 transition-colors"
+                              className="text-left py-4 px-4 font-mono text-sm text-foreground/60 hover:text-foreground/90 hover:bg-foreground/[0.03] transition-colors rounded-lg min-h-[48px]"
                             >
                               {project.title}
                             </button>
@@ -566,7 +566,7 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate, onSearchOpen }: LeftDr
                       </h3>
                       <button
                         onClick={() => handleCategoryClick("calendar")}
-                        className="text-left py-2 px-0 font-mono text-sm text-foreground/60 hover:text-foreground/90 transition-colors w-full"
+                        className="text-left py-4 px-4 font-mono text-sm text-foreground/60 hover:text-foreground/90 hover:bg-foreground/[0.03] transition-colors w-full rounded-lg min-h-[48px]"
                       >
                         Calendar
                       </button>
