@@ -31,6 +31,11 @@ const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const TestCore = lazy(() => import("./pages/TestCore"));
 const TestAll = lazy(() => import("./pages/TestAll"));
 const Inbox = lazy(() => import("./pages/Inbox"));
+const Today = lazy(() => import("./pages/Today"));
+const Someday = lazy(() => import("./pages/Someday"));
+const Work = lazy(() => import("./pages/Work"));
+const HomeTasks = lazy(() => import("./pages/HomeTasks"));
+const Gym = lazy(() => import("./pages/Gym"));
 const Notifications = lazy(() => import("./pages/Notifications"));
 const Calendar = lazy(() => import("./pages/Calendar"));
 const DailySession = lazy(() => import("./pages/DailySession"));
@@ -249,7 +254,13 @@ const App = () => {
               <Routes>
                 <Route element={<Layout />}>
                   <Route path="/" element={<Index />} />
+                  <Route path="/today" element={<Today />} />
                   <Route path="/inbox" element={<Inbox />} />
+                  <Route path="/someday" element={<Someday />} />
+                  <Route path="/work" element={<Work />} />
+                  <Route path="/home-tasks" element={<HomeTasks />} />
+                  <Route path="/gym" element={<Gym />} />
+                  <Route path="/journal" element={<Journal />} />
                   <Route path="/calendar" element={<Calendar />} />
                   <Route path="/daily-session" element={<DailySession />} />
                   <Route path="/weekly-insights" element={<WeeklyInsights />} />
@@ -258,7 +269,6 @@ const App = () => {
                   <Route path="/notifications" element={<Notifications />} />
                   <Route path="/backup" element={<Backup />} />
                   <Route path="/customization" element={<Customization />} />
-                  <Route path="/journal" element={<Journal />} />
                   <Route path="/monthly-insights" element={<MonthlyInsights />} />
                   <Route path="/quests" element={<Quests />} />
                   <Route path="/ambient-worlds" element={<AmbientWorlds />} />
