@@ -2,7 +2,14 @@ import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
-import { Trash2, User, Clock, Bell, Star, MapPin } from "lucide-react";
+import { Trash2, User, Clock, Bell, Star, MapPin, ArrowRightFromLine } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useTasks, Task } from "@/hooks/useTasks";
 import { useCustomCategories } from "@/hooks/useCustomCategories";
 import { useCompanionGrowth } from "@/hooks/useCompanionGrowth";
@@ -320,6 +327,46 @@ export const TaskList = ({ category: externalCategory, onPlanThis }: TaskListPro
     setTaskToMove(null);
   };
 
+  const handleMoveToDestination = async (taskId: string, destination: string) => {
+    const today = new Date().toISOString().split('T')[0];
+    
+    let updates: any = {};
+    
+    if (destination === 'today') {
+      updates = {
+        is_focus: true,
+        focus_date: today,
+        scheduled_bucket: 'today',
+        category: null,
+      };
+    } else if (destination === 'someday') {
+      updates = {
+        is_focus: false,
+        focus_date: null,
+        scheduled_bucket: 'someday',
+        category: null,
+      };
+    } else {
+      // Moving to a category (work, home, gym)
+      updates = {
+        category: destination,
+        is_focus: false,
+        focus_date: null,
+      };
+    }
+    
+    await updateTask({ id: taskId, updates });
+    
+    const destinationLabel = destination === 'today' ? 'Today' 
+      : destination === 'someday' ? 'Someday'
+      : destination.charAt(0).toUpperCase() + destination.slice(1);
+    
+    toast({
+      title: "Moved to " + destinationLabel,
+      description: "Task has been moved",
+    });
+  };
+
   const getCategoryLabel = (cat: string) => {
     if (cat.startsWith("custom-")) {
       const categoryId = cat.replace('custom-', '');
@@ -552,17 +599,61 @@ export const TaskList = ({ category: externalCategory, onPlanThis }: TaskListPro
                                  onCreateTasks={handleCreateSubtasks}
                                  onPlanThis={onPlanThis}
                                />
-                             {selectedDomain === "inbox" && (
-                               <QuickSendButton taskId={task.id} taskTitle={task.title} />
-                             )}
-                             <Button
-                               variant="ghost"
-                               size="icon"
-                               onClick={() => handleDelete(task.id)}
-                               className="shrink-0 text-muted-foreground hover:text-destructive"
-                             >
-                               <Trash2 className="w-4 h-4" />
-                             </Button>
+                              {selectedDomain === "inbox" ? (
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="shrink-0 text-foreground/30 hover:text-foreground/50"
+                                      title="Move to"
+                                    >
+                                      <ArrowRightFromLine className="w-5 h-5" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end" className="min-w-[140px]">
+                                    <DropdownMenuItem
+                                      onClick={() => handleMoveToDestination(task.id, 'today')}
+                                      className="font-mono text-sm"
+                                    >
+                                      Today
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                      onClick={() => handleMoveToDestination(task.id, 'someday')}
+                                      className="font-mono text-sm"
+                                    >
+                                      Someday
+                                    </DropdownMenuItem>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem
+                                      onClick={() => handleMoveToDestination(task.id, 'work')}
+                                      className="font-mono text-sm"
+                                    >
+                                      Work
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                      onClick={() => handleMoveToDestination(task.id, 'home')}
+                                      className="font-mono text-sm"
+                                    >
+                                      Home
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                      onClick={() => handleMoveToDestination(task.id, 'gym')}
+                                      className="font-mono text-sm"
+                                    >
+                                      Gym
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              ) : null}
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleDelete(task.id)}
+                                className="shrink-0 text-muted-foreground hover:text-destructive"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
                            </div>
                          </div>
                        ))}
@@ -598,18 +689,63 @@ export const TaskList = ({ category: externalCategory, onPlanThis }: TaskListPro
                                onCreateTasks={handleCreateSubtasks}
                                onPlanThis={onPlanThis}
                              />
-                            {selectedDomain === "inbox" && (
-                              <QuickSendButton taskId={task.id} taskTitle={task.title} />
+                            {selectedDomain === "inbox" ? (
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="shrink-0 text-foreground/30 hover:text-foreground/50"
+                                    title="Move to"
+                                  >
+                                    <ArrowRightFromLine className="w-5 h-5" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="min-w-[140px]">
+                                  <DropdownMenuItem
+                                    onClick={() => handleMoveToDestination(task.id, 'today')}
+                                    className="font-mono text-sm"
+                                  >
+                                    Today
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    onClick={() => handleMoveToDestination(task.id, 'someday')}
+                                    className="font-mono text-sm"
+                                  >
+                                    Someday
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem
+                                    onClick={() => handleMoveToDestination(task.id, 'work')}
+                                    className="font-mono text-sm"
+                                  >
+                                    Work
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    onClick={() => handleMoveToDestination(task.id, 'home')}
+                                    className="font-mono text-sm"
+                                  >
+                                    Home
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    onClick={() => handleMoveToDestination(task.id, 'gym')}
+                                    className="font-mono text-sm"
+                                  >
+                                    Gym
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            ) : (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleEditTask(task)}
+                                className="shrink-0 text-muted-foreground hover:text-foreground"
+                                title="Edit task & add location"
+                              >
+                                <MapPin className="w-4 h-4" />
+                              </Button>
                             )}
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleEditTask(task)}
-                              className="shrink-0 text-muted-foreground hover:text-foreground"
-                              title="Edit task & add location"
-                            >
-                              <MapPin className="w-4 h-4" />
-                            </Button>
                             <Button
                               variant="ghost"
                               size="icon"
