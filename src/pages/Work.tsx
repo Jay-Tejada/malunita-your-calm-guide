@@ -3,11 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { ChevronLeft } from 'lucide-react';
 import { useTasks } from '@/hooks/useTasks';
 import { supabase } from '@/integrations/supabase/client';
+import { MobileTaskCapture } from '@/components/shared/MobileTaskCapture';
+import { DesktopTaskCapture } from '@/components/shared/DesktopTaskCapture';
 
 const Work = () => {
   const navigate = useNavigate();
   const { tasks, updateTask } = useTasks();
-  const [input, setInput] = useState('');
   const [showCompleted, setShowCompleted] = useState(false);
   
   const workTasks = tasks?.filter(t => 
@@ -18,19 +19,15 @@ const Work = () => {
     t.category === 'work' && t.completed
   ) || [];
 
-  const handleCapture = async (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && input.trim()) {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      
-      await supabase.from('tasks').insert({
-        user_id: user.id,
-        title: input.trim(),
-        category: 'work'
-      });
-      
-      setInput('');
-    }
+  const handleCapture = async (text: string) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    
+    await supabase.from('tasks').insert({
+      user_id: user.id,
+      title: text,
+      category: 'work'
+    });
   };
 
   return (
@@ -44,19 +41,15 @@ const Work = () => {
         <div className="w-5" />
       </div>
 
-      <div className="px-4 pt-4">
-        {/* Capture input */}
-        <input
-          type="text"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={handleCapture}
-          placeholder="Add a work task..."
-          className="w-full bg-transparent border-b border-foreground/10 py-3 font-mono text-sm text-foreground/80 placeholder:text-muted-foreground/40 focus:outline-none focus:border-foreground/20"
+      <div className="px-4 pt-4 pb-24 md:pb-0">
+        {/* Desktop capture input */}
+        <DesktopTaskCapture 
+          placeholder="Add a work task..." 
+          onCapture={handleCapture} 
         />
 
         {/* Task list */}
-        <div className="mt-4">
+        <div className="mt-4 md:mt-0">
           {workTasks.length === 0 ? (
             <p className="text-muted-foreground/30 text-center py-12">No work tasks</p>
           ) : (
@@ -84,6 +77,12 @@ const Work = () => {
           </button>
         )}
       </div>
+      
+      {/* Mobile capture input */}
+      <MobileTaskCapture 
+        placeholder="Add a work task..." 
+        onCapture={handleCapture} 
+      />
     </div>
   );
 };
