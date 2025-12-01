@@ -1,6 +1,7 @@
-import { useMemo } from 'react';
+import { useMemo, useEffect, useState } from 'react';
 import { useTasks } from './useTasks';
 import { useUserPatterns, getPeakCompletionHour } from './useUserPatterns';
+import { useProgressStats } from './useProgressStats';
 
 interface CompanionMessage {
   text: string;
@@ -10,6 +11,18 @@ interface CompanionMessage {
 export const useCompanionMessage = (): CompanionMessage | null => {
   const { tasks } = useTasks();
   const { data: patterns } = useUserPatterns();
+  const { completedToday: progressCompletedToday, streak } = useProgressStats();
+  const [personalBest, setPersonalBest] = useState(() => {
+    return parseInt(localStorage.getItem('malunita_best_day') || '0');
+  });
+  
+  // Check for daily high score and update
+  useEffect(() => {
+    if (progressCompletedToday > personalBest && progressCompletedToday >= 5) {
+      localStorage.setItem('malunita_best_day', progressCompletedToday.toString());
+      setPersonalBest(progressCompletedToday);
+    }
+  }, [progressCompletedToday, personalBest]);
   
   return useMemo(() => {
     const now = new Date();
@@ -21,6 +34,9 @@ export const useCompanionMessage = (): CompanionMessage | null => {
     const completedToday = todayTasks.filter(t => t.completed).length;
     const remainingToday = todayTasks.filter(t => !t.completed).length;
     const inboxCount = tasks?.filter(t => (t.category === 'inbox' || !t.category) && !t.completed).length || 0;
+    
+    // Total completed all-time
+    const totalCompleted = tasks?.filter(t => t.completed).length || 0;
     
     // Work pattern detection
     const workTasksToday = todayTasks.filter(t => t.category === 'work' && !t.completed).length;
@@ -47,7 +63,57 @@ export const useCompanionMessage = (): CompanionMessage | null => {
     
     // Priority message selection (first match wins)
     
-    // 1. CELEBRATIONS (highest priority — reward good behavior)
+    // 0. MILESTONE CELEBRATIONS (highest priority — rare & meaningful)
+    
+    // Streak milestones
+    if (streak === 7) {
+      return {
+        text: "One week streak. You're building a habit.",
+        type: 'celebration'
+      };
+    }
+    if (streak === 30) {
+      return {
+        text: "30 days. This is who you are now.",
+        type: 'celebration'
+      };
+    }
+    if (streak === 100) {
+      return {
+        text: "100 days. Incredible.",
+        type: 'celebration'
+      };
+    }
+    
+    // Total completion milestones
+    if (totalCompleted === 10) {
+      return {
+        text: "10 tasks done. You're getting the hang of this.",
+        type: 'celebration'
+      };
+    }
+    if (totalCompleted === 100) {
+      return {
+        text: "100 tasks completed. Look at you go.",
+        type: 'celebration'
+      };
+    }
+    if (totalCompleted === 500) {
+      return {
+        text: "500 done. You've built something real.",
+        type: 'celebration'
+      };
+    }
+    
+    // Daily high score (only if improved and >= 5)
+    if (completedToday > personalBest && completedToday >= 5) {
+      return {
+        text: `New personal best. ${completedToday} in one day.`,
+        type: 'celebration'
+      };
+    }
+    
+    // 1. CELEBRATIONS (reward good behavior)
     if (completedToday >= 5) {
       return { 
         text: "You're on fire today. 5 tasks crushed.", 
@@ -227,16 +293,16 @@ export const useCompanionMessage = (): CompanionMessage | null => {
     // 10% chance to show wisdom instead of default
     if (Math.random() < 0.1) {
       return {
-        text: wisdomMessages[Math.floor(Math.random() * wisdomMessages.length)],
-        type: 'insight'
-      };
-    }
-    
-    // 11. FALLBACK — all clear
-    return { 
-      text: "All clear. What's on your mind?", 
-      type: 'greeting' 
+      text: wisdomMessages[Math.floor(Math.random() * wisdomMessages.length)],
+      type: 'insight'
     };
-    
-  }, [tasks, patterns]);
+  }
+  
+  // 11. FALLBACK — all clear
+  return { 
+    text: "All clear. What's on your mind?", 
+    type: 'greeting' 
+  };
+  
+}, [tasks, patterns, streak, personalBest, progressCompletedToday]);
 };
