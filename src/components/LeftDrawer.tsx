@@ -2,6 +2,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Plus, ChevronLeft, Circle, Check } from "lucide-react";
 import { useSwipeable } from "react-swipeable";
+import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useTasks } from "@/hooks/useTasks";
 import { useProjectTasks } from "@/hooks/useProjectTasks";
@@ -48,6 +49,7 @@ const spaceCategories = [
 const calendarCategory = { id: "calendar", label: "Calendar", filter: (task: any) => task.reminder_time !== null };
 
 export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => {
+  const navigate = useNavigate();
   const [drawerMode, setDrawerMode] = useState<DrawerMode>("root");
   const { tasks, updateTask, createTasks, deleteTask } = useTasks();
   const { data: projectTasks } = useProjectTasks();
@@ -79,7 +81,7 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
       setDrawerMode("calendar");
     } else if (route) {
       // Navigate to the page and close drawer
-      onNavigate(route);
+      navigate(route);
       onClose();
     }
   };
