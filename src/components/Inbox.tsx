@@ -16,6 +16,7 @@ interface InboxProps {
 export const Inbox = ({ onMoveToToday }: InboxProps) => {
   const [items, setItems] = useState<InboxItem[]>([]);
   const [inputValue, setInputValue] = useState("");
+  const [expandedTask, setExpandedTask] = useState<string | null>(null);
 
   const handleAdd = () => {
     if (!inputValue.trim()) return;
@@ -76,75 +77,74 @@ export const Inbox = ({ onMoveToToday }: InboxProps) => {
 
       {/* Inbox Items */}
       {items.length > 0 && (
-        <div className="space-y-2">
+        <div className="divide-y divide-foreground/5">
           {items.map((item) => (
-            <div
-              key={item.id}
-              className="p-4 bg-card rounded-xl border border-secondary flex items-start justify-between gap-3 group"
-            >
-              <p className="text-sm text-foreground flex-1">{item.text}</p>
-              
-              <div className="flex items-center gap-1 shrink-0">
-                {!item.category && (
-                  <>
-                    <Button
-                      onClick={() => handleCategorize(item.id, "today")}
-                      size="sm"
-                      variant="ghost"
-                      className="h-7 px-2 text-xs"
-                      title="Move to Today"
-                    >
-                      Today
-                    </Button>
-                    <Button
-                      onClick={() => handleCategorize(item.id, "this-week")}
-                      size="sm"
-                      variant="ghost"
-                      className="h-7 px-2 text-xs"
-                      title="This Week"
-                    >
-                      Week
-                    </Button>
-                    <Button
-                      onClick={() => handleCategorize(item.id, "later")}
-                      size="sm"
-                      variant="ghost"
-                      className="h-7 px-2 text-xs"
-                      title="Later"
-                    >
-                      Later
-                    </Button>
-                  </>
-                )}
+            <div key={item.id}>
+              {/* Main row */}
+              <div 
+                onClick={() => setExpandedTask(expandedTask === item.id ? null : item.id)}
+                className="flex items-start gap-3 px-4 py-3 cursor-pointer hover:bg-foreground/[0.02] transition-colors"
+              >
+                {/* Checkbox - stops propagation so tap doesn't expand */}
+                <button 
+                  onClick={(e) => { 
+                    e.stopPropagation(); 
+                    handleRemove(item.id); 
+                  }}
+                  className="w-5 h-5 mt-0.5 rounded-full border border-foreground/20 hover:border-foreground/40 flex-shrink-0"
+                />
                 
-                {item.category && (
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-muted-foreground">
-                      {item.category === "this-week" ? "This Week" : item.category === "later" ? "Later" : ""}
-                    </span>
-                    {item.category !== "today" && (
-                      <Button
-                        onClick={() => handleCategorize(item.id, "today")}
-                        size="icon"
-                        variant="ghost"
-                        className="h-7 w-7"
-                        title="Move to Today"
-                      >
-                        <MoveRight className="h-3 w-3" />
-                      </Button>
-                    )}
-                  </div>
-                )}
-                
-                <Button
-                  onClick={() => handleRemove(item.id)}
-                  size="icon"
-                  variant="ghost"
-                  className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
-                >
-                  <X className="h-3 w-3" />
-                </Button>
+                {/* Task text */}
+                <p className="flex-1 font-mono text-sm text-foreground/70 leading-relaxed">
+                  {item.text}
+                </p>
               </div>
+              
+              {/* Actions - revealed on tap */}
+              {expandedTask === item.id && (
+                <div className="flex items-center gap-6 px-4 py-2 pl-12 bg-foreground/[0.015]">
+                  <button 
+                    onClick={() => { 
+                      handleCategorize(item.id, "today"); 
+                      setExpandedTask(null); 
+                    }}
+                    className="flex items-center gap-1.5 text-xs text-foreground/50 hover:text-foreground/70"
+                  >
+                    <MoveRight className="w-3.5 h-3.5" />
+                    Today
+                  </button>
+                  <button 
+                    onClick={() => { 
+                      handleCategorize(item.id, "this-week"); 
+                      setExpandedTask(null); 
+                    }}
+                    className="flex items-center gap-1.5 text-xs text-foreground/50 hover:text-foreground/70"
+                  >
+                    <MoveRight className="w-3.5 h-3.5" />
+                    Week
+                  </button>
+                  <button 
+                    onClick={() => { 
+                      handleCategorize(item.id, "later"); 
+                      setExpandedTask(null); 
+                    }}
+                    className="flex items-center gap-1.5 text-xs text-foreground/50 hover:text-foreground/70"
+                  >
+                    <MoveRight className="w-3.5 h-3.5" />
+                    Later
+                  </button>
+                  <button 
+                    onClick={() => { 
+                      handleRemove(item.id); 
+                      setExpandedTask(null); 
+                    }}
+                    className="flex items-center gap-1.5 text-xs text-red-400/70 hover:text-red-500"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                    Delete
+                  </button>
+                </div>
+              )}
             </div>
           ))}
         </div>
