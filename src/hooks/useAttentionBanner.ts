@@ -19,14 +19,6 @@ export const useAttentionBanner = () => {
     
     const items: AttentionItem[] = [];
     
-    // 0. Focus task (HIGHEST priority - show first)
-    const focus = tasks
-      .filter(t => 
-        !t.completed && 
-        t.is_focus
-      )
-      .map(t => ({ ...t, bannerPriority: 'today' as const, urgency: 0 })); // urgency 0 = highest
-    
     // 1. Overdue tasks
     const overdue = tasks
       .filter(t => 
@@ -69,7 +61,8 @@ export const useAttentionBanner = () => {
       )
       .map(t => ({ ...t, bannerPriority: 'today' as const, urgency: 4 }));
     
-    return [...focus, ...overdue, ...upcoming, ...inbox, ...today];
+    // Focus task is excluded - it shows in the center, not the banner
+    return [...overdue, ...upcoming, ...inbox, ...today];
   }, [tasks]);
 
   // Auto-rotate every 6 seconds (faster for urgent items)
