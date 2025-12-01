@@ -8,7 +8,9 @@ import { TaskPageLayout } from "@/components/shared/TaskPageLayout";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { PageHeader } from "@/components/shared/PageHeader";
-import { TaskCaptureInput } from "@/components/shared/TaskCaptureInput";
+import SmartTaskInput from "@/components/SmartTaskInput";
+import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
 
 
 interface TaskSuggestion {
@@ -26,6 +28,67 @@ const Inbox = () => {
   const [suggestions, setSuggestions] = useState<TaskSuggestion[]>([]);
   const { toast } = useToast();
   const isMobile = useIsMobile();
+  const queryClient = useQueryClient();
+
+  const handleTaskCreate = async ({ 
+    title, 
+    scheduledDate, 
+    scheduledTime, 
+    hasReminder 
+  }: { 
+    title: string; 
+    scheduledDate?: Date; 
+    scheduledTime?: Date;
+    hasReminder: boolean;
+  }) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const taskData = {
+      user_id: user.id,
+      title,
+      category: 'inbox',
+      // If date detected, determine scheduled bucket
+      ...(scheduledDate && {
+        scheduled_bucket: determineBucket(scheduledDate),
+      }),
+      // If time detected, set reminder
+      ...(scheduledTime && {
+        reminder_time: scheduledTime.toISOString(),
+        has_reminder: true,
+      }),
+    };
+
+    const { error: insertError } = await supabase.from('tasks').insert(taskData);
+    
+    if (insertError) {
+      toast({
+        title: "Error",
+        description: "Failed to create task",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    queryClient.invalidateQueries({ queryKey: ['tasks'] });
+  };
+
+  const determineBucket = (date: Date): 'today' | 'tomorrow' | 'this_week' | 'upcoming' | 'someday' => {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const endOfWeek = new Date(today);
+    endOfWeek.setDate(endOfWeek.getDate() + (7 - today.getDay()));
+
+    const targetDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+
+    if (targetDate.getTime() === today.getTime()) return 'today';
+    if (targetDate.getTime() === tomorrow.getTime()) return 'tomorrow';
+    if (targetDate <= endOfWeek) return 'this_week';
+    if (targetDate <= new Date(today.getTime() + 14 * 24 * 60 * 60 * 1000)) return 'upcoming';
+    return 'someday';
+  };
 
   const handlePlanThis = (title: string) => {
     setPlanningText(title);
@@ -131,9 +194,9 @@ const Inbox = () => {
         
         {/* Capture input - fixed at bottom on mobile */}
         <div className="fixed bottom-0 left-0 right-0 bg-background border-t border-foreground/5 px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
-          <TaskCaptureInput 
+          <SmartTaskInput 
             placeholder="Capture a thought..." 
-            category="inbox"
+            onSubmit={handleTaskCreate}
           />
         </div>
       </div>
@@ -142,11 +205,16 @@ const Inbox = () => {
 
   // Desktop layout: input at top
   return (
-    <TaskPageLayout
-      title="Inbox"
-      placeholder="Capture a thought..."
-      category="inbox"
-    >
+    <div className="min-h-screen bg-background">
+      <PageHeader title="Inbox" />
+      
+      <div className="px-4 pt-16">
+        <div className="mb-4">
+          <SmartTaskInput 
+            placeholder="Capture a thought..." 
+            onSubmit={handleTaskCreate}
+          />
+        </div>
       {/* Planning Mode Overlay */}
       {planningMode && (
         <div className="fixed inset-0 bg-background/40 backdrop-blur-sm flex items-center justify-center p-6 z-50">
@@ -171,15 +239,16 @@ const Inbox = () => {
         />
       )}
       
-      {/* Task List */}
-      <TaskList 
-        category="inbox" 
-        onPlanThis={handlePlanThis}
-        suggestions={suggestions}
-        onApplySuggestion={handleApplySuggestion}
-        onDismissSuggestion={handleDismissSuggestion}
-      />
-    </TaskPageLayout>
+        {/* Task List */}
+        <TaskList 
+          category="inbox" 
+          onPlanThis={handlePlanThis}
+          suggestions={suggestions}
+          onApplySuggestion={handleApplySuggestion}
+          onDismissSuggestion={handleDismissSuggestion}
+        />
+      </div>
+    </div>
   );
 };
 
