@@ -56,9 +56,9 @@ export const ActionableBanner = () => {
       labelColor: 'text-muted-foreground/50',
     },
     today: {
-      color: 'text-foreground/60',
-      label: null,
-      labelColor: 'text-muted-foreground/50',
+      color: currentItem.is_focus ? 'text-foreground/80' : 'text-foreground/60',
+      label: currentItem.is_focus ? 'Your ONE thing' : null,
+      labelColor: currentItem.is_focus ? 'text-foreground/50' : 'text-muted-foreground/50',
     },
   }[currentItem.bannerPriority];
 
