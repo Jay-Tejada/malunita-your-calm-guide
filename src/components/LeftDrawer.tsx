@@ -82,9 +82,11 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate, onSearchOpen }: LeftDr
       // Calendar stays inline in drawer
       setDrawerMode("calendar");
     } else if (route) {
-      // Navigate to the page and close drawer
-      navigate(route);
+      // Close drawer first, then navigate after a frame to avoid race condition
       onClose();
+      requestAnimationFrame(() => {
+        navigate(route);
+      });
     }
   };
 
@@ -541,8 +543,10 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate, onSearchOpen }: LeftDr
                               key={project.id}
                               onClick={() => {
                                 hapticLight();
-                                onNavigate(`/project/${project.id}`);
                                 onClose();
+                                requestAnimationFrame(() => {
+                                  onNavigate(`/project/${project.id}`);
+                                });
                               }}
                               className="text-left py-2 px-0 font-mono text-sm text-foreground/60 hover:text-foreground/90 transition-colors"
                             >
