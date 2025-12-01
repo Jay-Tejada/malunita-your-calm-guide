@@ -1,4 +1,4 @@
-import { X } from "lucide-react";
+import { Check, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface InboxSuggestionChipProps {
@@ -18,32 +18,34 @@ export const InboxSuggestionChip = ({
     return suggestion.charAt(0).toUpperCase() + suggestion.slice(1);
   };
 
-  const isHighConfidence = confidence > 0.9;
-
   return (
-    <button
-      onClick={(e) => {
-        e.stopPropagation();
-        onApply();
-      }}
-      className={cn(
-        "inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-mono transition-all",
-        "hover:scale-105 active:scale-95",
-        isHighConfidence 
-          ? "bg-foreground/10 text-foreground/70 hover:bg-foreground/15"
-          : "bg-foreground/5 text-foreground/50 hover:bg-foreground/10"
-      )}
+    <div 
+      className="inline-flex items-center gap-1"
+      onClick={(e) => e.stopPropagation()}
     >
-      <span>→ {getSuggestionLabel()}</span>
+      <span className="text-xs text-foreground/50 font-mono">
+        → {getSuggestionLabel()}
+      </span>
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          onApply();
+        }}
+        className="text-green-500/50 hover:text-green-500 transition-colors"
+        title="Apply suggestion"
+      >
+        <Check className="w-4 h-4" />
+      </button>
       <button
         onClick={(e) => {
           e.stopPropagation();
           onDismiss();
         }}
-        className="hover:text-foreground transition-colors"
+        className="text-foreground/30 hover:text-foreground/50 transition-colors"
+        title="Dismiss suggestion"
       >
-        <X className="w-3 h-3" />
+        <X className="w-4 h-4" />
       </button>
-    </button>
+    </div>
   );
 };
