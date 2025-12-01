@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { useTasks } from './useTasks';
 import { useThoughts } from './useThoughts';
 
-interface SearchResult {
+export interface SearchResult {
   id: string;
   type: 'task' | 'thought' | 'journal';
   title: string;
