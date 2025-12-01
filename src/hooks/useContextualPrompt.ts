@@ -119,7 +119,7 @@ export function useContextualPrompt(): ContextualPrompt {
         title: stripEmojis(todaysFocusTask),
         subtitle: stripEmojis("Today's main focus"),
         priority: 'calm',
-        action: () => navigate('/tasks')
+        action: null // Don't navigate - actions will be shown inline
       };
     }
     

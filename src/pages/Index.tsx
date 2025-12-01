@@ -131,6 +131,10 @@ const Index = () => {
   
   // Contextual prompt for mobile
   const contextualPrompt = useContextualPrompt();
+  
+  // State for focus task actions
+  const [showFocusActions, setShowFocusActions] = useState(false);
+  const isFocusTask = contextualPrompt.subtitle === "Today's main focus";
 
   // Initialize keyboard shortcuts
   useKeyboardShortcuts({
@@ -388,12 +392,60 @@ const Index = () => {
 
           {/* CENTER STAGE - Focus text floats in center */}
           {contextualPrompt.title && (
-            <div className="pt-[35vh] flex items-center justify-center">
+            <div className="pt-[35vh] flex flex-col items-center justify-center gap-4">
               <ContextualCard
                 title={contextualPrompt.title}
                 subtitle={contextualPrompt.subtitle}
-                onTap={contextualPrompt.action || undefined}
+                onTap={isFocusTask ? () => setShowFocusActions(!showFocusActions) : contextualPrompt.action || undefined}
               />
+              {isFocusTask && showFocusActions && (
+                <div className="flex justify-center gap-4">
+                  <button
+                    onClick={async () => {
+                      const { data: { user } } = await supabase.auth.getUser();
+                      if (!user) return;
+                      const today = new Date().toISOString().split('T')[0];
+                      const { data: task } = await supabase
+                        .from('tasks')
+                        .select('id')
+                        .eq('user_id', user.id)
+                        .eq('is_focus', true)
+                        .eq('focus_date', today)
+                        .maybeSingle();
+                      if (task) {
+                        await supabase.from('tasks').update({ completed: true }).eq('id', task.id);
+                        setShowFocusActions(false);
+                        toast({ description: "Focus task completed!" });
+                      }
+                    }}
+                    className="text-xs text-foreground/50 hover:text-foreground/70 transition-colors"
+                  >
+                    ✓ Done
+                  </button>
+                  <button
+                    onClick={async () => {
+                      const { data: { user } } = await supabase.auth.getUser();
+                      if (!user) return;
+                      const today = new Date().toISOString().split('T')[0];
+                      const { data: task } = await supabase
+                        .from('tasks')
+                        .select('id')
+                        .eq('user_id', user.id)
+                        .eq('is_focus', true)
+                        .eq('focus_date', today)
+                        .maybeSingle();
+                      if (task) {
+                        await supabase.from('tasks').update({ is_focus: false, focus_date: null }).eq('id', task.id);
+                        setShowFocusActions(false);
+                        toast({ description: "Cleared from focus" });
+                      }
+                    }}
+                    className="text-xs text-foreground/50 hover:text-foreground/70 transition-colors"
+                  >
+                    Clear focus
+                  </button>
+                </div>
+              )}
             </div>
           )}
 
@@ -447,14 +499,62 @@ const Index = () => {
               <div className="relative min-h-[85vh] flex flex-col">
                 {/* CENTER STAGE - Focus text floats in center */}
                 {contextualPrompt.title && (
-                  <div className="pt-[35vh] flex items-center justify-center">
+                  <div className="pt-[35vh] flex flex-col items-center justify-center gap-4">
                     <div className="w-full max-w-md">
                       <ContextualCard
                         title={contextualPrompt.title}
                         subtitle={contextualPrompt.subtitle}
-                        onTap={contextualPrompt.action || undefined}
+                        onTap={isFocusTask ? () => setShowFocusActions(!showFocusActions) : contextualPrompt.action || undefined}
                       />
                     </div>
+                    {isFocusTask && showFocusActions && (
+                      <div className="flex justify-center gap-4">
+                        <button
+                          onClick={async () => {
+                            const { data: { user } } = await supabase.auth.getUser();
+                            if (!user) return;
+                            const today = new Date().toISOString().split('T')[0];
+                            const { data: task } = await supabase
+                              .from('tasks')
+                              .select('id')
+                              .eq('user_id', user.id)
+                              .eq('is_focus', true)
+                              .eq('focus_date', today)
+                              .maybeSingle();
+                            if (task) {
+                              await supabase.from('tasks').update({ completed: true }).eq('id', task.id);
+                              setShowFocusActions(false);
+                              toast({ description: "Focus task completed!" });
+                            }
+                          }}
+                          className="text-xs text-foreground/50 hover:text-foreground/70 transition-colors"
+                        >
+                          ✓ Done
+                        </button>
+                        <button
+                          onClick={async () => {
+                            const { data: { user } } = await supabase.auth.getUser();
+                            if (!user) return;
+                            const today = new Date().toISOString().split('T')[0];
+                            const { data: task } = await supabase
+                              .from('tasks')
+                              .select('id')
+                              .eq('user_id', user.id)
+                              .eq('is_focus', true)
+                              .eq('focus_date', today)
+                              .maybeSingle();
+                            if (task) {
+                              await supabase.from('tasks').update({ is_focus: false, focus_date: null }).eq('id', task.id);
+                              setShowFocusActions(false);
+                              toast({ description: "Cleared from focus" });
+                            }
+                          }}
+                          className="text-xs text-foreground/50 hover:text-foreground/70 transition-colors"
+                        >
+                          Clear focus
+                        </button>
+                      </div>
+                    )}
                   </div>
                 )}
 
