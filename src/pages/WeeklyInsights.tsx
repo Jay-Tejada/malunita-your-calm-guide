@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Header } from "@/components/Header";
+import { SimpleHeader } from '@/components/SimpleHeader';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ArrowLeft, ChevronLeft, ChevronRight, TrendingUp, Target, Clock, Calendar, Lightbulb, Zap, CheckCircle2, Flame } from "lucide-react";
@@ -44,7 +44,9 @@ const WeeklyInsights = () => {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background">
-        <Header />
+        <div className="container mx-auto px-4 max-w-4xl">
+          <SimpleHeader title="Weekly Insights" />
+        </div>
         <main className="container mx-auto px-4 py-6 max-w-4xl">
           <div className="animate-pulse space-y-4">
             <div className="h-32 bg-card rounded-lg" />
@@ -61,16 +63,17 @@ const WeeklyInsights = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header />
+      <div className="container mx-auto px-4 max-w-4xl">
+        <SimpleHeader title="Weekly Insights" />
+      </div>
       
       <main className="container mx-auto px-4 py-6 max-w-4xl pb-20 md:pb-6">
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-6 md:hidden">
           <div className="flex items-center gap-4">
             <Button
               variant="ghost"
               size="icon"
               onClick={() => navigate(-1)}
-              className="md:hidden"
             >
               <ArrowLeft className="h-5 w-5" />
             </Button>

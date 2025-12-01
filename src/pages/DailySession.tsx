@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Header } from "@/components/Header";
+import { SimpleHeader } from "@/components/SimpleHeader";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -106,7 +106,9 @@ const DailySession = () => {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background">
-        <Header />
+        <div className="container mx-auto px-4 max-w-4xl">
+          <SimpleHeader title="Daily Session" />
+        </div>
         <main className="container mx-auto px-4 py-6 max-w-4xl">
           <div className="animate-pulse space-y-4">
             <div className="h-64 bg-card rounded-lg" />
@@ -118,10 +120,12 @@ const DailySession = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header />
+      <div className="container mx-auto px-4 max-w-4xl">
+        <SimpleHeader title="Daily Session" />
+      </div>
       
       <main className="container mx-auto px-4 py-6 max-w-4xl pb-20 md:pb-6">
-        <div className="flex items-center gap-4 mb-6">
+        <div className="flex items-center gap-4 mb-6 md:hidden">
           <Button
             variant="ghost"
             size="icon"
