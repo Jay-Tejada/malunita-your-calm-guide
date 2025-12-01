@@ -146,12 +146,51 @@ const Index = () => {
   const [captureText, setCaptureText] = useState("");
   const captureInputRef = useRef<HTMLInputElement>(null);
   
+  // Desktop quick capture modal state
+  const [showDesktopCapture, setShowDesktopCapture] = useState(false);
+  const [showKeyboardHint, setShowKeyboardHint] = useState(() => {
+    // Only show hint if never used before
+    return !localStorage.getItem('captureHintDismissed');
+  });
+  const desktopCaptureInputRef = useRef<HTMLInputElement>(null);
+  
   // Auto-focus quick capture input when shown
   useEffect(() => {
     if (showQuickCapture && captureInputRef.current) {
       captureInputRef.current.focus();
     }
-  }, [showQuickCapture]);
+    if (showDesktopCapture && desktopCaptureInputRef.current) {
+      desktopCaptureInputRef.current.focus();
+    }
+  }, [showQuickCapture, showDesktopCapture]);
+
+  // Global keyboard shortcuts for desktop
+  useEffect(() => {
+    if (isMobile) return;
+    
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't trigger if already typing somewhere
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      
+      if (e.key === 'q' || e.key === '/') {
+        e.preventDefault();
+        setShowDesktopCapture(true);
+        // Hide hint after first use
+        if (showKeyboardHint) {
+          localStorage.setItem('captureHintDismissed', 'true');
+          setShowKeyboardHint(false);
+        }
+      }
+      
+      if (e.key === 'Escape') {
+        setShowDesktopCapture(false);
+        setCaptureText("");
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isMobile, showKeyboardHint]);
 
   // Close quick capture on click outside
   useEffect(() => {
@@ -160,13 +199,17 @@ const Index = () => {
         setShowQuickCapture(false);
         setCaptureText("");
       }
+      if (showDesktopCapture && desktopCaptureInputRef.current?.parentElement && !desktopCaptureInputRef.current.parentElement.contains(e.target as Node)) {
+        setShowDesktopCapture(false);
+        setCaptureText("");
+      }
     };
     
-    if (showQuickCapture) {
+    if (showQuickCapture || showDesktopCapture) {
       document.addEventListener('mousedown', handleClickOutside);
       return () => document.removeEventListener('mousedown', handleClickOutside);
     }
-  }, [showQuickCapture]);
+  }, [showQuickCapture, showDesktopCapture]);
 
   // Fetch focus task data when needed
   useEffect(() => {
@@ -431,8 +474,7 @@ const Index = () => {
       
       // Show success
       toast({
-        title: "Captured!",
-        description: "Your thought has been processed.",
+        description: "Captured",
       });
     } catch (error) {
       console.error('Error capturing text:', error);
@@ -444,12 +486,16 @@ const Index = () => {
     }
   };
 
-  const handleQuickCaptureSubmit = async () => {
+  const handleQuickCaptureSubmit = async (keepOpen = false) => {
     if (!captureText.trim()) return;
     
     await handleCapture(captureText);
     setCaptureText("");
-    setShowQuickCapture(false);
+    
+    if (!keepOpen) {
+      setShowQuickCapture(false);
+      setShowDesktopCapture(false);
+    }
   };
 
   const handleVoiceCapture = () => {
@@ -783,12 +829,19 @@ const Index = () => {
                 )}
 
                 {/* BOTTOM - Orb grounded in bottom third */}
-                <div className="mt-auto pb-16 flex items-center justify-center">
+                <div className="mt-auto pb-16 flex flex-col items-center justify-center gap-2">
                   <SimpleOrb
                     onTap={() => voiceRef.current?.startRecording()}
                     isRecording={voiceStatus.isListening}
                     isProcessing={voiceStatus.isProcessing}
                   />
+                  
+                  {/* Keyboard hint - fades after first use */}
+                  {showKeyboardHint && (
+                    <p className="text-[10px] text-muted-foreground/20 animate-fade-in">
+                      Press Q to capture
+                    </p>
+                  )}
                 </div>
               </div>
             </HomeCanvas>
@@ -803,6 +856,34 @@ const Index = () => {
         onOpenChange={setQuickCaptureOpen}
           onCapture={handleCapture}
         />
+      )}
+      
+      {/* Desktop Quick Capture Modal - triggered by Q or / */}
+      {!isMobile && showDesktopCapture && (
+        <div className="fixed inset-0 z-50 flex items-start justify-center pt-[20vh] bg-background/80 backdrop-blur-sm">
+          <div className="w-full max-w-xl mx-4 bg-background border border-foreground/10 rounded-xl shadow-lg p-4">
+            <input
+              ref={desktopCaptureInputRef}
+              type="text"
+              value={captureText}
+              onChange={(e) => setCaptureText(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  handleQuickCaptureSubmit(false);
+                } else if (e.key === 'Enter' && e.shiftKey) {
+                  e.preventDefault();
+                  handleQuickCaptureSubmit(true);
+                } else if (e.key === 'Escape') {
+                  setShowDesktopCapture(false);
+                  setCaptureText("");
+                }
+              }}
+              placeholder="Capture a thought... (Enter to save, Esc to close, Shift+Enter to save & continue)"
+              className="w-full text-base font-mono text-foreground bg-transparent focus:outline-none placeholder:text-muted-foreground/50"
+            />
+          </div>
+        </div>
       )}
 
       {/* Capture history modal (desktop only) */}
