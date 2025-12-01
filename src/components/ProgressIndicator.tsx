@@ -1,21 +1,53 @@
+import { useState, useEffect } from 'react';
 import { useProgressStats } from '@/hooks/useProgressStats';
 
 const ProgressIndicator = () => {
   const { completedToday, totalToday, streak, weeklyCompleted } = useProgressStats();
+  const [isVisible, setIsVisible] = useState(false);
+
+  // Show conditions:
+  // 1. Just completed a task (would need to detect this via prop or context)
+  // 2. Every 3 minutes for 8 seconds
+  // 3. When streak hits a milestone
+  // 4. On first load for 5 seconds, then fade out
   
-  // Calculate max for scaling
-  const maxDaily = Math.max(...weeklyCompleted, 1);
+  useEffect(() => {
+    // Show on mount for 5 seconds
+    setIsVisible(true);
+    const hideTimer = setTimeout(() => setIsVisible(false), 5000);
+    
+    // Then show every 3 minutes for 8 seconds
+    const interval = setInterval(() => {
+      setIsVisible(true);
+      setTimeout(() => setIsVisible(false), 8000);
+    }, 3 * 60 * 1000); // every 3 minutes
+    
+    return () => {
+      clearTimeout(hideTimer);
+      clearInterval(interval);
+    };
+  }, []);
+
+  // Always show if streak milestone
+  const isStreakMilestone = [7, 14, 21, 30, 60, 90, 100].includes(streak);
   
-  // Don't show if no activity at all
-  const hasActivity = weeklyCompleted.some(c => c > 0) || totalToday > 0;
-  if (!hasActivity) return null;
+  // Don't render if nothing to show
+  if (totalToday === 0 && streak === 0) return null;
   
+  // Hide if not visible and not a milestone
+  if (!isVisible && !isStreakMilestone) return null;
+
   return (
-    <div className="flex flex-col items-center gap-3">
-      
+    <div 
+      className={`
+        flex flex-col items-center gap-2 transition-opacity duration-1000
+        ${isVisible || isStreakMilestone ? 'opacity-100' : 'opacity-0'}
+      `}
+    >
       {/* Weekly mini bars */}
       <div className="flex items-end gap-1 h-4">
         {weeklyCompleted.map((count, i) => {
+          const maxDaily = Math.max(...weeklyCompleted, 1);
           const height = count > 0 ? Math.max((count / maxDaily) * 16, 3) : 2;
           const isToday = i === 6;
           
@@ -41,7 +73,6 @@ const ProgressIndicator = () => {
         {completedToday > 0 && streak > 1 && ' · '}
         {streak > 1 && `${streak} day streak`}
       </p>
-      
     </div>
   );
 };
