@@ -8,12 +8,14 @@ interface HomeTaskListProps {
 export const HomeTaskList = ({ showCompleted }: HomeTaskListProps) => {
   const { tasks, isLoading, updateTask, deleteTask } = useTasks();
 
-  // Filter home tasks
+  // Filter home tasks and sort by created_at descending (newest first)
   const homeTasks = tasks?.filter(t => {
     if (showCompleted && t.completed) return t.category === 'home';
     if (!showCompleted && t.completed) return false;
     return t.category === 'home';
-  }) || [];
+  }).sort((a, b) => 
+    new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+  ) || [];
 
   const handleComplete = async (id: string) => {
     await updateTask({
