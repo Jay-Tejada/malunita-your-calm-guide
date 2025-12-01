@@ -1,14 +1,13 @@
-import { Check } from "lucide-react";
 import { useTasks } from "@/hooks/useTasks";
 import { useProjectTasks } from "@/hooks/useProjectTasks";
-import { cn } from "@/lib/utils";
+import { TaskRow } from "@/components/shared/TaskRow";
 
 interface WorkTaskListProps {
   showCompleted: boolean;
 }
 
 export const WorkTaskList = ({ showCompleted }: WorkTaskListProps) => {
-  const { tasks, isLoading, updateTask } = useTasks();
+  const { tasks, isLoading, updateTask, deleteTask } = useTasks();
   const { data: projects } = useProjectTasks();
 
   // Filter work tasks
@@ -18,23 +17,27 @@ export const WorkTaskList = ({ showCompleted }: WorkTaskListProps) => {
     return t.category === 'work';
   }) || [];
 
-  const handleToggleTask = async (taskId: string, completed: boolean) => {
-    try {
-      await updateTask({
-        id: taskId,
-        updates: {
-          completed: !completed,
-          completed_at: !completed ? new Date().toISOString() : null,
-        }
-      });
-    } catch (error) {
-      console.error("Failed to toggle task:", error);
-    }
+  const handleComplete = async (id: string) => {
+    await updateTask({
+      id,
+      updates: {
+        completed: true,
+        completed_at: new Date().toISOString(),
+      }
+    });
+  };
+
+  const handleDelete = async (id: string) => {
+    await deleteTask(id);
+  };
+
+  const handleEdit = (id: string) => {
+    console.log('Edit task:', id);
   };
 
   // Group by project
-  const tasksWithProjects = workTasks.filter(t => t.plan_id);
   const tasksWithoutProjects = workTasks.filter(t => !t.plan_id);
+  const tasksWithProjects = workTasks.filter(t => t.plan_id);
 
   // Group tasks by project
   const tasksByProject = tasksWithProjects.reduce((acc, task) => {
@@ -45,36 +48,6 @@ export const WorkTaskList = ({ showCompleted }: WorkTaskListProps) => {
     acc[projectId].push(task);
     return acc;
   }, {} as Record<string, typeof workTasks>);
-
-  const renderTask = (task: any) => (
-    <div
-      key={task.id}
-      className="flex items-start gap-3 py-2.5 px-3 hover:bg-muted/20 rounded-md transition-colors group"
-    >
-      <button
-        onClick={() => handleToggleTask(task.id, task.completed || false)}
-        className={cn(
-          "flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center mt-0.5 transition-all",
-          task.completed
-            ? "bg-foreground/10 border border-foreground/20"
-            : "bg-transparent border border-foreground/20 hover:border-foreground/40"
-        )}
-      >
-        {task.completed && (
-          <Check className="w-3 h-3 text-foreground/60" />
-        )}
-      </button>
-      
-      <span className={cn(
-        "flex-1 font-mono text-[14px] leading-snug",
-        task.completed ? "text-foreground/40 line-through" : "text-foreground/90"
-      )}>
-        {task.title}
-      </span>
-
-      {/* Hover Actions - Removed for now */}
-    </div>
-  );
 
   if (isLoading) {
     return (
@@ -93,35 +66,38 @@ export const WorkTaskList = ({ showCompleted }: WorkTaskListProps) => {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-0 mb-8">
+      {/* Ungrouped tasks first (implicit "General" group - no header) */}
+      {tasksWithoutProjects.map((task) => (
+        <TaskRow
+          key={task.id}
+          task={task}
+          onComplete={handleComplete}
+          onDelete={handleDelete}
+          onEdit={handleEdit}
+        />
+      ))}
+
       {/* Tasks grouped by project */}
       {Object.entries(tasksByProject).map(([projectId, projectTasks]) => {
         const project = projects?.find(p => p.id === projectId);
         return (
-          <div key={projectId} className="space-y-2">
-            <h3 className="text-xs font-mono uppercase tracking-widest text-muted-foreground/40 mb-3">
+          <div key={projectId}>
+            <h3 className="text-[10px] uppercase tracking-widest text-muted-foreground/30 mt-6 mb-2">
               {project?.title || 'Project'}
             </h3>
-            <div className="space-y-1">
-              {projectTasks.map(renderTask)}
-            </div>
+            {projectTasks.map((task) => (
+              <TaskRow
+                key={task.id}
+                task={task}
+                onComplete={handleComplete}
+                onDelete={handleDelete}
+                onEdit={handleEdit}
+              />
+            ))}
           </div>
         );
       })}
-
-      {/* Ungrouped tasks */}
-      {tasksWithoutProjects.length > 0 && (
-        <div className="space-y-2">
-          {Object.keys(tasksByProject).length > 0 && (
-            <h3 className="text-xs font-mono uppercase tracking-widest text-muted-foreground/40 mb-3">
-              Ungrouped
-            </h3>
-          )}
-          <div className="space-y-1">
-            {tasksWithoutProjects.map(renderTask)}
-          </div>
-        </div>
-      )}
     </div>
   );
 };
