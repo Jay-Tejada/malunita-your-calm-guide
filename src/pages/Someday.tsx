@@ -2,6 +2,9 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft } from 'lucide-react';
 import { useTasks } from '@/hooks/useTasks';
+import { MobileTaskCapture } from '@/components/shared/MobileTaskCapture';
+import { DesktopTaskCapture } from '@/components/shared/DesktopTaskCapture';
+import { supabase } from '@/integrations/supabase/client';
 
 const Someday = () => {
   const navigate = useNavigate();
@@ -16,6 +19,17 @@ const Someday = () => {
     t.scheduled_bucket === 'someday' && t.completed
   ) || [];
 
+  const handleCapture = async (text: string) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    
+    await supabase.from('tasks').insert({
+      user_id: user.id,
+      title: text,
+      scheduled_bucket: 'someday'
+    });
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -27,7 +41,13 @@ const Someday = () => {
         <div className="w-5" /> {/* Spacer */}
       </div>
 
-      <div className="px-4 pt-6">
+      <div className="px-4 pt-6 pb-24 md:pb-0">
+        {/* Desktop capture input */}
+        <DesktopTaskCapture 
+          placeholder="Save for someday..." 
+          onCapture={handleCapture} 
+        />
+
         {/* Intro text */}
         {somedayTasks.length > 0 && (
           <p className="text-sm text-muted-foreground/40 text-center mb-6">
@@ -62,6 +82,12 @@ const Someday = () => {
           </button>
         )}
       </div>
+      
+      {/* Mobile capture input */}
+      <MobileTaskCapture 
+        placeholder="Save for someday..." 
+        onCapture={handleCapture} 
+      />
     </div>
   );
 };

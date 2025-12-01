@@ -4,13 +4,14 @@ import { ChevronLeft, ArrowRight } from 'lucide-react';
 import { useTasks } from '@/hooks/useTasks';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { MobileTaskCapture } from '@/components/shared/MobileTaskCapture';
+import { DesktopTaskCapture } from '@/components/shared/DesktopTaskCapture';
 
 const Today = () => {
   const navigate = useNavigate();
   const { tasks, updateTask } = useTasks();
   const { toast } = useToast();
   const [focusInput, setFocusInput] = useState('');
-  const [quickAddInput, setQuickAddInput] = useState('');
   const [showCompleted, setShowCompleted] = useState(false);
   const [completingTasks, setCompletingTasks] = useState<Set<string>>(new Set());
   
@@ -51,19 +52,15 @@ const Today = () => {
     }
   };
 
-  const handleQuickAdd = async (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && quickAddInput.trim()) {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      
-      await supabase.from('tasks').insert({
-        user_id: user.id,
-        title: quickAddInput.trim(),
-        scheduled_bucket: 'today'
-      });
-      
-      setQuickAddInput('');
-    }
+  const handleQuickAdd = async (text: string) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    
+    await supabase.from('tasks').insert({
+      user_id: user.id,
+      title: text,
+      scheduled_bucket: 'today'
+    });
   };
 
   const handleMoveToToday = async (taskId: string) => {
@@ -106,9 +103,17 @@ const Today = () => {
         <div className="w-5" /> {/* Spacer for alignment */}
       </div>
 
-      <div className="px-4 pt-4 pb-20">
+      <div className="px-4 pt-4 pb-24 md:pb-20">
         {/* Date */}
         <p className="text-xs text-muted-foreground/40 text-center mb-6">{today}</p>
+
+        {/* Desktop quick add */}
+        {todayTasks.length > 0 && (
+          <DesktopTaskCapture 
+            placeholder="Add to today..." 
+            onCapture={handleQuickAdd} 
+          />
+        )}
 
         {/* TODAY'S FOCUS SECTION */}
         <div className="mb-8">
@@ -206,21 +211,15 @@ const Today = () => {
             ))}
           </div>
         )}
-
-        {/* Quick add at bottom */}
-        {todayTasks.length > 0 && (
-          <div className="fixed bottom-0 left-0 right-0 bg-background/80 backdrop-blur-sm border-t border-foreground/5 p-4">
-            <input
-              type="text"
-              value={quickAddInput}
-              onChange={(e) => setQuickAddInput(e.target.value)}
-              onKeyDown={handleQuickAdd}
-              placeholder="Add to today..."
-              className="w-full bg-transparent border-b border-foreground/10 py-2 font-mono text-sm text-foreground/80 placeholder:text-muted-foreground/30 focus:outline-none focus:border-foreground/20"
-            />
-          </div>
-        )}
       </div>
+
+      {/* Mobile quick add at bottom */}
+      {todayTasks.length > 0 && (
+        <MobileTaskCapture 
+          placeholder="Add to today..." 
+          onCapture={handleQuickAdd} 
+        />
+      )}
     </div>
   );
 };
