@@ -115,10 +115,10 @@ export const Layout = () => {
           position="right"
           label={isCompanionVisible ? "companion" : "summon companion"}
           onClick={() => {
-            if (!isCompanionVisible) {
-              showCompanion();
+            if (isCompanionVisible) {
+              hideCompanion();
             } else {
-              setRightDrawerOpen(true);
+              showCompanion();
             }
           }}
         />
