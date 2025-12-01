@@ -152,11 +152,23 @@ export function InboxActions({ tasks, onSuggestionsGenerated }: InboxActionsProp
       });
     } catch (error) {
       console.error("Failed to organize inbox:", error);
-      toast({
-        title: "Failed to organize",
-        description: error instanceof Error ? error.message : "Unknown error",
-        variant: "destructive",
-      });
+      
+      // Check if it's a network/deployment error
+      const isFetchError = error instanceof Error && 
+        (error.message.includes("Failed to fetch") || error.message.includes("Edge Function"));
+      
+      if (isFetchError) {
+        toast({
+          title: "AI organizing unavailable",
+          description: "Use manual 'Move to' actions on each task instead",
+        });
+      } else {
+        toast({
+          title: "Failed to organize",
+          description: error instanceof Error ? error.message : "Unknown error",
+          variant: "destructive",
+        });
+      }
     } finally {
       setIsOrganizing(false);
     }
