@@ -136,6 +136,29 @@ export const useCompanionMessage = (): CompanionMessage | null => {
     }
     
     // 3. TIME-BASED GREETINGS
+    
+    // If focus is already set, acknowledge it
+    if (focusTask && hour >= 5 && hour < 12) {
+      const focusMessages = [
+        "Focus is set. You know what to do.",
+        "Eyes on the prize.",
+        "One thing at a time.",
+        "Stay locked in.",
+      ];
+      return {
+        text: focusMessages[Math.floor(Math.random() * focusMessages.length)],
+        type: 'greeting'
+      };
+    }
+    
+    // Only show "What's the ONE thing" if NO focus is set
+    if (!focusTask && hour >= 5 && hour < 11) {
+      return {
+        text: "Morning. What's the ONE thing for today?",
+        type: 'greeting'
+      };
+    }
+    
     if (hour >= 5 && hour < 9) {
       // Early morning
       const morningMessages = [
@@ -143,12 +166,6 @@ export const useCompanionMessage = (): CompanionMessage | null => {
         "Morning. Let's make today count.",
         "New day, clean slate.",
       ];
-      if (remainingToday === 0) {
-        return { 
-          text: "Morning. What's the ONE thing for today?", 
-          type: 'greeting' 
-        };
-      }
       return { 
         text: morningMessages[Math.floor(Math.random() * morningMessages.length)], 
         type: 'greeting' 
