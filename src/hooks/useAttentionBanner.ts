@@ -19,12 +19,21 @@ export const useAttentionBanner = () => {
     
     const items: AttentionItem[] = [];
     
-    // 1. Overdue tasks (highest priority)
+    // 0. Focus task (HIGHEST priority - show first)
+    const focus = tasks
+      .filter(t => 
+        !t.completed && 
+        t.is_focus
+      )
+      .map(t => ({ ...t, bannerPriority: 'today' as const, urgency: 0 })); // urgency 0 = highest
+    
+    // 1. Overdue tasks
     const overdue = tasks
       .filter(t => 
         !t.completed && 
         t.reminder_time && 
-        new Date(t.reminder_time) < now
+        new Date(t.reminder_time) < now &&
+        !t.is_focus // Don't duplicate focus task
       )
       .map(t => ({ ...t, bannerPriority: 'overdue' as const, urgency: 1 }));
     
@@ -34,7 +43,8 @@ export const useAttentionBanner = () => {
         !t.completed && 
         t.reminder_time && 
         new Date(t.reminder_time) > now && 
-        new Date(t.reminder_time) < oneHourFromNow
+        new Date(t.reminder_time) < oneHourFromNow &&
+        !t.is_focus
       )
       .map(t => ({ ...t, bannerPriority: 'upcoming' as const, urgency: 2 }));
     
@@ -44,7 +54,8 @@ export const useAttentionBanner = () => {
         !t.completed && 
         !t.category && 
         !t.custom_category_id &&
-        !t.scheduled_bucket
+        !t.scheduled_bucket &&
+        !t.is_focus
       )
       .slice(0, 5)
       .map(t => ({ ...t, bannerPriority: 'inbox' as const, urgency: 3 }));
@@ -54,19 +65,19 @@ export const useAttentionBanner = () => {
       .filter(t => 
         !t.completed && 
         t.scheduled_bucket === 'today' &&
-        !t.is_focus // Don't include focus task
+        !t.is_focus // Don't duplicate focus task
       )
       .map(t => ({ ...t, bannerPriority: 'today' as const, urgency: 4 }));
     
-    return [...overdue, ...upcoming, ...inbox, ...today];
+    return [...focus, ...overdue, ...upcoming, ...inbox, ...today];
   }, [tasks]);
 
-  // Auto-rotate every 8 seconds (faster for urgent items)
+  // Auto-rotate every 6 seconds (faster for urgent items)
   useEffect(() => {
     if (priorityItems.length <= 1) return;
     
     const currentItem = priorityItems[currentIndex];
-    const interval = currentItem?.urgency === 1 ? 5000 : 8000; // Faster for overdue
+    const interval = currentItem?.urgency === 1 ? 5000 : 6000; // 5s for overdue, 6s for others
     
     const timer = setInterval(() => {
       setCurrentIndex(prev => (prev + 1) % priorityItems.length);
