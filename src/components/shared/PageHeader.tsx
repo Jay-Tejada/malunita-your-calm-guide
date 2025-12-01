@@ -21,7 +21,7 @@ export const PageHeader = ({ title, onBack, onCompanionClick }: PageHeaderProps)
   return (
     <header className="fixed top-0 left-0 right-0 h-14 bg-background z-10">
       <div className="flex items-center justify-between px-4 h-14 border-b border-foreground/5">
-        {/* Left - Back arrow ONLY */}
+        {/* Left - Back arrow only */}
         <button 
           onClick={handleBack} 
           className="p-2 -ml-2 text-foreground/30 hover:text-foreground/50"
@@ -31,11 +31,11 @@ export const PageHeader = ({ title, onBack, onCompanionClick }: PageHeaderProps)
         </button>
         
         {/* Center - Title */}
-        <span className="absolute left-1/2 -translate-x-1/2 font-mono text-foreground/80">
+        <span className="font-mono text-foreground/80">
           {title}
         </span>
         
-        {/* Right - Empty spacer */}
+        {/* Right - Spacer or companion */}
         <div className="w-9" />
       </div>
     </header>
