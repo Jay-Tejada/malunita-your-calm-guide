@@ -3,10 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, ArrowRight } from 'lucide-react';
 import { useTasks } from '@/hooks/useTasks';
 import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 const Today = () => {
   const navigate = useNavigate();
   const { tasks, updateTask } = useTasks();
+  const { toast } = useToast();
   const [focusInput, setFocusInput] = useState('');
   const [quickAddInput, setQuickAddInput] = useState('');
   const [showCompleted, setShowCompleted] = useState(false);
@@ -67,6 +69,19 @@ const Today = () => {
     await updateTask({ 
       id: taskId, 
       updates: { scheduled_bucket: 'today' } 
+    });
+    toast({
+      description: "Added to today",
+    });
+  };
+
+  const handleCompleteTask = async (taskId: string) => {
+    await updateTask({ 
+      id: taskId, 
+      updates: { completed: true } 
+    });
+    toast({
+      description: "Completed",
     });
   };
 
@@ -143,15 +158,18 @@ const Today = () => {
             </h3>
             <div className="space-y-2">
               {inboxTasks.map(task => (
-                <div key={task.id} className="flex items-center justify-between py-2 group">
-                  <span className="font-mono text-sm text-foreground/60">{task.title}</span>
-                  <button
-                    onClick={() => handleMoveToToday(task.id)}
-                    className="flex items-center gap-1 text-xs text-muted-foreground/30 hover:text-foreground/50 opacity-0 group-hover:opacity-100 transition-opacity"
+                <div key={task.id} className="flex items-center gap-3 py-2">
+                  <button 
+                    onClick={() => handleMoveToToday(task.id)} 
+                    className="text-foreground/30 hover:text-foreground/50 flex-shrink-0"
                   >
-                    <ArrowRight className="w-3 h-3" />
-                    Today
+                    <ArrowRight className="w-4 h-4" />
                   </button>
+                  <span className="flex-1 font-mono text-sm text-foreground/60">{task.title}</span>
+                  <button 
+                    onClick={() => handleCompleteTask(task.id)} 
+                    className="w-5 h-5 rounded-full border border-foreground/20 hover:border-foreground/40 flex-shrink-0" 
+                  />
                 </div>
               ))}
             </div>
