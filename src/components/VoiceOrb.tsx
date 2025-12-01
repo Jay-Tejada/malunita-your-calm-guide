@@ -111,7 +111,6 @@ export const VoiceOrb = ({
         onTranscribed: async (text) => {
           if (onVoiceInput) onVoiceInput(text, 'inbox');
           await growth.addXp(1, 'Voice task captured');
-          toast({ title: "Task captured", description: text });
           setIsResponding(false);
         },
         onModeDetected: (detectedMode) => {
@@ -170,7 +169,6 @@ export const VoiceOrb = ({
   const handleCategorySelect = (category: 'home' | 'work' | 'gym' | 'projects') => {
     if (onVoiceInput && pendingTask) {
       onVoiceInput(pendingTask, category);
-      toast({ title: "Task captured", description: `${pendingTask} (${category})` });
     }
     setShowCategoryDialog(false);
     setPendingTask("");

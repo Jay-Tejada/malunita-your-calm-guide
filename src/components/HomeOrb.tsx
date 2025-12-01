@@ -128,7 +128,6 @@ export const HomeOrb = ({
         onAIAlertsUpdate(alerts);
       }
 
-      toast.success("Task added");
       setTaskText("");
       setShowTextInput(false);
     } catch (error) {
