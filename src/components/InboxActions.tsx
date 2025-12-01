@@ -246,9 +246,9 @@ export function InboxActions({ tasks }: InboxActionsProps) {
           onClick={handleIntelligentClear}
           disabled={isProcessing}
           variant="ghost"
-          className="flex items-center gap-2 bg-transparent border border-foreground/20 text-foreground/60 hover:border-foreground/30 hover:text-foreground/80 hover:bg-transparent text-sm py-2 px-4"
+          className="inline-flex items-center gap-2 text-sm text-foreground/50 hover:text-foreground/70 border border-foreground/15 rounded-lg px-3 py-1.5 bg-transparent hover:bg-transparent"
         >
-          <Sparkles className="w-3.5 h-3.5 opacity-60" />
+          <Sparkles className="w-4 h-4" />
           Organize
         </Button>
       </div>
