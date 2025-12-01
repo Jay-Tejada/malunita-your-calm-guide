@@ -497,12 +497,6 @@ export const TaskList = ({
         )}
 
         {/* Keyboard shortcuts hint */}
-        {filteredTasks.length > 0 && (
-          <div className="text-xs text-muted-foreground text-center">
-            Press <kbd className="px-1.5 py-0.5 bg-secondary rounded text-foreground">1-5</kbd> to move selected task • 
-            Press <kbd className="px-1.5 py-0.5 bg-secondary rounded text-foreground">Q</kbd> to create task
-          </div>
-        )}
         
         {filteredTasks.length === 0 ? (
           <div className="text-center py-12">
@@ -556,12 +550,7 @@ export const TaskList = ({
                        {planTasks.map((task) => (
                          <div key={task.id} className="space-y-0 pl-4 border-l-2 border-primary/20">
                            <div className="flex items-center gap-2 group">
-                             <Checkbox
-                               checked={selectedTaskIds.has(task.id)}
-                               onCheckedChange={() => handleToggleTaskSelection(task.id)}
-                               className="shrink-0"
-                             />
-                               <TaskCard
+                            <TaskCard
                                  id={task.id}
                                  title={task.title}
                                  context={task.context || undefined}
@@ -592,7 +581,10 @@ export const TaskList = ({
                                       <ArrowRightFromLine className="w-5 h-5" />
                                     </Button>
                                   </DropdownMenuTrigger>
-                                  <DropdownMenuContent align="end" className="min-w-[140px]">
+                                   <DropdownMenuContent 
+                                     align="end" 
+                                     className="min-w-[140px] bg-background border border-foreground/10 shadow-md z-50"
+                                   >
                                     <DropdownMenuItem
                                       onClick={() => handleMoveToDestination(task.id, 'today')}
                                       className="font-mono text-sm"
@@ -640,18 +632,13 @@ export const TaskList = ({
                        ))}
                         </div>
                       );
-                    })}
+                     })}
 
                      {/* Render regular tasks */}
-                      {sortedRegularTasks.map((task) => (
-                        <div key={task.id} className="space-y-0">
-                          <div className="flex items-center gap-2 group">
-                            <Checkbox
-                              checked={selectedTaskIds.has(task.id)}
-                              onCheckedChange={() => handleToggleTaskSelection(task.id)}
-                              className="shrink-0"
-                            />
-                             <TaskCard
+                     {sortedRegularTasks.map((task) => (
+                       <div key={task.id} className="space-y-0">
+                         <div className="flex items-center gap-2 group">
+                           <TaskCard
                                id={task.id}
                                title={task.title}
                                context={task.context || undefined}
@@ -682,7 +669,10 @@ export const TaskList = ({
                                     <ArrowRightFromLine className="w-5 h-5" />
                                   </Button>
                                 </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className="min-w-[140px]">
+                                 <DropdownMenuContent 
+                                   align="end" 
+                                   className="min-w-[140px] bg-background border border-foreground/10 shadow-md z-50"
+                                 >
                                   <DropdownMenuItem
                                     onClick={() => handleMoveToDestination(task.id, 'today')}
                                     className="font-mono text-sm"
