@@ -1,4 +1,5 @@
-import { formatDistanceToNow } from "date-fns";
+import { format } from "date-fns";
+import { useState } from "react";
 
 interface JournalEntry {
   id: string;
@@ -13,17 +14,30 @@ interface JournalEntryCardProps {
 }
 
 export const JournalEntryCard = ({ entry }: JournalEntryCardProps) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  // Get first line of content for preview
+  const firstLine = entry.content.split('\n')[0];
+  const preview = firstLine.length > 80 ? firstLine.slice(0, 80) + '...' : firstLine;
+
   return (
-    <div className="p-4 border border-foreground/10 rounded-lg hover:border-foreground/20 transition-colors">
-      <div className="flex items-start justify-between mb-2">
-        <h3 className="text-sm font-mono text-foreground/80">{entry.title}</h3>
-        <span className="text-[10px] text-muted-foreground/30 uppercase tracking-widest">
-          {formatDistanceToNow(new Date(entry.created_at), { addSuffix: true })}
-        </span>
+    <div
+      onClick={() => setIsExpanded(!isExpanded)}
+      className="py-4 border-b border-foreground/5 cursor-pointer hover:bg-muted/5 transition-colors"
+    >
+      <div className="text-xs text-muted-foreground/40 mb-1">
+        {format(new Date(entry.created_at), "MMM d, yyyy")}
       </div>
-      <p className="text-sm text-foreground/60 whitespace-pre-wrap line-clamp-3">
-        {entry.content}
-      </p>
+      <div className="text-sm text-foreground/70">
+        {isExpanded ? (
+          <div className="whitespace-pre-wrap">
+            <div className="font-medium mb-2">{entry.title}</div>
+            {entry.content}
+          </div>
+        ) : (
+          preview
+        )}
+      </div>
     </div>
   );
 };

@@ -33,7 +33,7 @@ export const JournalEntryList = () => {
   }
 
   return (
-    <div className="space-y-4">
+    <div>
       {entries.map((entry) => (
         <JournalEntryCard key={entry.id} entry={entry} />
       ))}
