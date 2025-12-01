@@ -1,6 +1,6 @@
 import { useState, KeyboardEvent } from "react";
 import { TaskList } from "@/components/TaskList";
-import { Header } from "@/components/Header";
+import { SimpleHeader } from "@/components/SimpleHeader";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
@@ -53,7 +53,9 @@ const Inbox = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header />
+      <div className="container mx-auto px-4 max-w-4xl">
+        <SimpleHeader title="Inbox" />
+      </div>
       
       {/* Planning Mode Overlay */}
       {planningMode && (
@@ -70,12 +72,11 @@ const Inbox = () => {
       )}
       
       <main className="container mx-auto px-4 py-6 max-w-4xl pb-20 md:pb-6">
-        <div className="flex items-center gap-4 mb-6">
+        <div className="flex items-center gap-4 mb-6 md:hidden">
           <Button
             variant="ghost"
             size="icon"
             onClick={() => navigate("/")}
-            className="md:hidden"
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>

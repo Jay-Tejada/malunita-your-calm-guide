@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Header } from "@/components/Header";
+import { SimpleHeader } from "@/components/SimpleHeader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -333,20 +333,23 @@ const Calendar = () => {
 
   return (
     <div className="min-h-screen pb-20 bg-background">
-      <Header />
-      <main className="container max-w-4xl mx-auto px-4 pt-20">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => {
-            hapticLight();
-            navigate("/");
-          }}
-          className="mb-4"
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to Home
-        </Button>
+      <div className="container max-w-4xl mx-auto px-4">
+        <SimpleHeader title="Calendar" />
+      </div>
+      <main className="container max-w-4xl mx-auto px-4 pt-4">
+        <div className="mb-8 md:hidden">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              hapticLight();
+              navigate("/");
+            }}
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Home
+          </Button>
+        </div>
 
         <div className="mb-8">
           <div className="flex items-center justify-between mb-2">

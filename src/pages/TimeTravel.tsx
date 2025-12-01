@@ -1,5 +1,5 @@
 import { TimeTravelView } from "@/features/timetravel/TimeTravelView";
-import { Header } from "@/components/Header";
+import { SimpleHeader } from "@/components/SimpleHeader";
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
@@ -10,20 +10,23 @@ export default function TimeTravel() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <Header />
+      <div className="container mx-auto px-4 max-w-full">
+        <SimpleHeader title="Time Travel" />
+      </div>
       <main className="flex-1 container mx-auto px-4 py-6 max-w-full pb-20 md:pb-6">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => {
-            hapticLight();
-            navigate('/');
-          }}
-          className="mb-4"
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to Home
-        </Button>
+        <div className="mb-4 md:hidden">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              hapticLight();
+              navigate('/');
+            }}
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Home
+          </Button>
+        </div>
         
         <div className="mb-6">
           <h1 className="text-3xl font-bold">⏳ Time Travel</h1>
