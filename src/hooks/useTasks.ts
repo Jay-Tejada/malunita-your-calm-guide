@@ -240,6 +240,34 @@ export const useTasks = () => {
           undefined // We don't track duration yet
         );
         
+        // Track user patterns for companion intelligence
+        try {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user?.id) {
+            const now = new Date();
+            const hour = now.getHours();
+            const dayOfWeek = now.getDay();
+
+            // Track completion hours pattern
+            await supabase.rpc('update_user_pattern', {
+              p_user_id: user.id,
+              p_pattern_type: 'completion_hours',
+              p_data: { hour: hour.toString(), dayOfWeek }
+            });
+
+            // Track category patterns
+            if (category !== 'uncategorized') {
+              await supabase.rpc('update_user_pattern', {
+                p_user_id: user.id,
+                p_pattern_type: 'common_categories',
+                p_data: { [category]: 1 }
+              });
+            }
+          }
+        } catch (error) {
+          console.error('Failed to track user pattern:', error);
+        }
+        
         // Insert into task_history for analytics
         try {
           const { data: { user } } = await supabase.auth.getUser();
