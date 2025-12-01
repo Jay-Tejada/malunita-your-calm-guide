@@ -1,28 +1,90 @@
-import { useState } from "react";
-import { TaskPageLayout } from "@/components/layout/TaskPageLayout";
-import { TaskCapture } from "@/components/tasks/TaskCapture";
-import { WorkTaskList } from "@/components/tasks/WorkTaskList";
-import { ShowCompletedToggle } from "@/components/shared/ShowCompletedToggle";
-import { useTasks } from "@/hooks/useTasks";
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { ChevronLeft } from 'lucide-react';
+import { useTasks } from '@/hooks/useTasks';
+import { supabase } from '@/integrations/supabase/client';
 
 const Work = () => {
-  const { tasks } = useTasks();
+  const navigate = useNavigate();
+  const { tasks, updateTask } = useTasks();
+  const [input, setInput] = useState('');
   const [showCompleted, setShowCompleted] = useState(false);
+  
+  const workTasks = tasks?.filter(t => 
+    t.category === 'work' && !t.completed
+  ) || [];
+  
+  const completedTasks = tasks?.filter(t => 
+    t.category === 'work' && t.completed
+  ) || [];
 
-  // Get work tasks for completed count
-  const workTasks = tasks?.filter(t => t.category === 'work') || [];
-  const completedCount = workTasks.filter(t => t.completed).length;
+  const handleCapture = async (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && input.trim()) {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      
+      await supabase.from('tasks').insert({
+        user_id: user.id,
+        title: input.trim(),
+        category: 'work'
+      });
+      
+      setInput('');
+    }
+  };
 
   return (
-    <TaskPageLayout title="Work">
-      <TaskCapture placeholder="Add a work task..." category="work" />
-      <WorkTaskList showCompleted={showCompleted} />
-      <ShowCompletedToggle
-        count={completedCount}
-        isVisible={showCompleted}
-        onToggle={() => setShowCompleted(!showCompleted)}
-      />
-    </TaskPageLayout>
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 h-14 border-b border-foreground/5">
+        <button onClick={() => navigate('/')} className="text-foreground/30 hover:text-foreground/50">
+          <ChevronLeft className="w-5 h-5" />
+        </button>
+        <span className="font-mono text-foreground/80">Work</span>
+        <div className="w-5" />
+      </div>
+
+      <div className="px-4 pt-4">
+        {/* Capture input */}
+        <input
+          type="text"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={handleCapture}
+          placeholder="Add a work task..."
+          className="w-full bg-transparent border-b border-foreground/10 py-3 font-mono text-sm text-foreground/80 placeholder:text-muted-foreground/40 focus:outline-none focus:border-foreground/20"
+        />
+
+        {/* Task list */}
+        <div className="mt-4">
+          {workTasks.length === 0 ? (
+            <p className="text-muted-foreground/30 text-center py-12">No work tasks</p>
+          ) : (
+            <div className="space-y-2">
+              {workTasks.map(task => (
+                <div key={task.id} className="flex items-start gap-3 py-3">
+                  <button
+                    onClick={() => updateTask({ id: task.id, updates: { completed: true } })}
+                    className="w-5 h-5 rounded-full border border-foreground/20 hover:border-foreground/40 flex-shrink-0 mt-0.5"
+                  />
+                  <span className="font-mono text-sm text-foreground/80">{task.title}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Show completed toggle */}
+        {completedTasks.length > 0 && (
+          <button
+            onClick={() => setShowCompleted(!showCompleted)}
+            className="w-full text-center text-xs text-muted-foreground/30 hover:text-muted-foreground/50 py-4"
+          >
+            {showCompleted ? 'Hide' : 'Show'} completed ({completedTasks.length})
+          </button>
+        )}
+      </div>
+    </div>
   );
 };
 
