@@ -98,19 +98,23 @@ export const Layout = () => {
 
   return (
     <>
-      {/* Top-Left Mini Orb - Notebook Drawer */}
-      <MiniOrb
-        position="left"
-        label="notebook"
-        onClick={() => setLeftDrawerOpen(!leftDrawerOpen)}
-      />
+      {/* Top-Left Mini Orb - Notebook Drawer - Only show on home page */}
+      {location.pathname === '/' && (
+        <MiniOrb
+          position="left"
+          label="notebook"
+          onClick={() => setLeftDrawerOpen(!leftDrawerOpen)}
+        />
+      )}
 
-      {/* Top-Right Mini Orb - Companion Drawer */}
-      <MiniOrb
-        position="right"
-        label="companion"
-        onClick={() => setRightDrawerOpen(!rightDrawerOpen)}
-      />
+      {/* Top-Right Mini Orb - Companion Drawer - Only show on home page */}
+      {location.pathname === '/' && (
+        <MiniOrb
+          position="right"
+          label="companion"
+          onClick={() => setRightDrawerOpen(!rightDrawerOpen)}
+        />
+      )}
 
       {/* Left Tasks Drawer */}
       <LeftDrawer
