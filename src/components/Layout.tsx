@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, Outlet, useLocation } from "react-router-dom";
 import { MiniOrb } from "@/components/home/MiniOrb";
 import { LeftDrawer } from "@/components/LeftDrawer";
 import { RightDrawer } from "@/components/RightDrawer";
 import { QuickCapture } from "@/components/QuickCapture";
+import Search from "@/components/Search";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { useProcessInputMutation } from "@/hooks/useProcessInputMutation";
 import { useTasks } from "@/hooks/useTasks";
@@ -13,6 +14,7 @@ export const Layout = () => {
   const [leftDrawerOpen, setLeftDrawerOpen] = useState(false);
   const [rightDrawerOpen, setRightDrawerOpen] = useState(false);
   const [quickCaptureOpen, setQuickCaptureOpen] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const processInputMutation = useProcessInputMutation();
@@ -61,6 +63,7 @@ export const Layout = () => {
     setLeftDrawerOpen(false);
     setRightDrawerOpen(false);
     setQuickCaptureOpen(false);
+    setShowSearch(false);
   };
 
   // Setup keyboard shortcuts
@@ -69,6 +72,29 @@ export const Layout = () => {
     onFocusInput: handleFocusInput,
     onCloseModals: handleCloseModals,
   });
+
+  // Search keyboard shortcuts (Cmd/Ctrl+K and /)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't trigger if user is typing in an input or textarea
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      
+      // Cmd/Ctrl + K
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setShowSearch(true);
+      }
+      
+      // / key (forward slash)
+      if (e.key === '/' && !showSearch) {
+        e.preventDefault();
+        setShowSearch(true);
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showSearch]);
 
   return (
     <>
@@ -91,6 +117,7 @@ export const Layout = () => {
         isOpen={leftDrawerOpen}
         onClose={() => setLeftDrawerOpen(false)}
         onNavigate={(path) => navigate(path)}
+        onSearchOpen={() => setShowSearch(true)}
       />
 
       {/* Right Companion Drawer */}
@@ -104,6 +131,12 @@ export const Layout = () => {
         isOpen={quickCaptureOpen}
         onClose={() => setQuickCaptureOpen(false)}
         variant="desktop"
+      />
+
+      {/* Search Modal */}
+      <Search 
+        isOpen={showSearch} 
+        onClose={() => setShowSearch(false)} 
       />
 
       {/* Page Content */}

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, ChevronLeft, Circle, Check } from "lucide-react";
+import { Plus, ChevronLeft, Circle, Check, Search as SearchIcon } from "lucide-react";
 import { useSwipeable } from "react-swipeable";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -31,6 +31,7 @@ interface LeftDrawerProps {
   isOpen: boolean;
   onClose: () => void;
   onNavigate: (path: string) => void;
+  onSearchOpen?: () => void;
 }
 
 const coreCategories = [
@@ -49,7 +50,7 @@ const spaceCategories = [
 
 const calendarCategory = { id: "calendar", label: "Calendar", filter: (task: any) => task.reminder_time !== null };
 
-export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => {
+export const LeftDrawer = ({ isOpen, onClose, onNavigate, onSearchOpen }: LeftDrawerProps) => {
   const navigate = useNavigate();
   const [drawerMode, setDrawerMode] = useState<DrawerMode>("root");
   const { tasks, updateTask, createTasks, deleteTask } = useTasks();
@@ -438,6 +439,22 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
                         isLoading={mindstreamData.isLoading}
                       />
                     </div>
+
+                    {/* Search Button */}
+                    <button
+                      onClick={() => {
+                        hapticLight();
+                        onSearchOpen?.();
+                        onClose();
+                      }}
+                      className="w-full flex items-center gap-3 px-4 py-3 text-foreground/50 hover:text-foreground/70 hover:bg-foreground/[0.03] transition-colors rounded-lg"
+                    >
+                      <SearchIcon className="w-4 h-4" />
+                      <span className="font-mono text-sm">Search</span>
+                      <span className="ml-auto text-[10px] text-muted-foreground/30">/</span>
+                    </button>
+
+                    <div className="border-b border-foreground/5 my-4" />
 
                     {/* Add New Task Button */}
                     <button
