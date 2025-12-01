@@ -131,15 +131,18 @@ const MorningRitual = ({ onComplete, onDismiss }: MorningRitualProps) => {
                   From your inbox
                 </p>
                 {inboxTasks.map(task => (
-                  <div key={task.id} className="flex items-center justify-between py-2">
-                    <span className="text-sm text-foreground/50 font-mono truncate flex-1">
+                  <div key={task.id} className="py-3 border-b border-foreground/5">
+                    {/* Full task text - wrap instead of truncate */}
+                    <p className="text-sm text-foreground/60 font-mono mb-2">
                       {task.title}
-                    </span>
+                    </p>
+                    
+                    {/* Action button */}
                     <button
                       onClick={() => handleMoveToToday(task.id)}
-                      className="text-xs text-foreground/30 hover:text-foreground/50 ml-2"
+                      className="text-xs text-foreground/40 hover:text-foreground/60"
                     >
-                      + Today
+                      + Add to today
                     </button>
                   </div>
                 ))}
