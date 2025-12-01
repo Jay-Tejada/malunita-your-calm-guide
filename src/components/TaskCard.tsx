@@ -225,13 +225,13 @@ export const TaskCard = ({ id, title, time, context, completed, selected, onTogg
       onTouchEnd={handleTouchEnd}
       onTouchCancel={handleTouchEnd}
       className={cn(
-        "group flex items-start gap-3 px-4 py-3 border-b border-foreground/5 hover:bg-foreground/[0.02] transition-colors",
+        "group grid grid-cols-[24px_1fr_auto] gap-3 items-start px-4 py-3 hover:bg-foreground/[0.02] transition-colors",
         completed && "opacity-60",
         selected && "bg-foreground/[0.03]",
         isDragging && "opacity-50"
       )}
     >
-      {/* Checkbox - fixed width */}
+      {/* Column 1: Checkbox - fixed 24px */}
       <button
         onClick={(e) => {
           e.stopPropagation();
@@ -240,7 +240,7 @@ export const TaskCard = ({ id, title, time, context, completed, selected, onTogg
         {...attributes}
         {...listeners}
         className={cn(
-          "flex-shrink-0 mt-0.5 w-5 h-5 rounded-full flex items-center justify-center transition-all cursor-pointer",
+          "w-6 h-6 mt-0.5 rounded-full flex items-center justify-center transition-all cursor-pointer",
           completed
             ? "bg-foreground/10 border border-foreground/20"
             : "bg-transparent border border-foreground/20 hover:border-foreground/40"
@@ -251,14 +251,14 @@ export const TaskCard = ({ id, title, time, context, completed, selected, onTogg
         )}
       </button>
 
-      {/* Task text - fills available space */}
+      {/* Column 2: Task text - fills remaining space */}
       <div 
         onClick={onSelect}
-        className="flex-1 min-w-0 cursor-pointer"
+        className="cursor-pointer"
       >
         <p
           className={cn(
-            "font-mono text-sm leading-relaxed",
+            "font-mono text-sm leading-relaxed break-words",
             completed ? "text-foreground/40 line-through" : "text-foreground/70"
           )}
         >
@@ -284,18 +284,18 @@ export const TaskCard = ({ id, title, time, context, completed, selected, onTogg
         )}
       </div>
 
-      {/* Actions - fixed width, always aligned right */}
-      <div className="flex items-center gap-2 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+      {/* Column 3: Actions - auto width, always aligned right */}
+      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
         {onEdit && (
           <button 
             onClick={(e) => {
               e.stopPropagation();
               onEdit();
             }}
-            className="p-1.5 hover:bg-foreground/5 rounded transition-colors"
+            className="p-1.5 text-foreground/40 hover:text-foreground/60 rounded hover:bg-foreground/5 transition-colors"
             title="Edit"
           >
-            <Edit2 className="w-4 h-4 text-foreground/40 hover:text-foreground/70" />
+            <Edit2 className="w-4 h-4" />
           </button>
         )}
         
@@ -306,10 +306,10 @@ export const TaskCard = ({ id, title, time, context, completed, selected, onTogg
               handleMoveToToday(e);
             }}
             disabled={isMovingToToday}
-            className="p-1.5 hover:bg-foreground/5 rounded transition-colors disabled:opacity-50"
+            className="p-1.5 text-foreground/40 hover:text-foreground/60 rounded hover:bg-foreground/5 transition-colors disabled:opacity-50"
             title="Move to Today"
           >
-            <Star className="w-4 h-4 text-foreground/40 hover:text-foreground/70" />
+            <Star className="w-4 h-4" />
           </button>
         )}
         
@@ -317,10 +317,10 @@ export const TaskCard = ({ id, title, time, context, completed, selected, onTogg
           <DropdownMenuTrigger asChild>
             <button
               onClick={(e) => e.stopPropagation()}
-              className="p-1.5 hover:bg-foreground/5 rounded transition-colors"
+              className="p-1.5 text-foreground/40 hover:text-foreground/60 rounded hover:bg-foreground/5 transition-colors"
               title="More actions"
             >
-              <MoreVertical className="w-4 h-4 text-foreground/40 hover:text-foreground/70" />
+              <MoreVertical className="w-4 h-4" />
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48">
