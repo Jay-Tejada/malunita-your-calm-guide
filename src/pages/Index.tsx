@@ -192,6 +192,14 @@ const Index = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isMobile, showKeyboardHint]);
 
+  // Dismiss keyboard hint when desktop capture is opened (via orb click or keyboard)
+  useEffect(() => {
+    if (showDesktopCapture && showKeyboardHint) {
+      localStorage.setItem('captureHintDismissed', 'true');
+      setShowKeyboardHint(false);
+    }
+  }, [showDesktopCapture, showKeyboardHint]);
+
   // Close quick capture on click outside
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -831,7 +839,7 @@ const Index = () => {
                 {/* BOTTOM - Orb grounded in bottom third */}
                 <div className="mt-auto pb-16 flex flex-col items-center justify-center gap-2">
                   <SimpleOrb
-                    onTap={() => voiceRef.current?.startRecording()}
+                    onTap={() => setShowDesktopCapture(true)}
                     isRecording={voiceStatus.isListening}
                     isProcessing={voiceStatus.isProcessing}
                   />
@@ -839,7 +847,7 @@ const Index = () => {
                   {/* Keyboard hint - fades after first use */}
                   {showKeyboardHint && (
                     <p className="text-[10px] text-muted-foreground/20 animate-fade-in">
-                      Press Q to capture
+                      Click orb or press Q to capture
                     </p>
                   )}
                 </div>
