@@ -29,6 +29,7 @@ import { FloatingCompanion } from "@/components/mobile/FloatingCompanion";
 import { useCompanionMessages } from "@/hooks/useCompanionMessages";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ActionableBanner } from "@/components/home/ActionableBanner";
+import { FocusSection } from "@/components/home/FocusSection";
 import { OfflineIndicator } from "@/components/OfflineIndicator";
 import { VoiceSheet } from "@/components/mobile/VoiceSheet";
 import { useOfflineStatus } from "@/hooks/useOfflineStatus";
@@ -497,9 +498,9 @@ const Index = () => {
             </div>
           )}
 
-          {/* CENTER STAGE - Empty, banner shows items at top */}
-          <div className="pt-[35vh] flex flex-col items-center justify-center gap-4">
-            {/* Content moved to ActionableBanner */}
+          {/* CENTER STAGE - Focus task */}
+          <div className="flex-1 flex items-center justify-center">
+            <FocusSection />
           </div>
 
           {/* BOTTOM ZONE - Orb grounded in bottom third */}
@@ -577,9 +578,9 @@ const Index = () => {
             >
               {/* Minimal desktop home - clean & focused */}
               <div className="relative min-h-[85vh] flex flex-col">
-                {/* CENTER STAGE - Empty, banner shows items at top */}
-                <div className="pt-[35vh] flex flex-col items-center justify-center gap-4">
-                  {/* Content moved to ActionableBanner */}
+                {/* CENTER STAGE - Focus task */}
+                <div className="flex-1 flex items-center justify-center">
+                  <FocusSection />
                 </div>
 
                 {/* BOTTOM - Orb grounded in bottom third */}
