@@ -1,19 +1,22 @@
-import { useState, KeyboardEvent } from "react";
-import { TaskList } from "@/components/TaskList";
+import { useState } from "react";
 import { SimpleHeader } from "@/components/SimpleHeader";
-import { ArrowRight, Check } from "lucide-react";
 import { useTasks } from "@/hooks/useTasks";
 import { PlanningModePanel } from "@/components/planning/PlanningModePanel";
 import { usePlanningBreakdown } from "@/hooks/usePlanningBreakdown";
-import { useToast } from "@/hooks/use-toast";
+import { Check, MoreVertical, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const Someday = () => {
-  const { createTasks } = useTasks();
+  const { tasks, isLoading, updateTask } = useTasks();
   const [planningMode, setPlanningMode] = useState(false);
   const [planningText, setPlanningText] = useState("");
-  const [quickInput, setQuickInput] = useState("");
-  const [showSuccess, setShowSuccess] = useState(false);
   const { loading, error, result, runPlanningBreakdown } = usePlanningBreakdown();
   const { toast } = useToast();
 
@@ -22,32 +25,47 @@ const Someday = () => {
     setPlanningMode(true);
   };
 
-  const handleCapture = async () => {
-    if (!quickInput.trim()) return;
-    
+  // Get someday tasks, sorted by newest first
+  const somedayTasks = tasks?.filter(t => 
+    !t.completed && t.scheduled_bucket === 'someday'
+  ).sort((a, b) => 
+    new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+  ) || [];
+
+  const handleToggleTask = async (taskId: string, completed: boolean) => {
     try {
-      await createTasks([{
-        title: quickInput.trim(),
-        scheduled_bucket: 'someday',
-      }]);
-      
-      setQuickInput("");
-      setShowSuccess(true);
-      setTimeout(() => setShowSuccess(false), 1000);
-    } catch (error) {
-      console.error('Error creating task:', error);
-      toast({
-        description: "Failed to capture",
-        variant: "destructive",
-        duration: 2000,
+      await updateTask({
+        id: taskId,
+        updates: {
+          completed: !completed,
+          completed_at: !completed ? new Date().toISOString() : null,
+        }
       });
+    } catch (error) {
+      console.error("Failed to toggle task:", error);
     }
   };
 
-  const handleQuickCapture = async (e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      await handleCapture();
+  const handleMoveToToday = async (taskId: string) => {
+    try {
+      await updateTask({
+        id: taskId,
+        updates: {
+          scheduled_bucket: 'today',
+        }
+      });
+      
+      toast({
+        description: "Moved to Today",
+        duration: 2000,
+      });
+    } catch (error) {
+      console.error("Failed to move task:", error);
+      toast({
+        description: "Failed to move task",
+        variant: "destructive",
+        duration: 2000,
+      });
     }
   };
 
@@ -72,52 +90,73 @@ const Someday = () => {
       )}
       
       <main className="container mx-auto px-4 py-6 max-w-4xl pb-20 md:pb-6">
-        {/* Quick capture input */}
-        <div className="mb-6 relative">
-          <div className="relative">
-            <input
-              type="text"
-              value={quickInput}
-              onChange={(e) => setQuickInput(e.target.value)}
-              onKeyDown={handleQuickCapture}
-              placeholder="Capture a thought..."
-              className={cn(
-                "w-full bg-transparent border-0 border-b transition-all font-mono text-sm py-2 pr-8 px-0 placeholder:text-muted-foreground/40 outline-none",
-                showSuccess 
-                  ? "border-primary/50" 
-                  : "border-border/30 focus:border-foreground/40"
-              )}
-            />
-            
-            {/* Send indicator */}
-            {quickInput.trim() && !showSuccess && (
-              <button
-                onClick={handleCapture}
-                className="absolute right-0 top-1/2 -translate-y-1/2 text-foreground/30 hover:text-foreground/50 transition-colors"
-              >
-                <ArrowRight className="w-4 h-4" />
-              </button>
-            )}
-            
-            {/* Success checkmark */}
-            {showSuccess && (
-              <div className="absolute right-0 top-1/2 -translate-y-1/2 text-primary animate-scale-in">
-                <Check className="w-4 h-4" />
-              </div>
-            )}
-          </div>
-          
-          {/* Hint text */}
-          {!quickInput.trim() && !showSuccess && (
-            <p className="text-[10px] text-muted-foreground/30 mt-1 font-mono">
-              Press enter to capture
-            </p>
-          )}
+        {/* Intro Text */}
+        <div className="mb-8 text-center">
+          <p className="text-sm text-muted-foreground/50 font-mono">
+            Ideas worth keeping, for when the time is right.
+          </p>
         </div>
 
-        <div className="max-w-4xl mx-auto">
-          <TaskList category="someday" onPlanThis={handlePlanThis} />
-        </div>
+        {/* Task List */}
+        {isLoading ? (
+          <div className="text-center py-12">
+            <p className="text-muted-foreground/40 text-sm font-mono">Loading...</p>
+          </div>
+        ) : somedayTasks.length === 0 ? (
+          <div className="text-center py-16">
+            <p className="text-muted-foreground/40 text-sm font-mono">Nothing here yet</p>
+          </div>
+        ) : (
+          <div className="space-y-1">
+            {somedayTasks.map((task) => (
+              <div
+                key={task.id}
+                className="flex items-start gap-3 py-2.5 px-3 hover:bg-muted/20 rounded-md transition-colors group"
+              >
+                <button
+                  onClick={() => handleToggleTask(task.id, task.completed || false)}
+                  className={cn(
+                    "flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center mt-0.5 transition-all",
+                    task.completed
+                      ? "bg-foreground/10 border border-foreground/20"
+                      : "bg-transparent border border-foreground/20 hover:border-foreground/40"
+                  )}
+                >
+                  {task.completed && (
+                    <Check className="w-3 h-3 text-foreground/60" />
+                  )}
+                </button>
+                
+                <span className={cn(
+                  "flex-1 font-mono text-[14px] leading-snug",
+                  task.completed ? "text-foreground/40 line-through" : "text-foreground/90"
+                )}>
+                  {task.title}
+                </span>
+
+                {/* Hover Actions */}
+                <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button className="p-1 hover:bg-muted/30 rounded transition-colors">
+                        <MoreVertical className="w-4 h-4 text-foreground/40" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-48">
+                      <DropdownMenuItem onClick={() => handleMoveToToday(task.id)}>
+                        <ArrowRight className="w-4 h-4 mr-2" />
+                        Move to Today
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handlePlanThis(task.title)}>
+                        Plan This
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </main>
     </div>
   );
