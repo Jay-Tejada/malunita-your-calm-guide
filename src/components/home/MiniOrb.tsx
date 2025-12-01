@@ -37,7 +37,7 @@ export const MiniOrb = ({ onClick, label, position }: MiniOrbProps) => {
       onClick={onClick}
       className={cn(
         positionClasses[position],
-        'z-50 transition-opacity duration-300',
+        'z-[60] transition-opacity duration-300',
         'text-foreground/20 hover:text-foreground/40'
       )}
       aria-label={label}
