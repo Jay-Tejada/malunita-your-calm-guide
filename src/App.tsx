@@ -48,6 +48,7 @@ const Customization = lazy(() => import("./pages/Customization"));
 const Journal = lazy(() => import("./pages/Journal"));
 const MonthlyInsights = lazy(() => import("./pages/MonthlyInsights"));
 const Quests = lazy(() => import("./pages/Quests"));
+const Thoughts = lazy(() => import("./pages/Thoughts"));
 const AmbientWorlds = lazy(() => import("./pages/AmbientWorlds"));
 const Clusters = lazy(() => import("./pages/Clusters"));
 const TimeTravel = lazy(() => import("./pages/TimeTravel"));
@@ -276,6 +277,7 @@ const App = () => {
                   <Route path="/timetravel" element={<TimeTravel />} />
                   <Route path="/reminders" element={<Reminders />} />
                   <Route path="/learning" element={<Learning />} />
+                  <Route path="/thoughts" element={<Thoughts />} />
                   <Route path="/settings" element={<Settings />} />
                   {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                   <Route path="*" element={<NotFound />} />

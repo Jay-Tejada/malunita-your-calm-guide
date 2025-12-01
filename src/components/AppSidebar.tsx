@@ -309,6 +309,12 @@ export function AppSidebar({
                         </SidebarMenuButton>
                       </SidebarMenuItem>
                       <SidebarMenuItem>
+                        <SidebarMenuButton onClick={() => navigate('/thoughts')} className="hover:bg-sidebar-active/50">
+                          <Lightbulb className="w-4 h-4" />
+                          <span>Thoughts</span>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                      <SidebarMenuItem>
                         <SidebarMenuButton onClick={() => navigate('/daily-session')} className="hover:bg-sidebar-active/50">
                           <Focus className="w-4 h-4" />
                           <span>Reflection Mode</span>
