@@ -39,6 +39,7 @@ const coreCategories = [
   { id: "inbox", label: "Inbox", route: "/inbox" },
   { id: "thoughts", label: "Thoughts", route: "/thoughts" },
   { id: "someday", label: "Someday", route: "/someday" },
+  { id: "calendar", label: "Calendar", route: "/calendar" },
 ];
 
 const spaceCategories = [
@@ -462,26 +463,28 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate, onSearchOpen }: LeftDr
                     <button
                       onClick={() => {
                         hapticMedium();
-                        // Just dismiss the drawer - user can add tasks on home screen
                         onClose();
+                        requestAnimationFrame(() => {
+                          navigate('/inbox?focus=capture');
+                        });
                       }}
-                      className="w-full h-14 rounded-full bg-transparent border border-foreground/20 text-foreground/60 hover:border-foreground/40 hover:text-foreground/80 font-mono text-[15px] flex items-center justify-center gap-2 transition-all mb-8"
+                      className="w-full flex items-center justify-center gap-2 py-2.5 border border-foreground/10 rounded-lg text-sm text-foreground/60 hover:bg-foreground/[0.03] transition-colors mb-4"
                     >
                       <Plus className="w-4 h-4" />
                       Add new task
                     </button>
 
                     {/* CORE Section */}
-                    <div className="mb-6">
-                      <h3 className="font-mono font-normal text-[10px] text-muted-foreground/40 uppercase tracking-widest mt-8 mb-3">
+                    <div className="mb-4">
+                      <h3 className="font-mono font-normal text-[10px] text-muted-foreground/40 uppercase tracking-widest mb-2">
                         Core
                       </h3>
-                      <div className="flex flex-col gap-1">
+                      <div className="space-y-0.5">
                         {coreCategories.map((category) => (
                           <button
                             key={category.id}
                             onClick={() => handleCategoryClick(category.id, category.route)}
-                            className="text-left py-4 px-4 font-mono text-sm text-foreground/60 hover:text-foreground/90 hover:bg-foreground/[0.03] transition-colors rounded-lg min-h-[48px]"
+                            className="w-full text-left py-2 px-2 font-mono text-sm text-foreground/70 hover:bg-foreground/[0.03] rounded-md transition-colors"
                           >
                             {category.label}
                           </button>
@@ -489,19 +492,17 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate, onSearchOpen }: LeftDr
                       </div>
                     </div>
 
-                    <div className="h-px mb-6" style={{ backgroundColor: 'rgba(0,0,0,0.1)' }} />
-
                     {/* SPACES Section */}
-                    <div className="mb-6">
-                      <h3 className="font-mono font-normal text-[10px] text-muted-foreground/40 uppercase tracking-widest mt-8 mb-3">
+                    <div className="mb-4">
+                      <h3 className="font-mono font-normal text-[10px] text-muted-foreground/40 uppercase tracking-widest mb-2">
                         Spaces
                       </h3>
-                      <div className="flex flex-col gap-1">
+                      <div className="space-y-0.5">
                         {spaceCategories.map((category) => (
                           <button
                             key={category.id}
                             onClick={() => handleCategoryClick(category.id, category.route)}
-                            className="text-left py-4 px-4 font-mono text-sm text-foreground/60 hover:text-foreground/90 hover:bg-foreground/[0.03] transition-colors rounded-lg min-h-[48px]"
+                            className="w-full text-left py-2 px-2 font-mono text-sm text-foreground/70 hover:bg-foreground/[0.03] rounded-md transition-colors"
                           >
                             {category.label}
                           </button>
@@ -509,34 +510,29 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate, onSearchOpen }: LeftDr
                       </div>
                     </div>
 
-                    <div className="h-px mb-6" style={{ backgroundColor: 'rgba(0,0,0,0.1)' }} />
-
                     {/* PROJECTS Section */}
-                    <div className="mb-6">
-                      <div className="flex items-center justify-between mb-3">
-                        <h3 className="font-mono font-normal text-[10px] text-muted-foreground/40 uppercase tracking-widest mt-8">
+                    <div className="mb-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="font-mono font-normal text-[10px] text-muted-foreground/40 uppercase tracking-widest">
                           Projects
                         </h3>
                         <button
                           onClick={() => {
                             hapticLight();
-                            // TODO: Add project creation flow
                             toast({
                               title: "Coming soon",
                               description: "Project creation will be available soon.",
                             });
                           }}
-                          className="p-1 hover:bg-muted/30 rounded transition-colors"
+                          className="p-1 text-foreground/30 hover:text-foreground/50 transition-colors"
                           title="Create new project"
                         >
-                          <Plus className="w-3.5 h-3.5" style={{ color: '#777' }} />
+                          <Plus className="w-3.5 h-3.5" />
                         </button>
                       </div>
-                      <div className="flex flex-col gap-1">
+                      <div className="space-y-0.5">
                         {!projectTasks || projectTasks.length === 0 ? (
-                          <div className="text-center py-12">
-                            <p className="text-muted-foreground/40 text-sm">Nothing here yet</p>
-                          </div>
+                          <p className="text-xs text-foreground/30 py-1">Nothing here yet</p>
                         ) : (
                           projectTasks.map((project) => (
                             <button
@@ -548,28 +544,13 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate, onSearchOpen }: LeftDr
                                   onNavigate(`/project/${project.id}`);
                                 });
                               }}
-                              className="text-left py-4 px-4 font-mono text-sm text-foreground/60 hover:text-foreground/90 hover:bg-foreground/[0.03] transition-colors rounded-lg min-h-[48px]"
+                              className="w-full text-left py-2 px-2 font-mono text-sm text-foreground/70 hover:bg-foreground/[0.03] rounded-md transition-colors"
                             >
                               {project.title}
                             </button>
                           ))
                         )}
                       </div>
-                    </div>
-
-                    <div className="h-px mb-6" style={{ backgroundColor: 'rgba(0,0,0,0.1)' }} />
-
-                    {/* CALENDAR Section */}
-                    <div className="mb-6">
-                      <h3 className="font-['IBM_Plex_Mono'] text-[11px] uppercase tracking-wider mb-3" style={{ color: '#777' }}>
-                        Calendar
-                      </h3>
-                      <button
-                        onClick={() => handleCategoryClick("calendar")}
-                        className="text-left py-4 px-4 font-mono text-sm text-foreground/60 hover:text-foreground/90 hover:bg-foreground/[0.03] transition-colors w-full rounded-lg min-h-[48px]"
-                      >
-                        Calendar
-                      </button>
                     </div>
 
                     <div className="flex-1" />
