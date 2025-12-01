@@ -42,6 +42,7 @@ import { useDailyRituals } from "@/hooks/useDailyRituals";
 import MorningRitual from "@/components/rituals/MorningRitual";
 import EveningRitual from "@/components/rituals/EveningRitual";
 import RitualPrompt from "@/components/RitualPrompt";
+import Search from "@/components/Search";
 
 interface AISummary {
   decisions: string[];
@@ -122,6 +123,7 @@ const Index = () => {
   const [planningText, setPlanningText] = useState("");
   const [showThinkWithMe, setShowThinkWithMe] = useState(false);
   const [quickCaptureOpen, setQuickCaptureOpen] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   
@@ -258,8 +260,32 @@ const Index = () => {
       setQuickCaptureOpen(false);
       setShowThinkWithMe(false);
       setShowCaptureHistory(false);
+      setShowSearch(false);
     },
   });
+  
+  // Search keyboard shortcuts (Cmd/Ctrl+K and /)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't trigger if user is typing in an input or textarea
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      
+      // Cmd/Ctrl + K
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setShowSearch(true);
+      }
+      
+      // / key (forward slash)
+      if (e.key === '/' && !showSearch) {
+        e.preventDefault();
+        setShowSearch(true);
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showSearch]);
   
   // Listen for contextual card actions
   useEffect(() => {
@@ -874,6 +900,11 @@ const Index = () => {
                     </p>
                   )}
                   
+                  {/* Search hint */}
+                  <p className="text-[10px] text-muted-foreground/20 text-center mt-1">
+                    Press / to search
+                  </p>
+                  
                   {/* Companion zone - message and progress */}
                   <div className="flex flex-col items-center gap-4 mt-2">
                     <div className="min-h-[20px]">
@@ -939,6 +970,9 @@ const Index = () => {
           onPlanningModeActivated={handlePlanningModeActivated}
         />
       )}
+      
+      {/* Search modal */}
+      <Search isOpen={showSearch} onClose={() => setShowSearch(false)} />
     </>
   );
 };
