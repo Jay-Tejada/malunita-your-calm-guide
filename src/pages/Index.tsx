@@ -41,6 +41,7 @@ import ProgressIndicator from "@/components/ProgressIndicator";
 import { useDailyRituals } from "@/hooks/useDailyRituals";
 import MorningRitual from "@/components/rituals/MorningRitual";
 import EveningRitual from "@/components/rituals/EveningRitual";
+import RitualPrompt from "@/components/RitualPrompt";
 
 interface AISummary {
   decisions: string[];
@@ -147,6 +148,8 @@ const Index = () => {
     dismissMorning,
     dismissEvening,
   } = useDailyRituals();
+  const [showMorningRitual, setShowMorningRitual] = useState(false);
+  const [showEveningRitual, setShowEveningRitual] = useState(false);
   
   // State for focus task actions
   const [showFocusActions, setShowFocusActions] = useState(false);
@@ -486,19 +489,31 @@ const Index = () => {
 
   return (
     <>
-      {/* Morning ritual overlay */}
-      {shouldShowMorning && (
+      {/* Morning ritual */}
+      {showMorningRitual && (
         <MorningRitual 
-          onComplete={completeMorning} 
-          onDismiss={dismissMorning} 
+          onComplete={() => {
+            completeMorning();
+            setShowMorningRitual(false);
+          }} 
+          onDismiss={() => {
+            dismissMorning();
+            setShowMorningRitual(false);
+          }} 
         />
       )}
       
-      {/* Evening ritual overlay */}
-      {shouldShowEvening && (
+      {/* Evening ritual */}
+      {showEveningRitual && (
         <EveningRitual 
-          onComplete={completeEvening} 
-          onDismiss={dismissEvening} 
+          onComplete={() => {
+            completeEvening();
+            setShowEveningRitual(false);
+          }} 
+          onDismiss={() => {
+            dismissEvening();
+            setShowEveningRitual(false);
+          }} 
         />
       )}
       
@@ -633,6 +648,22 @@ const Index = () => {
 
           {/* BOTTOM ZONE - Orb grounded in bottom third */}
           <div className="mt-auto pb-24 flex flex-col items-center justify-center relative gap-6">
+            {/* Ritual prompts */}
+            {shouldShowMorning && !showMorningRitual && (
+              <RitualPrompt 
+                type="morning" 
+                onTap={() => setShowMorningRitual(true)}
+                onDismiss={dismissMorning}
+              />
+            )}
+            {shouldShowEvening && !showEveningRitual && (
+              <RitualPrompt 
+                type="evening" 
+                onTap={() => setShowEveningRitual(true)}
+                onDismiss={dismissEvening}
+              />
+            )}
+            
             <div className={`transition-transform duration-200 ${showQuickCapture ? 'translate-y-5' : ''}`}>
               <SimpleOrb
                 onTap={handleVoiceCapture}
@@ -810,6 +841,26 @@ const Index = () => {
 
                 {/* BOTTOM - Orb grounded in bottom third */}
                 <div className="mt-auto pb-16 flex flex-col items-center justify-center gap-2">
+                  {/* Ritual prompts */}
+                  {shouldShowMorning && !showMorningRitual && (
+                    <div className="mb-4">
+                      <RitualPrompt 
+                        type="morning" 
+                        onTap={() => setShowMorningRitual(true)}
+                        onDismiss={dismissMorning}
+                      />
+                    </div>
+                  )}
+                  {shouldShowEvening && !showEveningRitual && (
+                    <div className="mb-4">
+                      <RitualPrompt 
+                        type="evening" 
+                        onTap={() => setShowEveningRitual(true)}
+                        onDismiss={dismissEvening}
+                      />
+                    </div>
+                  )}
+                  
                   <SimpleOrb
                     onTap={() => setShowDesktopCapture(true)}
                     isRecording={voiceStatus.isListening}
