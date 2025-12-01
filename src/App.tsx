@@ -20,6 +20,7 @@ import { useCutsceneManager } from "./features/cutscenes/useCutsceneManager";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { initPerformanceMonitoring } from "@/lib/performance";
 import { NetworkStatusBanner } from "@/components/NetworkStatusBanner";
+import { ProgressProvider } from "@/contexts/ProgressContext";
 
 // Lazy load all pages
 const Index = lazy(() => import("./pages/Index"));
@@ -236,9 +237,10 @@ const App = () => {
       <QueryClientProvider client={queryClient}>
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
           <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <NetworkStatusBanner />
+            <ProgressProvider>
+              <Toaster />
+              <Sonner />
+              <NetworkStatusBanner />
           
           {/* Ritual overlays */}
           <AnimatePresence>
@@ -293,6 +295,7 @@ const App = () => {
               </Routes>
             </Suspense>
           </BrowserRouter>
+            </ProgressProvider>
         </TooltipProvider>
       </ThemeProvider>
     </QueryClientProvider>
