@@ -101,9 +101,9 @@ export const Layout = () => {
 
       {/* Quick Capture Modal */}
       <QuickCapture
-        open={quickCaptureOpen}
-        onOpenChange={setQuickCaptureOpen}
-        onCapture={handleQuickCapture}
+        isOpen={quickCaptureOpen}
+        onClose={() => setQuickCaptureOpen(false)}
+        variant="desktop"
       />
 
       {/* Page Content */}

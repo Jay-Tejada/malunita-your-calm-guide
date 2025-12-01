@@ -141,10 +141,8 @@ const Index = () => {
   const [focusTaskData, setFocusTaskData] = useState<{ id: string; reminderTime: string | null } | null>(null);
   const isFocusTask = contextualPrompt.subtitle === "Today's main focus";
   
-  // Quick capture state (mobile swipe-up on orb)
+  // Quick capture state (mobile swipe-up on orb, desktop Q//)
   const [showQuickCapture, setShowQuickCapture] = useState(false);
-  const [captureText, setCaptureText] = useState("");
-  const captureInputRef = useRef<HTMLInputElement>(null);
   
   // Desktop quick capture modal state
   const [showDesktopCapture, setShowDesktopCapture] = useState(false);
@@ -152,18 +150,7 @@ const Index = () => {
     // Only show hint if never used before
     return !localStorage.getItem('captureHintDismissed');
   });
-  const desktopCaptureInputRef = useRef<HTMLInputElement>(null);
   
-  // Auto-focus quick capture input when shown
-  useEffect(() => {
-    if (showQuickCapture && captureInputRef.current) {
-      captureInputRef.current.focus();
-    }
-    if (showDesktopCapture && desktopCaptureInputRef.current) {
-      desktopCaptureInputRef.current.focus();
-    }
-  }, [showQuickCapture, showDesktopCapture]);
-
   // Global keyboard shortcuts for desktop
   useEffect(() => {
     if (isMobile) return;
@@ -184,7 +171,6 @@ const Index = () => {
       
       if (e.key === 'Escape') {
         setShowDesktopCapture(false);
-        setCaptureText("");
       }
     };
     
@@ -199,25 +185,6 @@ const Index = () => {
       setShowKeyboardHint(false);
     }
   }, [showDesktopCapture, showKeyboardHint]);
-
-  // Close quick capture on click outside
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (showQuickCapture && captureInputRef.current && !captureInputRef.current.contains(e.target as Node)) {
-        setShowQuickCapture(false);
-        setCaptureText("");
-      }
-      if (showDesktopCapture && desktopCaptureInputRef.current?.parentElement && !desktopCaptureInputRef.current.parentElement.contains(e.target as Node)) {
-        setShowDesktopCapture(false);
-        setCaptureText("");
-      }
-    };
-    
-    if (showQuickCapture || showDesktopCapture) {
-      document.addEventListener('mousedown', handleClickOutside);
-      return () => document.removeEventListener('mousedown', handleClickOutside);
-    }
-  }, [showQuickCapture, showDesktopCapture]);
 
   // Fetch focus task data when needed
   useEffect(() => {
@@ -494,18 +461,6 @@ const Index = () => {
     }
   };
 
-  const handleQuickCaptureSubmit = async (keepOpen = false) => {
-    if (!captureText.trim()) return;
-    
-    await handleCapture(captureText);
-    setCaptureText("");
-    
-    if (!keepOpen) {
-      setShowQuickCapture(false);
-      setShowDesktopCapture(false);
-    }
-  };
-
   const handleVoiceCapture = () => {
     if (isMobile) {
       setVoiceSheetOpen(true);
@@ -647,28 +602,6 @@ const Index = () => {
 
           {/* BOTTOM ZONE - Orb grounded in bottom third */}
           <div className="mt-auto pb-24 flex flex-col items-center justify-center relative">
-            {/* Quick capture input - appears above orb on swipe up */}
-            {showQuickCapture && (
-              <div className="absolute bottom-32 left-1/2 -translate-x-1/2 w-[80%] max-w-md animate-fade-in">
-                <input
-                  ref={captureInputRef}
-                  type="text"
-                  value={captureText}
-                  onChange={(e) => setCaptureText(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      handleQuickCaptureSubmit();
-                    } else if (e.key === 'Escape') {
-                      setShowQuickCapture(false);
-                      setCaptureText("");
-                    }
-                  }}
-                  placeholder="Capture a thought..."
-                  className="w-full text-center text-sm font-mono text-foreground/80 bg-background/80 backdrop-blur-sm border-b border-foreground/20 px-4 py-2 focus:outline-none focus:border-foreground/40 placeholder:text-muted-foreground/50"
-                />
-              </div>
-            )}
-            
             <div className={`transition-transform duration-200 ${showQuickCapture ? 'translate-y-5' : ''}`}>
               <SimpleOrb
                 onTap={handleVoiceCapture}
@@ -857,41 +790,24 @@ const Index = () => {
         </>
       )}
       
-      {/* Quick Capture Modal - triggered by Cmd+K (desktop only) */}
-      {!isMobile && (
+      {/* Quick Capture - Mobile variant (swipe up on orb) */}
+      {isMobile && (
         <QuickCapture
-        open={quickCaptureOpen}
-        onOpenChange={setQuickCaptureOpen}
-          onCapture={handleCapture}
+          isOpen={showQuickCapture}
+          onClose={() => setShowQuickCapture(false)}
+          variant="mobile"
+          onCapture={handleTaskCreated}
         />
       )}
       
-      {/* Desktop Quick Capture Modal - triggered by Q or / */}
-      {!isMobile && showDesktopCapture && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center pt-[20vh] bg-background/80 backdrop-blur-sm">
-          <div className="w-full max-w-xl mx-4 bg-background border border-foreground/10 rounded-xl shadow-lg p-4">
-            <input
-              ref={desktopCaptureInputRef}
-              type="text"
-              value={captureText}
-              onChange={(e) => setCaptureText(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault();
-                  handleQuickCaptureSubmit(false);
-                } else if (e.key === 'Enter' && e.shiftKey) {
-                  e.preventDefault();
-                  handleQuickCaptureSubmit(true);
-                } else if (e.key === 'Escape') {
-                  setShowDesktopCapture(false);
-                  setCaptureText("");
-                }
-              }}
-              placeholder="Capture a thought... (Enter to save, Esc to close, Shift+Enter to save & continue)"
-              className="w-full text-base font-mono text-foreground bg-transparent focus:outline-none placeholder:text-muted-foreground/50"
-            />
-          </div>
-        </div>
+      {/* Quick Capture - Desktop variant (Q or / keyboard shortcut, or orb click) */}
+      {!isMobile && (
+        <QuickCapture
+          isOpen={showDesktopCapture}
+          onClose={() => setShowDesktopCapture(false)}
+          variant="desktop"
+          onCapture={handleTaskCreated}
+        />
       )}
 
       {/* Capture history modal (desktop only) */}
