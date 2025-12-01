@@ -2,10 +2,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Task } from '@/hooks/useTasks';
 import { useWorkloadSuggestions, WorkloadSuggestion } from '@/ai/adaptiveWorkloadBalancer';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { ChevronDown, ChevronUp, ArrowRight, TrendingDown, TrendingUp, X } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { ArrowRight, X } from 'lucide-react';
 
 interface WorkloadBalanceSuggestionsProps {
   tasks: Task[] | undefined;
@@ -53,22 +50,12 @@ export const WorkloadBalanceSuggestions = ({
   };
 
   return (
-    <Card className="mb-4 overflow-hidden border-primary/20 bg-primary/5">
+    <div className="mb-6">
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full px-4 py-3 flex items-center justify-between text-left hover:bg-primary/10 transition-colors"
+        className="text-[11px] text-muted-foreground/50 hover:text-muted-foreground/80 transition-colors font-mono"
       >
-        <div className="flex items-center gap-2">
-          <TrendingDown className="w-4 h-4 text-primary" />
-          <span className="text-sm font-medium">
-            Workload Suggestions ({activeSuggestions.length})
-          </span>
-        </div>
-        {isExpanded ? (
-          <ChevronUp className="w-4 h-4 text-muted-foreground" />
-        ) : (
-          <ChevronDown className="w-4 h-4 text-muted-foreground" />
-        )}
+        💡 {activeSuggestions.length} suggestion{activeSuggestions.length !== 1 ? 's' : ''}
       </button>
 
       <AnimatePresence>
@@ -78,65 +65,47 @@ export const WorkloadBalanceSuggestions = ({
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="overflow-hidden"
+            className="mt-4"
           >
-            <div className="px-4 pb-4 space-y-2">
+            <div className="space-y-6">
               {activeSuggestions.map((suggestion) => (
                 <motion.div
                   key={suggestion.id}
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, x: -100 }}
-                  className={cn(
-                    "p-3 rounded-lg border bg-card",
-                    suggestion.type === 'move_out' ? 'border-orange-500/30' : 'border-green-500/30'
-                  )}
+                  className="group"
                 >
-                  <div className="flex items-start gap-3">
-                    <div className={cn(
-                      "w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0",
-                      suggestion.type === 'move_out' ? 'bg-orange-500/10' : 'bg-green-500/10'
-                    )}>
-                      {suggestion.type === 'move_out' ? (
-                        <TrendingDown className="w-4 h-4 text-orange-500" />
-                      ) : (
-                        <TrendingUp className="w-4 h-4 text-green-500" />
-                      )}
-                    </div>
-
+                  <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-foreground/90 mb-1">
+                      <p className="text-sm font-mono text-foreground/80 mb-1">
                         {suggestion.taskTitle}
                       </p>
-                      <p className="text-xs text-muted-foreground mb-2">
+                      <p className="text-xs text-muted-foreground/60 mb-2">
                         {suggestion.reason}
                       </p>
-                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                      <div className="flex items-center gap-1 text-[10px] text-muted-foreground/40 font-mono">
                         <span>{getBucketLabel(suggestion.fromBucket)}</span>
                         <ArrowRight className="w-3 h-3" />
-                        <span className="font-medium">{getBucketLabel(suggestion.toBucket)}</span>
+                        <span>{getBucketLabel(suggestion.toBucket)}</span>
                       </div>
                     </div>
 
-                    <div className="flex flex-col gap-1 flex-shrink-0">
-                      <Button
-                        size="sm"
-                        variant="ghost"
+                    <div className="flex items-center gap-3 flex-shrink-0">
+                      <button
                         onClick={() => handleApply(suggestion)}
                         disabled={applyingIds.has(suggestion.id)}
-                        className="h-7 px-2 text-xs"
+                        className="text-xs text-foreground/60 hover:text-foreground/90 transition-colors disabled:opacity-50 font-mono"
                       >
                         {applyingIds.has(suggestion.id) ? 'Moving...' : 'Apply'}
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
+                      </button>
+                      <button
                         onClick={() => handleDismiss(suggestion.id)}
-                        className="h-7 px-2"
+                        className="text-muted-foreground/30 hover:text-muted-foreground/60 transition-colors"
                         title="Dismiss"
                       >
                         <X className="w-3 h-3" />
-                      </Button>
+                      </button>
                     </div>
                   </div>
                 </motion.div>
@@ -145,6 +114,6 @@ export const WorkloadBalanceSuggestions = ({
           </motion.div>
         )}
       </AnimatePresence>
-    </Card>
+    </div>
   );
 };
