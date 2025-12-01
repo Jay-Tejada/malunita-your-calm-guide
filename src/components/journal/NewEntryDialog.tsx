@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { X } from "lucide-react";
+import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 
 interface NewEntryDialogProps {
@@ -10,99 +10,116 @@ interface NewEntryDialogProps {
 }
 
 export const NewEntryDialog = ({ isOpen, onClose }: NewEntryDialogProps) => {
-  const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
+  const [entryId, setEntryId] = useState<string | null>(null);
+  const [showSaved, setShowSaved] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const { toast } = useToast();
   const queryClient = useQueryClient();
+  const timeoutRef = useRef<NodeJS.Timeout>();
+  const saveTimeoutRef = useRef<NodeJS.Timeout>();
 
-  const handleSave = async () => {
-    if (!title.trim() || !content.trim()) {
-      toast({
-        description: "Please add a title and content",
-        variant: "destructive",
-      });
-      return;
-    }
+  const saveEntry = async (text: string) => {
+    if (!text.trim()) return;
 
     setIsSaving(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      const { error } = await supabase
-        .from("journal_entries")
-        .insert({
-          user_id: user.id,
-          title: title.trim(),
-          content: content.trim(),
-        });
+      // Get first line as title
+      const firstLine = text.split('\n')[0].slice(0, 100) || "Untitled";
 
-      if (error) throw error;
+      if (entryId) {
+        // Update existing entry
+        const { error } = await supabase
+          .from("journal_entries")
+          .update({
+            title: firstLine,
+            content: text.trim(),
+          })
+          .eq("id", entryId);
 
-      toast({
-        description: "Entry saved",
-      });
+        if (error) throw error;
+      } else {
+        // Create new entry
+        const { data, error } = await supabase
+          .from("journal_entries")
+          .insert({
+            user_id: user.id,
+            title: firstLine,
+            content: text.trim(),
+          })
+          .select()
+          .single();
+
+        if (error) throw error;
+        if (data) setEntryId(data.id);
+      }
+
+      // Show saved indicator
+      setShowSaved(true);
+      if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+      saveTimeoutRef.current = setTimeout(() => setShowSaved(false), 2000);
 
       queryClient.invalidateQueries({ queryKey: ["journal_entries"] });
-      onClose();
     } catch (error) {
       console.error("Failed to save entry:", error);
-      toast({
-        description: "Failed to save entry",
-        variant: "destructive",
-      });
     } finally {
       setIsSaving(false);
     }
   };
 
+  // Auto-save on content change (debounced)
+  useEffect(() => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    
+    timeoutRef.current = setTimeout(() => {
+      if (content) saveEntry(content);
+    }, 2000);
+
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, [content]);
+
+  // Save on blur
+  const handleBlur = () => {
+    if (content.trim()) saveEntry(content);
+  };
+
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-      <div className="bg-background border border-foreground/10 rounded-lg w-full max-w-2xl p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-sm font-mono text-foreground/80">New Entry</h2>
-          <button
-            onClick={onClose}
-            className="text-foreground/40 hover:text-foreground/60 transition-colors"
-          >
-            <X className="w-4 h-4" />
-          </button>
+    <div className="fixed inset-0 bg-background z-50 flex flex-col">
+      {/* Header */}
+      <div className="flex items-center justify-between px-6 py-4 border-b border-foreground/5">
+        <div className="text-xs text-muted-foreground/40">
+          {format(new Date(), "MMMM d, yyyy")}
         </div>
+        <button
+          onClick={onClose}
+          className="text-foreground/40 hover:text-foreground/60 transition-colors"
+        >
+          <X className="w-5 h-5" />
+        </button>
+      </div>
 
-        <input
-          type="text"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder="Entry title..."
-          className="w-full px-3 py-2 mb-3 bg-transparent border border-foreground/10 rounded text-sm font-mono text-foreground/80 placeholder:text-foreground/30 focus:outline-none focus:border-foreground/20"
-        />
-
+      {/* Main textarea */}
+      <div className="flex-1 px-6 py-6 overflow-auto">
         <textarea
           value={content}
           onChange={(e) => setContent(e.target.value)}
-          placeholder="Write your thoughts..."
-          rows={12}
-          className="w-full px-3 py-2 mb-4 bg-transparent border border-foreground/10 rounded text-sm font-mono text-foreground/80 placeholder:text-foreground/30 focus:outline-none focus:border-foreground/20 resize-none"
+          onBlur={handleBlur}
+          placeholder="Start writing..."
+          autoFocus
+          className="w-full h-full min-h-[50vh] font-mono text-base text-foreground/80 bg-transparent placeholder:text-foreground/30 focus:outline-none resize-none"
         />
+      </div>
 
-        <div className="flex justify-end gap-2">
-          <button
-            onClick={onClose}
-            disabled={isSaving}
-            className="px-4 py-2 text-sm font-mono text-foreground/60 hover:text-foreground/80 transition-colors"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleSave}
-            disabled={isSaving}
-            className="px-4 py-2 text-sm font-mono bg-foreground/10 hover:bg-foreground/20 text-foreground/80 rounded transition-colors disabled:opacity-50"
-          >
-            {isSaving ? "Saving..." : "Save"}
-          </button>
+      {/* Footer - Saved indicator */}
+      <div className="px-6 py-3 border-t border-foreground/5">
+        <div className={`text-xs text-muted-foreground/40 transition-opacity duration-300 ${showSaved ? 'opacity-100' : 'opacity-0'}`}>
+          Saved
         </div>
       </div>
     </div>
