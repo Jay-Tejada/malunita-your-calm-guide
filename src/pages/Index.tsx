@@ -35,6 +35,7 @@ import { useOfflineStatus } from "@/hooks/useOfflineStatus";
 import { ContextualCard } from "@/components/mobile/ContextualCard";
 import { SimpleOrb } from "@/components/mobile/SimpleOrb";
 import { useContextualPrompt } from "@/hooks/useContextualPrompt";
+import { Check, Clock, Pencil } from "lucide-react";
 
 interface AISummary {
   decisions: string[];
@@ -134,7 +135,56 @@ const Index = () => {
   
   // State for focus task actions
   const [showFocusActions, setShowFocusActions] = useState(false);
+  const [showScheduler, setShowScheduler] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editText, setEditText] = useState("");
+  const [focusTaskData, setFocusTaskData] = useState<{ id: string; reminderTime: string | null } | null>(null);
   const isFocusTask = contextualPrompt.subtitle === "Today's main focus";
+  
+  // Fetch focus task data when needed
+  useEffect(() => {
+    if (isFocusTask && user) {
+      const fetchFocusTask = async () => {
+        const today = new Date().toISOString().split('T')[0];
+        const { data } = await supabase
+          .from('tasks')
+          .select('id, reminder_time')
+          .eq('user_id', user.id)
+          .eq('is_focus', true)
+          .eq('focus_date', today)
+          .maybeSingle();
+        if (data) {
+          setFocusTaskData({ id: data.id, reminderTime: data.reminder_time });
+        }
+      };
+      fetchFocusTask();
+    }
+  }, [isFocusTask, user]);
+  
+  // Helper to format scheduled time
+  const formatScheduledTime = (timeString: string) => {
+    const date = new Date(timeString);
+    const hour = date.getHours();
+    
+    if (hour === 9) return 'morning';
+    if (hour === 13) return 'afternoon';
+    if (hour === 18) return 'evening';
+    
+    return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: hour !== 0 ? '2-digit' : undefined });
+  };
+  
+  // Close scheduler on click outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (showScheduler) {
+        setShowScheduler(false);
+      }
+    };
+    if (showScheduler) {
+      document.addEventListener('click', handleClickOutside);
+      return () => document.removeEventListener('click', handleClickOutside);
+    }
+  }, [showScheduler]);
 
   // Initialize keyboard shortcuts
   useKeyboardShortcuts({
@@ -393,57 +443,114 @@ const Index = () => {
           {/* CENTER STAGE - Focus text floats in center */}
           {contextualPrompt.title && (
             <div className="pt-[35vh] flex flex-col items-center justify-center gap-4">
-              <ContextualCard
-                title={contextualPrompt.title}
-                subtitle={contextualPrompt.subtitle}
-                onTap={isFocusTask ? () => setShowFocusActions(!showFocusActions) : contextualPrompt.action || undefined}
-              />
-              {isFocusTask && showFocusActions && (
-                <div className="flex justify-center gap-4">
-                  <button
-                    onClick={async () => {
-                      const { data: { user } } = await supabase.auth.getUser();
-                      if (!user) return;
-                      const today = new Date().toISOString().split('T')[0];
-                      const { data: task } = await supabase
-                        .from('tasks')
-                        .select('id')
-                        .eq('user_id', user.id)
-                        .eq('is_focus', true)
-                        .eq('focus_date', today)
-                        .maybeSingle();
-                      if (task) {
-                        await supabase.from('tasks').update({ completed: true }).eq('id', task.id);
-                        setShowFocusActions(false);
-                        toast({ description: "Focus task completed!" });
-                      }
-                    }}
-                    className="text-xs text-foreground/50 hover:text-foreground/70 transition-colors"
-                  >
-                    ✓ Done
-                  </button>
-                  <button
-                    onClick={async () => {
-                      const { data: { user } } = await supabase.auth.getUser();
-                      if (!user) return;
-                      const today = new Date().toISOString().split('T')[0];
-                      const { data: task } = await supabase
-                        .from('tasks')
-                        .select('id')
-                        .eq('user_id', user.id)
-                        .eq('is_focus', true)
-                        .eq('focus_date', today)
-                        .maybeSingle();
-                      if (task) {
-                        await supabase.from('tasks').update({ is_focus: false, focus_date: null }).eq('id', task.id);
-                        setShowFocusActions(false);
-                        toast({ description: "Cleared from focus" });
-                      }
-                    }}
-                    className="text-xs text-foreground/50 hover:text-foreground/70 transition-colors"
-                  >
-                    Clear focus
-                  </button>
+              {isEditing && isFocusTask ? (
+                <input
+                  type="text"
+                  value={editText}
+                  onChange={(e) => setEditText(e.target.value)}
+                  onKeyDown={async (e) => {
+                    if (e.key === 'Enter' && editText.trim() && focusTaskData) {
+                      await supabase.from('tasks').update({ title: editText.trim() }).eq('id', focusTaskData.id);
+                      setIsEditing(false);
+                      toast({ description: "Task updated" });
+                      window.location.reload();
+                    } else if (e.key === 'Escape') {
+                      setIsEditing(false);
+                    }
+                  }}
+                  autoFocus
+                  className="text-2xl font-mono font-light text-foreground/80 leading-tight text-center bg-transparent border-b border-foreground/20 px-4 py-2 focus:outline-none focus:border-foreground/40"
+                />
+              ) : (
+                <>
+                  <ContextualCard
+                    title={contextualPrompt.title}
+                    subtitle={contextualPrompt.subtitle}
+                    onTap={isFocusTask ? () => setShowFocusActions(!showFocusActions) : contextualPrompt.action || undefined}
+                  />
+                  {isFocusTask && focusTaskData?.reminderTime && (
+                    <p className="text-[10px] text-muted-foreground/40 uppercase tracking-widest">
+                      Scheduled for {formatScheduledTime(focusTaskData.reminderTime)}
+                    </p>
+                  )}
+                </>
+              )}
+              {isFocusTask && showFocusActions && !isEditing && (
+                <div className="flex flex-col items-center gap-3">
+                  <div className="flex justify-center items-center gap-6">
+                    <button
+                      onClick={async () => {
+                        if (focusTaskData) {
+                          await supabase.from('tasks').update({ completed: true }).eq('id', focusTaskData.id);
+                          setShowFocusActions(false);
+                          toast({ description: "Focus task completed!" });
+                          window.location.reload();
+                        }
+                      }}
+                      className="flex items-center gap-1.5 text-xs text-foreground/50 hover:text-foreground/70 transition-colors"
+                    >
+                      <Check className="w-3.5 h-3.5" />
+                      Done
+                    </button>
+                    
+                          <div className="relative">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setShowScheduler(!showScheduler);
+                              }}
+                              className="flex items-center gap-1.5 text-xs text-foreground/50 hover:text-foreground/70 transition-colors"
+                            >
+                              <Clock className="w-3.5 h-3.5" />
+                              Schedule
+                            </button>
+                            
+                            {showScheduler && (
+                              <div 
+                                onClick={(e) => e.stopPropagation()}
+                                className="absolute top-full mt-2 left-1/2 -translate-x-1/2 bg-background border border-foreground/10 rounded-lg shadow-sm py-2 z-50 min-w-[140px]"
+                              >
+                          {[
+                            { label: 'Morning', time: '09:00' },
+                            { label: 'Afternoon', time: '13:00' },
+                            { label: 'Evening', time: '18:00' },
+                            { label: '9am', time: '09:00' },
+                            { label: '12pm', time: '12:00' },
+                            { label: '3pm', time: '15:00' },
+                            { label: '6pm', time: '18:00' },
+                          ].map((slot) => (
+                            <button
+                              key={slot.label}
+                              onClick={async () => {
+                                if (focusTaskData) {
+                                  const today = new Date().toISOString().split('T')[0];
+                                  const reminderTime = `${today}T${slot.time}:00`;
+                                  await supabase.from('tasks').update({ reminder_time: reminderTime }).eq('id', focusTaskData.id);
+                                  setFocusTaskData({ ...focusTaskData, reminderTime });
+                                  setShowScheduler(false);
+                                  toast({ description: `Scheduled for ${slot.label.toLowerCase()}` });
+                                }
+                              }}
+                              className="w-full px-4 py-2 text-left text-xs text-foreground/70 hover:bg-foreground/5 transition-colors"
+                            >
+                              {slot.label}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    
+                    <button
+                      onClick={() => {
+                        setEditText(contextualPrompt.title || '');
+                        setIsEditing(true);
+                      }}
+                      className="flex items-center gap-1.5 text-xs text-foreground/50 hover:text-foreground/70 transition-colors"
+                    >
+                      <Pencil className="w-3.5 h-3.5" />
+                      Edit
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
@@ -501,58 +608,115 @@ const Index = () => {
                 {contextualPrompt.title && (
                   <div className="pt-[35vh] flex flex-col items-center justify-center gap-4">
                     <div className="w-full max-w-md">
-                      <ContextualCard
-                        title={contextualPrompt.title}
-                        subtitle={contextualPrompt.subtitle}
-                        onTap={isFocusTask ? () => setShowFocusActions(!showFocusActions) : contextualPrompt.action || undefined}
-                      />
+                      {isEditing && isFocusTask ? (
+                        <input
+                          type="text"
+                          value={editText}
+                          onChange={(e) => setEditText(e.target.value)}
+                          onKeyDown={async (e) => {
+                            if (e.key === 'Enter' && editText.trim() && focusTaskData) {
+                              await supabase.from('tasks').update({ title: editText.trim() }).eq('id', focusTaskData.id);
+                              setIsEditing(false);
+                              toast({ description: "Task updated" });
+                              window.location.reload();
+                            } else if (e.key === 'Escape') {
+                              setIsEditing(false);
+                            }
+                          }}
+                          autoFocus
+                          className="text-2xl font-mono font-light text-foreground/80 leading-tight text-center bg-transparent border-b border-foreground/20 px-4 py-2 focus:outline-none focus:border-foreground/40 w-full"
+                        />
+                      ) : (
+                        <>
+                          <ContextualCard
+                            title={contextualPrompt.title}
+                            subtitle={contextualPrompt.subtitle}
+                            onTap={isFocusTask ? () => setShowFocusActions(!showFocusActions) : contextualPrompt.action || undefined}
+                          />
+                          {isFocusTask && focusTaskData?.reminderTime && (
+                            <p className="text-[10px] text-muted-foreground/40 uppercase tracking-widest text-center mt-2">
+                              Scheduled for {formatScheduledTime(focusTaskData.reminderTime)}
+                            </p>
+                          )}
+                        </>
+                      )}
                     </div>
-                    {isFocusTask && showFocusActions && (
-                      <div className="flex justify-center gap-4">
-                        <button
-                          onClick={async () => {
-                            const { data: { user } } = await supabase.auth.getUser();
-                            if (!user) return;
-                            const today = new Date().toISOString().split('T')[0];
-                            const { data: task } = await supabase
-                              .from('tasks')
-                              .select('id')
-                              .eq('user_id', user.id)
-                              .eq('is_focus', true)
-                              .eq('focus_date', today)
-                              .maybeSingle();
-                            if (task) {
-                              await supabase.from('tasks').update({ completed: true }).eq('id', task.id);
-                              setShowFocusActions(false);
-                              toast({ description: "Focus task completed!" });
-                            }
-                          }}
-                          className="text-xs text-foreground/50 hover:text-foreground/70 transition-colors"
-                        >
-                          ✓ Done
-                        </button>
-                        <button
-                          onClick={async () => {
-                            const { data: { user } } = await supabase.auth.getUser();
-                            if (!user) return;
-                            const today = new Date().toISOString().split('T')[0];
-                            const { data: task } = await supabase
-                              .from('tasks')
-                              .select('id')
-                              .eq('user_id', user.id)
-                              .eq('is_focus', true)
-                              .eq('focus_date', today)
-                              .maybeSingle();
-                            if (task) {
-                              await supabase.from('tasks').update({ is_focus: false, focus_date: null }).eq('id', task.id);
-                              setShowFocusActions(false);
-                              toast({ description: "Cleared from focus" });
-                            }
-                          }}
-                          className="text-xs text-foreground/50 hover:text-foreground/70 transition-colors"
-                        >
-                          Clear focus
-                        </button>
+                    {isFocusTask && showFocusActions && !isEditing && (
+                      <div className="flex flex-col items-center gap-3">
+                        <div className="flex justify-center items-center gap-6">
+                          <button
+                            onClick={async () => {
+                              if (focusTaskData) {
+                                await supabase.from('tasks').update({ completed: true }).eq('id', focusTaskData.id);
+                                setShowFocusActions(false);
+                                toast({ description: "Focus task completed!" });
+                                window.location.reload();
+                              }
+                            }}
+                            className="flex items-center gap-1.5 text-xs text-foreground/50 hover:text-foreground/70 transition-colors"
+                          >
+                            <Check className="w-3.5 h-3.5" />
+                            Done
+                          </button>
+                          
+                          <div className="relative">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setShowScheduler(!showScheduler);
+                              }}
+                              className="flex items-center gap-1.5 text-xs text-foreground/50 hover:text-foreground/70 transition-colors"
+                            >
+                              <Clock className="w-3.5 h-3.5" />
+                              Schedule
+                            </button>
+                            
+                            {showScheduler && (
+                              <div 
+                                onClick={(e) => e.stopPropagation()}
+                                className="absolute top-full mt-2 left-1/2 -translate-x-1/2 bg-background border border-foreground/10 rounded-lg shadow-sm py-2 z-50 min-w-[140px]"
+                              >
+                                {[
+                                  { label: 'Morning', time: '09:00' },
+                                  { label: 'Afternoon', time: '13:00' },
+                                  { label: 'Evening', time: '18:00' },
+                                  { label: '9am', time: '09:00' },
+                                  { label: '12pm', time: '12:00' },
+                                  { label: '3pm', time: '15:00' },
+                                  { label: '6pm', time: '18:00' },
+                                ].map((slot) => (
+                                  <button
+                                    key={slot.label}
+                                    onClick={async () => {
+                                      if (focusTaskData) {
+                                        const today = new Date().toISOString().split('T')[0];
+                                        const reminderTime = `${today}T${slot.time}:00`;
+                                        await supabase.from('tasks').update({ reminder_time: reminderTime }).eq('id', focusTaskData.id);
+                                        setFocusTaskData({ ...focusTaskData, reminderTime });
+                                        setShowScheduler(false);
+                                        toast({ description: `Scheduled for ${slot.label.toLowerCase()}` });
+                                      }
+                                    }}
+                                    className="w-full px-4 py-2 text-left text-xs text-foreground/70 hover:bg-foreground/5 transition-colors"
+                                  >
+                                    {slot.label}
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                          
+                          <button
+                            onClick={() => {
+                              setEditText(contextualPrompt.title || '');
+                              setIsEditing(true);
+                            }}
+                            className="flex items-center gap-1.5 text-xs text-foreground/50 hover:text-foreground/70 transition-colors"
+                          >
+                            <Pencil className="w-3.5 h-3.5" />
+                            Edit
+                          </button>
+                        </div>
                       </div>
                     )}
                   </div>
