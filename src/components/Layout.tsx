@@ -9,7 +9,8 @@ import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { useProcessInputMutation } from "@/hooks/useProcessInputMutation";
 import { useTasks } from "@/hooks/useTasks";
 import { toast } from "@/hooks/use-toast";
-
+import { useCompanionVisibility } from "@/state/useCompanionVisibility";
+ 
 export const Layout = () => {
   const [leftDrawerOpen, setLeftDrawerOpen] = useState(false);
   const [rightDrawerOpen, setRightDrawerOpen] = useState(false);
@@ -19,6 +20,7 @@ export const Layout = () => {
   const location = useLocation();
   const processInputMutation = useProcessInputMutation();
   const { createTasks } = useTasks();
+  const { isVisible: isCompanionVisible, show: showCompanion, hide: hideCompanion } = useCompanionVisibility();
 
   // Handle quick capture submission
   const handleQuickCapture = async (text: string) => {
@@ -107,12 +109,18 @@ export const Layout = () => {
         />
       )}
 
-      {/* Top-Right Mini Orb - Companion Drawer - Only show on home page */}
+      {/* Top-Right Mini Orb - Companion Drawer / Visibility - Only show on home page */}
       {location.pathname === '/' && (
         <MiniOrb
           position="right"
-          label="companion"
-          onClick={() => setRightDrawerOpen(!rightDrawerOpen)}
+          label={isCompanionVisible ? "companion" : "summon companion"}
+          onClick={() => {
+            if (!isCompanionVisible) {
+              showCompanion();
+            } else {
+              setRightDrawerOpen(true);
+            }
+          }}
         />
       )}
 
@@ -127,7 +135,10 @@ export const Layout = () => {
       {/* Right Companion Drawer */}
       <RightDrawer
         isOpen={rightDrawerOpen}
-        onClose={() => setRightDrawerOpen(false)}
+        onClose={() => {
+          setRightDrawerOpen(false);
+          hideCompanion();
+        }}
       />
 
       {/* Quick Capture Modal */}
