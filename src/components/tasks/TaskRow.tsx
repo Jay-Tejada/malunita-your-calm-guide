@@ -1,5 +1,12 @@
-import { Clock, Check, Circle, ChevronRight, Star, Lightbulb } from "lucide-react";
+import { Clock, Check, Circle, ChevronRight, Star, Lightbulb, MoreVertical, Edit2, Trash2, CalendarPlus } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface TaskRowProps {
   id: string;
@@ -9,9 +16,12 @@ interface TaskRowProps {
   onClick?: () => void;
   isPrimaryFocus?: boolean;
   onPlanThis?: (title: string) => void;
+  onEdit?: () => void;
+  onDelete?: () => void;
+  onMoveToToday?: () => void;
 }
 
-export const TaskRow = ({ id, title, completed, category, onClick, isPrimaryFocus, onPlanThis }: TaskRowProps) => {
+export const TaskRow = ({ id, title, completed, category, onClick, isPrimaryFocus, onPlanThis, onEdit, onDelete, onMoveToToday }: TaskRowProps) => {
   const getStatusIcon = () => {
     if (completed) {
       return <Check className="w-3 h-3 text-primary/70" />;
@@ -56,22 +66,84 @@ export const TaskRow = ({ id, title, completed, category, onClick, isPrimaryFocu
         )}
       </div>
 
-      {/* Plan This Button */}
-      {onPlanThis && (
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onPlanThis(title);
-          }}
-          className="opacity-0 group-hover:opacity-100 transition-opacity"
-          title="Plan This"
-        >
-          <Lightbulb className="w-4 h-4 text-muted-foreground hover:text-accent" />
-        </button>
-      )}
+      {/* Overflow Menu */}
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <button
+            onClick={(e) => e.stopPropagation()}
+            className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
+          >
+            <MoreVertical className="w-4 h-4 text-muted-foreground hover:text-foreground" />
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-48">
+          {onEdit && (
+            <DropdownMenuItem
+              onClick={(e) => {
+                e.stopPropagation();
+                onEdit();
+              }}
+            >
+              <Edit2 className="w-4 h-4 mr-2" />
+              Edit
+            </DropdownMenuItem>
+          )}
+          
+          {onPlanThis && (
+            <DropdownMenuItem
+              onClick={(e) => {
+                e.stopPropagation();
+                onPlanThis(title);
+              }}
+            >
+              <Lightbulb className="w-4 h-4 mr-2" />
+              Plan This
+            </DropdownMenuItem>
+          )}
 
-      {/* Chevron */}
-      <ChevronRight className="w-3 h-3 text-foreground/20 group-hover:text-foreground/40 transition-colors" />
+          {onMoveToToday && (
+            <DropdownMenuItem
+              onClick={(e) => {
+                e.stopPropagation();
+                onMoveToToday();
+              }}
+            >
+              <CalendarPlus className="w-4 h-4 mr-2" />
+              Move to Today
+            </DropdownMenuItem>
+          )}
+
+          <DropdownMenuSeparator />
+          
+          <DropdownMenuItem
+            onClick={(e) => {
+              e.stopPropagation();
+              // Toggle star/focus
+            }}
+          >
+            <Star className={cn("w-4 h-4 mr-2", isPrimaryFocus && "fill-primary text-primary")} />
+            {isPrimaryFocus ? "Unstar" : "Star"}
+          </DropdownMenuItem>
+
+          {onDelete && (
+            <>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (window.confirm('Delete this task?')) {
+                    onDelete();
+                  }
+                }}
+                className="text-destructive focus:text-destructive"
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                Delete
+              </DropdownMenuItem>
+            </>
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
     </button>
   );
 };
