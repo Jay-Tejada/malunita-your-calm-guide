@@ -28,6 +28,8 @@ export const QuickCapture = ({ isOpen, onClose, variant, onCapture }: QuickCaptu
   const handleSubmit = async (keepOpen = false) => {
     if (!input.trim()) return;
     
+    console.log('QuickCapture: handleSubmit called with input:', input.trim());
+    
     try {
       if (captureType === 'thought') {
         // Save as thought
@@ -47,15 +49,29 @@ export const QuickCapture = ({ isOpen, onClose, variant, onCapture }: QuickCaptu
         onCapture?.();
       } else {
         // Save as task (existing logic)
+        console.log('QuickCapture: Getting user...');
         const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
         
+        if (!user) {
+          console.error('QuickCapture: No user found');
+          toast({
+            title: "Error",
+            description: "You must be logged in to capture tasks.",
+            variant: "destructive"
+          });
+          return;
+        }
+        
+        console.log('QuickCapture: Invoking process-input function...');
         // Process text input using the processInput API
-        const { error } = await supabase.functions.invoke('process-input', {
+        const { data, error } = await supabase.functions.invoke('process-input', {
           body: { text: input.trim(), user_id: user.id }
         });
 
+        console.log('QuickCapture: process-input response:', { data, error });
+
         if (error) {
+          console.error('QuickCapture: process-input error:', error);
           toast({
             title: "Error",
             description: "Failed to process your input. Please try again.",
@@ -65,6 +81,7 @@ export const QuickCapture = ({ isOpen, onClose, variant, onCapture }: QuickCaptu
         }
         
         // Invalidate tasks query to refresh the list
+        console.log('QuickCapture: Invalidating tasks query...');
         queryClient.invalidateQueries({ queryKey: ['tasks'] });
         
         setInput('');
@@ -81,7 +98,7 @@ export const QuickCapture = ({ isOpen, onClose, variant, onCapture }: QuickCaptu
         onCapture?.();
       }
     } catch (error) {
-      console.error('Error capturing:', error);
+      console.error('QuickCapture: Error capturing:', error);
       toast({
         title: "Error",
         description: "Something went wrong. Please try again.",
