@@ -30,17 +30,13 @@ export const PageHeader = ({ title, onBack, onCompanionClick }: PageHeaderProps)
           <ChevronLeft className="w-5 h-5" />
         </button>
         
-        {/* Center: Page title */}
-        <span className="font-mono text-foreground/80">{title}</span>
+        {/* Center: Page title - absolutely centered */}
+        <span className="font-mono text-foreground/80 absolute left-1/2 -translate-x-1/2">
+          {title}
+        </span>
         
-        {/* Right: Companion icon */}
-        <button 
-          onClick={onCompanionClick}
-          className="text-foreground/30 hover:text-foreground/50 p-2 -mr-2 transition-colors"
-          aria-label="Open companion"
-        >
-          <Sparkles className="w-5 h-5" />
-        </button>
+        {/* Right: Empty spacer for alignment */}
+        <div className="w-9" />
       </div>
     </header>
   );
