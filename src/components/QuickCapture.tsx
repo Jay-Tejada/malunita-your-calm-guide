@@ -50,7 +50,7 @@ export const QuickCapture = ({ isOpen, onClose, variant, onCapture }: QuickCaptu
         
         // Process text input using the processInput API
         const { error } = await supabase.functions.invoke('process-input', {
-          body: { text: input.trim(), userId: user.id }
+          body: { text: input.trim(), user_id: user.id }
         });
 
         if (error) {
