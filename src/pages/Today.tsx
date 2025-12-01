@@ -100,26 +100,10 @@ const Today = () => {
         {/* Date */}
         <p className="text-xs text-muted-foreground/40 text-center mb-6">{today}</p>
 
-        {/* Empty state with focus prompt */}
-        {todayTasks.length === 0 && (
-          <div className="text-center py-12">
-            <p className="text-lg font-light text-foreground/60 mb-4">
-              What's the ONE thing that would make today a success?
-            </p>
-            <input
-              type="text"
-              value={focusInput}
-              onChange={(e) => setFocusInput(e.target.value)}
-              onKeyDown={handleSetFocus}
-              placeholder="Type your main focus..."
-              className="w-full max-w-md mx-auto bg-transparent border-b border-foreground/10 py-3 font-mono text-sm text-center text-foreground/80 placeholder:text-muted-foreground/40 focus:outline-none focus:border-foreground/20"
-            />
-          </div>
-        )}
-
-        {/* Focus task (when it exists) */}
-        {focusTask && (
-          <div className="mb-6">
+        {/* TODAY'S FOCUS SECTION */}
+        <div className="mb-8">
+          {focusTask ? (
+            // Show focus task
             <div className="flex items-start gap-3 py-4">
               <button
                 onClick={() => updateTask({ id: focusTask.id, updates: { completed: true } })}
@@ -127,34 +111,49 @@ const Today = () => {
               />
               <span className="font-mono text-base text-foreground/90 font-medium">{focusTask.title}</span>
             </div>
-          </div>
-        )}
+          ) : (
+            // Show focus input
+            <div className="text-center">
+              <p className="text-lg font-light text-foreground/60 mb-4">
+                What's the ONE thing that would make today a success?
+              </p>
+              <input
+                type="text"
+                value={focusInput}
+                onChange={(e) => setFocusInput(e.target.value)}
+                onKeyDown={handleSetFocus}
+                placeholder="Type your main focus..."
+                className="w-full max-w-md mx-auto bg-transparent border-b border-foreground/10 py-3 font-mono text-sm text-center text-foreground/80 placeholder:text-muted-foreground/40 focus:outline-none focus:border-foreground/20"
+              />
+            </div>
+          )}
+        </div>
 
-        {/* Divider */}
-        {focusTask && regularTasks.length > 0 && (
-          <div className="h-px bg-foreground/5 mb-4" />
-        )}
-
-        {/* Regular today tasks */}
+        {/* TODAY'S TASKS SECTION */}
         {regularTasks.length > 0 && (
-          <div className="space-y-2 mb-6">
-            {regularTasks.map(task => (
-              <div key={task.id} className="flex items-start gap-3 py-3">
-                <button
-                  onClick={() => updateTask({ id: task.id, updates: { completed: true } })}
-                  className="w-5 h-5 rounded-full border border-foreground/20 hover:border-foreground/40 flex-shrink-0 mt-0.5"
-                />
-                <span className="font-mono text-sm text-foreground/80">{task.title}</span>
-              </div>
-            ))}
+          <div className="mb-8">
+            <h3 className="text-[10px] uppercase tracking-widest text-muted-foreground/30 mb-3">
+              Today
+            </h3>
+            <div className="space-y-2">
+              {regularTasks.map(task => (
+                <div key={task.id} className="flex items-start gap-3 py-3">
+                  <button
+                    onClick={() => updateTask({ id: task.id, updates: { completed: true } })}
+                    className="w-5 h-5 rounded-full border border-foreground/20 hover:border-foreground/40 flex-shrink-0 mt-0.5"
+                  />
+                  <span className="font-mono text-sm text-foreground/80">{task.title}</span>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
-        {/* Inbox suggestions */}
+        {/* FROM YOUR INBOX SECTION */}
         {inboxTasks.length > 0 && (
-          <div className="mt-8">
-            <h3 className="text-xs text-muted-foreground/40 uppercase tracking-widest mb-3">
-              From your inbox:
+          <div className="mb-8">
+            <h3 className="text-[10px] uppercase tracking-widest text-muted-foreground/30 mb-3">
+              From your inbox
             </h3>
             <div className="space-y-2">
               {inboxTasks.map(task => (
