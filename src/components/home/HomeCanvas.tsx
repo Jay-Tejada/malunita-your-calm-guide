@@ -51,22 +51,6 @@ export const HomeCanvas = memo(function HomeCanvas({
       
       {/* Clean minimal home - structured vertical layout */}
       <div className="flex flex-col items-center justify-center w-full">
-        {/* Today's Focus text - only if exists */}
-        {oneThingFocus && (
-          <div 
-            className="text-center"
-            style={{ 
-              maxWidth: '70vw',
-              fontSize: '16px',
-              fontWeight: 400,
-              color: 'rgba(0, 0, 0, 0.55)',
-              marginBottom: '40px',
-            }}
-          >
-            {oneThingFocus.title}
-          </div>
-        )}
-        
         {/* Orb and content */}
         {children}
       </div>

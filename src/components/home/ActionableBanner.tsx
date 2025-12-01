@@ -125,7 +125,7 @@ export const ActionableBanner = () => {
   return (
     <div 
       {...swipeHandlers}
-      className="fixed top-0 left-0 right-0 z-40 px-4 py-3 bg-background/95 backdrop-blur-sm border-b border-foreground/5"
+      className="fixed top-0 left-0 right-0 z-40 px-4 py-3 bg-background/95 backdrop-blur-sm"
     >
       <AnimatePresence mode="wait">
         <motion.div
