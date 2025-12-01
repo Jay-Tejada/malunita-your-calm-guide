@@ -21,10 +21,10 @@ export const PageHeader = ({ title, onBack, onCompanionClick }: PageHeaderProps)
   return (
     <header className="fixed top-0 left-0 right-0 h-14 bg-background border-b border-foreground/5 z-10">
       <div className="flex items-center justify-between px-4 h-14">
-        {/* Left: Back arrow only - larger tap target */}
+        {/* Left: Back arrow - positioned to the right of hamburger menu */}
         <button 
           onClick={handleBack} 
-          className="text-foreground/30 hover:text-foreground/50 p-3 -ml-3 transition-colors"
+          className="fixed left-16 top-5 text-foreground/30 hover:text-foreground/50 p-3 transition-colors z-20"
           aria-label="Go back"
         >
           <ChevronLeft className="w-6 h-6" />
