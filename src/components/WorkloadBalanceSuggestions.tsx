@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Task } from '@/hooks/useTasks';
 import { useWorkloadSuggestions, WorkloadSuggestion } from '@/ai/adaptiveWorkloadBalancer';
-import { ArrowRight, X } from 'lucide-react';
+import { X } from 'lucide-react';
 
 interface WorkloadBalanceSuggestionsProps {
   tasks: Task[] | undefined;
@@ -40,20 +40,11 @@ export const WorkloadBalanceSuggestions = ({
     setDismissedIds(prev => new Set(prev).add(id));
   };
 
-  const getBucketLabel = (bucket: string) => {
-    const labels: Record<string, string> = {
-      today: 'Today',
-      thisWeek: 'This Week',
-      soon: 'Someday',
-    };
-    return labels[bucket] || bucket;
-  };
-
   return (
     <div className="mb-6">
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="text-[11px] text-muted-foreground/50 hover:text-muted-foreground/80 transition-colors font-mono"
+        className="text-xs text-muted-foreground/40 hover:text-muted-foreground/60 transition-colors"
       >
         💡 {activeSuggestions.length} suggestion{activeSuggestions.length !== 1 ? 's' : ''}
       </button>
@@ -65,52 +56,38 @@ export const WorkloadBalanceSuggestions = ({
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="mt-4"
+            className="mt-3 space-y-2"
           >
-            <div className="space-y-6">
-              {activeSuggestions.map((suggestion) => (
-                <motion.div
-                  key={suggestion.id}
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, x: -100 }}
-                  className="group"
-                >
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-mono text-foreground/80 mb-1">
-                        {suggestion.taskTitle}
-                      </p>
-                      <p className="text-xs text-muted-foreground/60 mb-2">
-                        {suggestion.reason}
-                      </p>
-                      <div className="flex items-center gap-1 text-[10px] text-muted-foreground/40 font-mono">
-                        <span>{getBucketLabel(suggestion.fromBucket)}</span>
-                        <ArrowRight className="w-3 h-3" />
-                        <span>{getBucketLabel(suggestion.toBucket)}</span>
-                      </div>
-                    </div>
+            {activeSuggestions.map((suggestion) => (
+              <motion.div
+                key={suggestion.id}
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, x: -100 }}
+                className="flex items-center justify-between gap-3"
+              >
+                <p className="text-sm font-mono text-foreground/80 flex-1">
+                  {suggestion.taskTitle}
+                </p>
 
-                    <div className="flex items-center gap-3 flex-shrink-0">
-                      <button
-                        onClick={() => handleApply(suggestion)}
-                        disabled={applyingIds.has(suggestion.id)}
-                        className="text-xs text-foreground/60 hover:text-foreground/90 transition-colors disabled:opacity-50 font-mono"
-                      >
-                        {applyingIds.has(suggestion.id) ? 'Moving...' : 'Apply'}
-                      </button>
-                      <button
-                        onClick={() => handleDismiss(suggestion.id)}
-                        className="text-muted-foreground/30 hover:text-muted-foreground/60 transition-colors"
-                        title="Dismiss"
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
+                <div className="flex items-center gap-3 flex-shrink-0">
+                  <button
+                    onClick={() => handleApply(suggestion)}
+                    disabled={applyingIds.has(suggestion.id)}
+                    className="text-xs text-muted-foreground/50 hover:text-muted-foreground/70 transition-colors disabled:opacity-50"
+                  >
+                    {applyingIds.has(suggestion.id) ? 'Applying...' : 'Apply'}
+                  </button>
+                  <button
+                    onClick={() => handleDismiss(suggestion.id)}
+                    className="text-muted-foreground/30 hover:text-muted-foreground/50 transition-colors"
+                    title="Dismiss"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              </motion.div>
+            ))}
           </motion.div>
         )}
       </AnimatePresence>
