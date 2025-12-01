@@ -221,36 +221,26 @@ export const TaskCard = ({ id, title, time, context, completed, selected, onTogg
     <div
       ref={setNodeRef}
       style={style}
-      onClick={onSelect}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
       onTouchCancel={handleTouchEnd}
       className={cn(
-        "group flex items-start gap-3 p-4 rounded-2xl border transition-all duration-300",
-        completed
-          ? "bg-success/10 border-success/30 hover:border-success/50"
-          : "bg-card border-secondary hover:border-accent hover:shadow-md",
-        selected && "ring-2 ring-accent shadow-lg",
-        isDragging && "opacity-50 shadow-xl scale-105"
+        "group flex items-start gap-3 px-4 py-3 border-b border-foreground/5 hover:bg-foreground/[0.02] transition-colors",
+        completed && "opacity-60",
+        selected && "bg-foreground/[0.03]",
+        isDragging && "opacity-50"
       )}
     >
-      {/* Drag Handle - hidden by default, visible on hover */}
-      <button
-        {...attributes}
-        {...listeners}
-        className="flex-shrink-0 mt-0.5 cursor-grab active:cursor-grabbing touch-none opacity-0 group-hover:opacity-100 transition-opacity"
-      >
-        <GripVertical className="w-5 h-5 text-muted-foreground/40" />
-      </button>
-
-      {/* Checkbox */}
+      {/* Checkbox - fixed width */}
       <button
         onClick={(e) => {
           e.stopPropagation();
           handleToggle();
         }}
+        {...attributes}
+        {...listeners}
         className={cn(
-          "flex-shrink-0 mt-0.5 w-5 h-5 rounded-full flex items-center justify-center transition-all",
+          "flex-shrink-0 mt-0.5 w-5 h-5 rounded-full flex items-center justify-center transition-all cursor-pointer",
           completed
             ? "bg-foreground/10 border border-foreground/20"
             : "bg-transparent border border-foreground/20 hover:border-foreground/40"
@@ -261,173 +251,135 @@ export const TaskCard = ({ id, title, time, context, completed, selected, onTogg
         )}
       </button>
 
-      {/* Content */}
+      {/* Task text - fills available space */}
       <div 
-        onClick={onEdit}
+        onClick={onSelect}
         className="flex-1 min-w-0 cursor-pointer"
       >
-        <div className="flex items-start gap-2">
-          <h3
-            className={cn(
-              "text-sm font-mono transition-all flex-1",
-              completed ? "text-muted-foreground line-through" : "text-foreground"
-            )}
-          >
-            {title}
-          </h3>
-          
-          {/* Tiny task indicator */}
-          {isTinyTask && (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Zap className="w-3 h-3 text-amber-500 flex-shrink-0 mt-1" />
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p className="text-xs">Quick task</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+        <p
+          className={cn(
+            "font-mono text-sm leading-relaxed",
+            completed ? "text-foreground/40 line-through" : "text-foreground/70"
           )}
-          
-          {goalAligned === true && (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Target className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
-                </TooltipTrigger>
-                <TooltipContent className="max-w-xs">
-                  <p className="text-xs">{alignmentReason || "Aligned with your goal"}</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          )}
-          
-          {/* Overflow Menu - visible on hover only */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button
-                onClick={(e) => e.stopPropagation()}
-                className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
-              >
-                <MoreVertical className="w-4 h-4 text-muted-foreground hover:text-foreground" />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuItem
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onEdit?.();
-                }}
-              >
-                <Edit2 className="w-4 h-4 mr-2" />
-                Edit
-              </DropdownMenuItem>
-              
-              {onPlanThis && (
-                <DropdownMenuItem
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onPlanThis(title);
-                  }}
-                >
-                  <Lightbulb className="w-4 h-4 mr-2" />
-                  Plan This
-                </DropdownMenuItem>
-              )}
-
-              {!isInToday && onTaskUpdate && (
-                <DropdownMenuItem
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleMoveToToday(e);
-                  }}
-                  disabled={isMovingToToday}
-                >
-                  <CalendarPlus className="w-4 h-4 mr-2" />
-                  Move to Today
-                </DropdownMenuItem>
-              )}
-
-              {isBigTask && onCreateTasks && (
-                <DropdownMenuItem
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleBreakDown(e);
-                  }}
-                  disabled={isSplitting}
-                >
-                  <Split className="w-4 h-4 mr-2" />
-                  Break Down
-                </DropdownMenuItem>
-              )}
-
-              <DropdownMenuSeparator />
-              
-              {fullTask && (
-                <>
-                  <DropdownMenuItem
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onTaskUpdate?.({ is_focus: !fullTask.is_focus });
-                    }}
-                  >
-                    <Star className={cn("w-4 h-4 mr-2", fullTask.is_focus && "fill-primary text-primary")} />
-                    {fullTask.is_focus ? "Unstar" : "Star"}
-                  </DropdownMenuItem>
-
-                  {fullTask.ai_metadata && (
-                    <DropdownMenuItem
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setShowCorrectionPanel(true);
-                      }}
-                    >
-                      <Settings className="w-4 h-4 mr-2" />
-                      Fix AI Output
-                    </DropdownMenuItem>
-                  )}
-
-                  <DropdownMenuSeparator />
-                  
-                  <DropdownMenuItem
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (window.confirm('Delete this task?')) {
-                        window.location.reload();
-                      }
-                    }}
-                    className="text-destructive focus:text-destructive"
-                  >
-                    <Trash2 className="w-4 h-4 mr-2" />
-                    Delete
-                  </DropdownMenuItem>
-                </>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-        {cluster?.domain && (
-          <div className="mt-1">
-            <span 
-              className="inline-block rounded-full px-2 py-0.5 bg-neutral-100 text-neutral-500 font-mono"
-              style={{ fontSize: '10px' }}
-            >
-              {cluster.label || clusterDomain.label}
-            </span>
-          </div>
-        )}
-        {(time || context) && (
-          <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
+        >
+          {title}
+        </p>
+        
+        {/* Metadata */}
+        {(time || context || cluster?.domain) && (
+          <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground/60">
             {time && (
               <span className="flex items-center gap-1">
                 <Clock className="w-3 h-3" />
                 {time}
               </span>
             )}
-            {context && <span className="text-muted-foreground/70">• {context}</span>}
+            {context && <span>• {context}</span>}
+            {cluster?.domain && (
+              <span className="inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 bg-foreground/5">
+                {cluster.label || clusterDomain.label}
+              </span>
+            )}
           </div>
         )}
+      </div>
+
+      {/* Actions - fixed width, always aligned right */}
+      <div className="flex items-center gap-2 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+        {onEdit && (
+          <button 
+            onClick={(e) => {
+              e.stopPropagation();
+              onEdit();
+            }}
+            className="p-1.5 hover:bg-foreground/5 rounded transition-colors"
+            title="Edit"
+          >
+            <Edit2 className="w-4 h-4 text-foreground/40 hover:text-foreground/70" />
+          </button>
+        )}
+        
+        {onTaskUpdate && !isInToday && (
+          <button 
+            onClick={(e) => {
+              e.stopPropagation();
+              handleMoveToToday(e);
+            }}
+            disabled={isMovingToToday}
+            className="p-1.5 hover:bg-foreground/5 rounded transition-colors disabled:opacity-50"
+            title="Move to Today"
+          >
+            <Star className="w-4 h-4 text-foreground/40 hover:text-foreground/70" />
+          </button>
+        )}
+        
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              onClick={(e) => e.stopPropagation()}
+              className="p-1.5 hover:bg-foreground/5 rounded transition-colors"
+              title="More actions"
+            >
+              <MoreVertical className="w-4 h-4 text-foreground/40 hover:text-foreground/70" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48">
+            {onPlanThis && (
+              <DropdownMenuItem
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onPlanThis(title);
+                }}
+              >
+                <Lightbulb className="w-4 h-4 mr-2" />
+                Plan This
+              </DropdownMenuItem>
+            )}
+
+            {isBigTask && onCreateTasks && (
+              <DropdownMenuItem
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleBreakDown(e);
+                }}
+                disabled={isSplitting}
+              >
+                <Split className="w-4 h-4 mr-2" />
+                Break Down
+              </DropdownMenuItem>
+            )}
+
+            {fullTask?.ai_metadata && (
+              <DropdownMenuItem
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowCorrectionPanel(true);
+                }}
+              >
+                <Settings className="w-4 h-4 mr-2" />
+                Fix AI Output
+              </DropdownMenuItem>
+            )}
+
+            {fullTask && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (window.confirm('Delete this task?')) {
+                      window.location.reload();
+                    }
+                  }}
+                  className="text-destructive focus:text-destructive"
+                >
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Delete
+                </DropdownMenuItem>
+              </>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {/* Correction Panel */}
