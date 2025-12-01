@@ -29,6 +29,8 @@ import { useAutoSplitTask } from "@/hooks/useAutoSplitTask";
 import { useRelatedTaskSuggestions } from "@/hooks/useRelatedTaskSuggestions";
 import { usePlanTasks } from "@/hooks/usePlanTasks";
 import { TaskPlanModal } from "@/components/TaskPlanModal";
+import { SwipeableTaskRow } from "@/components/SwipeableTaskRow";
+import { useIsMobile } from "@/hooks/useIsMobile";
 import {
   Drawer,
   DrawerClose,
@@ -67,6 +69,7 @@ export const TaskList = ({
   const { generateAndCreateSubtasks } = useAutoSplitTask();
   const { checkForRelatedTasks } = useRelatedTaskSuggestions();
   const { generatePlan, createPlanTasks, isGenerating, isCreating } = usePlanTasks();
+  const isMobile = useIsMobile();
   const [internalDomain, setInternalDomain] = useState("inbox");
   const [activeId, setActiveId] = useState<string | null>(null);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
@@ -537,7 +540,7 @@ export const TaskList = ({
                       const planTask = tasks?.find(t => t.id === planId);
                       if (!planTask) return null;
 
-                      return (
+                       return (
                         <div key={planId} className="space-y-2">
                           <div className="flex items-center gap-2 px-2">
                             <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
@@ -547,8 +550,8 @@ export const TaskList = ({
                               ({planTasks.filter(t => t.completed).length}/{planTasks.length} done)
                             </span>
                           </div>
-                       {planTasks.map((task) => (
-                         <div key={task.id} className="space-y-0 pl-4 border-l-2 border-primary/20">
+                       {planTasks.map((task) => {
+                         const taskCard = (
                            <div className="flex items-center gap-2 group">
                             <TaskCard
                                  id={task.id}
@@ -625,18 +628,36 @@ export const TaskList = ({
                                 onClick={() => handleDelete(task.id)}
                                 className="shrink-0 text-muted-foreground hover:text-destructive"
                               >
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
+                               <Trash2 className="w-4 h-4" />
+                             </Button>
                            </div>
-                         </div>
-                       ))}
+                         );
+                         
+                         return (
+                           <div key={task.id} className="space-y-0 pl-4 border-l-2 border-primary/20">
+                             {isMobile ? (
+                               <SwipeableTaskRow
+                                 task={task}
+                                 onComplete={() => handleToggleComplete(task)}
+                                 onDelete={() => handleDelete(task.id)}
+                                 onSchedule={() => handleMoveToDestination(task.id, 'today')}
+                                 onStar={() => handleAddToFocus(task.id)}
+                               >
+                                 {taskCard}
+                               </SwipeableTaskRow>
+                             ) : (
+                               taskCard
+                             )}
+                           </div>
+                         );
+                       })}
                         </div>
                       );
                      })}
 
                      {/* Render regular tasks */}
-                     {sortedRegularTasks.map((task) => (
-                       <div key={task.id} className="space-y-0">
+                     {sortedRegularTasks.map((task) => {
+                       const taskCard = (
                          <div className="flex items-center gap-2 group">
                            <TaskCard
                                id={task.id}
@@ -732,34 +753,52 @@ export const TaskList = ({
                               onClick={() => handleDelete(task.id)}
                               className="shrink-0 text-muted-foreground hover:text-destructive"
                             >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </div>
-                          
-                          {/* Show AI suggestion chip for inbox tasks */}
-                          {selectedDomain === 'inbox' && onApplySuggestion && onDismissSuggestion && (() => {
-                            const taskSuggestion = suggestions.find(s => s.taskId === task.id);
-                            return taskSuggestion ? (
-                              <InboxSuggestionChip
-                                suggestion={taskSuggestion.suggestion}
-                                confidence={taskSuggestion.confidence}
-                                onApply={() => onApplySuggestion(task.id, taskSuggestion.suggestion)}
-                                onDismiss={() => onDismissSuggestion(task.id)}
-                              />
-                            ) : null;
-                          })()}
-                          
-                          {/* Show feedback component for voice-created tasks */}
-                          {task.input_method === 'voice' && !task.completed && (
-                            <TaskCategoryFeedback
-                              taskId={task.id}
-                              taskTitle={task.title}
-                              currentCategory={task.category || 'inbox'}
-                              originalText={task.title}
-                            />
-                          )}
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
                         </div>
-                       ))}
+                       );
+                       
+                       return (
+                         <div key={task.id} className="space-y-0">
+                           {isMobile ? (
+                             <SwipeableTaskRow
+                               task={task}
+                               onComplete={() => handleToggleComplete(task)}
+                               onDelete={() => handleDelete(task.id)}
+                               onSchedule={() => handleMoveToDestination(task.id, 'today')}
+                               onStar={() => handleAddToFocus(task.id)}
+                             >
+                               {taskCard}
+                             </SwipeableTaskRow>
+                           ) : (
+                             taskCard
+                           )}
+                           
+                           {/* Show AI suggestion chip for inbox tasks */}
+                           {selectedDomain === 'inbox' && onApplySuggestion && onDismissSuggestion && (() => {
+                             const taskSuggestion = suggestions.find(s => s.taskId === task.id);
+                             return taskSuggestion ? (
+                               <InboxSuggestionChip
+                                 suggestion={taskSuggestion.suggestion}
+                                 confidence={taskSuggestion.confidence}
+                                 onApply={() => onApplySuggestion(task.id, taskSuggestion.suggestion)}
+                                 onDismiss={() => onDismissSuggestion(task.id)}
+                               />
+                             ) : null;
+                           })()}
+                           
+                           {/* Show feedback component for voice-created tasks */}
+                           {task.input_method === 'voice' && !task.completed && (
+                             <TaskCategoryFeedback
+                               taskId={task.id}
+                               taskTitle={task.title}
+                               currentCategory={task.category || 'inbox'}
+                               originalText={task.title}
+                             />
+                           )}
+                         </div>
+                       );
+                     })}
                    </>
                  );
                })()}
