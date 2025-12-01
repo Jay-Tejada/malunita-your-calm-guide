@@ -38,27 +38,27 @@ export const ActionableBanner = () => {
 
   if (!currentItem) return null;
 
-  // Urgency color and label
+  // Urgency color and label using semantic tokens
   const urgencyConfig = {
     overdue: {
-      color: 'text-red-400/70',
+      color: 'text-destructive',
       label: 'Overdue',
-      labelColor: 'text-red-400/50',
+      labelColor: 'text-destructive/60',
     },
     upcoming: {
-      color: 'text-orange-400/70',
+      color: 'text-orange-500',
       label: null, // Will show time instead
-      labelColor: 'text-orange-400/50',
+      labelColor: 'text-orange-500/60',
     },
     inbox: {
-      color: 'text-foreground/50',
+      color: 'text-muted-foreground',
       label: 'From inbox',
-      labelColor: 'text-muted-foreground/40',
+      labelColor: 'text-muted-foreground/50',
     },
     today: {
-      color: 'text-foreground/50',
+      color: 'text-foreground/60',
       label: null,
-      labelColor: 'text-muted-foreground/40',
+      labelColor: 'text-muted-foreground/50',
     },
   }[currentItem.bannerPriority];
 
@@ -158,20 +158,15 @@ export const ActionableBanner = () => {
             </div>
           )}
           
-          {/* Time/Priority indicator */}
+          {/* Priority label - subtle context */}
+          {urgencyConfig.label && (
+            <p className={`text-[10px] text-center mt-1 ${urgencyConfig.labelColor}`}>
+              {urgencyConfig.label}
+            </p>
+          )}
           {currentItem.bannerPriority === 'upcoming' && currentItem.reminder_time && (
-            <p className="text-[10px] text-center text-orange-400/50 mt-1 uppercase tracking-widest">
+            <p className={`text-[10px] text-center mt-1 ${urgencyConfig.labelColor}`}>
               {formatTime(currentItem.reminder_time)}
-            </p>
-          )}
-          {currentItem.bannerPriority === 'overdue' && (
-            <p className="text-[10px] text-center text-red-400/50 mt-1 uppercase tracking-widest">
-              Overdue
-            </p>
-          )}
-          {currentItem.bannerPriority === 'inbox' && (
-            <p className="text-[10px] text-center text-muted-foreground/40 mt-1 uppercase tracking-widest">
-              From inbox
             </p>
           )}
           
@@ -225,7 +220,7 @@ export const ActionableBanner = () => {
                     >
                       {[
                         { label: 'Morning', time: '09:00' },
-                        { label: 'Afternoon', time: '13:00' },
+                        { label: 'Afternoon', time: '14:00' },
                         { label: 'Evening', time: '18:00' },
                         { label: '9am', time: '09:00' },
                         { label: '12pm', time: '12:00' },
