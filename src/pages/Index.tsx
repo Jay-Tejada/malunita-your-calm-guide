@@ -10,7 +10,6 @@ import { useCompanionIdentity, PersonalityType } from "@/hooks/useCompanionIdent
 import { useToast } from "@/hooks/use-toast";
 import { HomeShell } from "@/layouts/HomeShell";
 import { HomeCanvas } from "@/components/home/HomeCanvas";
-import { DailyPriorityPrompt, DailyPriorityPromptRef } from "@/components/DailyPriorityPrompt";
 import { useDailyReset } from "@/hooks/useDailyReset";
 import { usePrimaryFocusPrediction } from "@/hooks/usePrimaryFocusPrediction";
 import { AutoFocusNotification } from "@/components/AutoFocusNotification";
@@ -113,7 +112,6 @@ const Index = () => {
   const { companion, needsOnboarding, updateCompanion } = useCompanionIdentity();
   const { toast } = useToast();
   const voiceRef = useRef<MalunitaVoiceRef>(null);
-  const dailyPriorityRef = useRef<DailyPriorityPromptRef>(null);
   const { sessions, lastSession } = useCaptureSessions();
   const [showCaptureHistory, setShowCaptureHistory] = useState(false);
   const mindstreamData = useDailyMindstream();
@@ -228,19 +226,6 @@ const Index = () => {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [showSearch]);
-  
-  // Listen for contextual card actions
-  useEffect(() => {
-    const handleOpenDailyPriority = () => {
-      if (dailyPriorityRef.current) {
-        // Trigger daily priority prompt
-        dailyPriorityRef.current.openDialog();
-      }
-    };
-    
-    window.addEventListener('open-daily-priority', handleOpenDailyPriority);
-    return () => window.removeEventListener('open-daily-priority', handleOpenDailyPriority);
-  }, []);
 
   useEffect(() => {
     const {
@@ -567,9 +552,6 @@ const Index = () => {
             onDreamModeClick={handleDreamModeClick}
             activeCategory={activeCategory}
           >
-            {/* Modals and prompts - not visible on main canvas */}
-            <DailyPriorityPrompt ref={dailyPriorityRef} onTaskCreated={handleTaskCreated} />
-            
             <HomeCanvas
               oneThingFocus={mindstreamData.oneThingFocus}
               planningMode={planningMode}
