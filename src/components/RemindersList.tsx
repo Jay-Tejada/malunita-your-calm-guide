@@ -23,6 +23,7 @@ export function RemindersList() {
   const [isListening, setIsListening] = useState(false);
   const [voiceCommand, setVoiceCommand] = useState('');
   const [selectedReminderId, setSelectedReminderId] = useState<string | null>(null);
+  const [showCompleted, setShowCompleted] = useState(false);
   const { toast } = useToast();
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
 
@@ -331,7 +332,7 @@ export function RemindersList() {
             </div>
           )}
 
-          {groupedReminders.completed.length > 0 && (
+          {showCompleted && groupedReminders.completed.length > 0 && (
             <div>
               <h2 className="text-xl font-light mb-3 text-muted-foreground">Completed</h2>
               <div className="space-y-2">
@@ -348,6 +349,16 @@ export function RemindersList() {
                 ))}
               </div>
             </div>
+          )}
+          
+          {/* Show completed toggle */}
+          {groupedReminders.completed.length > 0 && (
+            <button
+              onClick={() => setShowCompleted(!showCompleted)}
+              className="text-[10px] text-muted-foreground/30 hover:text-muted-foreground/60 transition-colors w-full text-center py-2"
+            >
+              {showCompleted ? `Hide completed (${groupedReminders.completed.length})` : `Show completed (${groupedReminders.completed.length})`}
+            </button>
           )}
         </div>
       )}
@@ -381,7 +392,7 @@ function ReminderCard({ reminder, isListening, onVoiceCommand, onDelete, getRela
   const recurrenceLabel = getRecurrenceLabel();
 
   return (
-    <Card className={isOverdue ? 'border-destructive' : ''}>
+    <Card className={`${isOverdue ? 'border-destructive' : ''} ${isCompleted ? 'opacity-40' : ''}`}>
       <CardContent className="p-4">
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1 min-w-0">

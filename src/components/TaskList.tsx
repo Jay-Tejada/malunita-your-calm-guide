@@ -55,6 +55,7 @@ export const TaskList = ({ category: externalCategory, onPlanThis }: TaskListPro
   const [taskToEdit, setTaskToEdit] = useState<Task | null>(null);
   const [planModalOpen, setPlanModalOpen] = useState(false);
   const [generatedPlan, setGeneratedPlan] = useState<any>(null);
+  const [showCompleted, setShowCompleted] = useState(false);
   const { toast } = useToast();
   
   // Use external category if provided, otherwise use internal state
@@ -175,6 +176,9 @@ export const TaskList = ({ category: externalCategory, onPlanThis }: TaskListPro
   const filteredTasks = tasks?.filter(task => {
     if (task.is_focus) return false;
     
+    // Hide completed tasks unless showCompleted is true
+    if (!showCompleted && task.completed) return false;
+    
     // Show all non-focus tasks if "all" is selected
     if (selectedDomain === 'all') return true;
     
@@ -187,6 +191,22 @@ export const TaskList = ({ category: externalCategory, onPlanThis }: TaskListPro
     
     return task.category === selectedDomain;
   }) || [];
+  
+  // Count completed tasks in current view for toggle button
+  const completedCount = tasks?.filter(task => {
+    if (task.is_focus) return false;
+    if (!task.completed) return false;
+    
+    if (selectedDomain === 'all') return true;
+    
+    const isCustomCategory = selectedDomain.startsWith('custom-');
+    if (isCustomCategory) {
+      const categoryId = selectedDomain.replace('custom-', '');
+      return task.custom_category_id === categoryId;
+    }
+    
+    return task.category === selectedDomain;
+  }).length || 0;
   const activeTask = activeId ? tasks?.find((t) => t.id === activeId) : null;
 
   if (!tasks || tasks.length === 0) {
@@ -513,25 +533,25 @@ export const TaskList = ({ category: externalCategory, onPlanThis }: TaskListPro
                                onCheckedChange={() => handleToggleTaskSelection(task.id)}
                                className="shrink-0"
                              />
-                              <TaskCard
-                                id={task.id}
-                                title={task.title}
-                                context={task.context || undefined}
-                                completed={task.completed || false}
-                                selected={selectedTaskId === task.id}
-                                onToggle={() => handleToggleComplete(task)}
-                                onSelect={() => setSelectedTaskId(task.id)}
-                                onLongPress={() => handleLongPress(task)}
-                                onEdit={() => handleEditTask(task)}
-                                goalAligned={task.goal_aligned}
-                                alignmentReason={task.alignment_reason}
-                                priority={task.future_priority_score}
-                                cluster={task.cluster}
-                                fullTask={task}
-                                onTaskUpdate={(updates) => updateTask({ id: task.id, updates })}
-                                onCreateTasks={handleCreateSubtasks}
-                                onPlanThis={onPlanThis}
-                              />
+                               <TaskCard
+                                 id={task.id}
+                                 title={task.title}
+                                 context={task.context || undefined}
+                                 completed={task.completed || false}
+                                 selected={selectedTaskId === task.id}
+                                 onToggle={() => handleToggleComplete(task)}
+                                 onSelect={() => setSelectedTaskId(task.id)}
+                                 onLongPress={() => handleLongPress(task)}
+                                 onEdit={() => handleEditTask(task)}
+                                 goalAligned={task.goal_aligned}
+                                 alignmentReason={task.alignment_reason}
+                                 priority={task.future_priority_score}
+                                 cluster={task.cluster}
+                                 fullTask={task}
+                                 onTaskUpdate={(updates) => updateTask({ id: task.id, updates })}
+                                 onCreateTasks={handleCreateSubtasks}
+                                 onPlanThis={onPlanThis}
+                               />
                              {selectedDomain === "inbox" && (
                                <QuickSendButton taskId={task.id} taskTitle={task.title} />
                              )}
@@ -619,12 +639,22 @@ export const TaskList = ({ category: externalCategory, onPlanThis }: TaskListPro
                             />
                           )}
                         </div>
-                      ))}
+                       ))}
                    </>
                  );
                })()}
              </div>
            </SortableContext>
+         )}
+         
+         {/* Show completed toggle */}
+         {completedCount > 0 && (
+           <button
+             onClick={() => setShowCompleted(!showCompleted)}
+             className="text-[10px] text-muted-foreground/30 hover:text-muted-foreground/60 transition-colors w-full text-center py-2"
+           >
+             {showCompleted ? `Hide completed (${completedCount})` : `Show completed (${completedCount})`}
+           </button>
          )}
        </div>
 
