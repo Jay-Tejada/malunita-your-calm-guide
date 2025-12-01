@@ -18,11 +18,14 @@ export const SomedayTaskList = ({ showCompleted }: SomedayTaskListProps) => {
   const { tasks, isLoading, updateTask, deleteTask } = useTasks();
   const { toast } = useToast();
 
-  // Get someday tasks, sorted by newest first
+  // Get someday tasks: scheduled = 'someday' OR (no due date AND category = 'someday')
   const somedayTasks = tasks?.filter(t => {
-    if (showCompleted && t.completed) return t.scheduled_bucket === 'someday';
+    const isSomedayTask = t.scheduled_bucket === 'someday' || 
+      (!t.scheduled_bucket && t.category === 'someday');
+    
+    if (showCompleted && t.completed) return isSomedayTask;
     if (!showCompleted && t.completed) return false;
-    return t.scheduled_bucket === 'someday';
+    return isSomedayTask;
   }).sort((a, b) => 
     new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
   ) || [];
@@ -79,8 +82,8 @@ export const SomedayTaskList = ({ showCompleted }: SomedayTaskListProps) => {
 
   if (somedayTasks.length === 0) {
     return (
-      <div className="text-center py-16">
-        <p className="text-muted-foreground/40 text-sm font-mono">Nothing here yet</p>
+      <div className="text-center py-12">
+        <p className="text-muted-foreground/30">Nothing here yet</p>
       </div>
     );
   }
