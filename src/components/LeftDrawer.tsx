@@ -20,14 +20,11 @@ import { MapboxLocationPicker } from "@/components/MapboxLocationPicker";
 import { MapFullScreen } from "@/components/MapFullScreen";
 import { useMapboxToken } from "@/hooks/useMapboxToken";
 import { MapPin } from "lucide-react";
-import { TodaySection } from "@/components/drawer/TodaySection";
 import { TodaysBriefing } from "@/components/home/TodaysBriefing";
 import { DailyIntelligence } from "@/components/home/DailyIntelligence";
 import { useDailyMindstream } from "@/hooks/useDailyMindstream";
 import { ShortcutsHelp } from "@/components/ShortcutsHelp";
-import { SimpleJournal } from "@/features/journal/SimpleJournal";
-
-type DrawerMode = "root" | "today" | "inbox" | "someday" | "work" | "home" | "gym" | "journal" | "calendar" | `project-${string}`;
+type DrawerMode = "root" | "calendar";
 
 interface LeftDrawerProps {
   isOpen: boolean;
@@ -36,16 +33,16 @@ interface LeftDrawerProps {
 }
 
 const coreCategories = [
-  { id: "today", label: "Today" },
-  { id: "inbox", label: "Inbox", filter: (task: any) => !task.category || task.category === "inbox" },
-  { id: "someday", label: "Someday", filter: (task: any) => task.scheduled_bucket === "someday" },
+  { id: "today", label: "Today", route: "/today" },
+  { id: "inbox", label: "Inbox", route: "/inbox" },
+  { id: "someday", label: "Someday", route: "/someday" },
 ];
 
 const spaceCategories = [
-  { id: "work", label: "Work", filter: (task: any) => task.category === "work" },
-  { id: "home", label: "Home", filter: (task: any) => task.category === "home" },
-  { id: "gym", label: "Gym", filter: (task: any) => task.category === "gym" },
-  { id: "journal", label: "Journal" }, // Shown in drawer, not a page
+  { id: "work", label: "Work", route: "/work" },
+  { id: "home", label: "Home", route: "/home-tasks" },
+  { id: "gym", label: "Gym", route: "/gym" },
+  { id: "journal", label: "Journal", route: "/journal" },
 ];
 
 const calendarCategory = { id: "calendar", label: "Calendar", filter: (task: any) => task.reminder_time !== null };
@@ -75,9 +72,16 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
   const [isLocationPickerOpen, setIsLocationPickerOpen] = useState(false);
   const [isMapFullScreenOpen, setIsMapFullScreenOpen] = useState(false);
 
-  const handleCategoryClick = (categoryId: DrawerMode) => {
+  const handleCategoryClick = (categoryId: string, route?: string) => {
     hapticLight();
-    setDrawerMode(categoryId);
+    if (categoryId === "calendar") {
+      // Calendar stays inline in drawer
+      setDrawerMode("calendar");
+    } else if (route) {
+      // Navigate to the page and close drawer
+      onNavigate(route);
+      onClose();
+    }
   };
 
   const handleBack = () => {
@@ -329,26 +333,10 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
     }
   };
 
-  // Filter tasks for current category
-  const getCurrentCategoryTasks = () => {
-    if (drawerMode === "root" || drawerMode === "today") return [];
-    
-    // Handle project-specific views
-    if (drawerMode.startsWith("project-")) {
-      const projectId = drawerMode.replace("project-", "");
-      return tasks?.filter(t => !t.completed && t.plan_id === projectId) || [];
-    }
-    
-    // Handle calendar
-    if (drawerMode === "calendar") {
-      return tasks?.filter(t => !t.completed && calendarCategory.filter(t)) || [];
-    }
-    
-    // Handle other categories
-    const allCategories = [...coreCategories, ...spaceCategories];
-    const category = allCategories.find(c => c.id === drawerMode);
-    if (!category || !category.filter) return [];
-    return tasks?.filter(t => !t.completed && category.filter(t)) || [];
+  // Group events for calendar (only used in calendar view)
+  const getCalendarEvents = () => {
+    if (drawerMode !== "calendar") return [];
+    return tasks?.filter(t => !t.completed && calendarCategory.filter(t)) || [];
   };
 
   // Group tasks by date for calendar view
@@ -370,22 +358,9 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
     return grouped;
   };
 
-  const groupedEvents = drawerMode === 'calendar' ? groupEventsByDate(tasks || []) : {};
+  const calendarEvents = getCalendarEvents();
+  const groupedEvents = drawerMode === 'calendar' ? groupEventsByDate(calendarEvents) : {};
   const hasEvents = Object.keys(groupedEvents).length > 0;
-
-  const categoryTasks = getCurrentCategoryTasks();
-  
-  const getCurrentCategoryLabel = () => {
-    if (drawerMode.startsWith("project-")) {
-      const projectId = drawerMode.replace("project-", "");
-      const project = projectTasks?.find(p => p.id === projectId);
-      return project?.title || "Project";
-    }
-    const allCategories = [...coreCategories, ...spaceCategories, calendarCategory];
-    return allCategories.find(c => c.id === drawerMode)?.label || "";
-  };
-  
-  const currentCategoryLabel = getCurrentCategoryLabel();
 
   // Swipe handlers
   const drawerSwipeHandlers = useSwipeable({
@@ -483,7 +458,7 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
                         {coreCategories.map((category) => (
                           <button
                             key={category.id}
-                            onClick={() => handleCategoryClick(category.id as DrawerMode)}
+                            onClick={() => handleCategoryClick(category.id, category.route)}
                             className="text-left py-2 px-0 font-mono text-sm text-foreground/60 hover:text-foreground/90 transition-colors"
                           >
                             {category.label}
@@ -503,7 +478,7 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
                         {spaceCategories.map((category) => (
                           <button
                             key={category.id}
-                            onClick={() => handleCategoryClick(category.id as DrawerMode)}
+                            onClick={() => handleCategoryClick(category.id, category.route)}
                             className="text-left py-2 px-0 font-mono text-sm text-foreground/60 hover:text-foreground/90 transition-colors"
                           >
                             {category.label}
@@ -544,7 +519,11 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
                           projectTasks.map((project) => (
                             <button
                               key={project.id}
-                              onClick={() => handleCategoryClick(`project-${project.id}` as DrawerMode)}
+                              onClick={() => {
+                                hapticLight();
+                                onNavigate(`/project/${project.id}`);
+                                onClose();
+                              }}
                               className="text-left py-2 px-0 font-mono text-sm text-foreground/60 hover:text-foreground/90 transition-colors"
                             >
                               {project.title}
@@ -576,59 +555,10 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
                       <ShortcutsHelp />
                     </div>
                   </motion.div>
-                ) : drawerMode === "today" ? (
+                ) : drawerMode === "calendar" ? (
                   <motion.div
                     {...categorySwipeHandlers}
-                    key="today"
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 20 }}
-                    transition={{ duration: 0.14 }}
-                    className="h-full flex flex-col pt-16"
-                  >
-                    {/* Back Button */}
-                    <button
-                      onClick={handleBack}
-                      className="flex items-center gap-2 mb-6 px-6 text-foreground/70 hover:text-foreground font-mono text-[14px] transition-colors"
-                    >
-                      <ChevronLeft className="w-4 h-4" />
-                      Back
-                    </button>
-
-                    {/* Today Section */}
-                    <TodaySection onOneThingClick={() => {
-                      // Just close the drawer - stay on home
-                      onClose();
-                    }} />
-                  </motion.div>
-                ) : drawerMode === "journal" ? (
-                  <motion.div
-                    {...categorySwipeHandlers}
-                    key="journal"
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 20 }}
-                    transition={{ duration: 0.14 }}
-                    className="h-full flex flex-col p-6 md:p-8 pt-16"
-                  >
-                    {/* Back Button */}
-                    <button
-                      onClick={handleBack}
-                      className="flex items-center gap-2 mb-6 text-foreground/70 hover:text-foreground font-mono text-[14px] transition-colors"
-                    >
-                      <ChevronLeft className="w-4 h-4" />
-                      Back
-                    </button>
-
-                    {/* Journal Content */}
-                    <div className="flex-1 overflow-y-auto -mx-6 px-6">
-                      <SimpleJournal />
-                    </div>
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    {...categorySwipeHandlers}
-                    key={drawerMode}
+                    key="calendar"
                     initial={{ opacity: 0, x: 20 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: 20 }}
@@ -647,155 +577,101 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
                     {/* Category Title */}
                     <div className="flex items-center justify-between mb-8">
                       <h2 className="font-mono text-[16px] font-medium" style={{ color: '#111' }}>
-                        {currentCategoryLabel}
+                        Calendar
                       </h2>
-                      {drawerMode === 'calendar' && (
-                        <button
-                          onClick={() => {
-                            hapticLight();
-                            setIsNewEventDialogOpen(true);
-                          }}
-                          className="p-1.5 hover:bg-black/5 rounded-md transition-colors"
-                          aria-label="Add new event"
-                        >
-                          <Plus className="w-4 h-4" style={{ color: '#777' }} />
-                        </button>
-                      )}
+                      <button
+                        onClick={() => {
+                          hapticLight();
+                          setIsNewEventDialogOpen(true);
+                        }}
+                        className="p-1.5 hover:bg-black/5 rounded-md transition-colors"
+                        aria-label="Add new event"
+                      >
+                        <Plus className="w-4 h-4" style={{ color: '#777' }} />
+                      </button>
                     </div>
 
                     {/* Calendar View */}
-                    {drawerMode === 'calendar' ? (
-                      <div className="flex-1">
-                        {!hasEvents ? (
-                          <div className="text-center py-16">
-                            <p className="text-muted-foreground/40 text-sm">Nothing here yet</p>
-                          </div>
-                        ) : (
-                          <div className="space-y-8">
-                            {Object.entries(groupedEvents).map(([dateKey, dayEvents]) => {
-                              const date = new Date(dateKey);
-                              const dayOfWeek = format(date, 'EEEE');
-                              const monthDay = format(date, 'MMM d');
-                              
-                              return (
-                                <div key={dateKey} className="space-y-4">
-                                  {/* Day Header */}
-                                  <div className="space-y-1">
-                                    <div className="font-mono font-medium text-[15px]" style={{ color: '#111' }}>
-                                      {dayOfWeek}
-                                    </div>
-                                    <div className="font-mono text-[14px]" style={{ color: '#999' }}>
-                                      {monthDay}
-                                    </div>
-                                  </div>
-                                  
-                                  {/* Divider */}
-                                  <div 
-                                    className="h-px" 
-                                    style={{ backgroundColor: 'rgba(0,0,0,0.06)' }}
-                                  />
-                                  
-                                  {/* Events List */}
-                                  <div className="space-y-4">
-                                    {dayEvents.map((task) => {
-                                      const eventTime = new Date(task.reminder_time!);
-                                      const dayAbbrev = format(eventTime, 'EEE');
-                                      const timeStr = format(eventTime, 'h:mm a');
-                                      
-                                      return (
-                                        <button
-                                          key={task.id}
-                                          onClick={() => handleEventClick(task)}
-                                          className="w-full text-left flex items-start gap-3 py-2 px-2 -mx-2 rounded-md transition-colors"
-                                          style={{ backgroundColor: 'transparent' }}
-                                          onMouseEnter={(e) => {
-                                            e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.02)';
-                                          }}
-                                          onMouseLeave={(e) => {
-                                            e.currentTarget.style.backgroundColor = 'transparent';
-                                          }}
-                                        >
-                                          <div className="flex-shrink-0 mt-0.5">
-                                            <span className="font-mono text-[14px]" style={{ color: '#888' }}>•</span>
-                                          </div>
-                                          
-                                          <div className="flex-1 min-w-0 space-y-1">
-                                            <div 
-                                              className="font-mono text-[14px] leading-snug"
-                                              style={{ color: '#111' }}
-                                            >
-                                              {task.title}
-                                            </div>
-                                            <div 
-                                              className="font-mono text-[13px]"
-                                              style={{ color: '#999' }}
-                                            >
-                                              {dayAbbrev} at {timeStr}
-                                            </div>
-                                          </div>
-                                        </button>
-                                      );
-                                    })}
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        )}
-                      </div>
-                    ) : (
-                      <div className="flex-1 space-y-2">
-                        {categoryTasks.length === 0 ? (
-                          <div className="text-center py-12">
-                            <p className="text-muted-foreground/40 text-sm">No tasks yet</p>
-                          </div>
-                        ) : (
-                          categoryTasks.map((task) => {
-                            const isCompleting = completingTaskIds.has(task.id);
+                    <div className="flex-1">
+                      {!hasEvents ? (
+                        <div className="text-center py-16">
+                          <p className="text-muted-foreground/40 text-sm">Nothing here yet</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-8">
+                          {Object.entries(groupedEvents).map(([dateKey, dayEvents]) => {
+                            const date = new Date(dateKey);
+                            const dayOfWeek = format(date, 'EEEE');
+                            const monthDay = format(date, 'MMM d');
                             
                             return (
-                              <motion.div
-                                key={task.id}
-                                initial={{ opacity: 1, x: 0 }}
-                                animate={isCompleting ? { 
-                                  opacity: 0, 
-                                  x: -20,
-                                  height: 0,
-                                  marginBottom: 0
-                                } : { 
-                                  opacity: 1, 
-                                  x: 0 
-                                }}
-                                transition={{ duration: 0.4, ease: "easeOut" }}
-                                className="flex items-start gap-3 py-2.5 px-3 hover:bg-muted/20 rounded-md transition-colors group overflow-hidden"
-                              >
-                                <button
-                                  onClick={() => handleTaskToggle(task.id, task.completed || false)}
-                                  className={cn(
-                                    "flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center mt-0.5 transition-all",
-                                    task.completed
-                                      ? "bg-foreground/10 border border-foreground/20"
-                                      : "bg-transparent border border-foreground/20 hover:border-foreground/40"
-                                  )}
-                                >
-                                  {task.completed && (
-                                    <Check className="w-3 h-3 text-foreground/60" />
-                                  )}
-                                </button>
-                                <span className={cn(
-                                  "flex-1 font-mono text-[14px] leading-snug",
-                                  task.completed ? "text-foreground/40 line-through" : "text-foreground/90"
-                                )}>
-                                  {task.title}
-                                </span>
-                              </motion.div>
+                              <div key={dateKey} className="space-y-4">
+                                {/* Day Header */}
+                                <div className="space-y-1">
+                                  <div className="font-mono font-medium text-[15px]" style={{ color: '#111' }}>
+                                    {dayOfWeek}
+                                  </div>
+                                  <div className="font-mono text-[14px]" style={{ color: '#999' }}>
+                                    {monthDay}
+                                  </div>
+                                </div>
+                                
+                                {/* Divider */}
+                                <div 
+                                  className="h-px" 
+                                  style={{ backgroundColor: 'rgba(0,0,0,0.06)' }}
+                                />
+                                
+                                {/* Events List */}
+                                <div className="space-y-4">
+                                  {dayEvents.map((task) => {
+                                    const eventTime = new Date(task.reminder_time!);
+                                    const dayAbbrev = format(eventTime, 'EEE');
+                                    const timeStr = format(eventTime, 'h:mm a');
+                                    
+                                    return (
+                                      <button
+                                        key={task.id}
+                                        onClick={() => handleEventClick(task)}
+                                        className="w-full text-left flex items-start gap-3 py-2 px-2 -mx-2 rounded-md transition-colors"
+                                        style={{ backgroundColor: 'transparent' }}
+                                        onMouseEnter={(e) => {
+                                          e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.02)';
+                                        }}
+                                        onMouseLeave={(e) => {
+                                          e.currentTarget.style.backgroundColor = 'transparent';
+                                        }}
+                                      >
+                                        <div className="flex-shrink-0 mt-0.5">
+                                          <span className="font-mono text-[14px]" style={{ color: '#888' }}>•</span>
+                                        </div>
+                                        
+                                        <div className="flex-1 min-w-0 space-y-1">
+                                          <div 
+                                            className="font-mono text-[14px] leading-snug"
+                                            style={{ color: '#111' }}
+                                          >
+                                            {task.title}
+                                          </div>
+                                          <div 
+                                            className="font-mono text-[13px]"
+                                            style={{ color: '#999' }}
+                                          >
+                                            {dayAbbrev} at {timeStr}
+                                          </div>
+                                        </div>
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              </div>
                             );
-                          })
-                        )}
-                      </div>
-                    )}
+                          })}
+                        </div>
+                      )}
+                    </div>
                   </motion.div>
-                )}
+                ) : null}
               </AnimatePresence>
             </motion.div>
           </>
