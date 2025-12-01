@@ -1,25 +1,27 @@
 import { useState, useEffect } from 'react';
 import { useProgressStats } from '@/hooks/useProgressStats';
+import { useProgressVisibility } from '@/contexts/ProgressContext';
 
 const ProgressIndicator = () => {
   const { completedToday, totalToday, streak, weeklyCompleted } = useProgressStats();
-  const [isVisible, setIsVisible] = useState(false);
+  const { isProgressVisible } = useProgressVisibility();
+  const [isPeriodicVisible, setIsPeriodicVisible] = useState(false);
 
   // Show conditions:
-  // 1. Just completed a task (would need to detect this via prop or context)
+  // 1. When task is completed (via context)
   // 2. Every 3 minutes for 8 seconds
   // 3. When streak hits a milestone
   // 4. On first load for 5 seconds, then fade out
   
   useEffect(() => {
     // Show on mount for 5 seconds
-    setIsVisible(true);
-    const hideTimer = setTimeout(() => setIsVisible(false), 5000);
+    setIsPeriodicVisible(true);
+    const hideTimer = setTimeout(() => setIsPeriodicVisible(false), 5000);
     
     // Then show every 3 minutes for 8 seconds
     const interval = setInterval(() => {
-      setIsVisible(true);
-      setTimeout(() => setIsVisible(false), 8000);
+      setIsPeriodicVisible(true);
+      setTimeout(() => setIsPeriodicVisible(false), 8000);
     }, 3 * 60 * 1000); // every 3 minutes
     
     return () => {
@@ -34,14 +36,17 @@ const ProgressIndicator = () => {
   // Don't render if nothing to show
   if (totalToday === 0 && streak === 0) return null;
   
-  // Hide if not visible and not a milestone
-  if (!isVisible && !isStreakMilestone) return null;
+  // Show if triggered by task completion OR periodic timer OR milestone
+  const shouldShow = isProgressVisible || isPeriodicVisible || isStreakMilestone;
+  
+  // Hide if not visible
+  if (!shouldShow) return null;
 
   return (
     <div 
       className={`
         flex flex-col items-center gap-2 transition-opacity duration-1000
-        ${isVisible || isStreakMilestone ? 'opacity-100' : 'opacity-0'}
+        ${shouldShow ? 'opacity-100' : 'opacity-0'}
       `}
     >
       {/* Weekly mini bars */}

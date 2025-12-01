@@ -15,6 +15,7 @@ import { updateBurnoutStatus } from "@/ai/burnoutDetector";
 import { updatePriorityStorms } from "@/ai/priorityStormPredictor";
 import { celebrations, getRandomToast } from "@/lib/celebrations";
 import { useTaskStreak } from "./useTaskStreak";
+import { useProgressVisibility } from "@/contexts/ProgressContext";
 
 export interface Task {
   id: string;
@@ -76,6 +77,7 @@ export const useTasks = () => {
   const { unlockCosmetic } = useCustomizationStore();
   const { checkAfterTaskCompletion } = useOneThingAvoidance();
   const { streakCount, isStreakActive, registerCompletion } = useTaskStreak();
+  const { showProgress } = useProgressVisibility();
 
   const { data: tasks, isLoading } = useQuery({
     queryKey: ['tasks'],
@@ -207,6 +209,9 @@ export const useTasks = () => {
         
         // Register completion for streak tracking
         const currentStreak = registerCompletion(data.id);
+        
+        // Show progress indicator as reward
+        showProgress();
         
         // Trigger appropriate celebration
         if (data.is_focus) {
