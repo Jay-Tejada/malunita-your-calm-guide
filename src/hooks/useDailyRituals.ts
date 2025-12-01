@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useProfile } from './useProfile';
 
 interface RitualState {
   morningDone: boolean;
@@ -16,9 +17,13 @@ export const useDailyRituals = (): RitualState => {
   const [morningDone, setMorningDone] = useState(false);
   const [eveningDone, setEveningDone] = useState(false);
   const [dismissed, setDismissed] = useState({ morning: false, evening: false });
+  const { profile } = useProfile();
   
   const today = new Date().toDateString();
   const hour = new Date().getHours();
+  
+  // Check if rituals are enabled in settings
+  const ritualsEnabled = profile?.rituals_enabled ?? true;
   
   // Check localStorage for today's ritual status
   useEffect(() => {
@@ -62,6 +67,7 @@ export const useDailyRituals = (): RitualState => {
   
   // Morning: show between 5am-11am if not done
   const shouldShowMorning = 
+    ritualsEnabled &&
     hour >= 5 && 
     hour < 11 && 
     !morningDone && 
@@ -69,6 +75,7 @@ export const useDailyRituals = (): RitualState => {
   
   // Evening: show between 7pm-11pm if not done
   const shouldShowEvening = 
+    ritualsEnabled &&
     hour >= 19 && 
     hour < 23 && 
     !eveningDone && 

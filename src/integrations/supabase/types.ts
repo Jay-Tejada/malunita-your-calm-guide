@@ -900,6 +900,7 @@ export type Database = {
           preferred_input_style: string | null
           reflection_streak: number | null
           ritual_preferences: Json | null
+          rituals_enabled: boolean | null
           selected_accessory: string | null
           selected_ambient_world: string | null
           selected_aura: string | null
@@ -961,6 +962,7 @@ export type Database = {
           preferred_input_style?: string | null
           reflection_streak?: number | null
           ritual_preferences?: Json | null
+          rituals_enabled?: boolean | null
           selected_accessory?: string | null
           selected_ambient_world?: string | null
           selected_aura?: string | null
@@ -1022,6 +1024,7 @@ export type Database = {
           preferred_input_style?: string | null
           reflection_streak?: number | null
           ritual_preferences?: Json | null
+          rituals_enabled?: boolean | null
           selected_accessory?: string | null
           selected_ambient_world?: string | null
           selected_aura?: string | null
