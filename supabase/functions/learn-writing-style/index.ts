@@ -23,7 +23,6 @@ serve(async (req) => {
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
-    const lovableApiKey = Deno.env.get('LOVABLE_API_KEY');
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
@@ -47,27 +46,6 @@ serve(async (req) => {
       );
     }
 
-    // Generate embedding using Lovable AI
-    const embeddingResponse = await fetch('https://ai.gateway.lovable.dev/v1/embeddings', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${lovableApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        input: text,
-        model: 'text-embedding-3-small',
-      }),
-    });
-
-    if (!embeddingResponse.ok) {
-      console.error('Embedding API error:', await embeddingResponse.text());
-      throw new Error('Failed to generate embeddings');
-    }
-
-    const embeddingData = await embeddingResponse.json();
-    const embedding = embeddingData.data[0].embedding;
-
     // Fetch current memory profile
     const { data: memoryProfile } = await supabase
       .from('ai_memory_profiles')
@@ -85,14 +63,18 @@ serve(async (req) => {
       last_updated: new Date().toISOString(),
     };
 
-    // Store embeddings as metadata (simplified for now)
+    // Store writing patterns (without embeddings)
     if (memoryProfile?.category_preferences) {
       // Merge with existing patterns
       updates.category_preferences = {
         ...memoryProfile.category_preferences,
         _writing_patterns: [
           ...(memoryProfile.category_preferences._writing_patterns || []),
-          { text: text.substring(0, 50), embedding: embedding.slice(0, 10) } // Store sample
+          { 
+            text: text.substring(0, 50), 
+            style: writingStyle,
+            timestamp: new Date().toISOString()
+          }
         ].slice(-20) // Keep last 20
       };
     }
@@ -114,7 +96,6 @@ serve(async (req) => {
         success: true,
         writingStyle,
         phrasings,
-        embedding: embedding.slice(0, 10), // Return sample for debugging
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
