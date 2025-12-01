@@ -20,6 +20,21 @@ export const useCompanionMessage = (): CompanionMessage | null => {
     const remainingToday = todayTasks.filter(t => !t.completed).length;
     const inboxCount = tasks?.filter(t => (t.category === 'inbox' || !t.category) && !t.completed).length || 0;
     
+    // Work pattern detection
+    const workTasksToday = todayTasks.filter(t => t.category === 'work' && !t.completed).length;
+    const personalTasksToday = todayTasks.filter(t => t.category !== 'work' && !t.completed).length;
+    
+    // Focus task awareness
+    const focusTask = tasks?.find(t => t.is_focus && !t.completed);
+    
+    // Completion velocity
+    const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
+    const recentCompletions = tasks?.filter(t => 
+      t.completed && 
+      t.completed_at && 
+      new Date(t.completed_at) > oneHourAgo
+    ).length || 0;
+    
     // Find neglected tasks (in inbox > 7 days)
     const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
     const neglectedTasks = tasks?.filter(t => 
@@ -27,9 +42,6 @@ export const useCompanionMessage = (): CompanionMessage | null => {
       (t.category === 'inbox' || !t.category) &&
       new Date(t.created_at) < oneWeekAgo
     ) || [];
-    
-    // Find streaks (consecutive days with completed tasks)
-    // This would need a more complex query, simplified for now
     
     // Priority message selection (first match wins)
     
@@ -47,7 +59,15 @@ export const useCompanionMessage = (): CompanionMessage | null => {
       };
     }
     
-    // 2. TIME-BASED GREETINGS
+    // 2. COMPLETION VELOCITY (acknowledge fast work)
+    if (recentCompletions >= 3) {
+      return { 
+        text: "You're in the zone. Keep that energy.", 
+        type: 'celebration' 
+      };
+    }
+    
+    // 3. TIME-BASED GREETINGS
     if (hour >= 5 && hour < 9) {
       // Early morning
       const morningMessages = [
@@ -87,6 +107,27 @@ export const useCompanionMessage = (): CompanionMessage | null => {
       }
     }
     
+    // 4. FOCUS TASK AWARENESS (during work hours)
+    if (focusTask && hour >= 10 && hour < 17) {
+      return { 
+        text: `Still focused on "${focusTask.title.slice(0, 25)}${focusTask.title.length > 25 ? '...' : ''}"?`, 
+        type: 'nudge' 
+      };
+    }
+    
+    // 5. ENCOURAGEMENT FOR SLOW DAYS
+    if (hour >= 14 && completedToday === 0 && remainingToday > 0) {
+      const gentleNudges = [
+        "Slow day? That's okay. One small thing.",
+        "Start with the smallest task. Momentum builds.",
+        "Even 5 minutes counts.",
+      ];
+      return {
+        text: gentleNudges[Math.floor(Math.random() * gentleNudges.length)],
+        type: 'nudge'
+      };
+    }
+    
     if (hour >= 17 && hour < 20) {
       // Evening
       if (remainingToday > 0) {
@@ -116,7 +157,15 @@ export const useCompanionMessage = (): CompanionMessage | null => {
       };
     }
     
-    // 3. NUDGES (gentle reminders)
+    // 6. WORK PATTERN DETECTION (work-life balance insight)
+    if (workTasksToday > 3 && personalTasksToday === 0) {
+      return { 
+        text: "All work today. Don't forget to live a little.", 
+        type: 'insight' 
+      };
+    }
+    
+    // 7. NUDGES (gentle reminders)
     if (neglectedTasks.length > 0) {
       const oldestTask = neglectedTasks[0];
       const daysOld = Math.floor((now.getTime() - new Date(oldestTask.created_at).getTime()) / (24 * 60 * 60 * 1000));
@@ -133,7 +182,7 @@ export const useCompanionMessage = (): CompanionMessage | null => {
       };
     }
     
-    // 4. DAY-SPECIFIC
+    // 8. DAY-SPECIFIC
     if (dayOfWeek === 1) { // Monday
       return { 
         text: "New week. What would make this one great?", 
@@ -147,7 +196,7 @@ export const useCompanionMessage = (): CompanionMessage | null => {
       };
     }
     
-    // 5. DEFAULT INSIGHTS
+    // 9. DEFAULT INSIGHTS
     if (remainingToday > 0) {
       return { 
         text: `${remainingToday} thing${remainingToday > 1 ? 's' : ''} on your plate.`, 
@@ -155,7 +204,24 @@ export const useCompanionMessage = (): CompanionMessage | null => {
       };
     }
     
-    // 6. FALLBACK — all clear
+    // 10. RANDOM WISDOM (low priority, sprinkle in occasionally)
+    const wisdomMessages = [
+      "Done is better than perfect.",
+      "What would make this easier?",
+      "You don't have to do everything today.",
+      "Progress, not perfection.",
+      "Breathe. Then begin.",
+    ];
+    
+    // 10% chance to show wisdom instead of default
+    if (Math.random() < 0.1) {
+      return {
+        text: wisdomMessages[Math.floor(Math.random() * wisdomMessages.length)],
+        type: 'insight'
+      };
+    }
+    
+    // 11. FALLBACK — all clear
     return { 
       text: "All clear. What's on your mind?", 
       type: 'greeting' 
