@@ -23,6 +23,7 @@ export interface UserProfile {
   custom_wake_word?: string;
   notification_preferences?: any;
   ritual_preferences?: any;
+  rituals_enabled?: boolean;
   companion_name?: string;
   companion_personality_type?: string;
   companion_colorway?: string;

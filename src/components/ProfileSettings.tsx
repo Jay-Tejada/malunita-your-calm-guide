@@ -368,8 +368,23 @@ export const ProfileSettings = ({ onClose }: ProfileSettingsProps) => {
               )}
             </div>
 
-            {/* Workflow Rituals */}
-            <RitualPreferences />
+            {/* Daily Rituals Toggle */}
+            <div>
+              <h3 className="text-lg font-medium mb-4">Daily Rituals</h3>
+              <div className="flex items-center justify-between py-3 bg-background rounded-xl px-4 border border-secondary">
+                <div>
+                  <p className="text-sm text-foreground/80">Enable rituals</p>
+                  <p className="text-xs text-muted-foreground/50">Morning & evening check-ins</p>
+                </div>
+                <Switch 
+                  checked={profile?.rituals_enabled ?? true}
+                  onCheckedChange={(checked) => updateProfile({ rituals_enabled: checked })}
+                />
+              </div>
+            </div>
+
+            {/* Workflow Rituals Settings */}
+            {profile?.rituals_enabled !== false && <RitualPreferences />}
           </div>
         </ScrollArea>
 
