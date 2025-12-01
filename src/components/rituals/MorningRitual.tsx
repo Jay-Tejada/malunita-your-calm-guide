@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useTasks } from '@/hooks/useTasks';
+import { useTasks, Task } from '@/hooks/useTasks';
 import { X, ArrowRight, Sun } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -8,15 +8,79 @@ interface MorningRitualProps {
   onDismiss: () => void;
 }
 
+const getSmartInboxPicks = (tasks: Task[] | undefined) => {
+  const inbox = tasks?.filter(t => 
+    (t.category === 'inbox' || !t.category) && !t.completed
+  ) || [];
+  
+  const now = new Date();
+  
+  // Score each task
+  const scored = inbox.map(task => {
+    let score = 0;
+    let reason = '';
+    
+    // Age: older items get higher priority (been waiting)
+    const ageInDays = Math.floor((now.getTime() - new Date(task.created_at).getTime()) / (1000 * 60 * 60 * 24));
+    if (ageInDays > 7) {
+      score += 3;
+      reason = `Waiting ${ageInDays} days`;
+    } else if (ageInDays > 3) {
+      score += 2;
+      reason = `Added ${ageInDays} days ago`;
+    }
+    
+    // Keywords suggesting urgency
+    const title = task.title.toLowerCase();
+    if (title.includes('today') || title.includes('asap') || title.includes('urgent')) {
+      score += 4;
+      reason = 'Marked urgent';
+    }
+    if (title.includes('by ') || title.includes('deadline') || title.includes('due')) {
+      score += 3;
+      reason = 'Has a deadline';
+    }
+    
+    // Time-specific mentions
+    if (title.includes('10am') || title.includes('morning') || title.includes('am')) {
+      score += 2;
+      reason = 'Time-sensitive';
+    }
+    
+    // Work-related (assuming weekday morning)
+    const isWeekday = now.getDay() >= 1 && now.getDay() <= 5;
+    if (isWeekday && (title.includes('client') || title.includes('meeting') || title.includes('email') || title.includes('pro'))) {
+      score += 2;
+      reason = reason || 'Work-related';
+    }
+    
+    // Short tasks (likely quick wins)
+    if (task.title.length < 40) {
+      score += 1;
+      reason = reason || 'Quick task';
+    }
+    
+    // Default reason if none found
+    if (!reason) {
+      reason = 'From your inbox';
+    }
+    
+    return { ...task, score, reason };
+  });
+  
+  // Sort by score, take top 3
+  return scored
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 3);
+};
+
 const MorningRitual = ({ onComplete, onDismiss }: MorningRitualProps) => {
   const [step, setStep] = useState(1);
   const [focusInput, setFocusInput] = useState('');
   const { tasks, updateTask } = useTasks();
   
-  // Get inbox items and yesterday's incomplete
-  const inboxTasks = tasks?.filter(t => 
-    (t.category === 'inbox' || !t.category) && !t.completed
-  ).slice(0, 3) || [];
+  // Get smart inbox picks with reasoning
+  const smartPicks = getSmartInboxPicks(tasks);
   
   const carryOver = tasks?.filter(t => 
     t.scheduled_bucket === 'today' && !t.completed
@@ -124,26 +188,31 @@ const MorningRitual = ({ onComplete, onDismiss }: MorningRitualProps) => {
               </div>
             )}
             
-            {/* Inbox items */}
-            {inboxTasks.length > 0 && (
+            {/* Smart inbox picks with reasoning */}
+            {smartPicks.length > 0 && (
               <div className="mb-6">
                 <p className="text-[10px] uppercase tracking-widest text-muted-foreground/40 mb-3">
                   From your inbox
                 </p>
-                {inboxTasks.map(task => (
+                {smartPicks.map(task => (
                   <div key={task.id} className="py-3 border-b border-foreground/5">
-                    {/* Full task text - wrap instead of truncate */}
-                    <p className="text-sm text-foreground/60 font-mono mb-2">
+                    {/* Task text */}
+                    <p className="text-sm text-foreground/60 font-mono mb-1">
                       {task.title}
                     </p>
                     
-                    {/* Action button */}
-                    <button
-                      onClick={() => handleMoveToToday(task.id)}
-                      className="text-xs text-foreground/40 hover:text-foreground/60"
-                    >
-                      + Add to today
-                    </button>
+                    {/* Reason tag + action */}
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] text-muted-foreground/40">
+                        {task.reason}
+                      </span>
+                      <button
+                        onClick={() => handleMoveToToday(task.id)}
+                        className="text-xs text-foreground/40 hover:text-foreground/60"
+                      >
+                        + Today
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
