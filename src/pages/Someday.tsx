@@ -25,6 +25,7 @@ const Someday = () => {
   ) || [];
 
   const completedCount = somedayTasks.filter(t => t.completed).length;
+  const hasAnyTasks = somedayTasks.length > 0;
 
   return (
     <TaskPageLayout
@@ -46,7 +47,7 @@ const Someday = () => {
         </div>
       )}
 
-      <SomedayIntro />
+      <SomedayIntro hasAnyTasks={hasAnyTasks} />
       <SomedayTaskList showCompleted={showCompleted} />
       <ShowCompletedToggle
         count={completedCount}
