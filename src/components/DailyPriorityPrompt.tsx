@@ -22,7 +22,7 @@ interface DailyPriorityPromptProps {
 }
 
 export const DailyPriorityPrompt = forwardRef<DailyPriorityPromptRef, DailyPriorityPromptProps>(({ onTaskCreated }, ref) => {
-  const { showPrompt, checkIfShouldShowPrompt, markPromptAnswered, markPromptSkipped } = useDailyPriorityPrompt();
+  const { showPrompt, checkIfShouldShowPrompt, markPromptAnswered, markPromptSkipped, lastAnsweredDate } = useDailyPriorityPrompt();
   const { createTasks } = useTasks();
   const { refetch } = useDailyIntelligence();
   const { onTaskCreated: onTaskCreatedEvent } = useCompanionEvents();
@@ -39,9 +39,15 @@ export const DailyPriorityPrompt = forwardRef<DailyPriorityPromptRef, DailyPrior
   const [taskInput, setTaskInput] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Expose method to open dialog programmatically
+  // Expose method to open dialog programmatically - but only if not already answered today
   useImperativeHandle(ref, () => ({
-    openDialog: () => setIsDialogOpen(true),
+    openDialog: () => {
+      const today = new Date().toISOString().split('T')[0];
+      // Only open if not already answered/skipped today
+      if (lastAnsweredDate !== today) {
+        setIsDialogOpen(true);
+      }
+    },
   }));
 
   // Check if prompt should show on mount
