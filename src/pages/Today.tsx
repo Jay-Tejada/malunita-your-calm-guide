@@ -96,11 +96,14 @@ const Today = () => {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <div className="flex items-center justify-between px-4 h-14 border-b border-foreground/5">
-        <button onClick={() => navigate('/')} className="text-foreground/30 hover:text-foreground/50">
-          <ChevronLeft className="w-5 h-5" />
+        <button 
+          onClick={() => navigate('/')} 
+          className="text-foreground/30 hover:text-foreground/50 p-3 -ml-3 transition-colors"
+        >
+          <ChevronLeft className="w-6 h-6" />
         </button>
         <span className="font-mono text-foreground/80">Today</span>
-        <div className="w-5" /> {/* Spacer for alignment */}
+        <div className="w-10" /> {/* Spacer for alignment */}
       </div>
 
       <div className="px-4 pt-4 pb-24 md:pb-20">
