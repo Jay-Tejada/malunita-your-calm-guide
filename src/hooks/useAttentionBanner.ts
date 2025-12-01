@@ -65,19 +65,16 @@ export const useAttentionBanner = () => {
     return [...overdue, ...upcoming, ...inbox, ...today];
   }, [tasks]);
 
-  // Auto-rotate every 6 seconds (faster for urgent items)
+  // Auto-rotate every 6 seconds
   useEffect(() => {
     if (priorityItems.length <= 1) return;
     
-    const currentItem = priorityItems[currentIndex];
-    const interval = currentItem?.urgency === 1 ? 5000 : 6000; // 5s for overdue, 6s for others
-    
     const timer = setInterval(() => {
       setCurrentIndex(prev => (prev + 1) % priorityItems.length);
-    }, interval);
+    }, 6000);
     
     return () => clearInterval(timer);
-  }, [priorityItems.length, currentIndex, priorityItems]);
+  }, [priorityItems.length]);
 
   // Reset index when items change
   useEffect(() => {
