@@ -1,14 +1,18 @@
 import { useCompanionMessage } from '@/hooks/useCompanionMessage';
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const CompanionMessage = () => {
   const message = useCompanionMessage();
   const [isVisible, setIsVisible] = useState(false);
   const [displayedText, setDisplayedText] = useState('');
+  const [showDetail, setShowDetail] = useState(false);
+  const navigate = useNavigate();
   
   // Fade in on mount and when message changes
   useEffect(() => {
     setIsVisible(false);
+    setShowDetail(false);
     
     const timer = setTimeout(() => {
       setDisplayedText(message?.text || '');
@@ -20,6 +24,31 @@ const CompanionMessage = () => {
 
   if (!message) return null;
 
+  // Define actions based on message type
+  const getAction = () => {
+    switch (message.type) {
+      case 'nudge':
+        return {
+          label: 'Go to Inbox',
+          action: () => navigate('/inbox')
+        };
+      case 'insight':
+        return {
+          label: 'View Today',
+          action: () => navigate('/today')
+        };
+      case 'celebration':
+        return {
+          label: 'See Progress',
+          action: () => setShowDetail(!showDetail)
+        };
+      default:
+        return null;
+    }
+  };
+  
+  const actionConfig = getAction();
+
   return (
     <div 
       className={`
@@ -27,9 +56,26 @@ const CompanionMessage = () => {
         ${isVisible ? 'opacity-100' : 'opacity-0'}
       `}
     >
-      <p className="text-xs font-mono text-muted-foreground/40 tracking-wide">
+      <p 
+        onClick={() => actionConfig && setShowDetail(!showDetail)}
+        className={`
+          text-xs font-mono text-muted-foreground/40 tracking-wide
+          ${actionConfig ? 'cursor-pointer hover:text-muted-foreground/60' : ''}
+          transition-colors duration-200
+        `}
+      >
         {displayedText}
       </p>
+      
+      {/* Expandable action */}
+      {showDetail && actionConfig && (
+        <button
+          onClick={actionConfig.action}
+          className="mt-2 text-[10px] text-foreground/30 hover:text-foreground/50 underline transition-colors"
+        >
+          {actionConfig.label}
+        </button>
+      )}
     </div>
   );
 };
