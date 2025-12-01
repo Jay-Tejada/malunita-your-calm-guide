@@ -193,3 +193,6 @@ verify_jwt = true
 [functions.planning-breakdown]
 verify_jwt = true
 
+[functions.batch-categorize-inbox]
+verify_jwt = true
+

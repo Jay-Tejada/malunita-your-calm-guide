@@ -2,7 +2,8 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useTasks, Task } from "@/hooks/useTasks";
 import { useToast } from "@/hooks/use-toast";
-import { Zap, Sparkles, Send } from "lucide-react";
+import { Zap, Sparkles, Send, Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,14 +17,23 @@ import {
 
 interface InboxActionsProps {
   tasks: Task[];
+  onSuggestionsGenerated?: (suggestions: TaskSuggestion[]) => void;
 }
 
-export function InboxActions({ tasks }: InboxActionsProps) {
+interface TaskSuggestion {
+  taskId: string;
+  suggestion: 'today' | 'someday' | 'work' | 'home' | 'gym';
+  confidence: number;
+  reason?: string;
+}
+
+export function InboxActions({ tasks, onSuggestionsGenerated }: InboxActionsProps) {
   const { updateTask } = useTasks();
   const { toast } = useToast();
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [ambiguousTasks, setAmbiguousTasks] = useState<Task[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isOrganizing, setIsOrganizing] = useState(false);
 
   // Filter inbox tasks
   const inboxTasks = tasks.filter(
@@ -83,98 +93,72 @@ export function InboxActions({ tasks }: InboxActionsProps) {
     }
   };
 
-  const handleIntelligentClear = async () => {
+  const handleBatchCategorize = async () => {
     if (inboxTasks.length === 0) {
       toast({
         title: "Inbox is empty",
-        description: "Nothing to clear",
+        description: "Nothing to organize",
       });
       return;
     }
 
-    setIsProcessing(true);
+    setIsOrganizing(true);
 
     try {
-      const today = new Date().toISOString().split("T")[0];
-
-      // Categorize tasks
-      const highValue: Task[] = [];
-      const lowValue: Task[] = [];
-      const ambiguous: Task[] = [];
-
-      inboxTasks.forEach((task) => {
-        const priority = task.priority || task.ai_metadata?.priority || "SHOULD";
-        const isTimeSensitive =
-          task.is_time_based || task.has_reminder || task.reminder_time;
-        const priorityScore = task.future_priority_score || 0;
-
-        // High value: MUST priority, time-sensitive, or high score
-        if (
-          priority === "MUST" ||
-          isTimeSensitive ||
-          priorityScore >= 0.75
-        ) {
-          highValue.push(task);
-        }
-        // Low value: COULD priority, no time constraint, low score
-        else if (
-          priority === "COULD" &&
-          !isTimeSensitive &&
-          priorityScore < 0.4
-        ) {
-          lowValue.push(task);
-        }
-        // Ambiguous: everything else
-        else {
-          ambiguous.push(task);
-        }
+      const { data, error } = await supabase.functions.invoke('batch-categorize-inbox', {
+        body: {}
       });
 
-      // Send high value to Today
-      await Promise.all(
-        highValue.map((task) =>
-          updateTask({
-            id: task.id,
-            updates: {
-              is_focus: true,
-              focus_date: today,
-              scheduled_bucket: "today",
-            },
-          })
-        )
-      );
-
-      // Send low value to Someday
-      await Promise.all(
-        lowValue.map((task) =>
-          updateTask({
-            id: task.id,
-            updates: {
-              scheduled_bucket: "someday",
-              category: "someday",
-            },
-          })
-        )
-      );
-
-      // Handle ambiguous tasks
-      if (ambiguous.length > 0) {
-        setAmbiguousTasks(ambiguous);
-        setShowConfirmDialog(true);
-      } else {
-        toast({
-          title: "Inbox cleared! 🎉",
-          description: `Moved ${highValue.length} to Today, ${lowValue.length} to Someday`,
-        });
+      if (error) {
+        console.error('Categorization error:', error);
+        
+        if (error.message?.includes('429')) {
+          toast({
+            title: "Rate limit exceeded",
+            description: "Please try again in a moment",
+            variant: "destructive",
+          });
+          return;
+        }
+        
+        if (error.message?.includes('402')) {
+          toast({
+            title: "AI credits depleted",
+            description: "Please add credits to your workspace",
+            variant: "destructive",
+          });
+          return;
+        }
+        
+        throw error;
       }
-    } catch (error) {
-      console.error("Failed to clear inbox:", error);
+
+      const suggestions = data?.suggestions || [];
+      
+      if (suggestions.length === 0) {
+        toast({
+          title: "No suggestions",
+          description: "AI couldn't categorize these tasks",
+        });
+        return;
+      }
+
+      // Pass suggestions to parent component
+      onSuggestionsGenerated?.(suggestions);
+
       toast({
-        title: "Failed to clear inbox",
+        title: `${suggestions.length} suggestions generated`,
+        description: "Click suggestions to apply them",
+      });
+    } catch (error) {
+      console.error("Failed to organize inbox:", error);
+      toast({
+        title: "Failed to organize",
+        description: error instanceof Error ? error.message : "Unknown error",
         variant: "destructive",
       });
     } finally {
-      setIsProcessing(false);
+      setIsOrganizing(false);
     }
   };
 
@@ -243,13 +227,22 @@ export function InboxActions({ tasks }: InboxActionsProps) {
 
         {/* Organize Inbox */}
         <Button
-          onClick={handleIntelligentClear}
-          disabled={isProcessing}
+          onClick={handleBatchCategorize}
+          disabled={isOrganizing}
           variant="ghost"
           className="inline-flex items-center gap-2 text-sm text-foreground/50 hover:text-foreground/70 border border-foreground/15 rounded-lg px-3 py-1.5 bg-transparent hover:bg-transparent"
         >
-          <Sparkles className="w-4 h-4" />
-          Organize
+          {isOrganizing ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin" />
+              Organizing...
+            </>
+          ) : (
+            <>
+              <Sparkles className="w-4 h-4" />
+              Organize
+            </>
+          )}
         </Button>
       </div>
 

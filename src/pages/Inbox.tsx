@@ -7,11 +7,19 @@ import { usePlanningBreakdown } from "@/hooks/usePlanningBreakdown";
 import { TaskPageLayout } from "@/components/shared/TaskPageLayout";
 
 
+interface TaskSuggestion {
+  taskId: string;
+  suggestion: 'today' | 'someday' | 'work' | 'home' | 'gym';
+  confidence: number;
+  reason?: string;
+}
+
 const Inbox = () => {
   const { tasks, isLoading } = useTasks();
   const [planningMode, setPlanningMode] = useState(false);
   const [planningText, setPlanningText] = useState("");
   const { loading, error, result, runPlanningBreakdown } = usePlanningBreakdown();
+  const [suggestions, setSuggestions] = useState<TaskSuggestion[]>([]);
 
   const handlePlanThis = (title: string) => {
     setPlanningText(title);
@@ -39,10 +47,20 @@ const Inbox = () => {
       )}
 
       {/* Inbox Actions */}
-      {!isLoading && tasks && <InboxActions tasks={tasks} />}
+      {!isLoading && tasks && (
+        <InboxActions 
+          tasks={tasks} 
+          onSuggestionsGenerated={(newSuggestions) => setSuggestions(newSuggestions)}
+        />
+      )}
       
       {/* Task List */}
-      <TaskList category="inbox" onPlanThis={handlePlanThis} />
+      <TaskList 
+        category="inbox" 
+        onPlanThis={handlePlanThis}
+        suggestions={suggestions}
+        onClearSuggestions={() => setSuggestions([])}
+      />
     </TaskPageLayout>
   );
 };
