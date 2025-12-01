@@ -1,4 +1,4 @@
-import { CheckCircle2, Circle, Clock, GripVertical, Target, Settings, Split, CalendarPlus, Zap, Lightbulb, Check } from "lucide-react";
+import { CheckCircle2, Circle, Clock, GripVertical, Target, Settings, Split, CalendarPlus, Zap, Lightbulb, Check, MoreVertical, Star, Edit2, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -12,6 +12,13 @@ import { useTaskStreak } from "@/hooks/useTaskStreak";
 import { useCompanionEvents } from "@/hooks/useCompanionEvents";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface TaskCardProps {
   id: string;
@@ -227,13 +234,13 @@ export const TaskCard = ({ id, title, time, context, completed, selected, onTogg
         isDragging && "opacity-50 shadow-xl scale-105"
       )}
     >
-      {/* Drag Handle */}
+      {/* Drag Handle - hidden by default, visible on hover */}
       <button
         {...attributes}
         {...listeners}
-        className="flex-shrink-0 mt-0.5 cursor-grab active:cursor-grabbing touch-none"
+        className="flex-shrink-0 mt-0.5 cursor-grab active:cursor-grabbing touch-none opacity-0 group-hover:opacity-100 transition-opacity"
       >
-        <GripVertical className="w-5 h-5 text-muted-foreground group-hover:text-accent" />
+        <GripVertical className="w-5 h-5 text-muted-foreground/40" />
       </button>
 
       {/* Checkbox */}
@@ -296,78 +303,110 @@ export const TaskCard = ({ id, title, time, context, completed, selected, onTogg
             </TooltipProvider>
           )}
           
-          {/* Action buttons group */}
-          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-            {/* Plan This Button */}
-            {onPlanThis && (
+          {/* Overflow Menu - visible on hover only */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
               <button
+                onClick={(e) => e.stopPropagation()}
+                className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
+              >
+                <MoreVertical className="w-4 h-4 text-muted-foreground hover:text-foreground" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem
                 onClick={(e) => {
                   e.stopPropagation();
-                  onPlanThis(title);
+                  onEdit?.();
                 }}
-                className="flex-shrink-0"
-                title="Plan This"
               >
-                <Lightbulb className="w-4 h-4 text-muted-foreground hover:text-accent" />
-              </button>
-            )}
+                <Edit2 className="w-4 h-4 mr-2" />
+                Edit
+              </DropdownMenuItem>
+              
+              {onPlanThis && (
+                <DropdownMenuItem
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onPlanThis(title);
+                  }}
+                >
+                  <Lightbulb className="w-4 h-4 mr-2" />
+                  Plan This
+                </DropdownMenuItem>
+              )}
 
-            {/* Break Down Button (for big tasks) */}
-            {isBigTask && onCreateTasks && (
-              <button
-                onClick={handleBreakDown}
-                disabled={isSplitting}
-                className="flex-shrink-0"
-                title="Break down into smaller tasks"
-              >
-                <Split className="w-4 h-4 text-muted-foreground hover:text-accent" />
-              </button>
-            )}
+              {!isInToday && onTaskUpdate && (
+                <DropdownMenuItem
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleMoveToToday(e);
+                  }}
+                  disabled={isMovingToToday}
+                >
+                  <CalendarPlus className="w-4 h-4 mr-2" />
+                  Move to Today
+                </DropdownMenuItem>
+              )}
 
-            {/* Move to Today Button */}
-            {!isInToday && onTaskUpdate && (
-              <button
-                onClick={handleMoveToToday}
-                disabled={isMovingToToday}
-                className="flex-shrink-0"
-                title="Move to Today"
-              >
-                <CalendarPlus className="w-4 h-4 text-muted-foreground hover:text-accent" />
-              </button>
-            )}
-            
-            {fullTask?.ai_metadata && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowCorrectionPanel(true);
-                }}
-                className="flex-shrink-0"
-                title="Fix AI Output"
-              >
-                <Settings className="w-4 h-4 text-muted-foreground hover:text-accent" />
-              </button>
-            )}
-            
-            {/* Action Sheet Menu */}
-            {fullTask && (
-              <TaskActionSheet
-                task={fullTask}
-                onUpdate={() => onTaskUpdate?.({})}
-                onDelete={() => window.location.reload()}
-                onBreakDown={isBigTask && onCreateTasks ? handleBreakDown : undefined}
-              />
-            )}
-          </div>
+              {isBigTask && onCreateTasks && (
+                <DropdownMenuItem
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleBreakDown(e);
+                  }}
+                  disabled={isSplitting}
+                >
+                  <Split className="w-4 h-4 mr-2" />
+                  Break Down
+                </DropdownMenuItem>
+              )}
+
+              <DropdownMenuSeparator />
+              
+              {fullTask && (
+                <>
+                  <DropdownMenuItem
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onTaskUpdate?.({ is_focus: !fullTask.is_focus });
+                    }}
+                  >
+                    <Star className={cn("w-4 h-4 mr-2", fullTask.is_focus && "fill-primary text-primary")} />
+                    {fullTask.is_focus ? "Unstar" : "Star"}
+                  </DropdownMenuItem>
+
+                  {fullTask.ai_metadata && (
+                    <DropdownMenuItem
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setShowCorrectionPanel(true);
+                      }}
+                    >
+                      <Settings className="w-4 h-4 mr-2" />
+                      Fix AI Output
+                    </DropdownMenuItem>
+                  )}
+
+                  <DropdownMenuSeparator />
+                  
+                  <DropdownMenuItem
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (window.confirm('Delete this task?')) {
+                        window.location.reload();
+                      }
+                    }}
+                    className="text-destructive focus:text-destructive"
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Delete
+                  </DropdownMenuItem>
+                </>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
-        {priority !== null && priority !== undefined && (
-          <div 
-            className="font-mono opacity-50 mt-0.5" 
-            style={{ fontSize: '10px' }}
-          >
-            {priority >= 0.85 ? '🔥 Must' : priority >= 0.60 ? '⬆ Should' : '→ Could'}
-          </div>
-        )}
         {cluster?.domain && (
           <div className="mt-1">
             <span 
