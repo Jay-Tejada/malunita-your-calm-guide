@@ -32,10 +32,7 @@ import { ActionableBanner } from "@/components/home/ActionableBanner";
 import { OfflineIndicator } from "@/components/OfflineIndicator";
 import { VoiceSheet } from "@/components/mobile/VoiceSheet";
 import { useOfflineStatus } from "@/hooks/useOfflineStatus";
-import { ContextualCard } from "@/components/mobile/ContextualCard";
 import { SimpleOrb } from "@/components/mobile/SimpleOrb";
-import { useContextualPrompt } from "@/hooks/useContextualPrompt";
-import { Check, Clock, Pencil } from "lucide-react";
 import CompanionMessage from "@/components/CompanionMessage";
 import ProgressIndicator from "@/components/ProgressIndicator";
 import { useDailyRituals } from "@/hooks/useDailyRituals";
@@ -138,9 +135,6 @@ const Index = () => {
   // Mobile-specific state
   const [voiceSheetOpen, setVoiceSheetOpen] = useState(false);
   
-  // Contextual prompt for mobile
-  const contextualPrompt = useContextualPrompt();
-  
   // Daily rituals
   const {
     shouldShowMorning,
@@ -152,14 +146,6 @@ const Index = () => {
   } = useDailyRituals();
   const [showMorningRitual, setShowMorningRitual] = useState(false);
   const [showEveningRitual, setShowEveningRitual] = useState(false);
-  
-  // State for focus task actions
-  const [showFocusActions, setShowFocusActions] = useState(false);
-  const [showScheduler, setShowScheduler] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
-  const [editText, setEditText] = useState("");
-  const [focusTaskData, setFocusTaskData] = useState<{ id: string; reminderTime: string | null } | null>(null);
-  const isFocusTask = contextualPrompt.subtitle === "Today's main focus";
   
   // Quick capture state (mobile swipe-up on orb, desktop Q//)
   const [showQuickCapture, setShowQuickCapture] = useState(false);
@@ -205,51 +191,6 @@ const Index = () => {
       setShowKeyboardHint(false);
     }
   }, [showDesktopCapture, showKeyboardHint]);
-
-  // Fetch focus task data when needed
-  useEffect(() => {
-    if (isFocusTask && user) {
-      const fetchFocusTask = async () => {
-        const today = new Date().toISOString().split('T')[0];
-        const { data } = await supabase
-          .from('tasks')
-          .select('id, reminder_time')
-          .eq('user_id', user.id)
-          .eq('is_focus', true)
-          .eq('focus_date', today)
-          .maybeSingle();
-        if (data) {
-          setFocusTaskData({ id: data.id, reminderTime: data.reminder_time });
-        }
-      };
-      fetchFocusTask();
-    }
-  }, [isFocusTask, user]);
-  
-  // Helper to format scheduled time
-  const formatScheduledTime = (timeString: string) => {
-    const date = new Date(timeString);
-    const hour = date.getHours();
-    
-    if (hour === 9) return 'morning';
-    if (hour === 13) return 'afternoon';
-    if (hour === 18) return 'evening';
-    
-    return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: hour !== 0 ? '2-digit' : undefined });
-  };
-  
-  // Close scheduler on click outside
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (showScheduler) {
-        setShowScheduler(false);
-      }
-    };
-    if (showScheduler) {
-      document.addEventListener('click', handleClickOutside);
-      return () => document.removeEventListener('click', handleClickOutside);
-    }
-  }, [showScheduler]);
 
   // Initialize keyboard shortcuts
   useKeyboardShortcuts({
