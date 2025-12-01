@@ -74,16 +74,16 @@ export const SwipeableTaskRow = ({
   return (
     <div className="relative overflow-hidden">
       {/* Left actions (revealed on swipe right) - Complete, Star */}
-      <div className="absolute inset-y-0 left-0 flex items-center">
+      <div className="absolute inset-y-0 left-0 flex items-center bg-foreground/5">
         <button
           onClick={(e) => { 
             e.stopPropagation();
             onComplete(task.id); 
             resetSwipe(); 
           }}
-          className="h-full w-20 bg-green-500/20 flex items-center justify-center"
+          className="h-full w-16 flex items-center justify-center text-green-600/70"
         >
-          <Check className="w-5 h-5 text-green-600" />
+          <Check className="w-5 h-5" />
         </button>
         <button
           onClick={(e) => { 
@@ -91,23 +91,23 @@ export const SwipeableTaskRow = ({
             onStar(task.id); 
             resetSwipe(); 
           }}
-          className="h-full w-20 bg-amber-500/20 flex items-center justify-center"
+          className="h-full w-16 flex items-center justify-center text-amber-600/70"
         >
-          <Star className="w-5 h-5 text-amber-600" />
+          <Star className="w-5 h-5" />
         </button>
       </div>
       
       {/* Right actions (revealed on swipe left) - Schedule, Delete */}
-      <div className="absolute inset-y-0 right-0 flex items-center">
+      <div className="absolute inset-y-0 right-0 flex items-center bg-foreground/5">
         <button
           onClick={(e) => { 
             e.stopPropagation();
             onSchedule(task.id); 
             resetSwipe(); 
           }}
-          className="h-full w-20 bg-blue-500/20 flex items-center justify-center"
+          className="h-full w-16 flex items-center justify-center text-blue-600/70"
         >
-          <Calendar className="w-5 h-5 text-blue-600" />
+          <Calendar className="w-5 h-5" />
         </button>
         <button
           onClick={(e) => { 
@@ -115,9 +115,9 @@ export const SwipeableTaskRow = ({
             onDelete(task.id); 
             resetSwipe(); 
           }}
-          className="h-full w-20 bg-red-500/20 flex items-center justify-center"
+          className="h-full w-16 flex items-center justify-center text-red-600/70"
         >
-          <Trash2 className="w-5 h-5 text-red-600" />
+          <Trash2 className="w-5 h-5" />
         </button>
       </div>
       
