@@ -42,6 +42,25 @@ const SmartTaskInput = ({ placeholder = "Add a task...", onSubmit }: SmartTaskIn
     <div className="w-full">
       {/* Input with overlay for highlighting */}
       <div className="relative">
+        {/* Hidden layer that shows highlighting */}
+        <div 
+          className="absolute inset-0 py-3 font-mono text-sm pointer-events-none whitespace-pre-wrap break-words"
+          aria-hidden="true"
+        >
+          {parsed.startIndex !== null ? (
+            <>
+              <span className="text-transparent">{input.slice(0, parsed.startIndex)}</span>
+              <span className="bg-blue-500/20 text-blue-600/80 rounded px-0.5">
+                {input.slice(parsed.startIndex, parsed.endIndex)}
+              </span>
+              <span className="text-transparent">{input.slice(parsed.endIndex)}</span>
+            </>
+          ) : (
+            <span className="text-transparent">{input}</span>
+          )}
+        </div>
+        
+        {/* Actual input (transparent text when date detected, visible caret) */}
         <input
           ref={inputRef}
           type="text"
@@ -49,8 +68,18 @@ const SmartTaskInput = ({ placeholder = "Add a task...", onSubmit }: SmartTaskIn
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
-          className="w-full bg-transparent border-b border-foreground/10 py-3 font-mono text-sm text-foreground/80 placeholder:text-muted-foreground/40 focus:outline-none focus:border-foreground/20"
+          className="relative w-full bg-transparent border-b border-foreground/10 py-3 font-mono text-sm placeholder:text-muted-foreground/40 focus:outline-none focus:border-foreground/20 caret-foreground/80"
+          style={{ color: parsed.detectedDate ? 'transparent' : undefined }}
         />
+        
+        {/* Visible text layer when date is detected */}
+        {parsed.detectedDate && (
+          <div className="absolute inset-0 py-3 font-mono text-sm pointer-events-none whitespace-pre-wrap break-words">
+            <span className="text-foreground/80">{input.slice(0, parsed.startIndex)}</span>
+            <span className="text-blue-500">{input.slice(parsed.startIndex, parsed.endIndex)}</span>
+            <span className="text-foreground/80">{input.slice(parsed.endIndex)}</span>
+          </div>
+        )}
       </div>
       
       {/* Date detection indicator */}
