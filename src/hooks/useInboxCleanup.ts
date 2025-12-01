@@ -4,6 +4,13 @@ import { useToast } from "@/hooks/use-toast";
 import { useTasks } from "@/hooks/useTasks";
 import { useQueryClient } from "@tanstack/react-query";
 
+interface LocalSuggestion {
+  taskId: string;
+  title: string;
+  suggestedCategory: string;
+  confidence: number;
+}
+
 interface TaskGroup {
   group_title: string;
   reason: string;
@@ -38,40 +45,103 @@ export const useInboxCleanup = () => {
   const queryClient = useQueryClient();
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysis, setAnalysis] = useState<CleanupAnalysis | null>(null);
+  const [suggestions, setSuggestions] = useState<LocalSuggestion[]>([]);
+
+  const categorizeLocally = (taskTitle: string): { category: string; confidence: number } => {
+    const title = taskTitle.toLowerCase();
+    
+    // Work keywords
+    if (title.includes('meeting') || title.includes('email') || title.includes('client') || 
+        title.includes('project') || title.includes('report') || title.includes('deadline') ||
+        title.includes('boss') || title.includes('coworker') || title.includes('office')) {
+      return { category: 'work', confidence: 0.8 };
+    }
+    
+    // Home keywords
+    if (title.includes('bill') || title.includes('grocery') || title.includes('clean') ||
+        title.includes('laundry') || title.includes('cook') || title.includes('fix') ||
+        title.includes('call mom') || title.includes('family') || title.includes('apartment')) {
+      return { category: 'home', confidence: 0.8 };
+    }
+    
+    // Gym keywords
+    if (title.includes('gym') || title.includes('workout') || title.includes('exercise') ||
+        title.includes('run') || title.includes('weight') || title.includes('fitness') ||
+        title.includes('trainer')) {
+      return { category: 'gym', confidence: 0.8 };
+    }
+    
+    // Quick win detection (short tasks)
+    if (title.includes('quick') || title.includes('5 min') || title.includes('remind') ||
+        title.length < 30) {
+      return { category: 'today', confidence: 0.7 };
+    }
+    
+    return { category: 'uncategorized', confidence: 0 };
+  };
 
   const analyzeInbox = async () => {
     setIsAnalyzing(true);
     try {
       const inboxTasks = tasks?.filter(t => 
-        t.category === 'inbox' && !t.completed
+        (t.category === 'inbox' || !t.category) && !t.completed
       ) || [];
 
       if (inboxTasks.length === 0) {
         toast({
           title: "Inbox is empty",
-          description: "No tasks to clean up!",
+          description: "Nothing to organize!",
         });
+        setIsAnalyzing(false);
         return null;
       }
 
-      const { data, error } = await supabase.functions.invoke('inbox-cleanup', {
-        body: { tasks: inboxTasks }
+      // Try edge function first
+      try {
+        const { data, error } = await supabase.functions.invoke('inbox-cleanup', {
+          body: { tasks: inboxTasks }
+        });
+        
+        if (!error && data) {
+          setAnalysis(data);
+          setIsAnalyzing(false);
+          return data;
+        }
+      } catch (e) {
+        console.log('Edge function unavailable, using local fallback');
+      }
+
+      // Local fallback - categorize each task
+      const localSuggestions = inboxTasks.map(task => {
+        const { category, confidence } = categorizeLocally(task.title);
+        return {
+          taskId: task.id,
+          title: task.title,
+          suggestedCategory: category,
+          confidence
+        };
+      }).filter(s => s.suggestedCategory !== 'uncategorized');
+
+      // Store suggestions in state for display
+      setSuggestions(localSuggestions);
+      
+      toast({
+        title: `${localSuggestions.length} suggestions ready`,
+        description: "Review and apply below",
       });
-
-      if (error) throw error;
-
-      setAnalysis(data);
-      return data;
+      
+      setIsAnalyzing(false);
+      return { suggestions: localSuggestions };
+      
     } catch (error) {
       console.error('Failed to analyze inbox:', error);
       toast({
         title: 'Error',
-        description: 'Failed to analyze inbox',
+        description: 'Failed to organize inbox',
         variant: 'destructive',
       });
-      return null;
-    } finally {
       setIsAnalyzing(false);
+      return null;
     }
   };
 
@@ -160,14 +230,69 @@ export const useInboxCleanup = () => {
     }
   };
 
+  const applySuggestion = async (taskId: string, category: string) => {
+    try {
+      if (category === 'today') {
+        await updateTask({ id: taskId, updates: { scheduled_bucket: 'today' } });
+      } else {
+        await updateTask({ id: taskId, updates: { category } });
+      }
+      
+      // Remove from suggestions
+      setSuggestions(prev => prev.filter(s => s.taskId !== taskId));
+      
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      
+      toast({
+        title: 'Moved',
+        description: `Task moved to ${category}`,
+      });
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to move task',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const applyAllSuggestions = async () => {
+    try {
+      for (const suggestion of suggestions) {
+        if (suggestion.suggestedCategory === 'today') {
+          await updateTask({ id: suggestion.taskId, updates: { scheduled_bucket: 'today' } });
+        } else {
+          await updateTask({ id: suggestion.taskId, updates: { category: suggestion.suggestedCategory } });
+        }
+      }
+      
+      setSuggestions([]);
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      
+      toast({
+        title: 'All moved',
+        description: `Moved ${suggestions.length} tasks`,
+      });
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to apply suggestions',
+        variant: 'destructive',
+      });
+    }
+  };
+
   return {
     analyzeInbox,
     completeGroup,
     snoozeGroup,
     archiveGroup,
     logCleanup,
+    applySuggestion,
+    applyAllSuggestions,
     isAnalyzing,
     analysis,
+    suggestions,
     inboxCount: tasks?.filter(t => t.category === 'inbox' && !t.completed).length || 0,
   };
 };
