@@ -1,35 +1,22 @@
-import { useState } from "react";
-import { Check, MoreVertical } from "lucide-react";
+import { Check } from "lucide-react";
 import { useTasks } from "@/hooks/useTasks";
 import { useProjectTasks } from "@/hooks/useProjectTasks";
 import { cn } from "@/lib/utils";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-
-interface Task {
-  id: string;
-  title: string;
-  completed?: boolean;
-  plan_id?: string | null;
-}
 
 interface WorkTaskListProps {
-  tasks: Task[];
-  isLoading?: boolean;
-  onPlanTask?: (title: string) => void;
+  showCompleted: boolean;
 }
 
-export const WorkTaskList = ({ 
-  tasks, 
-  isLoading,
-  onPlanTask 
-}: WorkTaskListProps) => {
-  const { updateTask } = useTasks();
+export const WorkTaskList = ({ showCompleted }: WorkTaskListProps) => {
+  const { tasks, isLoading, updateTask } = useTasks();
   const { data: projects } = useProjectTasks();
+
+  // Filter work tasks
+  const workTasks = tasks?.filter(t => {
+    if (showCompleted && t.completed) return t.category === 'work';
+    if (!showCompleted && t.completed) return false;
+    return t.category === 'work';
+  }) || [];
 
   const handleToggleTask = async (taskId: string, completed: boolean) => {
     try {
@@ -46,8 +33,8 @@ export const WorkTaskList = ({
   };
 
   // Group by project
-  const tasksWithProjects = tasks.filter(t => t.plan_id);
-  const tasksWithoutProjects = tasks.filter(t => !t.plan_id);
+  const tasksWithProjects = workTasks.filter(t => t.plan_id);
+  const tasksWithoutProjects = workTasks.filter(t => !t.plan_id);
 
   // Group tasks by project
   const tasksByProject = tasksWithProjects.reduce((acc, task) => {
@@ -57,9 +44,9 @@ export const WorkTaskList = ({
     }
     acc[projectId].push(task);
     return acc;
-  }, {} as Record<string, typeof tasks>);
+  }, {} as Record<string, typeof workTasks>);
 
-  const renderTask = (task: Task) => (
+  const renderTask = (task: any) => (
     <div
       key={task.id}
       className="flex items-start gap-3 py-2.5 px-3 hover:bg-muted/20 rounded-md transition-colors group"
@@ -85,38 +72,22 @@ export const WorkTaskList = ({
         {task.title}
       </span>
 
-      {/* Hover Actions */}
-      {onPlanTask && (
-        <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button className="p-1 hover:bg-muted/30 rounded transition-colors">
-                <MoreVertical className="w-4 h-4 text-foreground/40" />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuItem onClick={() => onPlanTask(task.title)}>
-                Plan This
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      )}
+      {/* Hover Actions - Removed for now */}
     </div>
   );
 
   if (isLoading) {
     return (
       <div className="text-center py-12">
-        <p className="text-muted-foreground/40 text-sm font-mono">Loading...</p>
+        <p className="text-muted-foreground/30">Loading...</p>
       </div>
     );
   }
 
-  if (tasks.length === 0) {
+  if (workTasks.length === 0) {
     return (
-      <div className="text-center py-16">
-        <p className="text-muted-foreground/40 text-sm font-mono">No work tasks</p>
+      <div className="text-center py-12">
+        <p className="text-muted-foreground/30">No work tasks</p>
       </div>
     );
   }
