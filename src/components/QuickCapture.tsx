@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useThoughts } from '@/hooks/useThoughts';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface QuickCaptureProps {
   isOpen: boolean;
@@ -16,6 +17,7 @@ export const QuickCapture = ({ isOpen, onClose, variant, onCapture }: QuickCaptu
   const inputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const { addThought } = useThoughts();
+  const queryClient = useQueryClient();
   
   useEffect(() => {
     if (isOpen && inputRef.current) {
@@ -61,6 +63,9 @@ export const QuickCapture = ({ isOpen, onClose, variant, onCapture }: QuickCaptu
           });
           return;
         }
+        
+        // Invalidate tasks query to refresh the list
+        queryClient.invalidateQueries({ queryKey: ['tasks'] });
         
         setInput('');
         
