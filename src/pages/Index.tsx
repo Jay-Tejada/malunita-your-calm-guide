@@ -38,6 +38,9 @@ import { useContextualPrompt } from "@/hooks/useContextualPrompt";
 import { Check, Clock, Pencil } from "lucide-react";
 import CompanionMessage from "@/components/CompanionMessage";
 import ProgressIndicator from "@/components/ProgressIndicator";
+import { useDailyRituals } from "@/hooks/useDailyRituals";
+import MorningRitual from "@/components/rituals/MorningRitual";
+import EveningRitual from "@/components/rituals/EveningRitual";
 
 interface AISummary {
   decisions: string[];
@@ -134,6 +137,16 @@ const Index = () => {
   
   // Contextual prompt for mobile
   const contextualPrompt = useContextualPrompt();
+  
+  // Daily rituals
+  const {
+    shouldShowMorning,
+    shouldShowEvening,
+    completeMorning,
+    completeEvening,
+    dismissMorning,
+    dismissEvening,
+  } = useDailyRituals();
   
   // State for focus task actions
   const [showFocusActions, setShowFocusActions] = useState(false);
@@ -473,6 +486,22 @@ const Index = () => {
 
   return (
     <>
+      {/* Morning ritual overlay */}
+      {shouldShowMorning && (
+        <MorningRitual 
+          onComplete={completeMorning} 
+          onDismiss={dismissMorning} 
+        />
+      )}
+      
+      {/* Evening ritual overlay */}
+      {shouldShowEvening && (
+        <EveningRitual 
+          onComplete={completeEvening} 
+          onDismiss={dismissEvening} 
+        />
+      )}
+      
       <ActionableBanner />
       <OfflineIndicator />
       
