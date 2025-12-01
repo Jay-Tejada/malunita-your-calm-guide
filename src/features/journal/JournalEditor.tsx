@@ -42,46 +42,58 @@ export const JournalEditor = ({ entry, onSave, onClose }: JournalEditorProps) =>
       exit={{ opacity: 0 }}
       className="fixed inset-0 bg-background z-50 overflow-y-auto"
     >
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <h1 className="text-2xl font-semibold">
-            {entry ? 'Edit Entry' : 'New Entry'}
-          </h1>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="default"
-              size="sm"
-              onClick={handleSave}
-              className="gap-2"
-            >
-              <Save className="w-4 h-4" />
-              Save
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onClose}
-            >
-              <X className="w-4 h-4" />
-            </Button>
-          </div>
+      <div className="max-w-2xl mx-auto px-6 py-8 min-h-screen">
+        {/* Minimal header */}
+        <div className="flex items-center justify-between mb-12">
+          <button
+            onClick={onClose}
+            className="text-muted-foreground/40 hover:text-foreground/60 transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleSave}
+            className="text-foreground/40 hover:text-foreground/60"
+          >
+            Save
+          </Button>
         </div>
 
-        {/* Editor */}
-        <div className="space-y-4">
+        {/* Date stamp */}
+        <div className="text-xs text-muted-foreground/40 mb-6 font-mono">
+          {entry 
+            ? new Date(entry.created_at).toLocaleDateString('en-US', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+              })
+            : new Date().toLocaleDateString('en-US', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+              })
+          }
+        </div>
+
+        {/* Clean editor */}
+        <div className="space-y-6">
           <Input
-            placeholder="Entry title..."
+            placeholder="Title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="text-xl font-medium border-0 border-b rounded-none px-0 focus-visible:ring-0"
+            className="text-lg border-0 px-0 focus-visible:ring-0 placeholder:text-muted-foreground/30"
+            autoFocus={!entry}
           />
           
           <Textarea
-            placeholder="Write your thoughts here..."
+            placeholder="Write..."
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            className="min-h-[500px] text-base resize-none border-0 focus-visible:ring-0 px-0"
+            className="min-h-[60vh] text-base resize-none border-0 focus-visible:ring-0 px-0 placeholder:text-muted-foreground/30"
           />
         </div>
       </div>

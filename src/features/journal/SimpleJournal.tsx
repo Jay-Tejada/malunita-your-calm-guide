@@ -136,57 +136,54 @@ export const SimpleJournal = () => {
 
   return (
     <>
-      <div className="max-w-4xl mx-auto space-y-8">
-        {/* New Entry button - minimal header */}
+      <div className="max-w-3xl mx-auto space-y-8 mt-8">
+        {/* New Entry button - subtle top right */}
         <div className="flex justify-end">
           <Button
             onClick={handleNewEntry}
-            variant="outline"
-            className="gap-2 bg-transparent border-foreground/20 text-foreground/60 hover:border-foreground/40 hover:text-foreground/80 hover:bg-transparent"
+            variant="ghost"
+            className="gap-2 text-foreground/40 hover:text-foreground/60"
           >
             <Plus className="w-4 h-4" />
-            New Entry
+            New entry
           </Button>
         </div>
 
         {/* Entries List */}
         {Object.keys(groupedEntries).length === 0 ? (
-          <div className="text-center py-20">
-            <p className="text-muted-foreground/40 text-sm">Nothing here yet</p>
+          <div className="text-center py-32 space-y-4">
+            <p className="text-muted-foreground/40 text-sm">No entries yet</p>
+            <Button
+              onClick={handleNewEntry}
+              variant="ghost"
+              className="text-foreground/40 hover:text-foreground/60"
+            >
+              Start writing
+            </Button>
           </div>
         ) : (
-          <div className="space-y-8">
+          <div className="space-y-1">
             {Object.entries(groupedEntries).map(([date, dateEntries]) => (
               <div key={date}>
-                {/* Date Header */}
-                <div className="flex items-center gap-2 mb-4 text-sm text-muted-foreground">
-                  <Calendar className="w-4 h-4" />
-                  {format(parseISO(date), 'EEEE, MMMM d, yyyy')}
-                </div>
-
-                {/* Entries for this date */}
-                <div className="space-y-3">
-                  {dateEntries.map((entry) => (
-                    <motion.button
-                      key={entry.id}
-                      onClick={() => handleEditEntry(entry)}
-                      className="w-full text-left p-6 rounded-lg border border-border hover:border-primary/50 bg-card transition-all hover:shadow-sm"
-                      whileHover={{ scale: 1.01 }}
-                      whileTap={{ scale: 0.99 }}
-                    >
-                      <div className="flex items-start justify-between mb-2">
-                        <h3 className="text-lg font-medium">{entry.title}</h3>
-                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                          <Clock className="w-3 h-3" />
-                          {format(parseISO(entry.created_at), 'h:mm a')}
-                        </div>
+                {dateEntries.map((entry) => (
+                  <motion.button
+                    key={entry.id}
+                    onClick={() => handleEditEntry(entry)}
+                    className="w-full text-left px-4 py-3 hover:bg-muted/30 transition-colors group"
+                    whileTap={{ scale: 0.995 }}
+                  >
+                    <div className="flex items-baseline justify-between gap-4">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm text-foreground/80 truncate group-hover:text-foreground">
+                          {entry.title}
+                        </p>
                       </div>
-                      <p className="text-sm text-muted-foreground line-clamp-2">
-                        {entry.content}
-                      </p>
-                    </motion.button>
-                  ))}
-                </div>
+                      <div className="flex-shrink-0 text-xs text-muted-foreground/60 font-mono">
+                        {format(parseISO(entry.created_at), 'MMM d')}
+                      </div>
+                    </div>
+                  </motion.button>
+                ))}
               </div>
             ))}
           </div>
