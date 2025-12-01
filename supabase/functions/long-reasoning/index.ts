@@ -1,4 +1,3 @@
-import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
@@ -21,77 +20,78 @@ serve(async (req) => {
       );
     }
 
-    const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
-    if (!OPENAI_API_KEY) {
-      throw new Error('OPENAI_API_KEY is not configured');
+    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+    if (!LOVABLE_API_KEY) {
+      throw new Error('LOVABLE_API_KEY is not configured');
     }
 
-    // Construct the prompt for OpenAI to generate structured reasoning
-    const systemPrompt = `You are a reasoning engine. You will be given an input and context, and you must provide:
-1. A final answer to the query
-2. A detailed chain of thought explaining your reasoning
-3. A list of reasoning steps you took
+    // Construct the prompt for structured reasoning
+    const systemPrompt = `You are a reasoning engine. Analyze the input and provide structured reasoning.
 
-Return your response in JSON format with these keys:
-- final_answer: the actual answer to the query
-- chain_of_thought: your detailed reasoning process
-- steps: an array of strings, each representing a step in your reasoning`;
+Return ONLY valid JSON with these exact keys:
+{
+  "final_answer": "your answer here",
+  "chain_of_thought": "detailed reasoning process",
+  "steps": ["step 1", "step 2", "step 3"]
+}`;
 
     const userPrompt = `Input: ${input}
 
 Context: ${JSON.stringify(context, null, 2)}
 
-Please analyze this and provide your structured reasoning.`;
+Analyze this and provide your structured reasoning in JSON format.`;
 
-    // Add timeout to prevent hanging
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 25000); // 25 second timeout
+    console.log('Making request to Lovable AI Gateway...');
 
-    let response;
-    try {
-      response = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${OPENAI_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'gpt-4o-mini',
-          messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: userPrompt }
-          ],
-          response_format: { type: 'json_object' },
-          temperature: 0.7,
-        }),
-        signal: controller.signal,
-      });
-    } catch (fetchError) {
-      clearTimeout(timeoutId);
-      if (fetchError instanceof Error && fetchError.name === 'AbortError') {
-        console.error('OpenAI API request timed out');
-        throw new Error('Request timed out - please try again');
-      }
-      throw fetchError;
-    } finally {
-      clearTimeout(timeoutId);
-    }
+    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'google/gemini-2.5-flash',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt }
+        ],
+        response_format: { type: 'json_object' },
+      }),
+    });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('OpenAI API error:', response.status, errorText);
-      throw new Error(`OpenAI API error: ${response.status}`);
+      console.error('Lovable AI error:', response.status, errorText);
+      
+      if (response.status === 429) {
+        throw new Error('Rate limit exceeded. Please try again in a moment.');
+      }
+      if (response.status === 402) {
+        throw new Error('Payment required. Please add credits to your Lovable AI workspace.');
+      }
+      
+      throw new Error(`AI Gateway error: ${response.status}`);
     }
 
     const data = await response.json();
     const content = data.choices[0].message.content;
     
+    console.log('Received response from AI:', content.substring(0, 100) + '...');
+    
     let parsedResponse;
     try {
       parsedResponse = JSON.parse(content);
     } catch (e) {
-      console.error('Failed to parse OpenAI response as JSON:', content);
-      throw new Error('Invalid response format from OpenAI');
+      console.error('Failed to parse AI response as JSON:', content);
+      // Fallback: return a basic response
+      return new Response(
+        JSON.stringify({
+          final_answer: content,
+          chain_of_thought: 'Unable to parse structured response',
+          steps: [],
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     // Return the structured response
