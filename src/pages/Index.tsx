@@ -37,6 +37,7 @@ import { SimpleOrb } from "@/components/mobile/SimpleOrb";
 import { useContextualPrompt } from "@/hooks/useContextualPrompt";
 import { Check, Clock, Pencil } from "lucide-react";
 import CompanionMessage from "@/components/CompanionMessage";
+import ProgressIndicator from "@/components/ProgressIndicator";
 
 interface AISummary {
   decisions: string[];
@@ -612,9 +613,12 @@ const Index = () => {
               />
             </div>
             
-            {/* Companion message - below orb */}
-            <div className="min-h-[20px]">
-              <CompanionMessage />
+            {/* Companion zone - message and progress */}
+            <div className="flex flex-col items-center gap-4">
+              <div className="min-h-[20px]">
+                <CompanionMessage />
+              </div>
+              <ProgressIndicator />
             </div>
           </div>
 
@@ -790,9 +794,12 @@ const Index = () => {
                     </p>
                   )}
                   
-                  {/* Companion message - below orb */}
-                  <div className="min-h-[20px]">
-                    <CompanionMessage />
+                  {/* Companion zone - message and progress */}
+                  <div className="flex flex-col items-center gap-4 mt-2">
+                    <div className="min-h-[20px]">
+                      <CompanionMessage />
+                    </div>
+                    <ProgressIndicator />
                   </div>
                 </div>
               </div>
