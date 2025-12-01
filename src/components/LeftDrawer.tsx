@@ -25,6 +25,7 @@ import { TodaysBriefing } from "@/components/home/TodaysBriefing";
 import { DailyIntelligence } from "@/components/home/DailyIntelligence";
 import { useDailyMindstream } from "@/hooks/useDailyMindstream";
 import { ShortcutsHelp } from "@/components/ShortcutsHelp";
+import { SimpleJournal } from "@/features/journal/SimpleJournal";
 
 type DrawerMode = "root" | "today" | "inbox" | "someday" | "work" | "home" | "gym" | "journal" | "calendar" | `project-${string}`;
 
@@ -44,7 +45,7 @@ const spaceCategories = [
   { id: "work", label: "Work", filter: (task: any) => task.category === "work" },
   { id: "home", label: "Home", filter: (task: any) => task.category === "home" },
   { id: "gym", label: "Gym", filter: (task: any) => task.category === "gym" },
-  { id: "journal", label: "Journal", isPage: true }, // Navigate to page instead of filtering
+  { id: "journal", label: "Journal" }, // Shown in drawer, not a page
 ];
 
 const calendarCategory = { id: "calendar", label: "Calendar", filter: (task: any) => task.reminder_time !== null };
@@ -76,14 +77,6 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
 
   const handleCategoryClick = (categoryId: DrawerMode) => {
     hapticLight();
-    
-    // Check if this is a page navigation (like Journal)
-    if (categoryId === "journal") {
-      onNavigate("/journal");
-      onClose();
-      return;
-    }
-    
     setDrawerMode(categoryId);
   };
 
@@ -472,7 +465,7 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
                     <button
                       onClick={() => {
                         hapticMedium();
-                        onNavigate("/");
+                        // Just dismiss the drawer - user can add tasks on home screen
                         onClose();
                       }}
                       className="w-full h-14 rounded-full bg-transparent border border-foreground/20 text-foreground/60 hover:border-foreground/40 hover:text-foreground/80 font-mono text-[15px] flex items-center justify-center gap-2 transition-all mb-8"
@@ -604,9 +597,33 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate }: LeftDrawerProps) => 
 
                     {/* Today Section */}
                     <TodaySection onOneThingClick={() => {
-                      onNavigate("/");
+                      // Just close the drawer - stay on home
                       onClose();
                     }} />
+                  </motion.div>
+                ) : drawerMode === "journal" ? (
+                  <motion.div
+                    {...categorySwipeHandlers}
+                    key="journal"
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 20 }}
+                    transition={{ duration: 0.14 }}
+                    className="h-full flex flex-col p-6 md:p-8 pt-16"
+                  >
+                    {/* Back Button */}
+                    <button
+                      onClick={handleBack}
+                      className="flex items-center gap-2 mb-6 text-foreground/70 hover:text-foreground font-mono text-[14px] transition-colors"
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                      Back
+                    </button>
+
+                    {/* Journal Content */}
+                    <div className="flex-1 overflow-y-auto -mx-6 px-6">
+                      <SimpleJournal />
+                    </div>
                   </motion.div>
                 ) : (
                   <motion.div
