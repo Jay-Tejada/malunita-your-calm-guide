@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Moon } from "lucide-react";
+import { Moon, Sun } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Auth } from "@/components/Auth";
 import { ThinkWithMe } from "@/components/ThinkWithMe";
@@ -39,6 +39,7 @@ import ProgressIndicator from "@/components/ProgressIndicator";
 import { useDailyRituals } from "@/hooks/useDailyRituals";
 import MorningRitual from "@/components/rituals/MorningRitual";
 import EveningSummary from "@/components/EveningSummary";
+import MorningSummary from "@/components/MorningSummary";
 import Search from "@/components/Search";
 
 interface AISummary {
@@ -145,6 +146,7 @@ const Index = () => {
   } = useDailyRituals();
   const [showMorningRitual, setShowMorningRitual] = useState(false);
   const [showEveningSummary, setShowEveningSummary] = useState(false);
+  const [showMorningSummary, setShowMorningSummary] = useState(false);
   
   // Quick capture state (mobile swipe-up on orb, desktop Q//)
   const [showQuickCapture, setShowQuickCapture] = useState(false);
@@ -465,6 +467,12 @@ const Index = () => {
         }} 
       />
       
+      {/* Morning summary */}
+      <MorningSummary
+        isOpen={showMorningSummary}
+        onClose={() => setShowMorningSummary(false)}
+      />
+      
       <ActionableBanner />
       <OfflineIndicator />
       
@@ -485,6 +493,17 @@ const Index = () => {
 
           {/* BOTTOM ZONE - Orb grounded in bottom third */}
           <div className="mt-auto pb-24 flex flex-col items-center justify-center relative gap-6">
+            {/* Morning kickoff button - shows before noon */}
+            {new Date().getHours() < 12 && (
+              <button
+                onClick={() => setShowMorningSummary(true)}
+                className="flex items-center gap-2 px-4 py-2 rounded-full border border-foreground/10 text-sm text-foreground/50 hover:bg-foreground/[0.03] transition-colors"
+              >
+                <Sun className="w-4 h-4" />
+                Start my day
+              </button>
+            )}
+            
             {/* Evening wind-down button - shows from 5pm onwards */}
             {new Date().getHours() >= 17 && (
               <button
@@ -557,6 +576,17 @@ const Index = () => {
 
                 {/* BOTTOM - Orb grounded in bottom third */}
                 <div className="mt-auto pb-16 flex flex-col items-center justify-center gap-2">
+                  {/* Morning kickoff button - shows before noon */}
+                  {new Date().getHours() < 12 && (
+                    <button
+                      onClick={() => setShowMorningSummary(true)}
+                      className="flex items-center gap-2 px-4 py-2 mb-4 rounded-full border border-foreground/10 text-sm text-foreground/50 hover:bg-foreground/[0.03] transition-colors"
+                    >
+                      <Sun className="w-4 h-4" />
+                      Start my day
+                    </button>
+                  )}
+                  
                   {/* Evening wind-down button - shows from 5pm onwards */}
                   {new Date().getHours() >= 17 && (
                     <button
