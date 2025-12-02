@@ -1,63 +1,123 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Drawer } from 'vaul';
 import { Mic, X, Send, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import '@/types/speech.d.ts';
 
 interface VoiceSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onStartRecording: () => void;
-  onStopRecording: () => void;
-  isRecording: boolean;
-  isProcessing: boolean;
-  recordingDuration?: number;
-  transcript?: string;
   onTranscriptSubmit?: (text: string) => void;
 }
 
 export function VoiceSheet({
   open,
   onOpenChange,
-  onStartRecording,
-  onStopRecording,
-  isRecording,
-  isProcessing,
-  recordingDuration = 0,
-  transcript = '',
   onTranscriptSubmit,
 }: VoiceSheetProps) {
   const [localTranscript, setLocalTranscript] = useState('');
   const [isSupported, setIsSupported] = useState(true);
   const [fallbackText, setFallbackText] = useState('');
-  // Default to toggle mode on mobile - more reliable than hold
-  const [recordMode] = useState<'hold' | 'toggle'>('toggle');
+  const [isRecording, setIsRecording] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const recognitionRef = useRef<any>(null);
 
   // Check browser support
   useEffect(() => {
-    const supported = !!(window.SpeechRecognition || window.webkitSpeechRecognition);
-    setIsSupported(supported);
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    setIsSupported(!!SpeechRecognition);
   }, []);
-
-  // Sync external transcript
-  useEffect(() => {
-    if (transcript) {
-      setLocalTranscript(transcript);
-    }
-  }, [transcript]);
 
   // Clear on close
   useEffect(() => {
     if (!open) {
       setLocalTranscript('');
       setFallbackText('');
+      setIsRecording(false);
+      setIsProcessing(false);
+      // Stop any active recognition
+      if (recognitionRef.current) {
+        recognitionRef.current.abort();
+        recognitionRef.current = null;
+      }
     }
   }, [open]);
 
+  const startRecording = useCallback(() => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      console.error('Speech recognition not supported');
+      return;
+    }
+
+    try {
+      const recognition = new SpeechRecognition();
+      recognitionRef.current = recognition;
+      
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.lang = 'en-US';
+
+      let finalTranscript = '';
+
+      recognition.onstart = () => {
+        console.log('Speech recognition started');
+        setIsRecording(true);
+        setIsProcessing(false);
+      };
+
+      recognition.onresult = (event: any) => {
+        let interimTranscript = '';
+        
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const transcript = event.results[i][0].transcript;
+          if (event.results[i].isFinal) {
+            finalTranscript += transcript + ' ';
+          } else {
+            interimTranscript += transcript;
+          }
+        }
+        
+        // Show interim results while recording
+        setLocalTranscript((finalTranscript + interimTranscript).trim());
+      };
+
+      recognition.onerror = (event: any) => {
+        console.error('Speech recognition error:', event.error);
+        setIsRecording(false);
+        setIsProcessing(false);
+        
+        if (event.error === 'not-allowed') {
+          alert('Microphone access denied. Please allow microphone access in your browser settings.');
+        }
+      };
+
+      recognition.onend = () => {
+        console.log('Speech recognition ended');
+        setIsRecording(false);
+        setIsProcessing(false);
+        recognitionRef.current = null;
+      };
+
+      recognition.start();
+    } catch (error) {
+      console.error('Failed to start recognition:', error);
+      setIsRecording(false);
+    }
+  }, []);
+
+  const stopRecording = useCallback(() => {
+    if (recognitionRef.current) {
+      setIsProcessing(true);
+      recognitionRef.current.stop();
+    }
+  }, []);
+
   const handleVoiceButton = () => {
     if (isRecording) {
-      onStopRecording();
+      stopRecording();
     } else {
-      onStartRecording();
+      startRecording();
     }
   };
 
@@ -160,17 +220,13 @@ export function VoiceSheet({
           </div>
         ) : (
           <p className="text-sm text-foreground/40 mb-8 font-mono">
-            {isProcessing ? 'Understanding...' : isRecording ? 'Listening...' : 'Tap to speak'}
+            {isProcessing ? 'Processing...' : isRecording ? 'Listening...' : 'Tap to speak'}
           </p>
         )}
 
         {/* Mic button - styled like the orb with calm amber tones */}
         <button
-          onClick={recordMode === 'toggle' ? handleVoiceButton : undefined}
-          onMouseDown={recordMode === 'hold' ? onStartRecording : undefined}
-          onMouseUp={recordMode === 'hold' ? onStopRecording : undefined}
-          onTouchStart={recordMode === 'hold' ? onStartRecording : undefined}
-          onTouchEnd={recordMode === 'hold' ? onStopRecording : undefined}
+          onClick={handleVoiceButton}
           disabled={isProcessing}
           className={cn(
             "w-24 h-24 rounded-full flex items-center justify-center transition-all duration-300",
@@ -218,13 +274,13 @@ export function VoiceSheet({
         {/* Hint */}
         {!isRecording && !localTranscript && !isProcessing && (
           <p className="text-xs text-foreground/30 mt-6 font-mono">
-            {recordMode === 'toggle' ? 'Tap to start, tap again to stop' : 'Hold to record'}
+            Tap to start, tap again to stop
           </p>
         )}
       </div>
 
       {/* Bottom actions */}
-      {localTranscript && (
+      {localTranscript && !isRecording && (
         <div className="px-4 py-4 border-t border-foreground/5 animate-fade-in">
           <div className="flex items-center gap-3">
             <button

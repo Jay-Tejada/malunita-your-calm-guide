@@ -620,13 +620,6 @@ const Index = () => {
           <VoiceSheet
             open={voiceSheetOpen}
             onOpenChange={setVoiceSheetOpen}
-            onStartRecording={() => voiceRef.current?.startRecording()}
-            onStopRecording={() => {
-              setVoiceSheetOpen(false);
-            }}
-            isRecording={voiceStatus.isListening}
-            isProcessing={voiceStatus.isProcessing}
-            recordingDuration={voiceStatus.recordingDuration}
             onTranscriptSubmit={handleVoiceTranscript}
           />
         </div>
