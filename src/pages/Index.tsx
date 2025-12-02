@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { Moon, Sun } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Auth } from "@/components/Auth";
@@ -41,6 +41,11 @@ import MorningRitual from "@/components/rituals/MorningRitual";
 import EveningSummary from "@/components/EveningSummary";
 import MorningSummary from "@/components/MorningSummary";
 import Search from "@/components/Search";
+import { useTasks } from "@/hooks/useTasks";
+import { generateFlowSessions, FlowSession } from "@/utils/taskCategorizer";
+import FlowSessionCard from "@/components/FlowSessionCard";
+import FocusSession from "@/components/FocusSession";
+import TinyTaskParty from "@/components/TinyTaskParty";
 
 interface AISummary {
   decisions: string[];
@@ -147,6 +152,33 @@ const Index = () => {
   const [showMorningRitual, setShowMorningRitual] = useState(false);
   const [showEveningSummary, setShowEveningSummary] = useState(false);
   const [showMorningSummary, setShowMorningSummary] = useState(false);
+  
+  // Flow sessions
+  const { tasks, updateTask } = useTasks();
+  const [activeSession, setActiveSession] = useState<FlowSession | null>(null);
+  const [sessionMode, setSessionMode] = useState<'focus' | 'party' | null>(null);
+  
+  const flowSessions = useMemo(() => {
+    if (!tasks) return [];
+    const todayTasks = tasks.filter(t => 
+      !t.completed && 
+      (t.scheduled_bucket === 'today' || !t.scheduled_bucket)
+    );
+    return generateFlowSessions(todayTasks);
+  }, [tasks]);
+  
+  const handleStartSession = (session: FlowSession) => {
+    setActiveSession(session);
+    if (session.type === 'tiny_task_fiesta') {
+      setSessionMode('party');
+    } else {
+      setSessionMode('focus');
+    }
+  };
+  
+  const handleCompleteTask = async (taskId: string) => {
+    await updateTask({ id: taskId, updates: { completed: true, completed_at: new Date().toISOString() } });
+  };
   
   // Time-based button visibility
   const hour = new Date().getHours();
@@ -490,8 +522,18 @@ const Index = () => {
           )}
 
           {/* CENTER STAGE - Focus task */}
-          <div className="flex-1 flex items-center justify-center">
+          <div className="flex-1 flex flex-col items-center justify-center">
             <FocusSection />
+            
+            {/* Flow session suggestion */}
+            {flowSessions.length > 0 && !activeSession && (
+              <div className="w-full max-w-sm mt-6">
+                <FlowSessionCard 
+                  session={flowSessions[0]} 
+                  onStart={() => handleStartSession(flowSessions[0])} 
+                />
+              </div>
+            )}
           </div>
 
           {/* BOTTOM ZONE - Orb grounded in bottom third */}
@@ -573,9 +615,19 @@ const Index = () => {
             >
               {/* Minimal desktop home - clean & focused */}
               <div className="relative min-h-[85vh] flex flex-col">
-                {/* CENTER STAGE - Focus task */}
-                <div className="flex-1 flex items-center justify-center">
+              {/* CENTER STAGE - Focus task */}
+                <div className="flex-1 flex flex-col items-center justify-center">
                   <FocusSection />
+                  
+                  {/* Flow session suggestion */}
+                  {flowSessions.length > 0 && !activeSession && (
+                    <div className="w-full max-w-md mt-6 px-4">
+                      <FlowSessionCard 
+                        session={flowSessions[0]} 
+                        onStart={() => handleStartSession(flowSessions[0])} 
+                      />
+                    </div>
+                  )}
                 </div>
 
                 {/* BOTTOM - Orb grounded in bottom third */}
@@ -689,6 +741,29 @@ const Index = () => {
       
       {/* Search modal */}
       <Search isOpen={showSearch} onClose={() => setShowSearch(false)} />
+      
+      {/* Active Flow Sessions */}
+      {sessionMode === 'party' && activeSession && (
+        <TinyTaskParty
+          tasks={activeSession.tasks}
+          onComplete={handleCompleteTask}
+          onClose={() => {
+            setActiveSession(null);
+            setSessionMode(null);
+          }}
+        />
+      )}
+
+      {sessionMode === 'focus' && activeSession && (
+        <FocusSession
+          session={activeSession}
+          onComplete={handleCompleteTask}
+          onClose={() => {
+            setActiveSession(null);
+            setSessionMode(null);
+          }}
+        />
+      )}
     </>
   );
 };
