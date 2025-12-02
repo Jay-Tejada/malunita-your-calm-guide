@@ -163,7 +163,7 @@ const Index = () => {
   const [showMorningSummary, setShowMorningSummary] = useState(false);
   
   // Flow sessions
-  const { tasks, updateTask } = useTasks();
+  const { tasks, updateTask, createTasks } = useTasks();
   const [activeSession, setActiveSession] = useState<FlowSession | null>(null);
   const [sessionMode, setSessionMode] = useState<'focus' | 'party' | null>(null);
   
@@ -486,6 +486,28 @@ const Index = () => {
     }
   };
 
+  // Handle voice transcript submission - create task in inbox
+  const handleVoiceTranscript = async (text: string) => {
+    try {
+      await createTasks([{
+        title: text,
+        category: 'inbox',
+        input_method: 'voice',
+      }]);
+      
+      toast({
+        description: "Added to inbox",
+      });
+    } catch (error) {
+      console.error('Failed to create task from voice:', error);
+      toast({
+        title: "Error",
+        description: "Failed to add task. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
   return (
     <>
       {/* Morning ritual */}
@@ -605,6 +627,7 @@ const Index = () => {
             isRecording={voiceStatus.isListening}
             isProcessing={voiceStatus.isProcessing}
             recordingDuration={voiceStatus.recordingDuration}
+            onTranscriptSubmit={handleVoiceTranscript}
           />
         </div>
       ) : (
