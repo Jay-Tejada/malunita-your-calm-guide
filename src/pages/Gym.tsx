@@ -4,6 +4,7 @@ import FastingTimer from '@/components/gym/FastingTimer';
 import WorkoutLog from '@/components/gym/WorkoutLog';
 import RecentWorkouts from '@/components/gym/RecentWorkouts';
 import BodyCheckIn from '@/components/gym/BodyCheckIn';
+import WeeklyReflection from '@/components/gym/WeeklyReflection';
 
 const Gym = () => {
   const navigate = useNavigate();
@@ -50,6 +51,9 @@ const Gym = () => {
         
         {/* Body Check-In */}
         <BodyCheckIn />
+        
+        {/* Weekly Reflection */}
+        <WeeklyReflection />
       </div>
     </div>
   );
