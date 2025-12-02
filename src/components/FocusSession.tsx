@@ -6,13 +6,16 @@ interface FocusSessionProps {
   session: FlowSession;
   onComplete: (taskId: string) => void;
   onClose: () => void;
+  onSaveSession?: (sessionId: string, reflection?: string, tasksCompleted?: number) => void;
 }
 
-const FocusSession = ({ session, onComplete, onClose }: FocusSessionProps) => {
+const FocusSession = ({ session, onComplete, onClose, onSaveSession }: FocusSessionProps) => {
   const [currentTaskIndex, setCurrentTaskIndex] = useState(0);
   const [completedIds, setCompletedIds] = useState<string[]>([]);
   const [secondsElapsed, setSecondsElapsed] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
+  const [showReflection, setShowReflection] = useState(false);
+  const [reflection, setReflection] = useState('');
   
   const currentTask = session.tasks.filter(t => !completedIds.includes(t.id))[0];
   const isFinished = !currentTask;
@@ -42,6 +45,13 @@ const FocusSession = ({ session, onComplete, onClose }: FocusSessionProps) => {
   
   const handleSkip = () => {
     setCurrentTaskIndex(i => i + 1);
+  };
+
+  const handleClose = async (reflectionText?: string) => {
+    if (session.id && onSaveSession) {
+      await onSaveSession(session.id, reflectionText, completedIds.length);
+    }
+    onClose();
   };
   
   // Progress
@@ -83,7 +93,7 @@ const FocusSession = ({ session, onComplete, onClose }: FocusSessionProps) => {
       
       {/* Main content */}
       <div className="flex-1 flex flex-col items-center justify-center px-6 min-h-[70vh]">
-        {isFinished ? (
+        {isFinished && !showReflection && (
           <div className="text-center animate-fade-in">
             <div className="w-16 h-16 rounded-full bg-foreground/5 flex items-center justify-center mx-auto mb-6">
               <Check className="w-8 h-8 text-foreground/50" />
@@ -91,17 +101,58 @@ const FocusSession = ({ session, onComplete, onClose }: FocusSessionProps) => {
             <h2 className="font-mono text-xl text-foreground/80 mb-2">
               Session Complete
             </h2>
-            <p className="text-sm text-foreground/50 mb-1">
+            <p className="text-sm text-foreground/50 mb-6">
               {completedIds.length} tasks · {formatTime(secondsElapsed)}
             </p>
-            <button
-              onClick={onClose}
-              className="mt-6 px-6 py-2 bg-foreground/5 text-foreground/70 rounded-lg hover:bg-foreground/10"
-            >
-              Done
-            </button>
+            
+            <div className="flex flex-col items-center gap-3">
+              <button
+                onClick={() => setShowReflection(true)}
+                className="text-sm text-foreground/50 hover:text-foreground/70"
+              >
+                Add a quick reflection
+              </button>
+              <button
+                onClick={() => handleClose()}
+                className="px-6 py-2 bg-foreground/5 text-foreground/70 rounded-lg hover:bg-foreground/10"
+              >
+                Done
+              </button>
+            </div>
           </div>
-        ) : (
+        )}
+
+        {isFinished && showReflection && (
+          <div className="text-center animate-fade-in w-full max-w-md">
+            <p className="text-[10px] uppercase tracking-widest text-foreground/40 mb-3">
+              How did that feel?
+            </p>
+            <textarea
+              value={reflection}
+              onChange={(e) => setReflection(e.target.value)}
+              placeholder="Quick thought..."
+              className="w-full bg-transparent border border-foreground/10 rounded-lg p-3 text-sm font-mono text-foreground/70 placeholder:text-foreground/30 resize-none focus:outline-none focus:border-foreground/20 mb-4"
+              rows={3}
+              autoFocus
+            />
+            <div className="flex items-center justify-center gap-3">
+              <button
+                onClick={() => handleClose()}
+                className="px-4 py-2 text-sm text-foreground/40"
+              >
+                Skip
+              </button>
+              <button
+                onClick={() => handleClose(reflection)}
+                className="px-6 py-2 bg-foreground/5 text-foreground/70 rounded-lg hover:bg-foreground/10"
+              >
+                Save & Done
+              </button>
+            </div>
+          </div>
+        )}
+
+        {!isFinished && (
           <div className="text-center w-full max-w-lg animate-fade-in" key={currentTask.id}>
             {/* Task number */}
             <p className="text-xs text-foreground/30 mb-4">
