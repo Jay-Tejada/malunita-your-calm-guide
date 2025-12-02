@@ -22,7 +22,8 @@ const WorkoutLog = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [currentExercise, setCurrentExercise] = useState<string | null>(null);
-  const [restTimerKey, setRestTimerKey] = useState(0);
+  const [showRestTimer, setShowRestTimer] = useState(false);
+  const [restSeconds, setRestSeconds] = useState(90);
 
   // Get unique exercises from history
   const pastExercises = useMemo(() => {
@@ -133,8 +134,8 @@ const WorkoutLog = () => {
       }]);
       setInput('');
       
-      // Trigger rest timer
-      setRestTimerKey(prev => prev + 1);
+      // Auto-start rest timer
+      setShowRestTimer(true);
       
       // Save exercise to localStorage for autocomplete
       const stored = localStorage.getItem('malunita_exercises');
@@ -186,11 +187,33 @@ const WorkoutLog = () => {
       ))}
       
       {/* Rest Timer - auto-starts after logging */}
-      {sets.length > 0 && (
+      {showRestTimer && (
         <div className="mb-4">
-          <RestTimer key={restTimerKey} autoStart={restTimerKey > 0} defaultSeconds={90} />
+          <RestTimer 
+            autoStart={true}
+            defaultSeconds={restSeconds}
+            onComplete={() => setShowRestTimer(false)}
+          />
         </div>
       )}
+      
+      {/* Rest time preference */}
+      <div className="flex items-center gap-2 mb-4">
+        <p className="text-[10px] text-foreground/40">Rest:</p>
+        {[60, 90, 120, 180].map(s => (
+          <button
+            key={s}
+            onClick={() => setRestSeconds(s)}
+            className={`text-[10px] px-2 py-0.5 rounded transition-colors ${
+              restSeconds === s 
+                ? 'bg-foreground/10 text-foreground/60' 
+                : 'text-foreground/30 hover:text-foreground/50'
+            }`}
+          >
+            {s >= 60 ? `${s/60}m` : `${s}s`}
+          </button>
+        ))}
+      </div>
       
       {sets.length === 0 && (
         <p className="text-xs text-foreground/30 py-4">No sets logged yet</p>
