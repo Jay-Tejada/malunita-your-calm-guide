@@ -148,6 +148,9 @@ const Index = () => {
   const [showEveningSummary, setShowEveningSummary] = useState(false);
   const [showMorningSummary, setShowMorningSummary] = useState(false);
   
+  // Time-based button visibility
+  const hour = new Date().getHours();
+  
   // Quick capture state (mobile swipe-up on orb, desktop Q//)
   const [showQuickCapture, setShowQuickCapture] = useState(false);
   
@@ -493,27 +496,28 @@ const Index = () => {
 
           {/* BOTTOM ZONE - Orb grounded in bottom third */}
           <div className="mt-auto pb-24 flex flex-col items-center justify-center relative gap-6">
-            {/* Morning kickoff button - shows before noon */}
-            {new Date().getHours() < 12 && (
-              <button
-                onClick={() => setShowMorningSummary(true)}
-                className="flex items-center gap-2 px-4 py-2 rounded-full border border-foreground/10 text-sm text-foreground/50 hover:bg-foreground/[0.03] transition-colors"
-              >
-                <Sun className="w-4 h-4" />
-                Start my day
-              </button>
-            )}
-            
-            {/* Evening wind-down button - shows from 5pm onwards */}
-            {new Date().getHours() >= 17 && (
-              <button
-                onClick={() => setShowEveningSummary(true)}
-                className="flex items-center gap-2 px-4 py-2 rounded-full border border-foreground/10 text-sm text-foreground/50 hover:bg-foreground/[0.03] transition-colors"
-              >
-                <Moon className="w-4 h-4" />
-                Wind down for tonight
-              </button>
-            )}
+            {/* Time-based ritual buttons */}
+            <div className="flex justify-center">
+              {hour >= 5 && hour < 12 && (
+                <button
+                  onClick={() => setShowMorningSummary(true)}
+                  className="flex items-center gap-2 px-4 py-2 rounded-full border border-foreground/10 text-xs text-foreground/40 hover:text-foreground/60 hover:bg-foreground/[0.02] transition-colors"
+                >
+                  <Sun className="w-3.5 h-3.5" />
+                  Start my day
+                </button>
+              )}
+              
+              {hour >= 17 && hour < 24 && (
+                <button
+                  onClick={() => setShowEveningSummary(true)}
+                  className="flex items-center gap-2 px-4 py-2 rounded-full border border-foreground/10 text-xs text-foreground/40 hover:text-foreground/60 hover:bg-foreground/[0.02] transition-colors"
+                >
+                  <Moon className="w-3.5 h-3.5" />
+                  Wind down
+                </button>
+              )}
+            </div>
             
             <div className={`transition-transform duration-200 ${showQuickCapture ? 'translate-y-5' : ''}`}>
               <SimpleOrb
@@ -576,27 +580,28 @@ const Index = () => {
 
                 {/* BOTTOM - Orb grounded in bottom third */}
                 <div className="mt-auto pb-16 flex flex-col items-center justify-center gap-2">
-                  {/* Morning kickoff button - shows before noon */}
-                  {new Date().getHours() < 12 && (
-                    <button
-                      onClick={() => setShowMorningSummary(true)}
-                      className="flex items-center gap-2 px-4 py-2 mb-4 rounded-full border border-foreground/10 text-sm text-foreground/50 hover:bg-foreground/[0.03] transition-colors"
-                    >
-                      <Sun className="w-4 h-4" />
-                      Start my day
-                    </button>
-                  )}
-                  
-                  {/* Evening wind-down button - shows from 5pm onwards */}
-                  {new Date().getHours() >= 17 && (
-                    <button
-                      onClick={() => setShowEveningSummary(true)}
-                      className="flex items-center gap-2 px-4 py-2 mb-4 rounded-full border border-foreground/10 text-sm text-foreground/50 hover:bg-foreground/[0.03] transition-colors"
-                    >
-                      <Moon className="w-4 h-4" />
-                      Wind down for tonight
-                    </button>
-                  )}
+                  {/* Time-based ritual buttons */}
+                  <div className="flex justify-center mb-4">
+                    {hour >= 5 && hour < 12 && (
+                      <button
+                        onClick={() => setShowMorningSummary(true)}
+                        className="flex items-center gap-2 px-4 py-2 rounded-full border border-foreground/10 text-xs text-foreground/40 hover:text-foreground/60 hover:bg-foreground/[0.02] transition-colors"
+                      >
+                        <Sun className="w-3.5 h-3.5" />
+                        Start my day
+                      </button>
+                    )}
+                    
+                    {hour >= 17 && hour < 24 && (
+                      <button
+                        onClick={() => setShowEveningSummary(true)}
+                        className="flex items-center gap-2 px-4 py-2 rounded-full border border-foreground/10 text-xs text-foreground/40 hover:text-foreground/60 hover:bg-foreground/[0.02] transition-colors"
+                      >
+                        <Moon className="w-3.5 h-3.5" />
+                        Wind down
+                      </button>
+                    )}
+                  </div>
                   
                   <SimpleOrb
                     onTap={() => setShowDesktopCapture(true)}
