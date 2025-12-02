@@ -514,7 +514,7 @@ const WorkoutLog = () => {
       {/* Rest time preference */}
       <div className="flex items-center gap-2">
         <p className="text-[10px] text-foreground/40">Rest:</p>
-        {[60, 90, 120, 180].map(s => (
+        {[60, 90, 120, 180, 600].map(s => (
           <button
             key={s}
             onClick={() => setRestSeconds(s)}
