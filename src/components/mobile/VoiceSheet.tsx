@@ -29,6 +29,8 @@ export function VoiceSheet({
   const [localTranscript, setLocalTranscript] = useState('');
   const [isSupported, setIsSupported] = useState(true);
   const [fallbackText, setFallbackText] = useState('');
+  // Default to toggle mode on mobile - more reliable than hold
+  const [recordMode] = useState<'hold' | 'toggle'>('toggle');
 
   // Check browser support
   useEffect(() => {
@@ -164,11 +166,15 @@ export function VoiceSheet({
 
         {/* Mic button - styled like the orb with calm amber tones */}
         <button
-          onClick={handleVoiceButton}
+          onClick={recordMode === 'toggle' ? handleVoiceButton : undefined}
+          onMouseDown={recordMode === 'hold' ? onStartRecording : undefined}
+          onMouseUp={recordMode === 'hold' ? onStopRecording : undefined}
+          onTouchStart={recordMode === 'hold' ? onStartRecording : undefined}
+          onTouchEnd={recordMode === 'hold' ? onStopRecording : undefined}
           disabled={isProcessing}
           className={cn(
             "w-24 h-24 rounded-full flex items-center justify-center transition-all duration-300",
-            "focus:outline-none",
+            "focus:outline-none active:scale-95",
             isRecording 
               ? 'bg-gradient-to-br from-amber-200 to-amber-300 scale-110 shadow-lg shadow-amber-200/30' 
               : 'bg-gradient-to-br from-amber-100/80 to-amber-200/80 hover:from-amber-100 hover:to-amber-200',
@@ -212,7 +218,7 @@ export function VoiceSheet({
         {/* Hint */}
         {!isRecording && !localTranscript && !isProcessing && (
           <p className="text-xs text-foreground/30 mt-6 font-mono">
-            Tap to record
+            {recordMode === 'toggle' ? 'Tap to start, tap again to stop' : 'Hold to record'}
           </p>
         )}
       </div>
