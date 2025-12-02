@@ -21,9 +21,6 @@ import { MapboxLocationPicker } from "@/components/MapboxLocationPicker";
 import { MapFullScreen } from "@/components/MapFullScreen";
 import { useMapboxToken } from "@/hooks/useMapboxToken";
 import { MapPin } from "lucide-react";
-import { TodaysBriefing } from "@/components/home/TodaysBriefing";
-import { DailyIntelligence } from "@/components/home/DailyIntelligence";
-import { useDailyMindstream } from "@/hooks/useDailyMindstream";
 import { ShortcutsHelp } from "@/components/ShortcutsHelp";
 type DrawerMode = "root" | "calendar";
 
@@ -59,7 +56,6 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate, onSearchOpen }: LeftDr
   const { toast } = useToast();
   const { recordEventTitle } = useRecentEventTitles();
   const { token: mapboxToken } = useMapboxToken();
-  const mindstreamData = useDailyMindstream();
   const [completingTaskIds, setCompletingTaskIds] = useState<Set<string>>(new Set());
   const [isNewEventDialogOpen, setIsNewEventDialogOpen] = useState(false);
   const [newEventTitle, setNewEventTitle] = useState("");
@@ -431,18 +427,6 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate, onSearchOpen }: LeftDr
                     transition={{ duration: 0.14 }}
                     className="h-full flex flex-col p-6 md:p-8 pt-16"
                   >
-                    {/* Today's Briefing - ONLY in drawer */}
-                    <div className="mb-6">
-                      <TodaysBriefing
-                        oneThingFocus={mindstreamData.oneThingFocus}
-                        quickWins={mindstreamData.quickWins}
-                        followUps={mindstreamData.followUps}
-                        yesterdayDone={mindstreamData.yesterdayDone}
-                        carryOverSuggestions={mindstreamData.carryOverSuggestions}
-                        isLoading={mindstreamData.isLoading}
-                      />
-                    </div>
-
                     {/* Search Button */}
                     <button
                       onClick={() => {
