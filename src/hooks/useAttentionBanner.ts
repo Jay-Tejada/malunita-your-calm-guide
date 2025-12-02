@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useTasks, Task } from './useTasks';
 
 export interface AttentionItem extends Task {
@@ -65,29 +65,46 @@ export const useAttentionBanner = () => {
     return [...overdue, ...upcoming, ...inbox, ...today];
   }, [tasks]);
 
-  // Auto-rotate every 6 seconds
-  useEffect(() => {
-    if (priorityItems.length <= 1) return;
-    
-    const timer = setInterval(() => {
-      setCurrentIndex(prev => (prev + 1) % priorityItems.length);
-    }, 6000);
-    
-    return () => clearInterval(timer);
-  }, [priorityItems.length]);
+  // Store the length in a ref to avoid stale closure issues
+  const itemsLengthRef = useRef(priorityItems.length);
+  itemsLengthRef.current = priorityItems.length;
 
-  // Reset index when items change
+  // Reset index if out of bounds
   useEffect(() => {
-    if (currentIndex >= priorityItems.length) {
+    if (priorityItems.length > 0 && currentIndex >= priorityItems.length) {
       setCurrentIndex(0);
     }
   }, [priorityItems.length, currentIndex]);
+
+  // Rotation interval - use ref for stable callback
+  useEffect(() => {
+    if (priorityItems.length <= 1) return;
+    
+    console.log('Banner rotation started with', priorityItems.length, 'items');
+    
+    const interval = setInterval(() => {
+      setCurrentIndex(prev => {
+        const nextIndex = (prev + 1) % itemsLengthRef.current;
+        console.log('Banner rotating to index:', nextIndex, 'of', itemsLengthRef.current);
+        return nextIndex;
+      });
+    }, 6000);
+    
+    return () => {
+      console.log('Banner rotation cleanup');
+      clearInterval(interval);
+    };
+  }, [priorityItems.length]);
 
   return {
     currentItem: priorityItems[currentIndex] || null,
     totalItems: priorityItems.length,
     currentIndex,
-    goToNext: () => setCurrentIndex(prev => (prev + 1) % priorityItems.length),
-    goToPrev: () => setCurrentIndex(prev => (prev - 1 + priorityItems.length) % priorityItems.length),
+    goToNext: () => setCurrentIndex(prev => 
+      priorityItems.length > 0 ? (prev + 1) % priorityItems.length : 0
+    ),
+    goToPrev: () => setCurrentIndex(prev => 
+      priorityItems.length > 0 ? (prev - 1 + priorityItems.length) % priorityItems.length : 0
+    ),
   };
 };
