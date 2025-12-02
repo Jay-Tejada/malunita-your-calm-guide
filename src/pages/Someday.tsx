@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft } from 'lucide-react';
-import { useTasks } from '@/hooks/useTasks';
+import { useTasks, Task } from '@/hooks/useTasks';
 import { MobileTaskCapture } from '@/components/shared/MobileTaskCapture';
 import { DesktopTaskCapture } from '@/components/shared/DesktopTaskCapture';
 import { supabase } from '@/integrations/supabase/client';
+import VirtualizedTaskList from '@/components/VirtualizedTaskList';
 
 const Someday = () => {
   const navigate = useNavigate();
@@ -59,17 +60,19 @@ const Someday = () => {
         {somedayTasks.length === 0 ? (
           <p className="text-muted-foreground/30 text-center py-12">Nothing here yet</p>
         ) : (
-          <div className="space-y-2">
-            {somedayTasks.map(task => (
-              <div key={task.id} className="flex items-start gap-3 py-3">
+          <VirtualizedTaskList
+            tasks={somedayTasks}
+            estimatedItemHeight={52}
+            renderTask={(task: Task) => (
+              <div key={task.id} className="flex items-start gap-3 py-3 border-b border-foreground/5">
                 <button
                   onClick={() => updateTask({ id: task.id, updates: { completed: true } })}
                   className="w-5 h-5 rounded-full border border-foreground/20 hover:border-foreground/40 flex-shrink-0 mt-0.5"
                 />
                 <span className="font-mono text-sm text-foreground/80">{task.title}</span>
               </div>
-            ))}
-          </div>
+            )}
+          />
         )}
 
         {/* Show completed toggle */}
