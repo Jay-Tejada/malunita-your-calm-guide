@@ -126,7 +126,54 @@ export const useTasks = () => {
       if (error) throw error;
       return data;
     },
-    onSuccess: async (data) => {
+    // Optimistic update for instant feedback
+    onMutate: async (newTasks) => {
+      await queryClient.cancelQueries({ queryKey: ['tasks'] });
+      
+      const previousTasks = queryClient.getQueryData<Task[]>(['tasks']);
+      
+      // Create optimistic tasks with temp IDs
+      const { data: { user } } = await supabase.auth.getUser();
+      const optimisticTasks = newTasks.map((task, index) => ({
+        id: `temp-${Date.now()}-${index}`,
+        user_id: user?.id || '',
+        title: task.title,
+        completed: false,
+        has_reminder: false,
+        has_person_name: false,
+        is_time_based: false,
+        input_method: 'text' as const,
+        is_focus: false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        ...task,
+      })) as Task[];
+      
+      queryClient.setQueryData<Task[]>(['tasks'], (old) => 
+        [...optimisticTasks, ...(old || [])]
+      );
+      
+      return { previousTasks, tempIds: optimisticTasks.map(t => t.id) };
+    },
+    onError: (err, variables, context) => {
+      if (context?.previousTasks) {
+        queryClient.setQueryData(['tasks'], context.previousTasks);
+      }
+      toast({
+        title: "Error",
+        description: err.message,
+        variant: "destructive",
+      });
+    },
+    onSuccess: async (data, variables, context) => {
+      // Replace temp tasks with real ones
+      if (context?.tempIds && data) {
+        queryClient.setQueryData<Task[]>(['tasks'], (old) => {
+          const withoutTemp = old?.filter(t => !context.tempIds.includes(t.id)) || [];
+          return [...data, ...withoutTemp];
+        });
+      }
+      
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
       queryClient.invalidateQueries({ queryKey: ['profile'] });
       
@@ -142,13 +189,6 @@ export const useTasks = () => {
       toast({
         title: "Tasks saved",
         description: `${data.length} task${data.length > 1 ? 's' : ''} created successfully.`,
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
       });
     },
   });
@@ -462,6 +502,30 @@ export const useTasks = () => {
 
       if (error) throw error;
     },
+    // Optimistic update for instant feedback
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: ['tasks'] });
+      
+      const previousTasks = queryClient.getQueryData<Task[]>(['tasks']);
+      
+      // Optimistically remove the task
+      queryClient.setQueryData<Task[]>(['tasks'], (old) =>
+        old?.filter((task) => task.id !== id)
+      );
+      
+      return { previousTasks };
+    },
+    onError: (err, id, context) => {
+      // Rollback on error
+      if (context?.previousTasks) {
+        queryClient.setQueryData(['tasks'], context.previousTasks);
+      }
+      toast({
+        title: "Error",
+        description: err.message,
+        variant: "destructive",
+      });
+    },
     onSuccess: async () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
       
@@ -473,13 +537,6 @@ export const useTasks = () => {
       
       toast({
         title: "Task deleted",
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
       });
     },
   });
