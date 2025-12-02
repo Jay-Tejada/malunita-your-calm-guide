@@ -8,6 +8,8 @@ import {
 } from '@/utils/exerciseNormalizer';
 import LastWorkoutSuggestion from './LastWorkoutSuggestion';
 import RestTimer from './RestTimer';
+import SwipeableSetItem from './SwipeableSetItem';
+import { useToast } from '@/hooks/use-toast';
 
 interface ExerciseSet {
   id: string;
@@ -33,6 +35,11 @@ interface PendingConfirmation {
   normalization: NormalizationResult;
 }
 
+interface DeletedSet {
+  set: ExerciseSet;
+  timeoutId: NodeJS.Timeout;
+}
+
 const WorkoutLog = () => {
   const [inputValue, setInputValue] = useState('');
   const [sets, setSets] = useState<ExerciseSet[]>([]);
@@ -45,7 +52,10 @@ const WorkoutLog = () => {
   const [showRestTimer, setShowRestTimer] = useState(false);
   const [restSeconds, setRestSeconds] = useState(90);
   const [currentExercise, setCurrentExercise] = useState<string | null>(null);
+  const [editingSet, setEditingSet] = useState<ExerciseSet | null>(null);
+  const [deletedSet, setDeletedSet] = useState<DeletedSet | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const { toast } = useToast();
 
   // Load user's exercise history
   useEffect(() => {
@@ -180,6 +190,12 @@ const WorkoutLog = () => {
     e?.preventDefault();
     setError(null);
     
+    // If editing, update instead of create
+    if (editingSet) {
+      handleUpdateSet();
+      return;
+    }
+    
     const parsed = parseWorkoutInput(inputValue);
     
     if (!parsed) {
@@ -291,10 +307,130 @@ const WorkoutLog = () => {
     }
   };
 
+  const handleDeleteSet = (set: ExerciseSet) => {
+    // Clear any existing undo timeout
+    if (deletedSet) {
+      clearTimeout(deletedSet.timeoutId);
+      // Actually delete the previous one from DB
+      performDelete(deletedSet.set.id);
+    }
+
+    // Optimistically remove from UI
+    setSets(prev => prev.filter(s => s.id !== set.id));
+    
+    // Haptic feedback
+    if (navigator.vibrate) {
+      navigator.vibrate([50, 50, 50]);
+    }
+
+    // Set up undo with timeout
+    const timeoutId = setTimeout(() => {
+      performDelete(set.id);
+      setDeletedSet(null);
+    }, 5000);
+
+    setDeletedSet({ set, timeoutId });
+
+    // Show toast with undo
+    toast({
+      description: (
+        <div className="flex items-center justify-between w-full">
+          <span>Set deleted</span>
+          <button 
+            onClick={() => handleUndoDelete(set, timeoutId)}
+            className="ml-4 px-2 py-1 text-xs bg-foreground/10 hover:bg-foreground/20 rounded transition-colors"
+          >
+            Undo
+          </button>
+        </div>
+      ),
+      duration: 5000,
+    });
+  };
+
+  const performDelete = async (setId: string) => {
+    await supabase.from('exercise_sets').delete().eq('id', setId);
+  };
+
+  const handleUndoDelete = (set: ExerciseSet, timeoutId: NodeJS.Timeout) => {
+    clearTimeout(timeoutId);
+    setSets(prev => [...prev, set].sort((a, b) => 
+      new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+    ));
+    setDeletedSet(null);
+    
+    toast({
+      description: "Set restored",
+      duration: 2000,
+    });
+  };
+
+  const handleEditSet = (set: ExerciseSet) => {
+    setEditingSet(set);
+    // Pre-fill input with set data
+    if (set.is_bodyweight) {
+      setInputValue(`${set.reps} ${set.exercise_name}`);
+    } else {
+      setInputValue(`${set.exercise_name} ${set.weight}x${set.reps}`);
+    }
+    inputRef.current?.focus();
+  };
+
+  const handleUpdateSet = async () => {
+    if (!editingSet) return;
+    
+    const parsed = parseWorkoutInput(inputValue);
+    if (!parsed) {
+      setError('Invalid format');
+      return;
+    }
+
+    const normalization = normalizeExerciseName(parsed.exercise);
+
+    const { error: updateError } = await supabase
+      .from('exercise_sets')
+      .update({
+        exercise_name: normalization.canonical,
+        weight: parsed.weight,
+        reps: parsed.reps,
+      })
+      .eq('id', editingSet.id);
+
+    if (!updateError) {
+      setSets(prev => prev.map(s => 
+        s.id === editingSet.id 
+          ? { 
+              ...s, 
+              exercise_name: normalization.canonical,
+              weight: parsed.weight, 
+              reps: parsed.reps,
+              is_bodyweight: parsed.isBodyweight,
+            } 
+          : s
+      ));
+      
+      toast({
+        description: "Set updated",
+        duration: 2000,
+      });
+    }
+
+    setEditingSet(null);
+    setInputValue('');
+    inputRef.current?.focus();
+  };
+
+  const handleCancelEdit = () => {
+    setEditingSet(null);
+    setInputValue('');
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       e.preventDefault();
       handleSubmit();
+    } else if (e.key === 'Escape' && editingSet) {
+      handleCancelEdit();
     }
   };
 
@@ -334,21 +470,13 @@ const WorkoutLog = () => {
               <p className="font-mono text-sm text-foreground/70 mb-1">{exercise}</p>
               <div className="pl-4 space-y-0.5">
                 {exerciseSets.map((set) => (
-                  <div 
+                  <SwipeableSetItem
                     key={set.id}
-                    className={`text-sm font-mono text-foreground/50 transition-colors ${
-                      recentlyAdded === set.id ? 'text-green-500/70 bg-green-500/5 -mx-2 px-2 py-0.5 rounded' : ''
-                    }`}
-                  >
-                    {set.duration ? (
-                      <span>{set.duration}s</span>
-                    ) : set.is_bodyweight ? (
-                      <span>× {set.reps}</span>
-                    ) : (
-                      <span>{set.weight} × {set.reps}</span>
-                    )}
-                    {set.isPR && <span className="ml-2 text-amber-500 text-xs">PR</span>}
-                  </div>
+                    set={set}
+                    isRecentlyAdded={recentlyAdded === set.id}
+                    onDelete={handleDeleteSet}
+                    onEdit={handleEditSet}
+                  />
                 ))}
               </div>
             </div>
@@ -398,19 +526,47 @@ const WorkoutLog = () => {
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="bench 135x10"
-            className="flex-1 bg-transparent border-b border-foreground/10 py-2 font-mono text-sm text-foreground/70 placeholder:text-foreground/30 focus:outline-none focus:border-foreground/20"
+            placeholder={editingSet ? "Edit set..." : "bench 135x10"}
+            className={`flex-1 bg-transparent border-b py-2 font-mono text-sm text-foreground/70 placeholder:text-foreground/30 focus:outline-none transition-colors ${
+              editingSet 
+                ? 'border-amber-500/30 focus:border-amber-500/50' 
+                : 'border-foreground/10 focus:border-foreground/20'
+            }`}
           />
-          <button
-            onClick={() => handleSubmit()}
-            className="p-2 bg-foreground/5 hover:bg-foreground/10 rounded-lg text-foreground/50"
-          >
-            <Plus className="w-4 h-4" />
-          </button>
+          {editingSet ? (
+            <>
+              <button
+                onClick={handleUpdateSet}
+                className="p-2 bg-amber-500/10 hover:bg-amber-500/20 rounded-lg text-amber-500/70"
+              >
+                <Check className="w-4 h-4" />
+              </button>
+              <button
+                onClick={handleCancelEdit}
+                className="p-2 hover:bg-foreground/5 rounded-lg text-foreground/40"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </>
+          ) : (
+            <button
+              onClick={() => handleSubmit()}
+              className="p-2 bg-foreground/5 hover:bg-foreground/10 rounded-lg text-foreground/50"
+            >
+              <Plus className="w-4 h-4" />
+            </button>
+          )}
         </div>
         
+        {/* Editing indicator */}
+        {editingSet && (
+          <p className="text-xs text-amber-500/60 mt-1">
+            Editing set · Press Esc to cancel
+          </p>
+        )}
+        
         {/* Autocomplete suggestions */}
-        {suggestions.length > 0 && !pendingConfirmation && (
+        {suggestions.length > 0 && !pendingConfirmation && !editingSet && (
           <div className="flex flex-wrap gap-2 mt-2">
             {suggestions.map(exercise => (
               <button
@@ -425,7 +581,7 @@ const WorkoutLog = () => {
         )}
         
         {/* Last workout suggestion */}
-        {currentExercise && !pendingConfirmation && (
+        {currentExercise && !pendingConfirmation && !editingSet && (
           <LastWorkoutSuggestion exercise={currentExercise} />
         )}
         
@@ -435,9 +591,9 @@ const WorkoutLog = () => {
         )}
         
         {/* Hint */}
-        {!error && !pendingConfirmation && suggestions.length === 0 && !currentExercise && (
+        {!error && !pendingConfirmation && !editingSet && suggestions.length === 0 && !currentExercise && (
           <p className="text-[10px] text-foreground/30 mt-1">
-            Format: exercise weight × reps
+            Format: exercise weight × reps · Swipe left to delete
           </p>
         )}
       </div>
