@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 
 interface SimpleOrbProps {
   onTap?: () => void;
@@ -18,6 +18,7 @@ export const SimpleOrb = ({
   onSwipeUp
 }: SimpleOrbProps) => {
   const [swipeStart, setSwipeStart] = useState<number | null>(null);
+  const touchStartTime = useRef<number>(0);
 
   const getOrbClass = () => {
     if (isRecording) return 'meditation-orb-recording';
@@ -27,22 +28,34 @@ export const SimpleOrb = ({
 
   const handleTouchStart = (e: React.TouchEvent) => {
     setSwipeStart(e.touches[0].clientY);
+    touchStartTime.current = Date.now();
   };
 
   const handleTouchEnd = (e: React.TouchEvent) => {
     if (swipeStart === null) return;
+    
     const swipeEnd = e.changedTouches[0].clientY;
     const diff = swipeStart - swipeEnd;
+    const touchDuration = Date.now() - touchStartTime.current;
     
+    // Swipe up detection: moved up more than 50px
     if (diff > 50 && onSwipeUp) {
-      // Swiped up
       onSwipeUp();
       e.preventDefault();
-    } else if (Math.abs(diff) < 10 && onTap) {
-      // Just a tap
+    } 
+    // Tap detection: less than 30px movement AND less than 300ms duration
+    else if (Math.abs(diff) < 30 && touchDuration < 300 && onTap) {
       onTap();
     }
+    
     setSwipeStart(null);
+  };
+
+  const handleClick = () => {
+    // Handle click for non-touch (desktop) devices
+    if (onTap) {
+      onTap();
+    }
   };
 
   return (
@@ -50,13 +63,10 @@ export const SimpleOrb = ({
       className={getOrbClass()}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
-      onClick={(e) => {
-        // Fallback for non-touch devices
-        if (!('ontouchstart' in window) && onTap) {
-          onTap();
-        }
-      }}
-    >
-    </div>
+      onClick={handleClick}
+      role="button"
+      tabIndex={0}
+      aria-label={isRecording ? "Recording..." : isProcessing ? "Processing..." : "Tap to capture"}
+    />
   );
 };
