@@ -47,6 +47,11 @@ const spaceCategories = [
   { id: "journal", label: "Journal", route: "/journal" },
 ];
 
+const insightCategories = [
+  { id: "weekly-review", label: "Weekly Review", route: "/weekly-review" },
+  { id: "weekly-insights", label: "Weekly Insights", route: "/weekly-insights" },
+];
+
 const calendarCategory = { id: "calendar", label: "Calendar", filter: (task: any) => task.reminder_time !== null };
 
 export const LeftDrawer = ({ isOpen, onClose, onNavigate, onSearchOpen }: LeftDrawerProps) => {
@@ -484,6 +489,24 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate, onSearchOpen }: LeftDr
                       </h3>
                       <div className="space-y-0.5">
                         {spaceCategories.map((category) => (
+                          <button
+                            key={category.id}
+                            onClick={() => handleCategoryClick(category.id, category.route)}
+                            className="w-full text-left py-2 px-2 font-mono text-sm text-foreground/70 hover:bg-foreground/[0.03] rounded-md transition-colors"
+                          >
+                            {category.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* INSIGHTS Section */}
+                    <div className="mb-4">
+                      <h3 className="font-mono font-normal text-[10px] text-muted-foreground/40 uppercase tracking-widest mb-2">
+                        Insights
+                      </h3>
+                      <div className="space-y-0.5">
+                        {insightCategories.map((category) => (
                           <button
                             key={category.id}
                             onClick={() => handleCategoryClick(category.id, category.route)}
