@@ -88,12 +88,15 @@ export const QuickCapture = ({ isOpen, onClose, variant, onCapture }: QuickCaptu
         console.log('QuickCapture: Invalidating tasks query...');
         queryClient.invalidateQueries({ queryKey: ['tasks'] });
         
+        // Clear input and close FIRST before showing toast
         setInput('');
         
         if (!keepOpen) {
+          console.log('QuickCapture: Closing modal now');
           onClose();
         }
         
+        // Show confirmation toast after close
         toast({ 
           description: 'Task captured',
           duration: 1500 
