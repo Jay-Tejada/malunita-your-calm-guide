@@ -15,7 +15,7 @@ import { useRitualTrigger } from "@/hooks/useRitualTrigger";
 import { EveningRitual } from "@/features/rituals/EveningRitual";
 import { questTracker } from "@/lib/questTracker";
 import { Layout } from "@/components/Layout";
-import { LoadingScreen } from "@/components/LoadingScreen";
+import PageLoader from "@/components/PageLoader";
 import { useCutsceneManager } from "./features/cutscenes/useCutsceneManager";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { initPerformanceMonitoring } from "@/lib/performance";
@@ -259,7 +259,7 @@ const App = () => {
           </AnimatePresence>
 
           <BrowserRouter>
-            <Suspense fallback={<LoadingScreen />}>
+            <Suspense fallback={<PageLoader />}>
               <Routes>
                 <Route element={<Layout />}>
                   <Route path="/" element={<Index />} />
