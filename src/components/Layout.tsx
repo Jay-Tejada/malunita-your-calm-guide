@@ -10,6 +10,8 @@ import { useProcessInputMutation } from "@/hooks/useProcessInputMutation";
 import { useTasks } from "@/hooks/useTasks";
 import { toast } from "@/hooks/use-toast";
 import { useCompanionVisibility } from "@/state/useCompanionVisibility";
+import ActiveSessionBar from "@/components/ActiveSessionBar";
+import { useFlowSessions } from "@/hooks/useFlowSessions";
  
 export const Layout = () => {
   const [leftDrawerOpen, setLeftDrawerOpen] = useState(false);
@@ -21,6 +23,23 @@ export const Layout = () => {
   const processInputMutation = useProcessInputMutation();
   const { createTasks } = useTasks();
   const { isVisible: isCompanionVisible, show: showCompanion, hide: hideCompanion } = useCompanionVisibility();
+  const { activeSession, completeSession, abandonSession } = useFlowSessions();
+
+  // Handle active session bar interactions
+  const handleSessionTap = () => {
+    navigate('/today');
+  };
+
+  const handleEndSession = async () => {
+    if (activeSession) {
+      // Complete the session (reflection can be added later)
+      await completeSession(activeSession.id, undefined, 0);
+      toast({
+        title: 'Session ended',
+        description: 'You can review it in your journal.',
+      });
+    }
+  };
 
   // Handle quick capture submission
   const handleQuickCapture = async (text: string) => {
@@ -99,7 +118,21 @@ export const Layout = () => {
   }, [showSearch]);
 
   return (
-    <>
+    <div className={activeSession ? 'pt-10' : ''}>
+      {/* Active Session Bar - shows on all pages */}
+      {activeSession && activeSession.started_at && (
+        <ActiveSessionBar
+          session={{
+            id: activeSession.id,
+            title: activeSession.title,
+            started_at: activeSession.started_at,
+            target_duration_minutes: activeSession.target_duration_minutes,
+          }}
+          onTap={handleSessionTap}
+          onEnd={handleEndSession}
+        />
+      )}
+      
       {/* Top-Left Mini Orb - Notebook Drawer - Only show on home page */}
       {location.pathname === '/' && (
         <MiniOrb
@@ -156,6 +189,6 @@ export const Layout = () => {
 
       {/* Page Content */}
       <Outlet />
-    </>
+    </div>
   );
 };
