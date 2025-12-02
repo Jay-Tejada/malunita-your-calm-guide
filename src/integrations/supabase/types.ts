@@ -1239,6 +1239,45 @@ export type Database = {
         }
         Relationships: []
       }
+      projects: {
+        Row: {
+          archived: boolean | null
+          color: string | null
+          created_at: string | null
+          icon: string | null
+          id: string
+          is_collapsed: boolean | null
+          name: string
+          sort_order: number | null
+          space: string
+          user_id: string
+        }
+        Insert: {
+          archived?: boolean | null
+          color?: string | null
+          created_at?: string | null
+          icon?: string | null
+          id?: string
+          is_collapsed?: boolean | null
+          name: string
+          sort_order?: number | null
+          space: string
+          user_id: string
+        }
+        Update: {
+          archived?: boolean | null
+          color?: string | null
+          created_at?: string | null
+          icon?: string | null
+          id?: string
+          is_collapsed?: boolean | null
+          name?: string
+          sort_order?: number | null
+          space?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       push_subscriptions: {
         Row: {
           created_at: string
@@ -1507,6 +1546,7 @@ export type Database = {
           parent_task_id: string | null
           plan_id: string | null
           primary_focus_alignment: string | null
+          project_id: string | null
           recurrence_day: number | null
           recurrence_end_date: string | null
           recurrence_pattern: string | null
@@ -1548,6 +1588,7 @@ export type Database = {
           parent_task_id?: string | null
           plan_id?: string | null
           primary_focus_alignment?: string | null
+          project_id?: string | null
           recurrence_day?: number | null
           recurrence_end_date?: string | null
           recurrence_pattern?: string | null
@@ -1589,6 +1630,7 @@ export type Database = {
           parent_task_id?: string | null
           plan_id?: string | null
           primary_focus_alignment?: string | null
+          project_id?: string | null
           recurrence_day?: number | null
           recurrence_end_date?: string | null
           recurrence_pattern?: string | null
@@ -1626,6 +1668,13 @@ export type Database = {
             columns: ["plan_id"]
             isOneToOne: false
             referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
             referencedColumns: ["id"]
           },
         ]

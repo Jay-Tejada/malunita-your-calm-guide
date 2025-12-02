@@ -46,6 +46,7 @@ export interface Task {
   location_address?: string | null;
   parent_task_id?: string | null;
   plan_id?: string | null;
+  project_id?: string | null;
   // Task Intelligence Fields
   priority?: 'MUST' | 'SHOULD' | 'COULD';
   effort?: 'tiny' | 'small' | 'medium' | 'large';
