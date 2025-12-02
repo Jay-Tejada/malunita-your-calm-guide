@@ -20,8 +20,12 @@ export const QuickCapture = ({ isOpen, onClose, variant, onCapture }: QuickCaptu
   const queryClient = useQueryClient();
   
   useEffect(() => {
-    if (isOpen && inputRef.current) {
-      inputRef.current.focus();
+    if (isOpen) {
+      // Small delay to ensure modal is rendered before focusing
+      const timer = setTimeout(() => {
+        inputRef.current?.focus();
+      }, 50);
+      return () => clearTimeout(timer);
     }
   }, [isOpen]);
   
