@@ -86,7 +86,7 @@ export interface TaskAnalysis {
 
 export interface FlowSession {
   id: string;
-  type: 'tiny_task_fiesta' | 'focus_block' | 'admin_hour' | 'avoidance_buster' | 'communication_batch';
+  type: 'tiny_task_fiesta' | 'focus_block' | 'admin_hour' | 'avoidance_buster' | 'communication_batch' | 'project_pulse';
   label: string;
   description: string;
   tasks: any[];
@@ -223,7 +223,44 @@ export const generateFlowSessions = (tasks: any[]): FlowSession[] => {
     });
   }
   
-  return sessions;
+  // 6. Project Pulse (tasks sharing same project/category)
+  const projectGroups: Record<string, any[]> = {};
+  analyzed.forEach(task => {
+    const project = task.custom_category_id || task.category || null;
+    if (!project) return;
+    if (!projectGroups[project]) projectGroups[project] = [];
+    projectGroups[project].push(task);
+  });
+
+  Object.entries(projectGroups).forEach(([projectId, projectTasks]) => {
+    if (projectTasks.length >= 3) {
+      const projectName = projectTasks[0].category || 'Project';
+      
+      sessions.push({
+        id: `project-${projectId}`,
+        type: 'project_pulse',
+        label: `${projectName} Focus`,
+        description: `${projectTasks.length} related tasks`,
+        tasks: projectTasks,
+        estimatedMinutes: projectTasks.reduce((sum, t) => sum + t.analysis.estimatedMinutes, 0),
+        icon: 'folder',
+      });
+    }
+  });
+
+  // Sort sessions by priority
+  const priority: Record<string, number> = {
+    'avoidance_buster': 1,
+    'tiny_task_fiesta': 2,
+    'communication_batch': 3,
+    'admin_hour': 4,
+    'project_pulse': 5,
+    'focus_block': 6,
+  };
+
+  sessions.sort((a, b) => (priority[a.type] || 99) - (priority[b.type] || 99));
+
+  return sessions.slice(0, 3);
 };
 
 // Get cognitive load color
