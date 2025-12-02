@@ -7,10 +7,11 @@ import { useQueryClient } from "@tanstack/react-query";
 interface NewEntryDialogProps {
   isOpen: boolean;
   onClose: () => void;
+  prefillContent?: string;
 }
 
-export const NewEntryDialog = ({ isOpen, onClose }: NewEntryDialogProps) => {
-  const [content, setContent] = useState("");
+export const NewEntryDialog = ({ isOpen, onClose, prefillContent = '' }: NewEntryDialogProps) => {
+  const [content, setContent] = useState(prefillContent);
   const [entryId, setEntryId] = useState<string | null>(null);
   const [showSaved, setShowSaved] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -18,6 +19,13 @@ export const NewEntryDialog = ({ isOpen, onClose }: NewEntryDialogProps) => {
   const queryClient = useQueryClient();
   const timeoutRef = useRef<NodeJS.Timeout>();
   const saveTimeoutRef = useRef<NodeJS.Timeout>();
+
+  // Set initial content from prefill
+  useEffect(() => {
+    if (isOpen && prefillContent) {
+      setContent(prefillContent);
+    }
+  }, [isOpen, prefillContent]);
 
   // Fetch activity-aware prompt
   useEffect(() => {
