@@ -1,3 +1,4 @@
+import { useMemo, useCallback } from "react";
 import { useTasks } from "@/hooks/useTasks";
 import { TaskRow } from "@/components/shared/TaskRow";
 
@@ -8,16 +9,22 @@ interface GymTaskListProps {
 export const GymTaskList = ({ showCompleted }: GymTaskListProps) => {
   const { tasks, isLoading, updateTask, deleteTask } = useTasks();
 
-  // Filter gym tasks and sort by created_at descending (newest first)
-  const gymTasks = tasks?.filter(t => {
-    if (showCompleted && t.completed) return t.category === 'gym';
-    if (!showCompleted && t.completed) return false;
-    return t.category === 'gym';
-  }).sort((a, b) => 
-    new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-  ) || [];
+  // Memoize filtered and sorted gym tasks
+  const gymTasks = useMemo(() => 
+    [...(tasks || [])]
+      .filter(t => {
+        if (showCompleted && t.completed) return t.category === 'gym';
+        if (!showCompleted && t.completed) return false;
+        return t.category === 'gym';
+      })
+      .sort((a, b) => 
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      ),
+    [tasks, showCompleted]
+  );
 
-  const handleComplete = async (id: string) => {
+  // Memoize callbacks
+  const handleComplete = useCallback(async (id: string) => {
     await updateTask({
       id,
       updates: {
@@ -25,15 +32,15 @@ export const GymTaskList = ({ showCompleted }: GymTaskListProps) => {
         completed_at: new Date().toISOString(),
       }
     });
-  };
+  }, [updateTask]);
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = useCallback(async (id: string) => {
     await deleteTask(id);
-  };
+  }, [deleteTask]);
 
-  const handleEdit = (id: string) => {
+  const handleEdit = useCallback((id: string) => {
     console.log('Edit task:', id);
-  };
+  }, []);
 
   if (isLoading) {
     return (
