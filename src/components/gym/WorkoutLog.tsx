@@ -1,19 +1,17 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Dumbbell, Trash2 } from 'lucide-react';
 
 interface ExerciseSet {
   id: string;
-  exercise_name: string;
-  set_number: number;
-  weight: number | null;
-  weight_unit: string;
-  reps: number | null;
-  is_pr: boolean;
+  exercise: string;
+  weight: number;
+  reps: number;
+  isPR?: boolean;
 }
 
 const WorkoutLog = () => {
   const [sets, setSets] = useState<ExerciseSet[]>([]);
+  const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -38,85 +36,119 @@ const WorkoutLog = () => {
       .order('created_at', { ascending: true });
 
     if (!error && data) {
-      setSets(data);
+      setSets(data.map(d => ({
+        id: d.id,
+        exercise: d.exercise_name,
+        weight: d.weight || 0,
+        reps: d.reps || 0,
+        isPR: d.is_pr
+      })));
     }
     setIsLoading(false);
   };
 
-  const deleteSet = async (id: string) => {
-    const { error } = await supabase
-      .from('exercise_sets')
-      .delete()
-      .eq('id', id);
+  // Parse input like "bench 135x10" or "squat 225 x 5"
+  const parseSetInput = (text: string) => {
+    const match = text.match(/^(.+?)\s+(\d+)\s*(?:lbs|kg)?\s*[x×]\s*(\d+)$/i);
+    if (match) {
+      return {
+        exercise: match[1].trim(),
+        weight: parseInt(match[2]),
+        reps: parseInt(match[3]),
+      };
+    }
+    return null;
+  };
 
-    if (!error) {
-      setSets(sets.filter(s => s.id !== id));
+  const handleAddSet = async () => {
+    const parsed = parseSetInput(input);
+    if (!parsed) return;
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    // Get set number for this exercise today
+    const exerciseSetsToday = sets.filter(
+      s => s.exercise.toLowerCase() === parsed.exercise.toLowerCase()
+    );
+    const setNumber = exerciseSetsToday.length + 1;
+
+    const { data, error } = await supabase
+      .from('exercise_sets')
+      .insert({
+        user_id: user.id,
+        exercise_name: parsed.exercise,
+        set_number: setNumber,
+        weight: parsed.weight,
+        weight_unit: 'lbs',
+        reps: parsed.reps,
+      })
+      .select()
+      .single();
+
+    if (!error && data) {
+      setSets([...sets, {
+        id: data.id,
+        exercise: data.exercise_name,
+        weight: data.weight || 0,
+        reps: data.reps || 0,
+        isPR: data.is_pr
+      }]);
+      setInput('');
     }
   };
 
   // Group sets by exercise
   const groupedSets = sets.reduce((acc, set) => {
-    if (!acc[set.exercise_name]) {
-      acc[set.exercise_name] = [];
-    }
-    acc[set.exercise_name].push(set);
+    const key = set.exercise.toLowerCase();
+    if (!acc[key]) acc[key] = { name: set.exercise, sets: [] };
+    acc[key].sets.push(set);
     return acc;
-  }, {} as Record<string, ExerciseSet[]>);
+  }, {} as Record<string, { name: string; sets: ExerciseSet[] }>);
 
   if (isLoading) {
     return (
-      <div className="py-8 text-center">
+      <div className="py-6 text-center">
         <p className="text-xs text-foreground/30">Loading...</p>
       </div>
     );
   }
 
-  if (sets.length === 0) {
-    return (
-      <div className="py-8 text-center">
-        <Dumbbell className="w-6 h-6 mx-auto mb-2 text-foreground/20" />
-        <p className="text-xs text-foreground/30">No sets logged today</p>
-      </div>
-    );
-  }
-
   return (
-    <div className="space-y-4">
-      {Object.entries(groupedSets).map(([exerciseName, exerciseSets]) => (
-        <div key={exerciseName} className="bg-foreground/[0.02] rounded-lg p-3">
-          <p className="text-sm font-medium text-foreground/70 mb-2">{exerciseName}</p>
-          <div className="space-y-1">
+    <div>
+      {/* Grouped exercises */}
+      {Object.entries(groupedSets).map(([key, { name, sets: exerciseSets }]) => (
+        <div key={key} className="mb-4">
+          <p className="font-mono text-sm text-foreground/70 capitalize mb-1">
+            {name}
+          </p>
+          <div className="pl-4 space-y-0.5">
             {exerciseSets.map((set) => (
-              <div 
-                key={set.id} 
-                className="flex items-center justify-between text-xs group"
-              >
-                <div className="flex items-center gap-3">
-                  <span className="text-foreground/30 w-4">{set.set_number}.</span>
-                  <span className="text-foreground/60 font-mono">
-                    {set.weight ? `${set.weight} ${set.weight_unit}` : '—'}
-                  </span>
-                  <span className="text-foreground/40">×</span>
-                  <span className="text-foreground/60 font-mono">
-                    {set.reps ?? '—'} reps
-                  </span>
-                  {set.is_pr && (
-                    <span className="text-[10px] bg-amber-500/20 text-amber-500 px-1.5 py-0.5 rounded">
-                      PR
-                    </span>
-                  )}
-                </div>
-                <button
-                  onClick={() => deleteSet(set.id)}
-                  className="opacity-0 group-hover:opacity-100 p-1 text-foreground/30 hover:text-red-500 transition-all"
-                >
-                  <Trash2 className="w-3 h-3" />
-                </button>
-              </div>
+              <p key={set.id} className="font-mono text-sm text-foreground/50">
+                {set.weight} × {set.reps}
+                {set.isPR && <span className="ml-2 text-amber-500 text-xs">PR</span>}
+              </p>
             ))}
           </div>
         </div>
       ))}
+      
+      {sets.length === 0 && (
+        <p className="text-xs text-foreground/30 py-4">No sets logged yet</p>
+      )}
+      
+      {/* Quick add input */}
+      <input
+        type="text"
+        value={input}
+        onChange={(e) => setInput(e.target.value)}
+        onKeyDown={(e) => e.key === 'Enter' && handleAddSet()}
+        placeholder="bench 135x10"
+        className="w-full bg-transparent border-b border-foreground/10 py-2 font-mono text-sm text-foreground/70 placeholder:text-foreground/30 focus:outline-none focus:border-foreground/20"
+      />
+      <p className="text-[10px] text-foreground/30 mt-1">
+        Format: exercise weight × reps
+      </p>
     </div>
   );
 };
