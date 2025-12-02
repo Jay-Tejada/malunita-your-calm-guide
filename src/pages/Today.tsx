@@ -9,15 +9,21 @@ import { DesktopTaskCapture } from '@/components/shared/DesktopTaskCapture';
 import FlowTimeline from '@/components/FlowTimeline';
 import { useFlowSessions } from '@/hooks/useFlowSessions';
 import { generateFlowSessions } from '@/utils/taskCategorizer';
+import { useHabits } from '@/hooks/useHabits';
+import { HabitQuickToggle } from '@/components/habits/HabitQuickToggle';
 
 const Today = () => {
   const navigate = useNavigate();
   const { tasks, updateTask } = useTasks();
   const { toast } = useToast();
   const { sessions, startSession, createSession } = useFlowSessions();
+  const { habits, toggleCompletion, isCompletedToday } = useHabits();
   const [focusInput, setFocusInput] = useState('');
   const [showCompleted, setShowCompleted] = useState(false);
   const [completingTasks, setCompletingTasks] = useState<Set<string>>(new Set());
+
+  // Show habits in the morning (before noon)
+  const isMorning = new Date().getHours() < 12;
   
   const todayTasks = tasks?.filter(t => 
     t.scheduled_bucket === 'today' && !t.completed
@@ -121,6 +127,25 @@ const Today = () => {
       <div className="px-4 pt-4 pb-24 md:pb-20">
         {/* Date */}
         <p className="text-xs text-muted-foreground/40 text-center mb-4">{today}</p>
+
+        {/* Daily Habits (morning only) */}
+        {isMorning && habits.length > 0 && (
+          <div className="mb-6">
+            <p className="text-[10px] uppercase tracking-widest text-muted-foreground/30 mb-2">
+              Daily Habits
+            </p>
+            <div className="space-y-1.5">
+              {habits.slice(0, 3).map(habit => (
+                <HabitQuickToggle
+                  key={habit.id}
+                  habit={habit}
+                  isCompleted={isCompletedToday(habit.id)}
+                  onToggle={() => toggleCompletion.mutate({ habitId: habit.id })}
+                />
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Flow Timeline */}
         <FlowTimeline 
