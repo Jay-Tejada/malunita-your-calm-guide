@@ -1,127 +1,176 @@
 import { useState, useEffect } from 'react';
 
 type TimeOfDay = 'morning' | 'midday' | 'evening' | 'night';
+type OrbMood = 'neutral' | 'thinking' | 'celebrating' | 'supportive';
 
 interface OrbProps {
   size?: number;
   onClick?: () => void;
+  className?: string;
+  forceTime?: TimeOfDay;
   isRecording?: boolean;
   isProcessing?: boolean;
+  mood?: OrbMood;
 }
 
-const Orb = ({ size = 200, onClick, isRecording = false, isProcessing = false }: OrbProps) => {
-  const [timeOfDay, setTimeOfDay] = useState<TimeOfDay>('morning');
+const Orb = ({ 
+  size = 200, 
+  onClick, 
+  className = '', 
+  forceTime,
+  isRecording = false, 
+  isProcessing = false,
+  mood = 'neutral'
+}: OrbProps) => {
+  const [timeOfDay, setTimeOfDay] = useState<TimeOfDay>('midday');
+  const [isPressed, setIsPressed] = useState(false);
+  const [ripple, setRipple] = useState(false);
 
+  // Determine time of day
   useEffect(() => {
+    if (forceTime) {
+      setTimeOfDay(forceTime);
+      return;
+    }
+
     const updateTimeOfDay = () => {
       const hour = new Date().getHours();
-      if (hour >= 5 && hour < 11) setTimeOfDay('morning');
-      else if (hour >= 11 && hour < 16) setTimeOfDay('midday');
-      else if (hour >= 16 && hour < 20) setTimeOfDay('evening');
+      if (hour >= 5 && hour < 10) setTimeOfDay('morning');
+      else if (hour >= 10 && hour < 17) setTimeOfDay('midday');
+      else if (hour >= 17 && hour < 21) setTimeOfDay('evening');
       else setTimeOfDay('night');
     };
 
     updateTimeOfDay();
     const interval = setInterval(updateTimeOfDay, 60000);
     return () => clearInterval(interval);
-  }, []);
+  }, [forceTime]);
 
+  // Color palettes for each time of day
   const palettes = {
     morning: {
-      primary: '#E8D5C4',
-      secondary: '#F5EDE4',
-      shadow: 'rgba(180, 150, 130, 0.3)',
-      glow: 'rgba(232, 213, 196, 0.2)',
+      primary: '#F5E6D3',
+      secondary: '#EDD9C4',
+      shadow: '#D4C4B0',
+      glow: 'rgba(245, 230, 211, 0.4)',
     },
     midday: {
-      primary: '#F0E8DC',
-      secondary: '#FAF6F0',
-      shadow: 'rgba(160, 150, 140, 0.25)',
-      glow: 'rgba(240, 232, 220, 0.2)',
+      primary: '#FAF6F1',
+      secondary: '#F0EBE3',
+      shadow: '#D8D3CA',
+      glow: 'rgba(250, 246, 241, 0.3)',
     },
     evening: {
-      primary: '#E5D4C0',
-      secondary: '#EDE4D8',
-      shadow: 'rgba(170, 140, 110, 0.35)',
-      glow: 'rgba(229, 212, 192, 0.25)',
+      primary: '#EFE4D4',
+      secondary: '#E5D9C7',
+      shadow: '#C9BBA8',
+      glow: 'rgba(239, 228, 212, 0.4)',
     },
     night: {
-      primary: '#C8D0D8',
-      secondary: '#D8DFE5',
-      shadow: 'rgba(100, 110, 130, 0.3)',
-      glow: 'rgba(200, 208, 216, 0.15)',
+      primary: '#E0E4E8',
+      secondary: '#C8CED6',
+      shadow: '#9CA5B0',
+      glow: 'rgba(200, 206, 214, 0.3)',
     },
   };
 
-  const colors = palettes[timeOfDay];
+  // Override colors based on recording/processing state
+  const getActiveColors = () => {
+    if (isRecording) {
+      return {
+        primary: '#E8B4A4',
+        secondary: '#F5DDD4',
+        shadow: '#D4A090',
+        glow: 'rgba(232, 180, 164, 0.4)',
+      };
+    }
+    if (isProcessing) {
+      return {
+        primary: '#D4D8E8',
+        secondary: '#E4E8F5',
+        shadow: '#B0B8C8',
+        glow: 'rgba(212, 216, 232, 0.35)',
+      };
+    }
+    return palettes[timeOfDay];
+  };
 
-  // Recording state uses a soft coral
-  const activeColors = isRecording ? {
-    primary: '#E8B4A4',
-    secondary: '#F5DDD4',
-    shadow: 'rgba(200, 130, 110, 0.4)',
-    glow: 'rgba(232, 180, 164, 0.3)',
-  } : isProcessing ? {
-    primary: '#D4D8E8',
-    secondary: '#E4E8F5',
-    shadow: 'rgba(130, 140, 180, 0.3)',
-    glow: 'rgba(212, 216, 232, 0.25)',
-  } : colors;
+  const colors = getActiveColors();
+
+  const handleClick = () => {
+    setRipple(true);
+    setTimeout(() => setRipple(false), 600);
+    onClick?.();
+  };
+
+  // Get mood-specific animation class
+  const getMoodClass = () => {
+    switch (mood) {
+      case 'thinking': return 'orb-thinking';
+      case 'celebrating': return 'orb-celebrating';
+      case 'supportive': return 'orb-supportive';
+      default: return '';
+    }
+  };
+
+  const orbStyle: React.CSSProperties = {
+    width: size,
+    height: size,
+    borderRadius: '50%',
+    position: 'relative',
+    cursor: onClick ? 'pointer' : 'default',
+    transition: 'all 2s ease-in-out, transform 0.15s ease-out',
+    transform: isPressed ? 'scale(0.97)' : 'scale(1)',
+    background: `
+      radial-gradient(
+        circle at 35% 35%,
+        ${colors.primary} 0%,
+        ${colors.secondary} 50%,
+        ${colors.shadow} 100%
+      )
+    `,
+    boxShadow: `
+      inset -${size * 0.1}px -${size * 0.1}px ${size * 0.2}px rgba(0, 0, 0, 0.08),
+      inset ${size * 0.05}px ${size * 0.05}px ${size * 0.15}px rgba(255, 255, 255, 0.5),
+      0 ${size * 0.1}px ${size * 0.25}px rgba(0, 0, 0, 0.1),
+      0 0 ${size * 0.4}px ${colors.glow}
+    `,
+  };
 
   return (
-    <button
-      onClick={onClick}
-      className="relative focus:outline-none group"
-      style={{ width: size, height: size }}
-      aria-label={isRecording ? "Recording..." : isProcessing ? "Processing..." : "Tap to capture"}
+    <div 
+      onClick={handleClick}
+      onMouseDown={() => setIsPressed(true)}
+      onMouseUp={() => setIsPressed(false)}
+      onMouseLeave={() => setIsPressed(false)}
+      onTouchStart={() => setIsPressed(true)}
+      onTouchEnd={() => setIsPressed(false)}
+      className={`orb ${getMoodClass()} ${className}`}
+      style={orbStyle}
+      role={onClick ? 'button' : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      aria-label={isRecording ? "Recording..." : isProcessing ? "Processing..." : "Malunita orb - tap to capture"}
     >
-      {/* Soft glow behind orb */}
+      {/* Inner highlight for 3D effect */}
       <div
-        className="absolute inset-0 rounded-full blur-xl opacity-50 transition-all duration-[3000ms]"
         style={{
-          background: `radial-gradient(circle, ${activeColors.glow} 0%, transparent 70%)`,
-          transform: 'scale(1.3)',
+          position: 'absolute',
+          top: '15%',
+          left: '20%',
+          width: '30%',
+          height: '25%',
+          borderRadius: '50%',
+          background: `radial-gradient(
+            circle,
+            rgba(255, 255, 255, 0.4) 0%,
+            rgba(255, 255, 255, 0) 70%
+          )`,
+          filter: 'blur(8px)',
+          pointerEvents: 'none',
         }}
       />
 
-      {/* Main orb */}
-      <div
-        className={`
-          relative w-full h-full rounded-full 
-          transition-all duration-[3000ms] ease-in-out
-          ${isRecording ? 'animate-breathe-fast' : 'animate-breathe'}
-        `}
-        style={{
-          background: `
-            radial-gradient(
-              circle at 35% 30%,
-              ${activeColors.secondary} 0%,
-              ${activeColors.primary} 50%,
-              ${activeColors.primary} 100%
-            )
-          `,
-          boxShadow: `
-            0 ${size * 0.15}px ${size * 0.25}px ${activeColors.shadow},
-            inset 0 -${size * 0.05}px ${size * 0.1}px rgba(0,0,0,0.05),
-            inset 0 ${size * 0.05}px ${size * 0.1}px rgba(255,255,255,0.3)
-          `,
-        }}
-      />
-
-      {/* Subtle highlight reflection */}
-      <div
-        className="absolute rounded-full opacity-40 transition-all duration-[3000ms]"
-        style={{
-          width: size * 0.3,
-          height: size * 0.15,
-          top: size * 0.15,
-          left: size * 0.25,
-          background: `radial-gradient(ellipse, rgba(255,255,255,0.6) 0%, transparent 70%)`,
-          filter: 'blur(4px)',
-        }}
-      />
-
-      {/* Recording indicator dot */}
+      {/* Recording indicator */}
       {isRecording && (
         <div 
           className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-red-400/80 animate-pulse"
@@ -134,7 +183,40 @@ const Orb = ({ size = 200, onClick, isRecording = false, isProcessing = false }:
           className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-6 h-6 border-2 border-foreground/20 border-t-foreground/60 rounded-full animate-spin"
         />
       )}
-    </button>
+
+      {/* Ripple effect on tap */}
+      {ripple && (
+        <div
+          className="orb-ripple"
+          style={{
+            position: 'absolute',
+            inset: 0,
+            borderRadius: '50%',
+            background: 'rgba(255, 255, 255, 0.3)',
+            pointerEvents: 'none',
+          }}
+        />
+      )}
+    </div>
+  );
+};
+
+// Mini variant for navigation/headers
+export const OrbMini = ({ 
+  size = 32, 
+  timeOfDay,
+  className = '' 
+}: { 
+  size?: number; 
+  timeOfDay?: TimeOfDay;
+  className?: string;
+}) => {
+  return (
+    <Orb 
+      size={size} 
+      forceTime={timeOfDay}
+      className={`orb-mini ${className}`}
+    />
   );
 };
 

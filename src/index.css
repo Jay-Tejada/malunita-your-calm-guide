@@ -419,6 +419,79 @@ All colors MUST be HSL.
     }
   }
 
+  /* Orb breathing and floating animations */
+  .orb {
+    animation: subtle-float 6s ease-in-out infinite;
+  }
+
+  @keyframes subtle-float {
+    0%, 100% {
+      transform: translateY(0) scale(1);
+    }
+    50% {
+      transform: translateY(-4px) scale(1.01);
+    }
+  }
+
+  /* Orb ripple effect */
+  .orb-ripple {
+    animation: orb-ripple 0.6s ease-out forwards;
+  }
+
+  @keyframes orb-ripple {
+    0% {
+      transform: scale(0.8);
+      opacity: 1;
+    }
+    100% {
+      transform: scale(1.2);
+      opacity: 0;
+    }
+  }
+
+  /* Mood-based orb animations */
+  .orb-thinking {
+    animation: orb-thinking-pulse 1.5s ease-in-out infinite;
+  }
+
+  @keyframes orb-thinking-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.85; }
+  }
+
+  .orb-celebrating {
+    animation: orb-celebrate 0.8s ease-in-out infinite;
+  }
+
+  @keyframes orb-celebrate {
+    0%, 100% { transform: translateY(0) scale(1); }
+    25% { transform: translateY(-6px) scale(1.03); }
+    75% { transform: translateY(-3px) scale(1.01); }
+  }
+
+  .orb-supportive {
+    animation: orb-supportive-glow 2s ease-in-out infinite;
+  }
+
+  @keyframes orb-supportive-glow {
+    0%, 100% { 
+      filter: brightness(1);
+    }
+    50% { 
+      filter: brightness(1.05);
+    }
+  }
+
+  /* Accessibility: reduce motion */
+  @media (prefers-reduced-motion: reduce) {
+    .orb,
+    .orb-thinking,
+    .orb-celebrating,
+    .orb-supportive {
+      animation: none;
+    }
+  }
+
   /* Companion Behavior Animations */
   @keyframes companion-blink {
     0%, 100% { 
