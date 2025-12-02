@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Drawer } from 'vaul';
-import { Mic, Loader2, CheckCircle2 } from 'lucide-react';
+import { Mic, X, Send, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface VoiceSheetProps {
@@ -11,6 +11,8 @@ interface VoiceSheetProps {
   isRecording: boolean;
   isProcessing: boolean;
   recordingDuration?: number;
+  transcript?: string;
+  onTranscriptSubmit?: (text: string) => void;
 }
 
 export function VoiceSheet({
@@ -21,7 +23,25 @@ export function VoiceSheet({
   isRecording,
   isProcessing,
   recordingDuration = 0,
+  transcript = '',
+  onTranscriptSubmit,
 }: VoiceSheetProps) {
+  const [localTranscript, setLocalTranscript] = useState('');
+
+  // Sync external transcript
+  useEffect(() => {
+    if (transcript) {
+      setLocalTranscript(transcript);
+    }
+  }, [transcript]);
+
+  // Clear on close
+  useEffect(() => {
+    if (!open) {
+      setLocalTranscript('');
+    }
+  }, [open]);
+
   const handleVoiceButton = () => {
     if (isRecording) {
       onStopRecording();
@@ -30,127 +50,130 @@ export function VoiceSheet({
     }
   };
 
-  const formatDuration = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  const handleSave = () => {
+    if (localTranscript.trim() && onTranscriptSubmit) {
+      onTranscriptSubmit(localTranscript.trim());
+      onOpenChange(false);
+    }
+  };
+
+  const handleClear = () => {
+    setLocalTranscript('');
   };
 
   return (
     <Drawer.Root open={open} onOpenChange={onOpenChange}>
       <Drawer.Portal>
         <Drawer.Overlay className="fixed inset-0 bg-black/40 z-[100]" />
-        <Drawer.Content className="bg-card flex flex-col rounded-t-[24px] h-[85vh] mt-24 fixed bottom-0 left-0 right-0 z-[100]">
-          {/* Drag Handle */}
-          <div className="mx-auto w-12 h-1.5 flex-shrink-0 rounded-full bg-muted-foreground/20 mb-8 mt-4" />
+        <Drawer.Content className="bg-background flex flex-col h-[90vh] mt-24 fixed bottom-0 left-0 right-0 z-[100] rounded-t-[24px]">
+          {/* Header */}
+          <div className="flex items-center justify-between px-4 py-3 border-b border-foreground/5">
+            <button 
+              onClick={() => onOpenChange(false)}
+              className="p-2 -ml-2 text-foreground/40 hover:text-foreground/60 transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <span className="text-xs text-foreground/40 uppercase tracking-widest font-mono">
+              Speak your thought
+            </span>
+            <div className="w-9" />
+          </div>
 
-          <div className="flex flex-col items-center justify-center flex-1 px-6 pb-safe">
-            {/* Status Text */}
-            <div className="mb-8 text-center">
-              {isProcessing ? (
-                <>
-                  <h2 className="text-2xl font-semibold text-foreground mb-2">
-                    Processing...
-                  </h2>
-                  <p className="text-foreground-soft">
-                    Understanding your voice
-                  </p>
-                </>
-              ) : isRecording ? (
-                <>
-                  <h2 className="text-2xl font-semibold text-foreground mb-2">
-                    Listening
-                  </h2>
-                  <p className="text-foreground-soft">
-                    Speak naturally
-                  </p>
-                </>
-              ) : (
-                <>
-                  <h2 className="text-2xl font-semibold text-foreground mb-2">
-                    Voice Capture
-                  </h2>
-                  <p className="text-foreground-soft">
-                    Tap to start recording
-                  </p>
-                </>
-              )}
-            </div>
+          {/* Main content */}
+          <div className="flex-1 flex flex-col items-center justify-center px-6">
+            
+            {/* Transcript display */}
+            {localTranscript ? (
+              <div className="w-full max-w-sm mb-8 animate-fade-in">
+                <p className="font-mono text-lg text-foreground/70 text-center leading-relaxed">
+                  "{localTranscript}"
+                </p>
+              </div>
+            ) : (
+              <p className="text-sm text-foreground/40 mb-8 font-mono">
+                {isProcessing ? 'Understanding...' : isRecording ? 'Listening...' : 'Tap to speak'}
+              </p>
+            )}
 
-            {/* Voice Button - Large and Centered */}
+            {/* Mic button - styled like the orb with calm amber tones */}
             <button
               onClick={handleVoiceButton}
               disabled={isProcessing}
               className={cn(
-                "relative w-40 h-40 rounded-full transition-all duration-300",
-                "flex items-center justify-center",
-                "focus:outline-none focus:ring-4 focus:ring-primary/20",
-                isRecording
-                  ? "bg-destructive shadow-malunita-orb scale-110"
-                  : "bg-primary shadow-malunita-card hover:scale-105 active:scale-95",
-                isProcessing && "opacity-50 cursor-not-allowed"
+                "w-24 h-24 rounded-full flex items-center justify-center transition-all duration-300",
+                "focus:outline-none",
+                isRecording 
+                  ? 'bg-gradient-to-br from-amber-200 to-amber-300 scale-110 shadow-lg shadow-amber-200/30' 
+                  : 'bg-gradient-to-br from-amber-100/80 to-amber-200/80 hover:from-amber-100 hover:to-amber-200',
+                isProcessing && "opacity-60 cursor-not-allowed"
               )}
             >
-              {/* Pulse Animation Ring */}
-              {isRecording && (
-                <span className="absolute inset-0 rounded-full bg-destructive animate-ping opacity-20" />
-              )}
-
-              {/* Icon */}
               {isProcessing ? (
-                <Loader2 className="w-16 h-16 text-primary-foreground animate-spin" />
-              ) : isRecording ? (
-                <div className="flex flex-col items-center gap-2">
-                  <div className="w-6 h-6 rounded bg-primary-foreground" />
-                  <span className="text-xs text-primary-foreground font-mono">
-                    {formatDuration(recordingDuration)}
-                  </span>
-                </div>
+                <Loader2 className="w-8 h-8 text-amber-700/50 animate-spin" />
               ) : (
-                <Mic className="w-16 h-16 text-primary-foreground" />
+                <Mic className={cn(
+                  "w-8 h-8 transition-colors",
+                  isRecording ? 'text-amber-700/70' : 'text-amber-700/40'
+                )} />
               )}
             </button>
 
-            {/* Helper Text */}
-            <div className="mt-8 text-center">
-              {isRecording ? (
-                <p className="text-sm text-foreground-soft">
-                  Tap again to stop recording
-                </p>
-              ) : (
-                <p className="text-sm text-foreground-soft">
-                  Hold and speak, or tap to start
-                </p>
-              )}
-            </div>
-
-            {/* Visual Waveform Indicator */}
+            {/* Recording indicator */}
             {isRecording && (
-              <div className="flex items-center gap-1 mt-6">
+              <div className="flex items-center gap-2 mt-6 animate-fade-in">
+                <div className="w-2 h-2 rounded-full bg-red-400 animate-pulse" />
+                <span className="text-xs text-foreground/40 font-mono">Recording</span>
+              </div>
+            )}
+
+            {/* Waveform visualization */}
+            {isRecording && (
+              <div className="flex items-center gap-1 mt-4">
                 {[...Array(5)].map((_, i) => (
                   <div
                     key={i}
-                    className={cn(
-                      "w-1 bg-primary rounded-full transition-all",
-                      "animate-pulse"
-                    )}
+                    className="w-1 bg-amber-400/60 rounded-full animate-pulse"
                     style={{
-                      height: `${Math.random() * 24 + 12}px`,
+                      height: `${12 + Math.sin(Date.now() / 200 + i) * 8}px`,
                       animationDelay: `${i * 0.1}s`,
                     }}
                   />
                 ))}
               </div>
             )}
+
+            {/* Hint */}
+            {!isRecording && !localTranscript && !isProcessing && (
+              <p className="text-xs text-foreground/30 mt-6 font-mono">
+                Tap to record
+              </p>
+            )}
           </div>
 
-          {/* Bottom Tips */}
-          <div className="px-6 pb-8 pt-4 border-t border-border/50">
-            <div className="flex items-center justify-center gap-2 text-xs text-foreground-soft">
-              <CheckCircle2 className="w-4 h-4" />
-              <span>Swipe down to dismiss</span>
+          {/* Bottom actions */}
+          {localTranscript && (
+            <div className="px-4 py-4 border-t border-foreground/5 animate-fade-in">
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={handleClear}
+                  className="flex-1 py-3 text-sm text-foreground/50 hover:text-foreground/70 font-mono transition-colors"
+                >
+                  Clear
+                </button>
+                <button
+                  onClick={handleSave}
+                  className="flex-1 flex items-center justify-center gap-2 py-3 bg-foreground/5 hover:bg-foreground/10 rounded-lg text-sm text-foreground/70 font-mono transition-colors"
+                >
+                  <Send className="w-4 h-4" />
+                  Add to Inbox
+                </button>
+              </div>
             </div>
-          </div>
+          )}
+
+          {/* Bottom safe area */}
+          <div className="h-safe" />
         </Drawer.Content>
       </Drawer.Portal>
     </Drawer.Root>
