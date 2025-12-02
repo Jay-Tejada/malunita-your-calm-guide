@@ -144,7 +144,7 @@ const Index = () => {
     dismissEvening,
   } = useDailyRituals();
   const [showMorningRitual, setShowMorningRitual] = useState(false);
-  const [showEveningRitual, setShowEveningRitual] = useState(false);
+  const [showEveningSummary, setShowEveningSummary] = useState(false);
   
   // Quick capture state (mobile swipe-up on orb, desktop Q//)
   const [showQuickCapture, setShowQuickCapture] = useState(false);
@@ -458,10 +458,10 @@ const Index = () => {
       
       {/* Evening summary */}
       <EveningSummary 
-        isOpen={showEveningRitual}
+        isOpen={showEveningSummary}
         onClose={() => {
           completeEvening();
-          setShowEveningRitual(false);
+          setShowEveningSummary(false);
         }} 
       />
       
@@ -488,7 +488,7 @@ const Index = () => {
             {/* Evening wind-down button - shows from 5pm onwards */}
             {new Date().getHours() >= 17 && (
               <button
-                onClick={() => setShowEveningRitual(true)}
+                onClick={() => setShowEveningSummary(true)}
                 className="flex items-center gap-2 px-4 py-2 rounded-full border border-foreground/10 text-sm text-foreground/50 hover:bg-foreground/[0.03] transition-colors"
               >
                 <Moon className="w-4 h-4" />
@@ -560,7 +560,7 @@ const Index = () => {
                   {/* Evening wind-down button - shows from 5pm onwards */}
                   {new Date().getHours() >= 17 && (
                     <button
-                      onClick={() => setShowEveningRitual(true)}
+                      onClick={() => setShowEveningSummary(true)}
                       className="flex items-center gap-2 px-4 py-2 mb-4 rounded-full border border-foreground/10 text-sm text-foreground/50 hover:bg-foreground/[0.03] transition-colors"
                     >
                       <Moon className="w-4 h-4" />
