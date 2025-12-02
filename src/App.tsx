@@ -58,6 +58,7 @@ const TimeTravel = lazy(() => import("./pages/TimeTravel"));
 const Learning = lazy(() => import("./pages/Learning"));
 const Settings = lazy(() => import("./pages/Settings"));
 const Habits = lazy(() => import("./pages/Habits"));
+const WeeklyReview = lazy(() => import("./pages/WeeklyReview"));
 import { JOURNAL_EVENTS } from "./features/journal/journalEvents";
 import { bondingMeter, BONDING_INCREMENTS } from "./state/bondingMeter";
 
@@ -287,6 +288,7 @@ const App = () => {
                   <Route path="/thoughts" element={<Thoughts />} />
                   <Route path="/settings" element={<Settings />} />
                   <Route path="/habits" element={<Habits />} />
+                  <Route path="/weekly-review" element={<WeeklyReview />} />
                   {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                   <Route path="*" element={<NotFound />} />
                 </Route>
