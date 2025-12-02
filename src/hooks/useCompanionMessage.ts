@@ -2,10 +2,15 @@ import { useMemo, useEffect, useState } from 'react';
 import { useTasks } from './useTasks';
 import { useUserPatterns, getPeakCompletionHour } from './useUserPatterns';
 import { useProgressStats } from './useProgressStats';
+import { generateFlowSessions, FlowSession } from '@/utils/taskCategorizer';
 
-interface CompanionMessage {
+export interface CompanionMessage {
   text: string;
   type: 'greeting' | 'insight' | 'nudge' | 'celebration' | 'reflection';
+  action?: {
+    type: 'start_session';
+    session: FlowSession;
+  };
 }
 
 export const useCompanionMessage = (): CompanionMessage | null => {
@@ -207,6 +212,29 @@ export const useCompanionMessage = (): CompanionMessage | null => {
         text: "This is usually your power hour. Ready?",
         type: 'nudge'
       };
+    }
+    
+    // 4.6. FLOW SESSION NUDGES
+    const flowSessions = generateFlowSessions(todayTasks.filter(t => !t.completed));
+    
+    if (flowSessions.length > 0) {
+      const bestSession = flowSessions[0];
+      
+      if (bestSession.type === 'tiny_task_fiesta' && bestSession.tasks.length >= 4) {
+        return {
+          text: `${bestSession.tasks.length} tiny tasks waiting. 10 minutes could clear them all.`,
+          type: 'nudge',
+          action: { type: 'start_session', session: bestSession },
+        };
+      }
+      
+      if (bestSession.type === 'avoidance_buster') {
+        return {
+          text: `Some tasks have been waiting. Want to tackle them together?`,
+          type: 'nudge',
+          action: { type: 'start_session', session: bestSession },
+        };
+      }
     }
     
     // 5. ENCOURAGEMENT FOR SLOW DAYS
