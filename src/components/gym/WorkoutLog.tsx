@@ -32,18 +32,6 @@ const WorkoutLog = () => {
     }
   }, []);
 
-  // Combined search: canonical + user history (prioritize user history)
-  const searchAllExercises = (query: string): string[] => {
-    const canonical = searchExercises(query);
-    const userMatches = userExercises.filter(e => 
-      e.toLowerCase().includes(query.toLowerCase())
-    );
-    
-    // Merge, dedupe, prioritize user history
-    const combined = [...new Set([...userMatches, ...canonical])];
-    return combined.slice(0, 5);
-  };
-
   // Filter suggestions as user types and detect exercise name
   useEffect(() => {
     // Extract exercise name from input for autocomplete
@@ -53,16 +41,16 @@ const WorkoutLog = () => {
       
       // Check if it's a known exercise (for LastWorkoutSuggestion)
       const normalized = normalizeExerciseName(exerciseQuery);
-      if (normalized.toLowerCase() !== exerciseQuery.toLowerCase() || 
+      if (!normalized.isNew || 
           userExercises.some((ex: string) => ex.toLowerCase() === exerciseQuery.toLowerCase())) {
-        setCurrentExercise(normalized);
+        setCurrentExercise(normalized.canonical);
       } else {
         setCurrentExercise(null);
       }
       
       // Get autocomplete suggestions (combined canonical + user history)
       if (exerciseQuery.length >= 2 && !input.includes('x') && !input.includes('×')) {
-        const results = searchAllExercises(exerciseQuery);
+        const results = searchExercises(exerciseQuery, userExercises);
         setSuggestions(results);
       } else {
         setSuggestions([]);
@@ -110,8 +98,9 @@ const WorkoutLog = () => {
   const parseSetInput = (text: string) => {
     const match = text.match(/^(.+?)\s+(\d+)\s*(?:lbs|kg)?\s*[x×]\s*(\d+)$/i);
     if (match) {
+      const normalized = normalizeExerciseName(match[1].trim());
       return {
-        exercise: normalizeExerciseName(match[1].trim()),
+        exercise: normalized.canonical,
         weight: parseInt(match[2]),
         reps: parseInt(match[3]),
       };
