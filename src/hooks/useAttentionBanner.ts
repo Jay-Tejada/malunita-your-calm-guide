@@ -12,7 +12,10 @@ export const useAttentionBanner = () => {
   
   // Build priority queue
   const priorityItems = useMemo(() => {
-    if (!tasks) return [];
+    if (!tasks) {
+      console.log('🔴 Banner: No tasks available');
+      return [];
+    }
     
     const now = new Date();
     const oneHourFromNow = new Date(now.getTime() + 60 * 60 * 1000);
@@ -25,7 +28,7 @@ export const useAttentionBanner = () => {
         !t.completed && 
         t.reminder_time && 
         new Date(t.reminder_time) < now &&
-        !t.is_focus // Don't duplicate focus task
+        !t.is_focus
       )
       .map(t => ({ ...t, bannerPriority: 'overdue' as const, urgency: 1 }));
     
@@ -57,12 +60,21 @@ export const useAttentionBanner = () => {
       .filter(t => 
         !t.completed && 
         t.scheduled_bucket === 'today' &&
-        !t.is_focus // Don't duplicate focus task
+        !t.is_focus
       )
       .map(t => ({ ...t, bannerPriority: 'today' as const, urgency: 4 }));
     
-    // Focus task is excluded - it shows in the center, not the banner
-    return [...overdue, ...upcoming, ...inbox, ...today];
+    const result = [...overdue, ...upcoming, ...inbox, ...today];
+    console.log('🟢 Banner items built:', {
+      total: result.length,
+      overdue: overdue.length,
+      upcoming: upcoming.length,
+      inbox: inbox.length,
+      today: today.length,
+      titles: result.map(i => i.title).slice(0, 3)
+    });
+    
+    return result;
   }, [tasks]);
 
   // Store the length in a ref to avoid stale closure issues
@@ -78,23 +90,30 @@ export const useAttentionBanner = () => {
 
   // Rotation interval - use ref for stable callback
   useEffect(() => {
-    if (priorityItems.length <= 1) return;
+    console.log('🔵 Banner rotation effect running, items:', priorityItems.length);
     
-    console.log('Banner rotation started with', priorityItems.length, 'items');
+    if (priorityItems.length <= 1) {
+      console.log('🟡 Banner: Not enough items to rotate (<= 1)');
+      return;
+    }
+    
+    console.log('🟢 Banner: Starting rotation interval for', priorityItems.length, 'items');
     
     const interval = setInterval(() => {
       setCurrentIndex(prev => {
         const nextIndex = (prev + 1) % itemsLengthRef.current;
-        console.log('Banner rotating to index:', nextIndex, 'of', itemsLengthRef.current);
+        console.log('🔄 Banner rotating:', prev, '→', nextIndex, '(of', itemsLengthRef.current, ')');
         return nextIndex;
       });
     }, 6000);
     
     return () => {
-      console.log('Banner rotation cleanup');
+      console.log('🔴 Banner rotation cleanup (interval cleared)');
       clearInterval(interval);
     };
   }, [priorityItems.length]);
+
+  console.log('🎯 Banner render state:', { currentIndex, totalItems: priorityItems.length, currentTitle: priorityItems[currentIndex]?.title });
 
   return {
     currentItem: priorityItems[currentIndex] || null,
