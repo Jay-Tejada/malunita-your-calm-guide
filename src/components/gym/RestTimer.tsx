@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Play, Pause, RotateCcw } from 'lucide-react';
+import { toast } from '@/hooks/use-toast';
 
 interface RestTimerProps {
   autoStart?: boolean;
@@ -28,6 +29,46 @@ const RestTimer = ({
     }
   }, [autoStart, defaultSeconds]);
   
+  // Play a beep sound using Web Audio API
+  const playBeep = () => {
+    try {
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      
+      oscillator.frequency.value = 800;
+      oscillator.type = 'sine';
+      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+      
+      oscillator.start(audioContext.currentTime);
+      oscillator.stop(audioContext.currentTime + 0.5);
+    } catch (e) {
+      console.log('Audio not supported');
+    }
+  };
+
+  // Show desktop notification
+  const showDesktopNotification = () => {
+    // Desktop toast alert
+    toast({
+      title: "Rest Complete!",
+      description: "Time to start your next set",
+    });
+    
+    // Try browser notification if permitted (for when tab is not focused)
+    if ('Notification' in window && Notification.permission === 'granted') {
+      new Notification('Rest Complete!', {
+        body: 'Time to start your next set',
+        icon: '/favicon.ico',
+        tag: 'rest-timer',
+      });
+    }
+  };
+
   useEffect(() => {
     if (isRunning && seconds > 0) {
       intervalRef.current = setInterval(() => {
@@ -35,25 +76,40 @@ const RestTimer = ({
           if (s <= 1) {
             setIsRunning(false);
             
-            // Haptic feedback (mobile) - pattern: buzz, pause, buzz
+            // Haptic feedback (mobile) - strong pattern: buzz, pause, buzz, pause, buzz
             if (navigator.vibrate) {
-              navigator.vibrate([200, 100, 200]);
+              navigator.vibrate([200, 100, 200, 100, 200]);
             }
             
-            // Optional soft sound
-            try {
-              const audio = new Audio('/sounds/gentle-chime.mp3');
-              audio.volume = 0.3;
-              audio.play().catch(() => {}); // Ignore if blocked
-            } catch {}
+            // Play beep sound (works on both mobile and desktop)
+            playBeep();
+            
+            // Desktop notification/alert
+            showDesktopNotification();
             
             onComplete?.();
             return 0;
           }
           
           // Warning at 10 seconds
-          if (s === 10 && navigator.vibrate) {
-            navigator.vibrate(100);
+          if (s === 10) {
+            if (navigator.vibrate) {
+              navigator.vibrate(100);
+            }
+            // Short beep for warning
+            try {
+              const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+              const oscillator = audioContext.createOscillator();
+              const gainNode = audioContext.createGain();
+              oscillator.connect(gainNode);
+              gainNode.connect(audioContext.destination);
+              oscillator.frequency.value = 600;
+              oscillator.type = 'sine';
+              gainNode.gain.setValueAtTime(0.15, audioContext.currentTime);
+              gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+              oscillator.start(audioContext.currentTime);
+              oscillator.stop(audioContext.currentTime + 0.2);
+            } catch {}
           }
           
           return s - 1;
