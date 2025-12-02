@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { Moon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Auth } from "@/components/Auth";
 import { ThinkWithMe } from "@/components/ThinkWithMe";
@@ -489,7 +490,16 @@ const Index = () => {
 
           {/* BOTTOM ZONE - Orb grounded in bottom third */}
           <div className="mt-auto pb-24 flex flex-col items-center justify-center relative gap-6">
-            {/* Ritual prompts removed - rituals triggered manually */}
+            {/* Evening wind-down button - shows from 5pm onwards */}
+            {new Date().getHours() >= 17 && (
+              <button
+                onClick={() => setShowEveningRitual(true)}
+                className="flex items-center gap-2 px-4 py-2 rounded-full border border-foreground/10 text-sm text-foreground/50 hover:bg-foreground/[0.03] transition-colors"
+              >
+                <Moon className="w-4 h-4" />
+                Wind down for tonight
+              </button>
+            )}
             
             <div className={`transition-transform duration-200 ${showQuickCapture ? 'translate-y-5' : ''}`}>
               <SimpleOrb
@@ -552,7 +562,16 @@ const Index = () => {
 
                 {/* BOTTOM - Orb grounded in bottom third */}
                 <div className="mt-auto pb-16 flex flex-col items-center justify-center gap-2">
-                  {/* Ritual prompts removed - rituals triggered manually */}
+                  {/* Evening wind-down button - shows from 5pm onwards */}
+                  {new Date().getHours() >= 17 && (
+                    <button
+                      onClick={() => setShowEveningRitual(true)}
+                      className="flex items-center gap-2 px-4 py-2 mb-4 rounded-full border border-foreground/10 text-sm text-foreground/50 hover:bg-foreground/[0.03] transition-colors"
+                    >
+                      <Moon className="w-4 h-4" />
+                      Wind down for tonight
+                    </button>
+                  )}
                   
                   <SimpleOrb
                     onTap={() => setShowDesktopCapture(true)}
