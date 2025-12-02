@@ -590,6 +590,38 @@ export type Database = {
         }
         Relationships: []
       }
+      habit_completions: {
+        Row: {
+          completed_at: string | null
+          date: string | null
+          habit_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          date?: string | null
+          habit_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          date?: string | null
+          habit_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "habit_completions_habit_id_fkey"
+            columns: ["habit_id"]
+            isOneToOne: false
+            referencedRelation: "habits"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       habit_logs: {
         Row: {
           completed_at: string
@@ -636,6 +668,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      habits: {
+        Row: {
+          archived: boolean | null
+          color: string | null
+          created_at: string | null
+          frequency: string | null
+          icon: string | null
+          id: string
+          target_count: number | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          archived?: boolean | null
+          color?: string | null
+          created_at?: string | null
+          frequency?: string | null
+          icon?: string | null
+          id?: string
+          target_count?: number | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          archived?: boolean | null
+          color?: string | null
+          created_at?: string | null
+          frequency?: string | null
+          icon?: string | null
+          id?: string
+          target_count?: number | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       hatching_moments: {
         Row: {
