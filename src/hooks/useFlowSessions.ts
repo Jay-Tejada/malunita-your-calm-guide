@@ -95,6 +95,10 @@ export const useFlowSessions = () => {
 
   // Complete a session
   const completeSession = async (sessionId: string, reflection?: string, tasksCompleted?: number) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return null;
+
+    // Update session
     const { data, error } = await supabase
       .from('flow_sessions')
       .update({ 
@@ -106,6 +110,20 @@ export const useFlowSessions = () => {
       .eq('id', sessionId)
       .select()
       .single();
+
+    // If there's a reflection, add to journal
+    if (data && reflection) {
+      const session = data as FlowSessionRecord;
+      const duration = session.started_at 
+        ? Math.round((new Date(session.ended_at!).getTime() - new Date(session.started_at).getTime()) / 60000)
+        : session.target_duration_minutes;
+
+      await supabase.from('journal_entries').insert({
+        user_id: user.id,
+        title: `${session.title} — ${new Date().toLocaleDateString()}`,
+        content: `**Session completed**\n\n${tasksCompleted} tasks in ${duration} minutes.\n\n**Reflection:**\n${reflection}`,
+      });
+    }
 
     if (data) {
       setActiveSession(null);
