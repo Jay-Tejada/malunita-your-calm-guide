@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import LastWorkoutSuggestion from './LastWorkoutSuggestion';
-
+import RestTimer from './RestTimer';
 const DEFAULT_EXERCISES = [
   'Bench Press', 'Squat', 'Deadlift', 'Pull-ups', 'Rows', 
   'Overhead Press', 'Incline DB Press', 'Leg Press', 'Lunges',
@@ -22,6 +22,7 @@ const WorkoutLog = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [currentExercise, setCurrentExercise] = useState<string | null>(null);
+  const [restTimerKey, setRestTimerKey] = useState(0);
 
   // Get unique exercises from history
   const pastExercises = useMemo(() => {
@@ -132,6 +133,9 @@ const WorkoutLog = () => {
       }]);
       setInput('');
       
+      // Trigger rest timer
+      setRestTimerKey(prev => prev + 1);
+      
       // Save exercise to localStorage for autocomplete
       const stored = localStorage.getItem('malunita_exercises');
       const exercises: string[] = stored ? JSON.parse(stored) : DEFAULT_EXERCISES;
@@ -180,6 +184,13 @@ const WorkoutLog = () => {
           </div>
         </div>
       ))}
+      
+      {/* Rest Timer - auto-starts after logging */}
+      {sets.length > 0 && (
+        <div className="mb-4">
+          <RestTimer key={restTimerKey} autoStart={restTimerKey > 0} defaultSeconds={90} />
+        </div>
+      )}
       
       {sets.length === 0 && (
         <p className="text-xs text-foreground/30 py-4">No sets logged yet</p>
