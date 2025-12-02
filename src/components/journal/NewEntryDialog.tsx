@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { X } from "lucide-react";
+import { X, Sparkles } from "lucide-react";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
@@ -14,9 +14,44 @@ export const NewEntryDialog = ({ isOpen, onClose }: NewEntryDialogProps) => {
   const [entryId, setEntryId] = useState<string | null>(null);
   const [showSaved, setShowSaved] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [activityPrompt, setActivityPrompt] = useState<string | null>(null);
   const queryClient = useQueryClient();
   const timeoutRef = useRef<NodeJS.Timeout>();
   const saveTimeoutRef = useRef<NodeJS.Timeout>();
+
+  // Fetch activity-aware prompt
+  useEffect(() => {
+    const fetchActivityPrompt = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Get today's completed tasks
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      const { data: completedTasks } = await supabase
+        .from('tasks')
+        .select('title, category')
+        .eq('user_id', user.id)
+        .eq('completed', true)
+        .gte('completed_at', today.toISOString());
+
+      if (completedTasks && completedTasks.length > 0) {
+        // Generate prompt based on activity
+        if (completedTasks.length >= 5) {
+          setActivityPrompt(`You crushed ${completedTasks.length} tasks today. What made today productive?`);
+        } else if (completedTasks.length >= 3) {
+          setActivityPrompt(`You completed ${completedTasks.length} tasks. How are you feeling?`);
+        } else if (completedTasks.some(t => t.category === 'work')) {
+          setActivityPrompt(`You made progress on work today. How's it going?`);
+        }
+      }
+    };
+    
+    if (isOpen) {
+      fetchActivityPrompt();
+    }
+  }, [isOpen]);
 
   const saveEntry = async (text: string) => {
     if (!text.trim()) return;
@@ -103,6 +138,18 @@ export const NewEntryDialog = ({ isOpen, onClose }: NewEntryDialogProps) => {
           <X className="w-5 h-5" />
         </button>
       </div>
+
+      {/* Activity prompt */}
+      {activityPrompt && (
+        <div className="px-6 py-3 bg-amber-500/5 border-b border-amber-500/10">
+          <div className="flex items-start gap-2">
+            <Sparkles className="w-4 h-4 text-amber-500/70 mt-0.5 flex-shrink-0" />
+            <p className="text-sm text-foreground/60">
+              {activityPrompt}
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Main textarea */}
       <div className="flex-1 px-6 py-6 overflow-auto">
