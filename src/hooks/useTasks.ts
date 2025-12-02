@@ -158,10 +158,6 @@ export const useTasks = () => {
       // If offline, queue the action
       if (!offlineQueue.isOnline()) {
         offlineQueue.addAction('update_task', { id, ...updates });
-        toast({
-          title: "Saved offline",
-          description: "Changes will sync when you're back online",
-        });
         return { id, ...updates } as Task;
       }
 
@@ -174,6 +170,35 @@ export const useTasks = () => {
 
       if (error) throw error;
       return data;
+    },
+    // Optimistic update for instant feedback
+    onMutate: async ({ id, updates }) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ['tasks'] });
+
+      // Snapshot the previous value
+      const previousTasks = queryClient.getQueryData<Task[]>(['tasks']);
+
+      // Optimistically update the cache
+      queryClient.setQueryData<Task[]>(['tasks'], (old) =>
+        old?.map((task) =>
+          task.id === id ? { ...task, ...updates } : task
+        )
+      );
+
+      // Return context with the snapshot
+      return { previousTasks };
+    },
+    onError: (err, variables, context) => {
+      // Rollback to previous value on error
+      if (context?.previousTasks) {
+        queryClient.setQueryData(['tasks'], context.previousTasks);
+      }
+      toast({
+        title: "Error",
+        description: err.message,
+        variant: "destructive",
+      });
     },
     onSuccess: async (data) => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
@@ -361,13 +386,6 @@ export const useTasks = () => {
           JOURNAL_EVENTS.TASK_MILESTONE(completedCount);
         }
       }
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
     },
   });
 
