@@ -43,11 +43,11 @@ export const useAttentionBanner = () => {
       )
       .map(t => ({ ...t, bannerPriority: 'upcoming' as const, urgency: 2 }));
     
-    // 3. Inbox items (unprocessed) - limit to 5
+    // 3. Inbox items (unprocessed or explicitly inbox) - limit to 5
     const inbox = tasks
       .filter(t => 
         !t.completed && 
-        !t.category && 
+        (!t.category || t.category === 'inbox') &&  // Include tasks with category='inbox' OR no category
         !t.custom_category_id &&
         !t.scheduled_bucket &&
         !t.is_focus
