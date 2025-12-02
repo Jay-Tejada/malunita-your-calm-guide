@@ -242,7 +242,14 @@ const WorkoutLog = () => {
 
   const addExerciseSet = async (parsed: ParsedExercise) => {
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    if (!user) {
+      toast({
+        title: "Sign in required",
+        description: "Please sign in to log your workouts",
+        variant: "destructive",
+      });
+      return;
+    }
 
     // Get set number for this exercise today
     const exerciseSetsToday = sets.filter(
@@ -263,7 +270,16 @@ const WorkoutLog = () => {
       .select()
       .single();
 
-    if (!insertError && data) {
+    if (insertError) {
+      toast({
+        title: "Failed to log set",
+        description: insertError.message,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (data) {
       const newSet: ExerciseSet = {
         id: data.id,
         exercise_name: data.exercise_name,
