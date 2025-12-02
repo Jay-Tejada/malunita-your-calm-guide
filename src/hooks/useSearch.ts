@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { useTasks } from './useTasks';
 import { useThoughts } from './useThoughts';
+import { useDebouncedValue } from './useDebounce';
 
 export interface SearchResult {
   id: string;
@@ -13,13 +14,14 @@ export interface SearchResult {
 
 export const useSearch = (query: string) => {
   const { tasks } = useTasks();
+  const debouncedQuery = useDebouncedValue(query, 300);
   const { thoughts } = useThoughts();
   // Add journal entries if you have them
 
   const results = useMemo(() => {
-    if (!query.trim() || query.length < 2) return [];
+    if (!debouncedQuery.trim() || debouncedQuery.length < 2) return [];
 
-    const q = query.toLowerCase();
+    const q = debouncedQuery.toLowerCase();
     const matches: SearchResult[] = [];
 
     // Search tasks
@@ -53,7 +55,7 @@ export const useSearch = (query: string) => {
     return matches.sort((a, b) => 
       new Date(b.date).getTime() - new Date(a.date).getTime()
     );
-  }, [query, tasks, thoughts]);
+  }, [debouncedQuery, tasks, thoughts]);
 
   return { results };
 };

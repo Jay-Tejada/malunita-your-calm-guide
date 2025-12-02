@@ -1,8 +1,9 @@
-import { useMemo, useEffect, useState } from 'react';
+import { useMemo, useEffect, useState, useRef } from 'react';
 import { useTasks } from './useTasks';
 import { useUserPatterns, getPeakCompletionHour } from './useUserPatterns';
 import { useProgressStats } from './useProgressStats';
 import { generateFlowSessions, FlowSession } from '@/utils/taskCategorizer';
+import { useDebouncedValue } from './useDebounce';
 
 export interface CompanionMessage {
   text: string;
@@ -21,6 +22,13 @@ export const useCompanionMessage = (): CompanionMessage | null => {
     return parseInt(localStorage.getItem('malunita_best_day') || '0');
   });
   
+  // Debounce tasks to avoid expensive recalculations on every change
+  const debouncedTasks = useDebouncedValue(tasks, 1000);
+  
+  // Cache flow sessions to avoid regenerating on every render
+  const [cachedFlowSessions, setCachedFlowSessions] = useState<FlowSession[]>([]);
+  const lastFlowSessionUpdate = useRef<number>(0);
+  
   // Check for daily high score and update
   useEffect(() => {
     if (progressCompletedToday > personalBest && progressCompletedToday >= 5) {
@@ -29,42 +37,59 @@ export const useCompanionMessage = (): CompanionMessage | null => {
     }
   }, [progressCompletedToday, personalBest]);
   
+  // Generate flow sessions with debouncing (expensive operation)
+  useEffect(() => {
+    const now = Date.now();
+    // Only regenerate if 2 seconds have passed since last update
+    if (now - lastFlowSessionUpdate.current < 2000) return;
+    
+    if (debouncedTasks) {
+      const todayTasks = debouncedTasks.filter(t => t.scheduled_bucket === 'today' && !t.completed);
+      const sessions = generateFlowSessions(todayTasks);
+      setCachedFlowSessions(sessions);
+      lastFlowSessionUpdate.current = now;
+    }
+  }, [debouncedTasks]);
+  
   return useMemo(() => {
     const now = new Date();
     const hour = now.getHours();
     const dayOfWeek = now.getDay(); // 0 = Sunday
     
+    // Use debounced tasks for expensive calculations
+    const taskList = debouncedTasks || [];
+    
     // Task stats
-    const todayTasks = tasks?.filter(t => t.scheduled_bucket === 'today') || [];
+    const todayTasks = taskList.filter(t => t.scheduled_bucket === 'today');
     const completedToday = todayTasks.filter(t => t.completed).length;
     const remainingToday = todayTasks.filter(t => !t.completed).length;
-    const inboxCount = tasks?.filter(t => (t.category === 'inbox' || !t.category) && !t.completed).length || 0;
+    const inboxCount = taskList.filter(t => (t.category === 'inbox' || !t.category) && !t.completed).length;
     
     // Total completed all-time
-    const totalCompleted = tasks?.filter(t => t.completed).length || 0;
+    const totalCompleted = taskList.filter(t => t.completed).length;
     
     // Work pattern detection
     const workTasksToday = todayTasks.filter(t => t.category === 'work' && !t.completed).length;
     const personalTasksToday = todayTasks.filter(t => t.category !== 'work' && !t.completed).length;
     
     // Focus task awareness
-    const focusTask = tasks?.find(t => t.is_focus && !t.completed);
+    const focusTask = taskList.find(t => t.is_focus && !t.completed);
     
     // Completion velocity
     const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
-    const recentCompletions = tasks?.filter(t => 
+    const recentCompletions = taskList.filter(t => 
       t.completed && 
       t.completed_at && 
       new Date(t.completed_at) > oneHourAgo
-    ).length || 0;
+    ).length;
     
     // Find neglected tasks (in inbox > 7 days)
     const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-    const neglectedTasks = tasks?.filter(t => 
+    const neglectedTasks = taskList.filter(t => 
       !t.completed && 
       (t.category === 'inbox' || !t.category) &&
       new Date(t.created_at) < oneWeekAgo
-    ) || [];
+    );
     
     // Priority message selection (first match wins)
     
@@ -214,8 +239,8 @@ export const useCompanionMessage = (): CompanionMessage | null => {
       };
     }
     
-    // 4.6. FLOW SESSION NUDGES
-    const flowSessions = generateFlowSessions(todayTasks.filter(t => !t.completed));
+    // 4.6. FLOW SESSION NUDGES (use cached sessions)
+    const flowSessions = cachedFlowSessions;
     
     if (flowSessions.length > 0) {
       const bestSession = flowSessions[0];
@@ -349,5 +374,5 @@ export const useCompanionMessage = (): CompanionMessage | null => {
     type: 'greeting' 
   };
   
-}, [tasks, patterns, streak, personalBest, progressCompletedToday]);
+}, [debouncedTasks, patterns, streak, personalBest, progressCompletedToday, cachedFlowSessions]);
 };

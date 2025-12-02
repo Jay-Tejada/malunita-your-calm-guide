@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useTasksQuery } from './useTasksQuery';
+import { useDebouncedValue } from './useDebounce';
 
 interface CompanionMessage {
   text: string;
@@ -11,6 +12,8 @@ interface CompanionMessage {
 
 export const useCompanionMessages = () => {
   const { tasks } = useTasksQuery();
+  // Debounce tasks to avoid excessive recalculations
+  const debouncedTasks = useDebouncedValue(tasks, 500);
   const [currentMessage, setCurrentMessage] = useState<CompanionMessage | null>(null);
   const lastActivityTime = useRef(Date.now());
   const tasksCompletedThisSession = useRef(0);
@@ -31,7 +34,7 @@ export const useCompanionMessages = () => {
     lastActivityTime.current = Date.now();
   };
 
-  // Track task completions
+  // Track task completions (use non-debounced tasks for immediate feedback on completions)
   useEffect(() => {
     if (!tasks) return;
 
@@ -68,11 +71,11 @@ export const useCompanionMessages = () => {
     lastCompletedCount.current = completedCount;
   }, [tasks]);
 
-  // Check inbox size
+  // Check inbox size (use debounced tasks for non-urgent checks)
   useEffect(() => {
-    if (!tasks || isDismissed()) return;
+    if (!debouncedTasks || isDismissed()) return;
 
-    const inboxTasks = tasks.filter(t => 
+    const inboxTasks = debouncedTasks.filter(t => 
       !t.completed && 
       t.category === 'inbox'
     );
@@ -97,7 +100,7 @@ export const useCompanionMessages = () => {
         localStorage.setItem('last_inbox_message', Date.now().toString());
       }
     }
-  }, [tasks]);
+  }, [debouncedTasks]);
 
   // Inactivity check (10 minutes)
   useEffect(() => {
