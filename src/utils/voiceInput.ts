@@ -40,16 +40,8 @@ interface SpeechRecognition extends EventTarget {
   abort(): void;
 }
 
-declare global {
-  interface Window {
-    SpeechRecognition: {
-      new(): SpeechRecognition;
-    };
-    webkitSpeechRecognition: {
-      new(): SpeechRecognition;
-    };
-  }
-}
+// Use type assertion instead of global augmentation to avoid conflicts
+type SpeechRecognitionConstructor = new () => SpeechRecognition;
 
 export interface VoiceInputOptions {
   onTranscript: (text: string) => void;
@@ -64,7 +56,7 @@ export const startVoiceInput = async (options: VoiceInputOptions) => {
   const { onTranscript, onListeningChange, silenceTimeout = 10000 } = options;
 
   // Check if speech recognition is supported
-  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition as SpeechRecognitionConstructor;
   
   if (!SpeechRecognition) {
     throw new Error('Speech recognition is not supported in this browser');
@@ -162,5 +154,5 @@ export const stopVoiceInput = () => {
 };
 
 export const isVoiceInputSupported = () => {
-  return !!(window.SpeechRecognition || window.webkitSpeechRecognition);
+  return !!((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition);
 };
