@@ -105,9 +105,9 @@ export function FocusTimerFloating() {
             hapticLight();
             setShowQuickStart(!showQuickStart);
           }}
-          className="flex items-center justify-center w-12 h-12 bg-foreground/5 hover:bg-foreground/10 backdrop-blur rounded-full shadow-sm border border-foreground/10 transition-colors"
+          className="flex items-center justify-center w-12 h-12 rounded-full text-foreground/20 hover:text-foreground/40 hover:bg-foreground/[0.03] transition-all duration-300"
         >
-          <Timer className="w-5 h-5 text-foreground/50" />
+          <Timer className="w-5 h-5" strokeWidth={1.5} />
         </button>
       </div>
     );
