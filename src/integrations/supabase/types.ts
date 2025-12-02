@@ -426,6 +426,56 @@ export type Database = {
         }
         Relationships: []
       }
+      exercise_sets: {
+        Row: {
+          created_at: string | null
+          exercise_name: string
+          id: string
+          is_pr: boolean | null
+          notes: string | null
+          reps: number | null
+          session_id: string | null
+          set_number: number
+          user_id: string
+          weight: number | null
+          weight_unit: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          exercise_name: string
+          id?: string
+          is_pr?: boolean | null
+          notes?: string | null
+          reps?: number | null
+          session_id?: string | null
+          set_number: number
+          user_id: string
+          weight?: number | null
+          weight_unit?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          exercise_name?: string
+          id?: string
+          is_pr?: boolean | null
+          notes?: string | null
+          reps?: number | null
+          session_id?: string | null
+          set_number?: number
+          user_id?: string
+          weight?: number | null
+          weight_unit?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exercise_sets_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "workout_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       focus_embeddings: {
         Row: {
           cluster_label: string | null
@@ -812,6 +862,33 @@ export type Database = {
           insight?: Json
           insight_type?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      personal_records: {
+        Row: {
+          achieved_at: string | null
+          exercise_name: string
+          id: string
+          reps: number
+          user_id: string
+          weight: number
+        }
+        Insert: {
+          achieved_at?: string | null
+          exercise_name: string
+          id?: string
+          reps: number
+          user_id: string
+          weight: number
+        }
+        Update: {
+          achieved_at?: string | null
+          exercise_name?: string
+          id?: string
+          reps?: number
+          user_id?: string
+          weight?: number
         }
         Relationships: []
       }
@@ -1740,6 +1817,36 @@ export type Database = {
           updated_at?: string
           user_id?: string
           week_start?: string
+        }
+        Relationships: []
+      }
+      workout_sessions: {
+        Row: {
+          created_at: string | null
+          date: string
+          duration_minutes: number | null
+          id: string
+          notes: string | null
+          user_id: string
+          workout_type: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          date?: string
+          duration_minutes?: number | null
+          id?: string
+          notes?: string | null
+          user_id: string
+          workout_type?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          date?: string
+          duration_minutes?: number | null
+          id?: string
+          notes?: string | null
+          user_id?: string
+          workout_type?: string | null
         }
         Relationships: []
       }
