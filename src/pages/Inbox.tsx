@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { TaskList } from "@/components/TaskList";
-import { useTasks } from "@/hooks/useTasks";
+import { useTasks, Task } from "@/hooks/useTasks";
 import { InboxActions } from "@/components/InboxActions";
 import { PlanningModePanel } from "@/components/planning/PlanningModePanel";
 import { usePlanningBreakdown } from "@/hooks/usePlanningBreakdown";
@@ -11,6 +11,9 @@ import { PageHeader } from "@/components/shared/PageHeader";
 import SmartTaskInput from "@/components/SmartTaskInput";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
+import { categorizeTask, getTaskTypeLabel, getTaskTypeIcon, TaskType } from "@/utils/taskCategorizer";
+import { GroupedTaskList } from "@/components/inbox/GroupedTaskList";
+import { List, Layers } from "lucide-react";
 
 
 interface TaskSuggestion {
@@ -26,9 +29,40 @@ const Inbox = () => {
   const [planningText, setPlanningText] = useState("");
   const { loading, error, result, runPlanningBreakdown } = usePlanningBreakdown();
   const [suggestions, setSuggestions] = useState<TaskSuggestion[]>([]);
+  const [viewMode, setViewMode] = useState<'flat' | 'grouped'>('flat');
   const { toast } = useToast();
   const isMobile = useIsMobile();
   const queryClient = useQueryClient();
+
+  // Filter inbox tasks
+  const inboxTasks = useMemo(() => {
+    return tasks?.filter(t => t.category === 'inbox' && !t.completed) || [];
+  }, [tasks]);
+
+  // Group tasks by detected type
+  const groupedTasks = useMemo(() => {
+    if (viewMode === 'flat' || inboxTasks.length === 0) return null;
+    
+    const groups: Record<TaskType, typeof inboxTasks> = {
+      communication: [],
+      deep_work: [],
+      admin: [],
+      errands: [],
+      quick_task: [],
+      general: [],
+    };
+    
+    inboxTasks.forEach(task => {
+      // Use custom category first, then auto-detect
+      const type = categorizeTask(task.title);
+      groups[type].push(task);
+    });
+    
+    // Filter out empty groups and sort by count
+    return Object.entries(groups)
+      .filter(([_, tasks]) => tasks.length > 0)
+      .sort((a, b) => b[1].length - a[1].length) as [TaskType, typeof inboxTasks][];
+  }, [inboxTasks, viewMode]);
 
   const handleTaskCreate = async ({ 
     title, 
@@ -150,6 +184,61 @@ const Inbox = () => {
     setSuggestions(prev => prev.filter(s => s.taskId !== taskId));
   };
 
+  // Handlers for grouped view
+  const handleToggleComplete = async (task: Task) => {
+    await updateTask({
+      id: task.id,
+      updates: {
+        completed: !task.completed,
+        completed_at: !task.completed ? new Date().toISOString() : null,
+      },
+    });
+  };
+
+  const handleMoveToToday = async (taskId: string) => {
+    await updateTask({
+      id: taskId,
+      updates: { scheduled_bucket: 'today' },
+    });
+    toast({ description: "Moved to today" });
+  };
+
+  const handleDeleteTask = async (taskId: string) => {
+    const { error } = await supabase.from('tasks').delete().eq('id', taskId);
+    if (!error) {
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      toast({ description: "Deleted" });
+    }
+  };
+
+  // View toggle component
+  const ViewToggle = () => (
+    <div className="flex items-center gap-1 bg-foreground/5 rounded-lg p-1">
+      <button
+        onClick={() => setViewMode('flat')}
+        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+          viewMode === 'flat' 
+            ? 'bg-background text-foreground shadow-sm' 
+            : 'text-foreground/50 hover:text-foreground/70'
+        }`}
+      >
+        <List className="w-3.5 h-3.5" />
+        List
+      </button>
+      <button
+        onClick={() => setViewMode('grouped')}
+        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+          viewMode === 'grouped' 
+            ? 'bg-background text-foreground shadow-sm' 
+            : 'text-foreground/50 hover:text-foreground/70'
+        }`}
+      >
+        <Layers className="w-3.5 h-3.5" />
+        Grouped
+      </button>
+    </div>
+  );
+
   // Mobile layout: input at bottom
   if (isMobile) {
     return (
@@ -172,8 +261,15 @@ const Inbox = () => {
 
         {/* Task list - scrollable, takes remaining space */}
         <div className="flex-1 overflow-y-auto px-4 pt-16 pb-24">
-          {/* Inbox Actions */}
-          {!isLoading && tasks && (
+          {/* View Toggle & Inbox Actions */}
+          <div className="flex items-center justify-between mb-4">
+            <ViewToggle />
+            {inboxTasks.length > 0 && (
+              <span className="text-xs text-foreground/40">{inboxTasks.length} tasks</span>
+            )}
+          </div>
+
+          {!isLoading && tasks && viewMode === 'flat' && (
             <InboxActions 
               tasks={tasks} 
               onSuggestionsGenerated={(newSuggestions) => setSuggestions(newSuggestions)}
@@ -182,14 +278,27 @@ const Inbox = () => {
             />
           )}
           
-          {/* Task List */}
-          <TaskList 
-            category="inbox" 
-            onPlanThis={handlePlanThis}
-            suggestions={suggestions}
-            onApplySuggestion={handleApplySuggestion}
-            onDismissSuggestion={handleDismissSuggestion}
-          />
+          {/* Task List - Flat or Grouped */}
+          {viewMode === 'flat' ? (
+            <TaskList 
+              category="inbox" 
+              onPlanThis={handlePlanThis}
+              suggestions={suggestions}
+              onApplySuggestion={handleApplySuggestion}
+              onDismissSuggestion={handleDismissSuggestion}
+            />
+          ) : groupedTasks ? (
+            <GroupedTaskList
+              groups={groupedTasks}
+              onToggleComplete={handleToggleComplete}
+              onMoveToToday={handleMoveToToday}
+              onDelete={handleDeleteTask}
+            />
+          ) : (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground/40 text-sm">No tasks in inbox</p>
+            </div>
+          )}
         </div>
         
         {/* Capture input - fixed at bottom on mobile */}
@@ -215,38 +324,60 @@ const Inbox = () => {
             onSubmit={handleTaskCreate}
           />
         </div>
-      {/* Planning Mode Overlay */}
-      {planningMode && (
-        <div className="fixed inset-0 bg-background/40 backdrop-blur-sm flex items-center justify-center p-6 z-50">
-          <PlanningModePanel 
-            initialText={planningText}
-            loading={loading}
-            error={error}
-            result={result}
-            onRun={() => runPlanningBreakdown(planningText)}
-            onClose={() => setPlanningMode(false)} 
-          />
-        </div>
-      )}
 
-      {/* Inbox Actions */}
-      {!isLoading && tasks && (
-        <InboxActions 
-          tasks={tasks} 
-          onSuggestionsGenerated={(newSuggestions) => setSuggestions(newSuggestions)}
-          suggestions={suggestions}
-          onApplyAll={handleApplyAllSuggestions}
-        />
-      )}
+        {/* View Toggle */}
+        <div className="flex items-center justify-between mb-4">
+          <ViewToggle />
+          {inboxTasks.length > 0 && (
+            <span className="text-xs text-foreground/40">{inboxTasks.length} tasks</span>
+          )}
+        </div>
+
+        {/* Planning Mode Overlay */}
+        {planningMode && (
+          <div className="fixed inset-0 bg-background/40 backdrop-blur-sm flex items-center justify-center p-6 z-50">
+            <PlanningModePanel 
+              initialText={planningText}
+              loading={loading}
+              error={error}
+              result={result}
+              onRun={() => runPlanningBreakdown(planningText)}
+              onClose={() => setPlanningMode(false)} 
+            />
+          </div>
+        )}
+
+        {/* Inbox Actions - only in flat mode */}
+        {!isLoading && tasks && viewMode === 'flat' && (
+          <InboxActions 
+            tasks={tasks} 
+            onSuggestionsGenerated={(newSuggestions) => setSuggestions(newSuggestions)}
+            suggestions={suggestions}
+            onApplyAll={handleApplyAllSuggestions}
+          />
+        )}
       
-        {/* Task List */}
-        <TaskList 
-          category="inbox" 
-          onPlanThis={handlePlanThis}
-          suggestions={suggestions}
-          onApplySuggestion={handleApplySuggestion}
-          onDismissSuggestion={handleDismissSuggestion}
-        />
+        {/* Task List - Flat or Grouped */}
+        {viewMode === 'flat' ? (
+          <TaskList 
+            category="inbox" 
+            onPlanThis={handlePlanThis}
+            suggestions={suggestions}
+            onApplySuggestion={handleApplySuggestion}
+            onDismissSuggestion={handleDismissSuggestion}
+          />
+        ) : groupedTasks ? (
+          <GroupedTaskList
+            groups={groupedTasks}
+            onToggleComplete={handleToggleComplete}
+            onMoveToToday={handleMoveToToday}
+            onDelete={handleDeleteTask}
+          />
+        ) : (
+          <div className="text-center py-12">
+            <p className="text-muted-foreground/40 text-sm">No tasks in inbox</p>
+          </div>
+        )}
       </div>
     </div>
   );
