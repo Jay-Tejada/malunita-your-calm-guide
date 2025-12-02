@@ -65,21 +65,9 @@ export const useDailyRituals = (): RitualState => {
   const dismissMorning = () => setDismissed(d => ({ ...d, morning: true }));
   const dismissEvening = () => setDismissed(d => ({ ...d, evening: true }));
   
-  // Morning: show between 5am-11am if not done
-  const shouldShowMorning = 
-    ritualsEnabled &&
-    hour >= 5 && 
-    hour < 11 && 
-    !morningDone && 
-    !dismissed.morning;
-  
-  // Evening: show between 7pm-11pm if not done
-  const shouldShowEvening = 
-    ritualsEnabled &&
-    hour >= 19 && 
-    hour < 23 && 
-    !eveningDone && 
-    !dismissed.evening;
+  // Auto-trigger disabled - rituals are now triggered manually via buttons
+  const shouldShowMorning = false;
+  const shouldShowEvening = false;
   
   return {
     morningDone,
