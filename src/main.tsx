@@ -4,12 +4,11 @@ import "./index.css";
 import { registerSW } from 'virtual:pwa-register';
 import { startBurnoutMonitoring } from './ai/burnoutDetector';
 
-// Register service worker for PWA
+// Register service worker for PWA with auto-update
 const updateSW = registerSW({
   onNeedRefresh() {
-    if (confirm('New content available. Reload?')) {
-      updateSW(true);
-    }
+    // Auto-update without prompting
+    updateSW(true);
   },
   onOfflineReady() {
     console.log('App ready to work offline');
