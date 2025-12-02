@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, lazy, Suspense } from "react";
 import { Moon, Sun } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Auth } from "@/components/Auth";
@@ -37,15 +37,24 @@ import { SimpleOrb } from "@/components/mobile/SimpleOrb";
 import CompanionMessage from "@/components/CompanionMessage";
 import ProgressIndicator from "@/components/ProgressIndicator";
 import { useDailyRituals } from "@/hooks/useDailyRituals";
-import MorningRitual from "@/components/rituals/MorningRitual";
-import EveningSummary from "@/components/EveningSummary";
-import MorningSummary from "@/components/MorningSummary";
 import Search from "@/components/Search";
 import { useTasks } from "@/hooks/useTasks";
 import { generateFlowSessions, FlowSession } from "@/utils/taskCategorizer";
 import FlowSessionCard from "@/components/FlowSessionCard";
-import FocusSession from "@/components/FocusSession";
-import TinyTaskParty from "@/components/TinyTaskParty";
+
+// Lazy load heavy modal components
+const MorningRitual = lazy(() => import("@/components/rituals/MorningRitual"));
+const EveningSummary = lazy(() => import("@/components/EveningSummary"));
+const MorningSummary = lazy(() => import("@/components/MorningSummary"));
+const FocusSession = lazy(() => import("@/components/FocusSession"));
+const TinyTaskParty = lazy(() => import("@/components/TinyTaskParty"));
+
+// Minimal loader for modals
+const ModalLoader = () => (
+  <div className="flex items-center justify-center p-12">
+    <div className="w-6 h-6 rounded-full bg-gradient-to-br from-amber-100 to-amber-200 animate-pulse" />
+  </div>
+);
 
 interface AISummary {
   decisions: string[];
@@ -481,32 +490,38 @@ const Index = () => {
     <>
       {/* Morning ritual */}
       {showMorningRitual && (
-        <MorningRitual 
-          onComplete={() => {
-            completeMorning();
-            setShowMorningRitual(false);
-          }} 
-          onDismiss={() => {
-            dismissMorning();
-            setShowMorningRitual(false);
-          }} 
-        />
+        <Suspense fallback={<ModalLoader />}>
+          <MorningRitual 
+            onComplete={() => {
+              completeMorning();
+              setShowMorningRitual(false);
+            }} 
+            onDismiss={() => {
+              dismissMorning();
+              setShowMorningRitual(false);
+            }} 
+          />
+        </Suspense>
       )}
       
       {/* Evening summary */}
-      <EveningSummary 
-        isOpen={showEveningSummary}
-        onClose={() => {
-          completeEvening();
-          setShowEveningSummary(false);
-        }} 
-      />
+      <Suspense fallback={<ModalLoader />}>
+        <EveningSummary 
+          isOpen={showEveningSummary}
+          onClose={() => {
+            completeEvening();
+            setShowEveningSummary(false);
+          }} 
+        />
+      </Suspense>
       
       {/* Morning summary */}
-      <MorningSummary
-        isOpen={showMorningSummary}
-        onClose={() => setShowMorningSummary(false)}
-      />
+      <Suspense fallback={<ModalLoader />}>
+        <MorningSummary
+          isOpen={showMorningSummary}
+          onClose={() => setShowMorningSummary(false)}
+        />
+      </Suspense>
       
       <ActionableBanner />
       <OfflineIndicator />
@@ -744,25 +759,29 @@ const Index = () => {
       
       {/* Active Flow Sessions */}
       {sessionMode === 'party' && activeSession && (
-        <TinyTaskParty
-          tasks={activeSession.tasks}
-          onComplete={handleCompleteTask}
-          onClose={() => {
-            setActiveSession(null);
-            setSessionMode(null);
-          }}
-        />
+        <Suspense fallback={<ModalLoader />}>
+          <TinyTaskParty
+            tasks={activeSession.tasks}
+            onComplete={handleCompleteTask}
+            onClose={() => {
+              setActiveSession(null);
+              setSessionMode(null);
+            }}
+          />
+        </Suspense>
       )}
 
       {sessionMode === 'focus' && activeSession && (
-        <FocusSession
-          session={activeSession}
-          onComplete={handleCompleteTask}
-          onClose={() => {
-            setActiveSession(null);
-            setSessionMode(null);
-          }}
-        />
+        <Suspense fallback={<ModalLoader />}>
+          <FocusSession
+            session={activeSession}
+            onComplete={handleCompleteTask}
+            onClose={() => {
+              setActiveSession(null);
+              setSessionMode(null);
+            }}
+          />
+        </Suspense>
       )}
     </>
   );
