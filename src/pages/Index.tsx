@@ -38,7 +38,6 @@ import ProgressIndicator from "@/components/ProgressIndicator";
 import { useDailyRituals } from "@/hooks/useDailyRituals";
 import MorningRitual from "@/components/rituals/MorningRitual";
 import EveningRitual from "@/components/rituals/EveningRitual";
-import RitualPrompt from "@/components/RitualPrompt";
 import Search from "@/components/Search";
 
 interface AISummary {
@@ -490,21 +489,7 @@ const Index = () => {
 
           {/* BOTTOM ZONE - Orb grounded in bottom third */}
           <div className="mt-auto pb-24 flex flex-col items-center justify-center relative gap-6">
-            {/* Ritual prompts */}
-            {shouldShowMorning && !showMorningRitual && (
-              <RitualPrompt 
-                type="morning" 
-                onTap={() => setShowMorningRitual(true)}
-                onDismiss={dismissMorning}
-              />
-            )}
-            {shouldShowEvening && !showEveningRitual && (
-              <RitualPrompt 
-                type="evening" 
-                onTap={() => setShowEveningRitual(true)}
-                onDismiss={dismissEvening}
-              />
-            )}
+            {/* Ritual prompts removed - rituals triggered manually */}
             
             <div className={`transition-transform duration-200 ${showQuickCapture ? 'translate-y-5' : ''}`}>
               <SimpleOrb
@@ -567,25 +552,7 @@ const Index = () => {
 
                 {/* BOTTOM - Orb grounded in bottom third */}
                 <div className="mt-auto pb-16 flex flex-col items-center justify-center gap-2">
-                  {/* Ritual prompts */}
-                  {shouldShowMorning && !showMorningRitual && (
-                    <div className="mb-4">
-                      <RitualPrompt 
-                        type="morning" 
-                        onTap={() => setShowMorningRitual(true)}
-                        onDismiss={dismissMorning}
-                      />
-                    </div>
-                  )}
-                  {shouldShowEvening && !showEveningRitual && (
-                    <div className="mb-4">
-                      <RitualPrompt 
-                        type="evening" 
-                        onTap={() => setShowEveningRitual(true)}
-                        onDismiss={dismissEvening}
-                      />
-                    </div>
-                  )}
+                  {/* Ritual prompts removed - rituals triggered manually */}
                   
                   <SimpleOrb
                     onTap={() => setShowDesktopCapture(true)}
