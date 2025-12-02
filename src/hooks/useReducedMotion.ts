@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useIsMobile } from './useIsMobile';
+import { useIsMobile } from './use-mobile';
 
 /**
  * Hook to detect if reduced motion should be used
@@ -31,5 +31,28 @@ export const useReducedMotion = () => {
     shouldReduceMotion,
     // Utility to conditionally apply animation classes
     animationClass: (className: string) => shouldReduceMotion ? '' : className,
+  };
+};
+
+/**
+ * Returns animation props for framer-motion components
+ */
+export const useAnimationConfig = () => {
+  const { shouldReduceMotion, animationClass } = useReducedMotion();
+
+  return {
+    // Disable animations entirely for framer-motion
+    animate: shouldReduceMotion ? false : undefined,
+    
+    // Simplified transition
+    transition: shouldReduceMotion 
+      ? { duration: 0 } 
+      : { duration: 0.3, ease: 'easeOut' },
+    
+    // For conditional className usage
+    animationClass,
+    
+    // Raw flag
+    reduceMotion: shouldReduceMotion,
   };
 };
