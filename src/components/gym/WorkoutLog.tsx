@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import LastWorkoutSuggestion from './LastWorkoutSuggestion';
 import RestTimer from './RestTimer';
@@ -22,12 +22,27 @@ const WorkoutLog = () => {
   const [currentExercise, setCurrentExercise] = useState<string | null>(null);
   const [showRestTimer, setShowRestTimer] = useState(false);
   const [restSeconds, setRestSeconds] = useState(90);
+  const [userExercises, setUserExercises] = useState<string[]>([]);
 
-  // Get unique exercises from history
-  const pastExercises = useMemo(() => {
+  // Fetch user's past exercise names on mount
+  useEffect(() => {
     const stored = localStorage.getItem('malunita_exercises');
-    return stored ? JSON.parse(stored) : DEFAULT_EXERCISES;
+    if (stored) {
+      setUserExercises(JSON.parse(stored));
+    }
   }, []);
+
+  // Combined search: canonical + user history (prioritize user history)
+  const searchAllExercises = (query: string): string[] => {
+    const canonical = searchExercises(query);
+    const userMatches = userExercises.filter(e => 
+      e.toLowerCase().includes(query.toLowerCase())
+    );
+    
+    // Merge, dedupe, prioritize user history
+    const combined = [...new Set([...userMatches, ...canonical])];
+    return combined.slice(0, 5);
+  };
 
   // Filter suggestions as user types and detect exercise name
   useEffect(() => {
@@ -39,15 +54,15 @@ const WorkoutLog = () => {
       // Check if it's a known exercise (for LastWorkoutSuggestion)
       const normalized = normalizeExerciseName(exerciseQuery);
       if (normalized.toLowerCase() !== exerciseQuery.toLowerCase() || 
-          pastExercises.some((ex: string) => ex.toLowerCase() === exerciseQuery.toLowerCase())) {
+          userExercises.some((ex: string) => ex.toLowerCase() === exerciseQuery.toLowerCase())) {
         setCurrentExercise(normalized);
       } else {
         setCurrentExercise(null);
       }
       
-      // Get autocomplete suggestions
+      // Get autocomplete suggestions (combined canonical + user history)
       if (exerciseQuery.length >= 2 && !input.includes('x') && !input.includes('×')) {
-        const results = searchExercises(exerciseQuery);
+        const results = searchAllExercises(exerciseQuery);
         setSuggestions(results);
       } else {
         setSuggestions([]);
@@ -56,7 +71,7 @@ const WorkoutLog = () => {
       setCurrentExercise(null);
       setSuggestions([]);
     }
-  }, [input, pastExercises]);
+  }, [input, userExercises]);
 
   useEffect(() => {
     fetchTodaySets();
@@ -143,12 +158,11 @@ const WorkoutLog = () => {
       // Auto-start rest timer
       setShowRestTimer(true);
       
-      // Save exercise to localStorage for autocomplete
-      const stored = localStorage.getItem('malunita_exercises');
-      const exercises: string[] = stored ? JSON.parse(stored) : DEFAULT_EXERCISES;
-      if (!exercises.some(e => e.toLowerCase() === parsed.exercise.toLowerCase())) {
-        exercises.unshift(parsed.exercise);
-        localStorage.setItem('malunita_exercises', JSON.stringify(exercises.slice(0, 50)));
+      // Track exercise name for future autocomplete
+      if (!userExercises.some(e => e.toLowerCase() === parsed.exercise.toLowerCase())) {
+        const updated = [parsed.exercise, ...userExercises].slice(0, 50);
+        setUserExercises(updated);
+        localStorage.setItem('malunita_exercises', JSON.stringify(updated));
       }
       
       // Save last set for this exercise (for suggestions)
