@@ -1,4 +1,3 @@
-import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.80.0";
 
@@ -13,12 +12,13 @@ serve(async (req) => {
   }
 
   try {
-    const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
+    const lovableApiKey = Deno.env.get('LOVABLE_API_KEY');
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
-    if (!openAIApiKey) {
-      throw new Error('OPENAI_API_KEY not configured');
+    if (!lovableApiKey) {
+      console.error('LOVABLE_API_KEY not configured');
+      throw new Error('AI service not configured');
     }
 
     // Get user from auth header
@@ -45,12 +45,13 @@ serve(async (req) => {
 
     console.log('Fetching data for user:', user.id);
 
-    // Load all tasks for the user
+    // Load all tasks for the user (limit to recent 100 for performance)
     const { data: tasks, error: tasksError } = await supabase
       .from('tasks')
       .select('*')
       .eq('user_id', user.id)
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false })
+      .limit(100);
 
     if (tasksError) {
       console.error('Error fetching tasks:', tasksError);
@@ -66,7 +67,8 @@ serve(async (req) => {
       .select('*')
       .eq('user_id', user.id)
       .gte('created_at', sixtyDaysAgo.toISOString())
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false })
+      .limit(50);
 
     if (eventsError) {
       console.error('Error fetching memory events:', eventsError);
@@ -75,9 +77,9 @@ serve(async (req) => {
 
     console.log(`Loaded ${tasks?.length || 0} tasks and ${memoryEvents?.length || 0} memory events`);
 
-    // Prepare data for OpenAI
+    // Prepare data for AI (limit data sent to reduce token usage)
     const dataForAnalysis = {
-      tasks: tasks?.map(t => ({
+      tasks: tasks?.slice(0, 50).map(t => ({
         title: t.title,
         category: t.category,
         completed: t.completed,
@@ -86,14 +88,14 @@ serve(async (req) => {
         context: t.context,
         is_time_based: t.is_time_based,
       })),
-      memory_events: memoryEvents?.map(e => ({
+      memory_events: memoryEvents?.slice(0, 20).map(e => ({
         event_type: e.event_type,
         payload: e.payload,
         created_at: e.created_at,
       })),
     };
 
-    // Call OpenAI
+    // Call Lovable AI Gateway
     const systemPrompt = `You are Malunita, an AI companion that detects life patterns and behavioral insights. 
 
 Analyze the user's tasks and memory events to identify:
@@ -118,16 +120,16 @@ Return ONLY valid JSON with this exact structure:
 
 Be specific and actionable in your insights. Each insight should be a clear, concise sentence.`;
 
-    console.log('Calling OpenAI for pattern analysis...');
+    console.log('Calling Lovable AI Gateway for pattern analysis...');
 
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${openAIApiKey}`,
+        'Authorization': `Bearer ${lovableApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: 'google/gemini-2.5-flash',
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: `Analyze this data and identify behavioral patterns:\n\n${JSON.stringify(dataForAnalysis, null, 2)}` }
@@ -139,8 +141,21 @@ Be specific and actionable in your insights. Each insight should be a clear, con
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('OpenAI API error:', response.status, errorText);
-      throw new Error(`OpenAI API error: ${response.status}`);
+      console.error('AI Gateway error:', response.status, errorText);
+      
+      if (response.status === 429) {
+        return new Response(JSON.stringify({ error: 'Rate limit exceeded, please try again later' }), {
+          status: 429,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      if (response.status === 402) {
+        return new Response(JSON.stringify({ error: 'AI credits exhausted' }), {
+          status: 402,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      throw new Error(`AI Gateway error: ${response.status}`);
     }
 
     const aiResponse = await response.json();
