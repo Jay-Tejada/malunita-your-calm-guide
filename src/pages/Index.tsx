@@ -38,7 +38,7 @@ import CompanionMessage from "@/components/CompanionMessage";
 import ProgressIndicator from "@/components/ProgressIndicator";
 import { useDailyRituals } from "@/hooks/useDailyRituals";
 import MorningRitual from "@/components/rituals/MorningRitual";
-import EveningRitual from "@/components/rituals/EveningRitual";
+import EveningSummary from "@/components/EveningSummary";
 import Search from "@/components/Search";
 
 interface AISummary {
@@ -456,19 +456,14 @@ const Index = () => {
         />
       )}
       
-      {/* Evening ritual */}
-      {showEveningRitual && (
-        <EveningRitual 
-          onComplete={() => {
-            completeEvening();
-            setShowEveningRitual(false);
-          }} 
-          onDismiss={() => {
-            dismissEvening();
-            setShowEveningRitual(false);
-          }} 
-        />
-      )}
+      {/* Evening summary */}
+      <EveningSummary 
+        isOpen={showEveningRitual}
+        onClose={() => {
+          completeEvening();
+          setShowEveningRitual(false);
+        }} 
+      />
       
       <ActionableBanner />
       <OfflineIndicator />
