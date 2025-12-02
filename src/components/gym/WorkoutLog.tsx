@@ -1,5 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+
+const DEFAULT_EXERCISES = [
+  'Bench Press', 'Squat', 'Deadlift', 'Pull-ups', 'Rows', 
+  'Overhead Press', 'Incline DB Press', 'Leg Press', 'Lunges',
+  'Lat Pulldown', 'Cable Rows', 'Dips', 'Curls', 'Tricep Extension'
+];
 
 interface ExerciseSet {
   id: string;
@@ -13,6 +19,28 @@ const WorkoutLog = () => {
   const [sets, setSets] = useState<ExerciseSet[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+
+  // Get unique exercises from history
+  const pastExercises = useMemo(() => {
+    const stored = localStorage.getItem('malunita_exercises');
+    return stored ? JSON.parse(stored) : DEFAULT_EXERCISES;
+  }, []);
+
+  // Filter suggestions as user types
+  useEffect(() => {
+    if (input.length < 2 || input.includes(' ')) {
+      setSuggestions([]);
+      return;
+    }
+    
+    const match = input.toLowerCase();
+    const filtered = pastExercises.filter((ex: string) => 
+      ex.toLowerCase().startsWith(match)
+    ).slice(0, 3);
+    
+    setSuggestions(filtered);
+  }, [input, pastExercises]);
 
   useEffect(() => {
     fetchTodaySets();
@@ -95,6 +123,14 @@ const WorkoutLog = () => {
         isPR: data.is_pr
       }]);
       setInput('');
+      
+      // Save exercise to localStorage for autocomplete
+      const stored = localStorage.getItem('malunita_exercises');
+      const exercises: string[] = stored ? JSON.parse(stored) : DEFAULT_EXERCISES;
+      if (!exercises.some(e => e.toLowerCase() === parsed.exercise.toLowerCase())) {
+        exercises.unshift(parsed.exercise);
+        localStorage.setItem('malunita_exercises', JSON.stringify(exercises.slice(0, 50)));
+      }
     }
   };
 
@@ -146,6 +182,22 @@ const WorkoutLog = () => {
         placeholder="bench 135x10"
         className="w-full bg-transparent border-b border-foreground/10 py-2 font-mono text-sm text-foreground/70 placeholder:text-foreground/30 focus:outline-none focus:border-foreground/20"
       />
+      
+      {/* Autocomplete suggestions */}
+      {suggestions.length > 0 && (
+        <div className="flex gap-2 mt-2">
+          {suggestions.map(s => (
+            <button
+              key={s}
+              onClick={() => setInput(s + ' ')}
+              className="text-xs px-2 py-1 bg-foreground/5 text-foreground/50 rounded hover:bg-foreground/10 transition-colors"
+            >
+              {s}
+            </button>
+          ))}
+        </div>
+      )}
+      
       <p className="text-[10px] text-foreground/30 mt-1">
         Format: exercise weight × reps
       </p>
