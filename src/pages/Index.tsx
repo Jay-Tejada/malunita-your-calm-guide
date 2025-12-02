@@ -33,7 +33,7 @@ import { FocusSection } from "@/components/home/FocusSection";
 import { OfflineIndicator } from "@/components/OfflineIndicator";
 import { VoiceSheet } from "@/components/mobile/VoiceSheet";
 import { useOfflineStatus } from "@/hooks/useOfflineStatus";
-import { SimpleOrb } from "@/components/mobile/SimpleOrb";
+import Orb from "@/components/Orb";
 import CompanionMessage from "@/components/CompanionMessage";
 import ProgressIndicator from "@/components/ProgressIndicator";
 import { useDailyRituals } from "@/hooks/useDailyRituals";
@@ -599,9 +599,9 @@ const Index = () => {
             </div>
             
             <div className={`transition-transform duration-200 ${showQuickCapture ? 'translate-y-5' : ''}`}>
-              <SimpleOrb
-                onTap={handleVoiceCapture}
-                onSwipeUp={() => setShowQuickCapture(true)}
+              <Orb
+                size={140}
+                onClick={handleVoiceCapture}
                 isRecording={voiceStatus.isListening}
                 isProcessing={voiceStatus.isProcessing}
               />
@@ -686,8 +686,9 @@ const Index = () => {
                     )}
                   </div>
                   
-                  <SimpleOrb
-                    onTap={() => setShowDesktopCapture(true)}
+                  <Orb
+                    size={180}
+                    onClick={() => setShowDesktopCapture(true)}
                     isRecording={voiceStatus.isListening}
                     isProcessing={voiceStatus.isProcessing}
                   />
