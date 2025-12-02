@@ -253,6 +253,26 @@ export default {
             transform: "scale(1.05)",
           },
         },
+        "breathe": {
+          "0%, 100%": {
+            transform: "scale(1)",
+            opacity: "1",
+          },
+          "50%": {
+            transform: "scale(1.03)",
+            opacity: "0.95",
+          },
+        },
+        "breathe-fast": {
+          "0%, 100%": {
+            transform: "scale(1)",
+            opacity: "1",
+          },
+          "50%": {
+            transform: "scale(1.05)",
+            opacity: "0.9",
+          },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -273,6 +293,8 @@ export default {
         "pulse-scale": "pulse-scale 2s ease-in-out infinite",
         "typing-dot": "typing-dot 0.6s ease-in-out infinite",
         "spin-continuous": "spin-continuous 20s linear infinite",
+        "breathe": "breathe 4s ease-in-out infinite",
+        "breathe-fast": "breathe-fast 2s ease-in-out infinite",
       },
       transitionDuration: {
         '2000': '2000ms',
