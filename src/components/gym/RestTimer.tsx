@@ -34,11 +34,28 @@ const RestTimer = ({
         setSeconds(s => {
           if (s <= 1) {
             setIsRunning(false);
+            
+            // Haptic feedback (mobile) - pattern: buzz, pause, buzz
+            if (navigator.vibrate) {
+              navigator.vibrate([200, 100, 200]);
+            }
+            
+            // Optional soft sound
+            try {
+              const audio = new Audio('/sounds/gentle-chime.mp3');
+              audio.volume = 0.3;
+              audio.play().catch(() => {}); // Ignore if blocked
+            } catch {}
+            
             onComplete?.();
-            // Gentle vibration if supported
-            if (navigator.vibrate) navigator.vibrate(200);
             return 0;
           }
+          
+          // Warning at 10 seconds
+          if (s === 10 && navigator.vibrate) {
+            navigator.vibrate(100);
+          }
+          
           return s - 1;
         });
       }, 1000);
