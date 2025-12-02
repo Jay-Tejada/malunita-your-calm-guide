@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import LastWorkoutSuggestion from './LastWorkoutSuggestion';
 
 const DEFAULT_EXERCISES = [
   'Bench Press', 'Squat', 'Deadlift', 'Pull-ups', 'Rows', 
@@ -20,6 +21,7 @@ const WorkoutLog = () => {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [currentExercise, setCurrentExercise] = useState<string | null>(null);
 
   // Get unique exercises from history
   const pastExercises = useMemo(() => {
@@ -27,16 +29,22 @@ const WorkoutLog = () => {
     return stored ? JSON.parse(stored) : DEFAULT_EXERCISES;
   }, []);
 
-  // Filter suggestions as user types
+  // Filter suggestions as user types and detect exercise name
   useEffect(() => {
+    // Check if input starts with a known exercise
+    const inputLower = input.toLowerCase();
+    const matchedExercise = pastExercises.find((ex: string) => 
+      inputLower.startsWith(ex.toLowerCase() + ' ')
+    );
+    setCurrentExercise(matchedExercise || null);
+
     if (input.length < 2 || input.includes(' ')) {
       setSuggestions([]);
       return;
     }
     
-    const match = input.toLowerCase();
     const filtered = pastExercises.filter((ex: string) => 
-      ex.toLowerCase().startsWith(match)
+      ex.toLowerCase().startsWith(inputLower)
     ).slice(0, 3);
     
     setSuggestions(filtered);
@@ -131,6 +139,10 @@ const WorkoutLog = () => {
         exercises.unshift(parsed.exercise);
         localStorage.setItem('malunita_exercises', JSON.stringify(exercises.slice(0, 50)));
       }
+      
+      // Save last set for this exercise (for suggestions)
+      const exerciseKey = `malunita_exercise_${parsed.exercise.toLowerCase().replace(/\s+/g, '_')}`;
+      localStorage.setItem(exerciseKey, JSON.stringify({ weight: parsed.weight, reps: parsed.reps }));
     }
   };
 
@@ -197,6 +209,9 @@ const WorkoutLog = () => {
           ))}
         </div>
       )}
+      
+      {/* Last workout suggestion */}
+      {currentExercise && <LastWorkoutSuggestion exercise={currentExercise} />}
       
       <p className="text-[10px] text-foreground/30 mt-1">
         Format: exercise weight × reps
