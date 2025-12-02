@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Plus, PenLine, Camera, Mic, Sparkles } from "lucide-react";
-import { PageHeader } from "@/components/journal/PageHeader";
+import { PageHeader } from "@/components/shared/PageHeader";
 import { JournalEntryList } from "@/components/journal/JournalEntryList";
 import { EmptyJournalState } from "@/components/journal/EmptyJournalState";
 import { NewEntryDialog } from "@/components/journal/NewEntryDialog";
