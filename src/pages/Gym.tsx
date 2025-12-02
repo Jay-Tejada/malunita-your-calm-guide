@@ -6,6 +6,7 @@ import { GymTaskList } from "@/components/tasks/GymTaskList";
 import { ShowCompletedToggle } from "@/components/shared/ShowCompletedToggle";
 import { MobileTaskCapture } from "@/components/shared/MobileTaskCapture";
 import { DesktopTaskCapture } from "@/components/shared/DesktopTaskCapture";
+import FastingTimer from "@/components/gym/FastingTimer";
 import { supabase } from "@/integrations/supabase/client";
 
 const Gym = () => {
@@ -40,8 +41,11 @@ const Gym = () => {
       </div>
 
       <div className="px-4 pt-4 pb-24 md:pb-0">
+        {/* Fasting Timer */}
+        <FastingTimer />
+        
         {/* Desktop capture input */}
-        <DesktopTaskCapture 
+        <DesktopTaskCapture
           placeholder="Add a fitness task..." 
           onCapture={handleCapture} 
         />
