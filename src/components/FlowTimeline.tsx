@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { Play, Check, Clock, Zap, Target, ClipboardList } from 'lucide-react';
 import { format } from 'date-fns';
+import { FlowSession as GeneratedFlowSession } from '@/utils/taskCategorizer';
 
 interface FlowSession {
   id: string;
@@ -16,11 +17,13 @@ interface FlowSession {
 
 interface FlowTimelineProps {
   sessions: FlowSession[];
+  suggestedSession?: GeneratedFlowSession | null;
   onStartSession: (id: string) => void;
   onViewSession: (id: string) => void;
+  onCreateSuggested?: () => void;
 }
 
-const FlowTimeline = ({ sessions, onStartSession, onViewSession }: FlowTimelineProps) => {
+const FlowTimeline = ({ sessions, suggestedSession, onStartSession, onViewSession, onCreateSuggested }: FlowTimelineProps) => {
   const icons: Record<string, JSX.Element> = {
     'tiny_task_fiesta': <Zap className="w-3.5 h-3.5" />,
     'focus_block': <Target className="w-3.5 h-3.5" />,
@@ -47,13 +50,29 @@ const FlowTimeline = ({ sessions, onStartSession, onViewSession }: FlowTimelineP
 
   if (sessions.length === 0) {
     return (
-      <div className="px-4 py-6 text-center">
-        <p className="text-sm text-foreground/40 mb-1">
-          Your day is wide open.
-        </p>
-        <p className="text-xs text-foreground/30">
-          Flow Sessions will appear here when created.
-        </p>
+      <div className="px-4 py-6">
+        {suggestedSession ? (
+          <div className="text-center">
+            <p className="text-sm text-foreground/50 mb-3">
+              I see a group of tasks that could work as a {suggestedSession.estimatedMinutes}-minute block.
+            </p>
+            <button
+              onClick={onCreateSuggested}
+              className="px-4 py-2 bg-foreground/5 hover:bg-foreground/10 rounded-lg text-sm text-foreground/60 transition-colors"
+            >
+              Create "{suggestedSession.label}"
+            </button>
+          </div>
+        ) : (
+          <div className="text-center">
+            <p className="text-sm text-foreground/40 mb-1">
+              Your day is wide open.
+            </p>
+            <p className="text-xs text-foreground/30">
+              Flow Sessions will appear here when created.
+            </p>
+          </div>
+        )}
       </div>
     );
   }

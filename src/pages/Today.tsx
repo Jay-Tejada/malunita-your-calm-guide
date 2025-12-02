@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, ArrowRight } from 'lucide-react';
 import { useTasks } from '@/hooks/useTasks';
@@ -8,12 +8,13 @@ import { MobileTaskCapture } from '@/components/shared/MobileTaskCapture';
 import { DesktopTaskCapture } from '@/components/shared/DesktopTaskCapture';
 import FlowTimeline from '@/components/FlowTimeline';
 import { useFlowSessions } from '@/hooks/useFlowSessions';
+import { generateFlowSessions } from '@/utils/taskCategorizer';
 
 const Today = () => {
   const navigate = useNavigate();
   const { tasks, updateTask } = useTasks();
   const { toast } = useToast();
-  const { sessions, startSession } = useFlowSessions();
+  const { sessions, startSession, createSession } = useFlowSessions();
   const [focusInput, setFocusInput] = useState('');
   const [showCompleted, setShowCompleted] = useState(false);
   const [completingTasks, setCompletingTasks] = useState<Set<string>>(new Set());
@@ -38,6 +39,14 @@ const Today = () => {
     month: 'long', 
     day: 'numeric' 
   });
+
+  // Suggest a flow session if none exist
+  const suggestedSession = useMemo(() => {
+    if (!tasks || sessions.length > 0) return null;
+    const availableTasks = tasks.filter(t => !t.completed);
+    const generated = generateFlowSessions(availableTasks);
+    return generated[0] || null;
+  }, [tasks, sessions]);
 
   const handleSetFocus = async (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && focusInput.trim()) {
@@ -114,20 +123,23 @@ const Today = () => {
         <p className="text-xs text-muted-foreground/40 text-center mb-4">{today}</p>
 
         {/* Flow Timeline */}
-        {sessions.length > 0 && (
-          <>
-            <FlowTimeline 
-              sessions={sessions}
-              onStartSession={(id) => {
-                startSession(id);
-              }}
-              onViewSession={(id) => {
-                // Could open a detail modal in the future
-                console.log('View session:', id);
-              }}
-            />
-            <div className="h-px bg-foreground/5 mx-0 my-4" />
-          </>
+        <FlowTimeline 
+          sessions={sessions}
+          suggestedSession={suggestedSession}
+          onStartSession={(id) => {
+            startSession(id);
+          }}
+          onViewSession={(id) => {
+            console.log('View session:', id);
+          }}
+          onCreateSuggested={async () => {
+            if (suggestedSession) {
+              await createSession(suggestedSession);
+            }
+          }}
+        />
+        {(sessions.length > 0 || suggestedSession) && (
+          <div className="h-px bg-foreground/5 mx-0 my-4" />
         )}
 
         {/* Desktop quick add */}
