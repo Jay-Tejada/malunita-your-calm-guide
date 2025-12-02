@@ -21,6 +21,8 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { initPerformanceMonitoring } from "@/lib/performance";
 import { NetworkStatusBanner } from "@/components/NetworkStatusBanner";
 import { ProgressProvider } from "@/contexts/ProgressContext";
+import { FocusTimerProvider } from "@/contexts/FocusTimerContext";
+import { FocusTimerFloating } from "@/components/FocusTimerFloating";
 
 // Lazy load all pages
 const Index = lazy(() => import("./pages/Index"));
@@ -239,9 +241,11 @@ const App = () => {
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
           <TooltipProvider>
             <ProgressProvider>
-              <Toaster />
-              <Sonner />
-              <NetworkStatusBanner />
+              <FocusTimerProvider>
+                <Toaster />
+                <Sonner />
+                <NetworkStatusBanner />
+                <FocusTimerFloating />
           
           {/* Ritual overlays */}
           <AnimatePresence>
@@ -297,6 +301,7 @@ const App = () => {
               </Routes>
             </Suspense>
           </BrowserRouter>
+              </FocusTimerProvider>
             </ProgressProvider>
         </TooltipProvider>
       </ThemeProvider>
