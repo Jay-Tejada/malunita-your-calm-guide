@@ -476,6 +476,54 @@ export type Database = {
           },
         ]
       }
+      flow_sessions: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          ended_at: string | null
+          id: string
+          reflection: string | null
+          session_type: string
+          started_at: string | null
+          status: string
+          target_duration_minutes: number
+          task_ids: string[]
+          tasks_completed: number | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          ended_at?: string | null
+          id?: string
+          reflection?: string | null
+          session_type: string
+          started_at?: string | null
+          status?: string
+          target_duration_minutes: number
+          task_ids?: string[]
+          tasks_completed?: number | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          ended_at?: string | null
+          id?: string
+          reflection?: string | null
+          session_type?: string
+          started_at?: string | null
+          status?: string
+          target_duration_minutes?: number
+          task_ids?: string[]
+          tasks_completed?: number | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       focus_embeddings: {
         Row: {
           cluster_label: string | null
