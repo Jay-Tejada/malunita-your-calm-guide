@@ -23,6 +23,7 @@ import { NetworkStatusBanner } from "@/components/NetworkStatusBanner";
 import { ProgressProvider } from "@/contexts/ProgressContext";
 import { FocusTimerProvider } from "@/contexts/FocusTimerContext";
 import { FocusTimerFloating } from "@/components/FocusTimerFloating";
+import { QuickCaptureProvider } from "@/contexts/QuickCaptureContext";
 
 // Lazy load all pages
 const Index = lazy(() => import("./pages/Index"));
@@ -243,6 +244,7 @@ const App = () => {
           <TooltipProvider>
             <ProgressProvider>
               <FocusTimerProvider>
+                <QuickCaptureProvider>
                 <Toaster />
                 <Sonner />
                 <NetworkStatusBanner />
@@ -303,6 +305,7 @@ const App = () => {
               </Routes>
             </Suspense>
           </BrowserRouter>
+                </QuickCaptureProvider>
               </FocusTimerProvider>
             </ProgressProvider>
         </TooltipProvider>

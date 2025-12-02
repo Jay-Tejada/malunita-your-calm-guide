@@ -12,11 +12,11 @@ import { toast } from "@/hooks/use-toast";
 import { useCompanionVisibility } from "@/state/useCompanionVisibility";
 import ActiveSessionBar from "@/components/ActiveSessionBar";
 import { useFlowSessions } from "@/hooks/useFlowSessions";
+import { useQuickCapture } from "@/contexts/QuickCaptureContext";
  
 export const Layout = () => {
   const [leftDrawerOpen, setLeftDrawerOpen] = useState(false);
   const [rightDrawerOpen, setRightDrawerOpen] = useState(false);
-  const [quickCaptureOpen, setQuickCaptureOpen] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
@@ -24,6 +24,7 @@ export const Layout = () => {
   const { createTasks } = useTasks();
   const { isVisible: isCompanionVisible, show: showCompanion, hide: hideCompanion } = useCompanionVisibility();
   const { activeSession, completeSession, abandonSession } = useFlowSessions();
+  const { isOpen: quickCaptureOpen, openQuickCapture, closeQuickCapture } = useQuickCapture();
 
   // Handle active session bar interactions
   const handleSessionTap = () => {
@@ -83,13 +84,13 @@ export const Layout = () => {
   const handleCloseModals = () => {
     setLeftDrawerOpen(false);
     setRightDrawerOpen(false);
-    setQuickCaptureOpen(false);
+    closeQuickCapture();
     setShowSearch(false);
   };
 
   // Setup keyboard shortcuts
   useKeyboardShortcuts({
-    onQuickCapture: () => setQuickCaptureOpen(true),
+    onQuickCapture: openQuickCapture,
     onFocusInput: handleFocusInput,
     onCloseModals: handleCloseModals,
   });
@@ -163,7 +164,6 @@ export const Layout = () => {
         onClose={() => setLeftDrawerOpen(false)}
         onNavigate={(path) => navigate(path)}
         onSearchOpen={() => setShowSearch(true)}
-        onOpenQuickCapture={() => setQuickCaptureOpen(true)}
       />
 
       {/* Right Companion Drawer */}
@@ -178,7 +178,7 @@ export const Layout = () => {
       {/* Quick Capture Modal */}
       <QuickCapture
         isOpen={quickCaptureOpen}
-        onClose={() => setQuickCaptureOpen(false)}
+        onClose={closeQuickCapture}
         variant="desktop"
       />
 
