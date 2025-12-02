@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useCallback } from "react";
 import { useTasks } from "@/hooks/useTasks";
 import { TaskRow } from "@/components/shared/TaskRow";
 import { useToast } from "@/hooks/use-toast";
@@ -18,19 +18,25 @@ export const SomedayTaskList = ({ showCompleted }: SomedayTaskListProps) => {
   const { tasks, isLoading, updateTask, deleteTask } = useTasks();
   const { toast } = useToast();
 
-  // Get someday tasks: scheduled = 'someday' OR (no due date AND category = 'someday')
-  const somedayTasks = tasks?.filter(t => {
-    const isSomedayTask = t.scheduled_bucket === 'someday' || 
-      (!t.scheduled_bucket && t.category === 'someday');
-    
-    if (showCompleted && t.completed) return isSomedayTask;
-    if (!showCompleted && t.completed) return false;
-    return isSomedayTask;
-  }).sort((a, b) => 
-    new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-  ) || [];
+  // Memoize filtered and sorted someday tasks
+  const somedayTasks = useMemo(() => 
+    [...(tasks || [])]
+      .filter(t => {
+        const isSomedayTask = t.scheduled_bucket === 'someday' || 
+          (!t.scheduled_bucket && t.category === 'someday');
+        
+        if (showCompleted && t.completed) return isSomedayTask;
+        if (!showCompleted && t.completed) return false;
+        return isSomedayTask;
+      })
+      .sort((a, b) => 
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      ),
+    [tasks, showCompleted]
+  );
 
-  const handleComplete = async (id: string) => {
+  // Memoize callbacks
+  const handleComplete = useCallback(async (id: string) => {
     await updateTask({
       id,
       updates: {
@@ -38,18 +44,17 @@ export const SomedayTaskList = ({ showCompleted }: SomedayTaskListProps) => {
         completed_at: new Date().toISOString(),
       }
     });
-  };
+  }, [updateTask]);
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = useCallback(async (id: string) => {
     await deleteTask(id);
-  };
+  }, [deleteTask]);
 
-  const handleEdit = (id: string) => {
-    // Edit functionality to be implemented
+  const handleEdit = useCallback((id: string) => {
     console.log('Edit task:', id);
-  };
+  }, []);
 
-  const handleMoveToToday = async (taskId: string) => {
+  const handleMoveToToday = useCallback(async (taskId: string) => {
     try {
       await updateTask({
         id: taskId,
@@ -70,7 +75,7 @@ export const SomedayTaskList = ({ showCompleted }: SomedayTaskListProps) => {
         duration: 2000,
       });
     }
-  };
+  }, [updateTask, toast]);
 
   if (isLoading) {
     return (

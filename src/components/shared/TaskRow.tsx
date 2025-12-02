@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, memo } from "react";
 import { Check, MoreHorizontal } from "lucide-react";
 import { Task } from "@/hooks/useTasks";
 import {
@@ -15,7 +15,7 @@ interface TaskRowProps {
   onEdit: (id: string) => void;
 }
 
-export const TaskRow = ({ task, onComplete, onDelete, onEdit }: TaskRowProps) => {
+export const TaskRow = memo(({ task, onComplete, onDelete, onEdit }: TaskRowProps) => {
   const [isCompleting, setIsCompleting] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
 
@@ -91,4 +91,6 @@ export const TaskRow = ({ task, onComplete, onDelete, onEdit }: TaskRowProps) =>
       </div>
     </div>
   );
-};
+});
+
+TaskRow.displayName = 'TaskRow';

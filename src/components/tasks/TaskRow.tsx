@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { Clock, Check, Circle, ChevronRight, Star, Lightbulb, MoreVertical, Edit2, Trash2, CalendarPlus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -21,7 +22,7 @@ interface TaskRowProps {
   onMoveToToday?: () => void;
 }
 
-export const TaskRow = ({ id, title, completed, category, onClick, isPrimaryFocus, onPlanThis, onEdit, onDelete, onMoveToToday }: TaskRowProps) => {
+export const TaskRow = memo(({ id, title, completed, category, onClick, isPrimaryFocus, onPlanThis, onEdit, onDelete, onMoveToToday }: TaskRowProps) => {
   const getStatusIcon = () => {
     if (completed) {
       return <Check className="w-3 h-3 text-primary/70" />;
@@ -146,4 +147,6 @@ export const TaskRow = ({ id, title, completed, category, onClick, isPrimaryFocu
       </DropdownMenu>
     </button>
   );
-};
+});
+
+TaskRow.displayName = 'TaskRow';

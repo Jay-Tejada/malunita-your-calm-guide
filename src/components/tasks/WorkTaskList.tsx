@@ -1,3 +1,4 @@
+import { useMemo, useCallback } from "react";
 import { useTasks } from "@/hooks/useTasks";
 import { useProjectTasks } from "@/hooks/useProjectTasks";
 import { TaskRow } from "@/components/shared/TaskRow";
@@ -10,14 +11,18 @@ export const WorkTaskList = ({ showCompleted }: WorkTaskListProps) => {
   const { tasks, isLoading, updateTask, deleteTask } = useTasks();
   const { data: projects } = useProjectTasks();
 
-  // Filter work tasks
-  const workTasks = tasks?.filter(t => {
-    if (showCompleted && t.completed) return t.category === 'work';
-    if (!showCompleted && t.completed) return false;
-    return t.category === 'work';
-  }) || [];
+  // Memoize filtered work tasks
+  const workTasks = useMemo(() => 
+    tasks?.filter(t => {
+      if (showCompleted && t.completed) return t.category === 'work';
+      if (!showCompleted && t.completed) return false;
+      return t.category === 'work';
+    }) || [], 
+    [tasks, showCompleted]
+  );
 
-  const handleComplete = async (id: string) => {
+  // Memoize callbacks to prevent re-renders
+  const handleComplete = useCallback(async (id: string) => {
     await updateTask({
       id,
       updates: {
@@ -25,29 +30,32 @@ export const WorkTaskList = ({ showCompleted }: WorkTaskListProps) => {
         completed_at: new Date().toISOString(),
       }
     });
-  };
+  }, [updateTask]);
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = useCallback(async (id: string) => {
     await deleteTask(id);
-  };
+  }, [deleteTask]);
 
-  const handleEdit = (id: string) => {
+  const handleEdit = useCallback((id: string) => {
     console.log('Edit task:', id);
-  };
+  }, []);
 
-  // Group by project
-  const tasksWithoutProjects = workTasks.filter(t => !t.plan_id);
-  const tasksWithProjects = workTasks.filter(t => t.plan_id);
-
-  // Group tasks by project
-  const tasksByProject = tasksWithProjects.reduce((acc, task) => {
-    const projectId = task.plan_id!;
-    if (!acc[projectId]) {
-      acc[projectId] = [];
-    }
-    acc[projectId].push(task);
-    return acc;
-  }, {} as Record<string, typeof workTasks>);
+  // Memoize grouped tasks
+  const { tasksWithoutProjects, tasksByProject } = useMemo(() => {
+    const withoutProjects = workTasks.filter(t => !t.plan_id);
+    const withProjects = workTasks.filter(t => t.plan_id);
+    
+    const byProject = withProjects.reduce((acc, task) => {
+      const projectId = task.plan_id!;
+      if (!acc[projectId]) {
+        acc[projectId] = [];
+      }
+      acc[projectId].push(task);
+      return acc;
+    }, {} as Record<string, typeof workTasks>);
+    
+    return { tasksWithoutProjects: withoutProjects, tasksByProject: byProject };
+  }, [workTasks]);
 
   if (isLoading) {
     return (
