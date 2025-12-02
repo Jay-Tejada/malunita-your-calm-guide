@@ -163,6 +163,7 @@ export const Layout = () => {
         onClose={() => setLeftDrawerOpen(false)}
         onNavigate={(path) => navigate(path)}
         onSearchOpen={() => setShowSearch(true)}
+        onOpenQuickCapture={() => setQuickCaptureOpen(true)}
       />
 
       {/* Right Companion Drawer */}

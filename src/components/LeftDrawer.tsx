@@ -29,6 +29,7 @@ interface LeftDrawerProps {
   onClose: () => void;
   onNavigate: (path: string) => void;
   onSearchOpen?: () => void;
+  onOpenQuickCapture?: () => void;
 }
 
 const coreCategories = [
@@ -54,7 +55,7 @@ const insightCategories = [
 
 const calendarCategory = { id: "calendar", label: "Calendar", filter: (task: any) => task.reminder_time !== null };
 
-export const LeftDrawer = ({ isOpen, onClose, onNavigate, onSearchOpen }: LeftDrawerProps) => {
+export const LeftDrawer = ({ isOpen, onClose, onNavigate, onSearchOpen, onOpenQuickCapture }: LeftDrawerProps) => {
   const navigate = useNavigate();
   const [drawerMode, setDrawerMode] = useState<DrawerMode>("root");
   const { tasks, updateTask, createTasks, deleteTask } = useTasks();
@@ -454,9 +455,10 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate, onSearchOpen }: LeftDr
                       onClick={() => {
                         hapticMedium();
                         onClose();
-                        requestAnimationFrame(() => {
-                          navigate('/inbox?focus=capture');
-                        });
+                        // Small delay to let drawer close before modal opens
+                        setTimeout(() => {
+                          onOpenQuickCapture?.();
+                        }, 100);
                       }}
                       className="w-full flex items-center justify-center gap-2 py-2.5 border border-foreground/10 rounded-lg text-sm text-foreground/60 hover:bg-foreground/[0.03] transition-colors mb-4"
                     >
