@@ -1,19 +1,18 @@
 import { useState, useMemo } from "react";
-import { TaskList } from "@/components/TaskList";
 import { useTasks, Task } from "@/hooks/useTasks";
 import { InboxActions } from "@/components/InboxActions";
 import { PlanningModePanel } from "@/components/planning/PlanningModePanel";
 import { usePlanningBreakdown } from "@/hooks/usePlanningBreakdown";
-import { TaskPageLayout } from "@/components/shared/TaskPageLayout";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { PageHeader } from "@/components/shared/PageHeader";
 import SmartTaskInput from "@/components/SmartTaskInput";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
-import { categorizeTask, getTaskTypeLabel, getTaskTypeIcon, TaskType } from "@/utils/taskCategorizer";
+import { categorizeTask, TaskType } from "@/utils/taskCategorizer";
 import { GroupedTaskList } from "@/components/inbox/GroupedTaskList";
-import { List, Layers } from "lucide-react";
+import { List, Layers, Sun, Moon, Trash2, Sparkles } from "lucide-react";
+import VirtualizedTaskList from "@/components/VirtualizedTaskList";
 
 
 interface TaskSuggestion {
@@ -30,6 +29,7 @@ const Inbox = () => {
   const { loading, error, result, runPlanningBreakdown } = usePlanningBreakdown();
   const [suggestions, setSuggestions] = useState<TaskSuggestion[]>([]);
   const [viewMode, setViewMode] = useState<'flat' | 'grouped'>('flat');
+  const [expandedTask, setExpandedTask] = useState<string | null>(null);
   const { toast } = useToast();
   const isMobile = useIsMobile();
   const queryClient = useQueryClient();
@@ -280,13 +280,67 @@ const Inbox = () => {
           
           {/* Task List - Flat or Grouped */}
           {viewMode === 'flat' ? (
-            <TaskList 
-              category="inbox" 
-              onPlanThis={handlePlanThis}
-              suggestions={suggestions}
-              onApplySuggestion={handleApplySuggestion}
-              onDismissSuggestion={handleDismissSuggestion}
-            />
+            inboxTasks.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-muted-foreground/40 text-sm">No tasks in inbox</p>
+              </div>
+            ) : (
+              <VirtualizedTaskList
+                tasks={inboxTasks}
+                estimatedItemHeight={expandedTask ? 100 : 56}
+                renderTask={(task: Task) => (
+                  <div key={task.id}>
+                    <div 
+                      onClick={() => setExpandedTask(expandedTask === task.id ? null : task.id)}
+                      className="flex items-start gap-3 px-4 py-3 cursor-pointer hover:bg-foreground/[0.02] transition-colors border-b border-foreground/5"
+                    >
+                      <button 
+                        onClick={(e) => { 
+                          e.stopPropagation(); 
+                          handleToggleComplete(task); 
+                        }}
+                        className="w-5 h-5 mt-0.5 rounded-full border border-foreground/20 hover:border-foreground/40 flex-shrink-0"
+                      />
+                      <p className="flex-1 font-mono text-sm text-foreground/70 leading-relaxed">
+                        {task.title}
+                      </p>
+                    </div>
+                    
+                    {expandedTask === task.id && (
+                      <div className="flex items-center gap-4 px-4 py-2 pl-12 bg-foreground/[0.015] border-b border-foreground/5">
+                        <button 
+                          onClick={() => { handleMoveToToday(task.id); setExpandedTask(null); }}
+                          className="flex items-center gap-1.5 text-xs text-foreground/50 hover:text-foreground/70"
+                        >
+                          <Sun className="w-3.5 h-3.5" />
+                          Today
+                        </button>
+                        <button 
+                          onClick={() => { updateTask({ id: task.id, updates: { scheduled_bucket: 'someday' } }); setExpandedTask(null); toast({ description: "Moved to someday" }); }}
+                          className="flex items-center gap-1.5 text-xs text-foreground/50 hover:text-foreground/70"
+                        >
+                          <Moon className="w-3.5 h-3.5" />
+                          Someday
+                        </button>
+                        <button 
+                          onClick={() => handlePlanThis(task.title)}
+                          className="flex items-center gap-1.5 text-xs text-foreground/50 hover:text-foreground/70"
+                        >
+                          <Sparkles className="w-3.5 h-3.5" />
+                          Plan
+                        </button>
+                        <button 
+                          onClick={() => { handleDeleteTask(task.id); setExpandedTask(null); }}
+                          className="flex items-center gap-1.5 text-xs text-red-500/70 hover:text-red-500 ml-auto"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+              />
+            )
           ) : groupedTasks ? (
             <GroupedTaskList
               groups={groupedTasks}
@@ -359,13 +413,67 @@ const Inbox = () => {
       
         {/* Task List - Flat or Grouped */}
         {viewMode === 'flat' ? (
-          <TaskList 
-            category="inbox" 
-            onPlanThis={handlePlanThis}
-            suggestions={suggestions}
-            onApplySuggestion={handleApplySuggestion}
-            onDismissSuggestion={handleDismissSuggestion}
-          />
+          inboxTasks.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground/40 text-sm">No tasks in inbox</p>
+            </div>
+          ) : (
+            <VirtualizedTaskList
+              tasks={inboxTasks}
+              estimatedItemHeight={expandedTask ? 100 : 56}
+              renderTask={(task: Task) => (
+                <div key={task.id}>
+                  <div 
+                    onClick={() => setExpandedTask(expandedTask === task.id ? null : task.id)}
+                    className="flex items-start gap-3 px-4 py-3 cursor-pointer hover:bg-foreground/[0.02] transition-colors border-b border-foreground/5"
+                  >
+                    <button 
+                      onClick={(e) => { 
+                        e.stopPropagation(); 
+                        handleToggleComplete(task); 
+                      }}
+                      className="w-5 h-5 mt-0.5 rounded-full border border-foreground/20 hover:border-foreground/40 flex-shrink-0"
+                    />
+                    <p className="flex-1 font-mono text-sm text-foreground/70 leading-relaxed">
+                      {task.title}
+                    </p>
+                  </div>
+                  
+                  {expandedTask === task.id && (
+                    <div className="flex items-center gap-4 px-4 py-2 pl-12 bg-foreground/[0.015] border-b border-foreground/5">
+                      <button 
+                        onClick={() => { handleMoveToToday(task.id); setExpandedTask(null); }}
+                        className="flex items-center gap-1.5 text-xs text-foreground/50 hover:text-foreground/70"
+                      >
+                        <Sun className="w-3.5 h-3.5" />
+                        Today
+                      </button>
+                      <button 
+                        onClick={() => { updateTask({ id: task.id, updates: { scheduled_bucket: 'someday' } }); setExpandedTask(null); toast({ description: "Moved to someday" }); }}
+                        className="flex items-center gap-1.5 text-xs text-foreground/50 hover:text-foreground/70"
+                      >
+                        <Moon className="w-3.5 h-3.5" />
+                        Someday
+                      </button>
+                      <button 
+                        onClick={() => handlePlanThis(task.title)}
+                        className="flex items-center gap-1.5 text-xs text-foreground/50 hover:text-foreground/70"
+                      >
+                        <Sparkles className="w-3.5 h-3.5" />
+                        Plan
+                      </button>
+                      <button 
+                        onClick={() => { handleDeleteTask(task.id); setExpandedTask(null); }}
+                        className="flex items-center gap-1.5 text-xs text-red-500/70 hover:text-red-500 ml-auto"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+            />
+          )
         ) : groupedTasks ? (
           <GroupedTaskList
             groups={groupedTasks}
