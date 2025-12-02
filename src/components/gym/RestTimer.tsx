@@ -140,6 +140,11 @@ const RestTimer = ({
     if (secs) setSeconds(secs);
     setShowTimer(true);
     setIsRunning(true);
+    
+    // Request notification permission on first use
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
   };
 
   if (!showTimer) {
