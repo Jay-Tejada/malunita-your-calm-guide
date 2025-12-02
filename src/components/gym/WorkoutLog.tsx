@@ -1,30 +1,53 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { Plus, Check, X, AlertCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { 
+  normalizeExerciseName, 
+  searchExercises,
+  NormalizationResult 
+} from '@/utils/exerciseNormalizer';
 import LastWorkoutSuggestion from './LastWorkoutSuggestion';
 import RestTimer from './RestTimer';
-import { normalizeExerciseName, searchExercises, getAllExercises } from '@/utils/exerciseNormalizer';
-
-const DEFAULT_EXERCISES = getAllExercises();
 
 interface ExerciseSet {
   id: string;
-  exercise: string;
-  weight: number;
-  reps: number;
+  exercise_name: string;
+  weight: number | null;
+  reps: number | null;
+  duration: number | null;
+  is_bodyweight: boolean;
+  created_at: string;
   isPR?: boolean;
 }
 
+interface ParsedExercise {
+  exercise: string;
+  weight: number | null;
+  reps: number | null;
+  duration?: number | null;
+  isBodyweight: boolean;
+}
+
+interface PendingConfirmation {
+  parsed: ParsedExercise;
+  normalization: NormalizationResult;
+}
+
 const WorkoutLog = () => {
+  const [inputValue, setInputValue] = useState('');
   const [sets, setSets] = useState<ExerciseSet[]>([]);
-  const [input, setInput] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
   const [suggestions, setSuggestions] = useState<string[]>([]);
-  const [currentExercise, setCurrentExercise] = useState<string | null>(null);
+  const [userExercises, setUserExercises] = useState<string[]>([]);
+  const [recentlyAdded, setRecentlyAdded] = useState<string | null>(null);
+  const [pendingConfirmation, setPendingConfirmation] = useState<PendingConfirmation | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [showRestTimer, setShowRestTimer] = useState(false);
   const [restSeconds, setRestSeconds] = useState(90);
-  const [userExercises, setUserExercises] = useState<string[]>([]);
+  const [currentExercise, setCurrentExercise] = useState<string | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  // Fetch user's past exercise names on mount
+  // Load user's exercise history
   useEffect(() => {
     const stored = localStorage.getItem('malunita_exercises');
     if (stored) {
@@ -32,35 +55,7 @@ const WorkoutLog = () => {
     }
   }, []);
 
-  // Filter suggestions as user types and detect exercise name
-  useEffect(() => {
-    // Extract exercise name from input for autocomplete
-    const match = input.match(/^(\d+\s+)?([a-zA-Z\s-]+)/);
-    if (match && match[2]) {
-      const exerciseQuery = match[2].trim();
-      
-      // Check if it's a known exercise (for LastWorkoutSuggestion)
-      const normalized = normalizeExerciseName(exerciseQuery);
-      if (!normalized.isNew || 
-          userExercises.some((ex: string) => ex.toLowerCase() === exerciseQuery.toLowerCase())) {
-        setCurrentExercise(normalized.canonical);
-      } else {
-        setCurrentExercise(null);
-      }
-      
-      // Get autocomplete suggestions (combined canonical + user history)
-      if (exerciseQuery.length >= 2 && !input.includes('x') && !input.includes('×')) {
-        const results = searchExercises(exerciseQuery, userExercises);
-        setSuggestions(results);
-      } else {
-        setSuggestions([]);
-      }
-    } else {
-      setCurrentExercise(null);
-      setSuggestions([]);
-    }
-  }, [input, userExercises]);
-
+  // Load today's sets from Supabase
   useEffect(() => {
     fetchTodaySets();
   }, []);
@@ -85,43 +80,161 @@ const WorkoutLog = () => {
     if (!error && data) {
       setSets(data.map(d => ({
         id: d.id,
-        exercise: d.exercise_name,
-        weight: d.weight || 0,
-        reps: d.reps || 0,
+        exercise_name: d.exercise_name,
+        weight: d.weight,
+        reps: d.reps,
+        duration: null,
+        is_bodyweight: !d.weight,
+        created_at: d.created_at || new Date().toISOString(),
         isPR: d.is_pr
       })));
     }
     setIsLoading(false);
   };
 
-  // Parse input like "bench 135x10" or "squat 225 x 5"
-  const parseSetInput = (text: string) => {
-    const match = text.match(/^(.+?)\s+(\d+)\s*(?:lbs|kg)?\s*[x×]\s*(\d+)$/i);
-    if (match) {
-      const normalized = normalizeExerciseName(match[1].trim());
+  // Update autocomplete suggestions as user types
+  useEffect(() => {
+    const match = inputValue.match(/^(\d+\s+)?([a-zA-Z\s-]+)/);
+    if (match && match[2] && match[2].trim().length >= 2) {
+      const exerciseQuery = match[2].trim();
+      
+      // Check if it's a known exercise (for LastWorkoutSuggestion)
+      const normalized = normalizeExerciseName(exerciseQuery);
+      if (!normalized.isNew || 
+          userExercises.some((ex: string) => ex.toLowerCase() === exerciseQuery.toLowerCase())) {
+        setCurrentExercise(normalized.canonical);
+      } else {
+        setCurrentExercise(null);
+      }
+      
+      // Only show suggestions before the x/× is typed
+      if (!inputValue.includes('x') && !inputValue.includes('×')) {
+        const results = searchExercises(exerciseQuery, userExercises);
+        setSuggestions(results);
+      } else {
+        setSuggestions([]);
+      }
+    } else {
+      setSuggestions([]);
+      setCurrentExercise(null);
+    }
+  }, [inputValue, userExercises]);
+
+  const parseWorkoutInput = (input: string): ParsedExercise | null => {
+    const trimmed = input.trim().toLowerCase();
+    if (!trimmed) return null;
+
+    // Pattern 1: "exercise weight x reps" (e.g., "bench 135x10")
+    const weightedPattern = /^(.+?)\s+(\d+(?:\.\d+)?)\s*(?:lbs?|kg)?\s*[x×]\s*(\d+)$/i;
+    const weightedMatch = trimmed.match(weightedPattern);
+    if (weightedMatch) {
       return {
-        exercise: normalized.canonical,
-        weight: parseInt(match[2]),
-        reps: parseInt(match[3]),
+        exercise: weightedMatch[1].trim(),
+        weight: parseFloat(weightedMatch[2]),
+        reps: parseInt(weightedMatch[3]),
+        isBodyweight: false,
       };
     }
+
+    // Pattern 2: "reps exercise" (e.g., "25 push-ups")
+    const repsFirstPattern = /^(\d+)\s+(.+)$/i;
+    const repsFirstMatch = trimmed.match(repsFirstPattern);
+    if (repsFirstMatch) {
+      return {
+        exercise: repsFirstMatch[2].trim(),
+        weight: null,
+        reps: parseInt(repsFirstMatch[1]),
+        isBodyweight: true,
+      };
+    }
+
+    // Pattern 3: "exercise x reps" or "exercise reps" (e.g., "push-ups x 25")
+    const exerciseFirstPattern = /^([a-zA-Z\s-]+?)\s*[x×]?\s*(\d+)$/i;
+    const exerciseFirstMatch = trimmed.match(exerciseFirstPattern);
+    if (exerciseFirstMatch) {
+      return {
+        exercise: exerciseFirstMatch[1].trim(),
+        weight: null,
+        reps: parseInt(exerciseFirstMatch[2]),
+        isBodyweight: true,
+      };
+    }
+
+    // Pattern 4: Time-based (e.g., "plank 60s")
+    const timePattern = /^(.+?)\s+(\d+)\s*(?:s|sec|seconds?)$/i;
+    const timeMatch = trimmed.match(timePattern);
+    if (timeMatch) {
+      return {
+        exercise: timeMatch[1].trim(),
+        weight: null,
+        reps: null,
+        duration: parseInt(timeMatch[2]),
+        isBodyweight: true,
+      };
+    }
+
     return null;
   };
 
-  const handleAddSet = async () => {
-    const parsed = parseSetInput(input);
-    if (!parsed) return;
+  const handleSubmit = (e?: React.FormEvent) => {
+    e?.preventDefault();
+    setError(null);
+    
+    const parsed = parseWorkoutInput(inputValue);
+    
+    if (!parsed) {
+      setError('Try: "25 push-ups" or "bench 135x10"');
+      return;
+    }
 
+    // Normalize the exercise name
+    const normalization = normalizeExerciseName(parsed.exercise);
+    
+    if (normalization.isNew && normalization.suggestions.length > 0) {
+      // Unknown exercise with suggestions - ask for confirmation
+      setPendingConfirmation({ parsed, normalization });
+    } else {
+      // Known exercise or no suggestions - add directly
+      addExerciseSet({ ...parsed, exercise: normalization.canonical });
+    }
+  };
+
+  const handleConfirmNewExercise = () => {
+    if (pendingConfirmation) {
+      addExerciseSet({
+        ...pendingConfirmation.parsed,
+        exercise: pendingConfirmation.normalization.canonical,
+      });
+      setPendingConfirmation(null);
+    }
+  };
+
+  const handleSelectSuggestion = (suggestion: string) => {
+    if (pendingConfirmation) {
+      addExerciseSet({
+        ...pendingConfirmation.parsed,
+        exercise: suggestion,
+      });
+      setPendingConfirmation(null);
+    }
+  };
+
+  const handleCancelConfirmation = () => {
+    setPendingConfirmation(null);
+    inputRef.current?.focus();
+  };
+
+  const addExerciseSet = async (parsed: ParsedExercise) => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
     // Get set number for this exercise today
     const exerciseSetsToday = sets.filter(
-      s => s.exercise.toLowerCase() === parsed.exercise.toLowerCase()
+      s => s.exercise_name.toLowerCase() === parsed.exercise.toLowerCase()
     );
     const setNumber = exerciseSetsToday.length + 1;
 
-    const { data, error } = await supabase
+    const { data, error: insertError } = await supabase
       .from('exercise_sets')
       .insert({
         user_id: user.id,
@@ -134,15 +247,19 @@ const WorkoutLog = () => {
       .select()
       .single();
 
-    if (!error && data) {
-      setSets([...sets, {
+    if (!insertError && data) {
+      const newSet: ExerciseSet = {
         id: data.id,
-        exercise: data.exercise_name,
-        weight: data.weight || 0,
-        reps: data.reps || 0,
+        exercise_name: data.exercise_name,
+        weight: data.weight,
+        reps: data.reps,
+        duration: parsed.duration || null,
+        is_bodyweight: parsed.isBodyweight,
+        created_at: data.created_at || new Date().toISOString(),
         isPR: data.is_pr
-      }]);
-      setInput('');
+      };
+
+      setSets(prev => [...prev, newSet]);
       
       // Auto-start rest timer
       setShowRestTimer(true);
@@ -157,16 +274,47 @@ const WorkoutLog = () => {
       // Save last set for this exercise (for suggestions)
       const exerciseKey = `malunita_exercise_${parsed.exercise.toLowerCase().replace(/\s+/g, '_')}`;
       localStorage.setItem(exerciseKey, JSON.stringify({ weight: parsed.weight, reps: parsed.reps }));
+      
+      // Visual feedback
+      setRecentlyAdded(newSet.id);
+      setTimeout(() => setRecentlyAdded(null), 1500);
+      
+      // Haptic feedback
+      if (navigator.vibrate) {
+        navigator.vibrate(50);
+      }
+      
+      // Clear and refocus
+      setInputValue('');
+      setSuggestions([]);
+      inputRef.current?.focus();
     }
   };
 
-  // Group sets by exercise
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleSubmit();
+    }
+  };
+
+  const selectAutocomplete = (exercise: string) => {
+    const repsMatch = inputValue.match(/^(\d+)\s+/);
+    if (repsMatch) {
+      setInputValue(`${repsMatch[1]} ${exercise}`);
+    } else {
+      setInputValue(exercise + ' ');
+    }
+    setSuggestions([]);
+    inputRef.current?.focus();
+  };
+
+  // Group sets by exercise name
   const groupedSets = sets.reduce((acc, set) => {
-    const key = set.exercise.toLowerCase();
-    if (!acc[key]) acc[key] = { name: set.exercise, sets: [] };
-    acc[key].sets.push(set);
+    if (!acc[set.exercise_name]) acc[set.exercise_name] = [];
+    acc[set.exercise_name].push(set);
     return acc;
-  }, {} as Record<string, { name: string; sets: ExerciseSet[] }>);
+  }, {} as Record<string, ExerciseSet[]>);
 
   if (isLoading) {
     return (
@@ -177,25 +325,38 @@ const WorkoutLog = () => {
   }
 
   return (
-    <div>
-      {/* Grouped exercises */}
-      {Object.entries(groupedSets).map(([key, { name, sets: exerciseSets }]) => (
-        <div key={key} className="mb-4">
-          <p className="font-mono text-sm text-foreground/70 capitalize mb-1">
-            {name}
-          </p>
-          <div className="pl-4 space-y-0.5">
-            {exerciseSets.map((set) => (
-              <p key={set.id} className="font-mono text-sm text-foreground/50">
-                {set.weight} × {set.reps}
-                {set.isPR && <span className="ml-2 text-amber-500 text-xs">PR</span>}
-              </p>
-            ))}
-          </div>
+    <div className="space-y-4">
+      {/* Today's log */}
+      {Object.keys(groupedSets).length > 0 && (
+        <div className="space-y-3">
+          {Object.entries(groupedSets).map(([exercise, exerciseSets]) => (
+            <div key={exercise}>
+              <p className="font-mono text-sm text-foreground/70 mb-1">{exercise}</p>
+              <div className="pl-4 space-y-0.5">
+                {exerciseSets.map((set) => (
+                  <div 
+                    key={set.id}
+                    className={`text-sm font-mono text-foreground/50 transition-colors ${
+                      recentlyAdded === set.id ? 'text-green-500/70 bg-green-500/5 -mx-2 px-2 py-0.5 rounded' : ''
+                    }`}
+                  >
+                    {set.duration ? (
+                      <span>{set.duration}s</span>
+                    ) : set.is_bodyweight ? (
+                      <span>× {set.reps}</span>
+                    ) : (
+                      <span>{set.weight} × {set.reps}</span>
+                    )}
+                    {set.isPR && <span className="ml-2 text-amber-500 text-xs">PR</span>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
         </div>
-      ))}
-      
-      {/* Rest Timer - auto-starts after logging */}
+      )}
+
+      {/* Rest Timer */}
       {showRestTimer && (
         <div className="mb-4">
           <RestTimer 
@@ -205,9 +366,9 @@ const WorkoutLog = () => {
           />
         </div>
       )}
-      
+
       {/* Rest time preference */}
-      <div className="flex items-center gap-2 mb-4">
+      <div className="flex items-center gap-2">
         <p className="text-[10px] text-foreground/40">Rest:</p>
         {[60, 90, 120, 180].map(s => (
           <button
@@ -223,51 +384,110 @@ const WorkoutLog = () => {
           </button>
         ))}
       </div>
-      
+
       {sets.length === 0 && (
         <p className="text-xs text-foreground/30 py-4">No sets logged yet</p>
       )}
-      
-      {/* Quick add input */}
-      <input
-        type="text"
-        value={input}
-        onChange={(e) => setInput(e.target.value)}
-        onKeyDown={(e) => e.key === 'Enter' && handleAddSet()}
-        placeholder="bench 135x10"
-        className="w-full bg-transparent border-b border-foreground/10 py-2 font-mono text-sm text-foreground/70 placeholder:text-foreground/30 focus:outline-none focus:border-foreground/20"
-      />
-      
-      {/* Autocomplete suggestions */}
-      {suggestions.length > 0 && (
-        <div className="flex flex-wrap gap-2 mt-2">
-          {suggestions.map(exercise => (
+
+      {/* Input area */}
+      <div>
+        <div className="flex items-center gap-2">
+          <input
+            ref={inputRef}
+            type="text"
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="bench 135x10"
+            className="flex-1 bg-transparent border-b border-foreground/10 py-2 font-mono text-sm text-foreground/70 placeholder:text-foreground/30 focus:outline-none focus:border-foreground/20"
+          />
+          <button
+            onClick={() => handleSubmit()}
+            className="p-2 bg-foreground/5 hover:bg-foreground/10 rounded-lg text-foreground/50"
+          >
+            <Plus className="w-4 h-4" />
+          </button>
+        </div>
+        
+        {/* Autocomplete suggestions */}
+        {suggestions.length > 0 && !pendingConfirmation && (
+          <div className="flex flex-wrap gap-2 mt-2">
+            {suggestions.map(exercise => (
+              <button
+                key={exercise}
+                onClick={() => selectAutocomplete(exercise)}
+                className="px-2 py-1 text-xs bg-foreground/5 hover:bg-foreground/10 rounded text-foreground/60 transition-colors"
+              >
+                {exercise}
+              </button>
+            ))}
+          </div>
+        )}
+        
+        {/* Last workout suggestion */}
+        {currentExercise && !pendingConfirmation && (
+          <LastWorkoutSuggestion exercise={currentExercise} />
+        )}
+        
+        {/* Error message */}
+        {error && !pendingConfirmation && (
+          <p className="text-xs text-red-400/70 mt-2">{error}</p>
+        )}
+        
+        {/* Hint */}
+        {!error && !pendingConfirmation && suggestions.length === 0 && !currentExercise && (
+          <p className="text-[10px] text-foreground/30 mt-1">
+            Format: exercise weight × reps
+          </p>
+        )}
+      </div>
+
+      {/* "Did you mean?" confirmation */}
+      {pendingConfirmation && (
+        <div className="p-4 bg-foreground/[0.02] border border-foreground/10 rounded-lg animate-fade-in">
+          <div className="flex items-start gap-3 mb-3">
+            <AlertCircle className="w-5 h-5 text-amber-500/70 flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm text-foreground/70 mb-1">
+                New exercise: <span className="font-mono">"{pendingConfirmation.normalization.canonical}"</span>
+              </p>
+              <p className="text-xs text-foreground/40">
+                Did you mean one of these?
+              </p>
+            </div>
+          </div>
+          
+          {/* Suggestions */}
+          <div className="space-y-2 mb-4">
+            {pendingConfirmation.normalization.suggestions.map(suggestion => (
+              <button
+                key={suggestion}
+                onClick={() => handleSelectSuggestion(suggestion)}
+                className="w-full flex items-center justify-between px-3 py-2 bg-foreground/5 hover:bg-foreground/10 rounded-lg text-sm text-foreground/70 transition-colors"
+              >
+                <span className="font-mono">{suggestion}</span>
+                <Check className="w-4 h-4 text-foreground/40" />
+              </button>
+            ))}
+          </div>
+          
+          {/* Actions */}
+          <div className="flex gap-2">
             <button
-              key={exercise}
-              onClick={() => {
-                // Replace exercise name in input with canonical
-                const repsMatch = input.match(/^(\d+)\s+/);
-                if (repsMatch) {
-                  setInput(`${repsMatch[1]} ${exercise}`);
-                } else {
-                  setInput(exercise + ' ');
-                }
-                setSuggestions([]);
-              }}
-              className="px-2 py-1 text-xs bg-foreground/5 hover:bg-foreground/10 rounded text-foreground/60 transition-colors"
+              onClick={handleConfirmNewExercise}
+              className="flex-1 px-3 py-2 bg-foreground/5 hover:bg-foreground/10 rounded-lg text-xs text-foreground/60 transition-colors"
             >
-              {exercise}
+              Keep "{pendingConfirmation.normalization.canonical}"
             </button>
-          ))}
+            <button
+              onClick={handleCancelConfirmation}
+              className="p-2 hover:bg-foreground/5 rounded-lg text-foreground/40 transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
         </div>
       )}
-      
-      {/* Last workout suggestion */}
-      {currentExercise && <LastWorkoutSuggestion exercise={currentExercise} />}
-      
-      <p className="text-[10px] text-foreground/30 mt-1">
-        Format: exercise weight × reps
-      </p>
     </div>
   );
 };
