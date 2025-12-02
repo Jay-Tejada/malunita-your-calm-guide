@@ -2,11 +2,9 @@ import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import LastWorkoutSuggestion from './LastWorkoutSuggestion';
 import RestTimer from './RestTimer';
-const DEFAULT_EXERCISES = [
-  'Bench Press', 'Squat', 'Deadlift', 'Pull-ups', 'Rows', 
-  'Overhead Press', 'Incline DB Press', 'Leg Press', 'Lunges',
-  'Lat Pulldown', 'Cable Rows', 'Dips', 'Curls', 'Tricep Extension'
-];
+import { normalizeExerciseName, searchExercises, getAllExercises } from '@/utils/exerciseNormalizer';
+
+const DEFAULT_EXERCISES = getAllExercises();
 
 interface ExerciseSet {
   id: string;
@@ -33,23 +31,31 @@ const WorkoutLog = () => {
 
   // Filter suggestions as user types and detect exercise name
   useEffect(() => {
-    // Check if input starts with a known exercise
-    const inputLower = input.toLowerCase();
-    const matchedExercise = pastExercises.find((ex: string) => 
-      inputLower.startsWith(ex.toLowerCase() + ' ')
-    );
-    setCurrentExercise(matchedExercise || null);
-
-    if (input.length < 2 || input.includes(' ')) {
+    // Extract exercise name from input for autocomplete
+    const match = input.match(/^(\d+\s+)?([a-zA-Z\s-]+)/);
+    if (match && match[2]) {
+      const exerciseQuery = match[2].trim();
+      
+      // Check if it's a known exercise (for LastWorkoutSuggestion)
+      const normalized = normalizeExerciseName(exerciseQuery);
+      if (normalized.toLowerCase() !== exerciseQuery.toLowerCase() || 
+          pastExercises.some((ex: string) => ex.toLowerCase() === exerciseQuery.toLowerCase())) {
+        setCurrentExercise(normalized);
+      } else {
+        setCurrentExercise(null);
+      }
+      
+      // Get autocomplete suggestions
+      if (exerciseQuery.length >= 2 && !input.includes('x') && !input.includes('×')) {
+        const results = searchExercises(exerciseQuery);
+        setSuggestions(results);
+      } else {
+        setSuggestions([]);
+      }
+    } else {
+      setCurrentExercise(null);
       setSuggestions([]);
-      return;
     }
-    
-    const filtered = pastExercises.filter((ex: string) => 
-      ex.toLowerCase().startsWith(inputLower)
-    ).slice(0, 3);
-    
-    setSuggestions(filtered);
   }, [input, pastExercises]);
 
   useEffect(() => {
@@ -90,7 +96,7 @@ const WorkoutLog = () => {
     const match = text.match(/^(.+?)\s+(\d+)\s*(?:lbs|kg)?\s*[x×]\s*(\d+)$/i);
     if (match) {
       return {
-        exercise: match[1].trim(),
+        exercise: normalizeExerciseName(match[1].trim()),
         weight: parseInt(match[2]),
         reps: parseInt(match[3]),
       };
@@ -231,14 +237,23 @@ const WorkoutLog = () => {
       
       {/* Autocomplete suggestions */}
       {suggestions.length > 0 && (
-        <div className="flex gap-2 mt-2">
-          {suggestions.map(s => (
+        <div className="flex flex-wrap gap-2 mt-2">
+          {suggestions.map(exercise => (
             <button
-              key={s}
-              onClick={() => setInput(s + ' ')}
-              className="text-xs px-2 py-1 bg-foreground/5 text-foreground/50 rounded hover:bg-foreground/10 transition-colors"
+              key={exercise}
+              onClick={() => {
+                // Replace exercise name in input with canonical
+                const repsMatch = input.match(/^(\d+)\s+/);
+                if (repsMatch) {
+                  setInput(`${repsMatch[1]} ${exercise}`);
+                } else {
+                  setInput(exercise + ' ');
+                }
+                setSuggestions([]);
+              }}
+              className="px-2 py-1 text-xs bg-foreground/5 hover:bg-foreground/10 rounded text-foreground/60 transition-colors"
             >
-              {s}
+              {exercise}
             </button>
           ))}
         </div>
