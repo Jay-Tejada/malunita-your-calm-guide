@@ -50,6 +50,7 @@ const HatchingGallery = lazy(() => import("./pages/HatchingGallery"));
 const Backup = lazy(() => import("./pages/Backup"));
 const Customization = lazy(() => import("./pages/Customization"));
 const Journal = lazy(() => import("./pages/Journal"));
+const JournalEntry = lazy(() => import("./pages/JournalEntry"));
 const MonthlyInsights = lazy(() => import("./pages/MonthlyInsights"));
 const Quests = lazy(() => import("./pages/Quests"));
 const Thoughts = lazy(() => import("./pages/Thoughts"));
@@ -272,6 +273,7 @@ const App = () => {
                   <Route path="/home-tasks" element={<HomeTasks />} />
                   <Route path="/gym" element={<Gym />} />
                   <Route path="/journal" element={<Journal />} />
+                  <Route path="/journal/:id" element={<JournalEntry />} />
                   <Route path="/calendar" element={<Calendar />} />
                   <Route path="/daily-session" element={<DailySession />} />
                   <Route path="/weekly-insights" element={<WeeklyInsights />} />
