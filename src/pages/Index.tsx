@@ -573,7 +573,7 @@ const Index = () => {
             {/* Companion zone - message and progress */}
             <div className="flex flex-col items-center gap-4">
               <div className="min-h-[20px]">
-                <CompanionMessage />
+                <CompanionMessage onStartSession={handleStartSession} />
               </div>
               <ProgressIndicator />
             </div>
@@ -676,7 +676,7 @@ const Index = () => {
                   {/* Companion zone - message and progress */}
                   <div className="flex flex-col items-center gap-4 mt-2">
                     <div className="min-h-[20px]">
-                      <CompanionMessage />
+                      <CompanionMessage onStartSession={handleStartSession} />
                     </div>
                     <ProgressIndicator />
                   </div>

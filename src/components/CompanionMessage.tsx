@@ -1,8 +1,13 @@
-import { useCompanionMessage } from '@/hooks/useCompanionMessage';
+import { useCompanionMessage, CompanionMessage as CompanionMessageType } from '@/hooks/useCompanionMessage';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { FlowSession } from '@/utils/taskCategorizer';
 
-const CompanionMessage = () => {
+interface CompanionMessageProps {
+  onStartSession?: (session: FlowSession) => void;
+}
+
+const CompanionMessage = ({ onStartSession }: CompanionMessageProps) => {
   const message = useCompanionMessage();
   const [isVisible, setIsVisible] = useState(false);
   const [displayedText, setDisplayedText] = useState('');
@@ -74,6 +79,16 @@ const CompanionMessage = () => {
           className="mt-2 text-[10px] text-foreground/30 hover:text-foreground/50 underline transition-colors"
         >
           {actionConfig.label}
+        </button>
+      )}
+      
+      {/* Flow session action */}
+      {message?.action?.type === 'start_session' && onStartSession && (
+        <button
+          onClick={() => onStartSession(message.action!.session)}
+          className="mt-2 text-xs text-foreground/40 hover:text-foreground/60 underline underline-offset-2"
+        >
+          Start session →
         </button>
       )}
     </div>
