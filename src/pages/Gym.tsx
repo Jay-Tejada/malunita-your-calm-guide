@@ -3,6 +3,7 @@ import { ChevronLeft } from 'lucide-react';
 import FastingTimer from '@/components/gym/FastingTimer';
 import WorkoutLog from '@/components/gym/WorkoutLog';
 import RecentWorkouts from '@/components/gym/RecentWorkouts';
+import BodyCheckIn from '@/components/gym/BodyCheckIn';
 
 const Gym = () => {
   const navigate = useNavigate();
@@ -46,6 +47,9 @@ const Gym = () => {
           </p>
           <RecentWorkouts />
         </div>
+        
+        {/* Body Check-In */}
+        <BodyCheckIn />
       </div>
     </div>
   );
