@@ -6,11 +6,14 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { MobileTaskCapture } from '@/components/shared/MobileTaskCapture';
 import { DesktopTaskCapture } from '@/components/shared/DesktopTaskCapture';
+import FlowTimeline from '@/components/FlowTimeline';
+import { useFlowSessions } from '@/hooks/useFlowSessions';
 
 const Today = () => {
   const navigate = useNavigate();
   const { tasks, updateTask } = useTasks();
   const { toast } = useToast();
+  const { sessions, startSession } = useFlowSessions();
   const [focusInput, setFocusInput] = useState('');
   const [showCompleted, setShowCompleted] = useState(false);
   const [completingTasks, setCompletingTasks] = useState<Set<string>>(new Set());
@@ -108,7 +111,24 @@ const Today = () => {
 
       <div className="px-4 pt-4 pb-24 md:pb-20">
         {/* Date */}
-        <p className="text-xs text-muted-foreground/40 text-center mb-6">{today}</p>
+        <p className="text-xs text-muted-foreground/40 text-center mb-4">{today}</p>
+
+        {/* Flow Timeline */}
+        {sessions.length > 0 && (
+          <>
+            <FlowTimeline 
+              sessions={sessions}
+              onStartSession={(id) => {
+                startSession(id);
+              }}
+              onViewSession={(id) => {
+                // Could open a detail modal in the future
+                console.log('View session:', id);
+              }}
+            />
+            <div className="h-px bg-foreground/5 mx-0 my-4" />
+          </>
+        )}
 
         {/* Desktop quick add */}
         {todayTasks.length > 0 && (
