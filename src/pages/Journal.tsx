@@ -149,24 +149,24 @@ export default function Journal() {
       <div className="fixed bottom-6 right-6 z-40">
         {/* Menu options */}
         {showNewMenu && (
-          <div className="absolute bottom-16 right-0 bg-background border border-foreground/10 rounded-lg shadow-xl py-2 min-w-[180px] animate-in fade-in slide-in-from-bottom-2 duration-200">
+          <div className="absolute bottom-16 right-0 bg-background border border-foreground/5 rounded-lg shadow-md py-2 min-w-[180px] animate-in fade-in slide-in-from-bottom-2 duration-200">
             <button
               onClick={() => handleOpenEntry('writer')}
-              className="w-full px-4 py-2.5 text-left text-sm text-foreground/70 hover:bg-foreground/5 flex items-center gap-3"
+              className="w-full px-4 py-2.5 text-left text-sm text-foreground/60 hover:text-foreground/90 hover:bg-foreground/[0.03] flex items-center gap-3 transition-colors"
             >
               <PenLine className="w-4 h-4 text-foreground/40" />
               Write Entry
             </button>
             <button
               onClick={() => handleOpenEntry('moment')}
-              className="w-full px-4 py-2.5 text-left text-sm text-foreground/70 hover:bg-foreground/5 flex items-center gap-3"
+              className="w-full px-4 py-2.5 text-left text-sm text-foreground/60 hover:text-foreground/90 hover:bg-foreground/[0.03] flex items-center gap-3 transition-colors"
             >
               <Camera className="w-4 h-4 text-foreground/40" />
               Add Moment
             </button>
             <button
               onClick={() => handleOpenEntry('voice')}
-              className="w-full px-4 py-2.5 text-left text-sm text-foreground/70 hover:bg-foreground/5 flex items-center gap-3"
+              className="w-full px-4 py-2.5 text-left text-sm text-foreground/60 hover:text-foreground/90 hover:bg-foreground/[0.03] flex items-center gap-3 transition-colors"
             >
               <Mic className="w-4 h-4 text-foreground/40" />
               Voice Note
@@ -176,9 +176,13 @@ export default function Journal() {
 
         <button
           onClick={() => setShowNewMenu(!showNewMenu)}
-          className="w-14 h-14 rounded-full bg-gradient-to-br from-amber-100 to-amber-200 shadow-lg flex items-center justify-center hover:shadow-xl transition-shadow"
+          className="w-14 h-14 rounded-full flex items-center justify-center hover:scale-105 transition-transform duration-200"
+          style={{
+            background: 'radial-gradient(circle at 30% 30%, #fffbf0, #fef3e2, #fde9c9)',
+            boxShadow: '0 10px 25px -5px rgba(200, 170, 120, 0.15), 0 8px 10px -6px rgba(200, 170, 120, 0.1)'
+          }}
         >
-          <Plus className={`w-6 h-6 text-amber-700/70 transition-transform duration-200 ${showNewMenu ? 'rotate-45' : ''}`} />
+          <Plus className={`w-6 h-6 text-foreground/40 transition-transform duration-200 ${showNewMenu ? 'rotate-45' : ''}`} />
         </button>
       </div>
 
