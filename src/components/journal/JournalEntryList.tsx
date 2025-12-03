@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { JournalEntryCard } from "./JournalEntryCard";
 
@@ -15,9 +16,10 @@ interface JournalEntry {
 
 interface JournalEntryListProps {
   onEditEntry?: (entry: JournalEntry) => void;
+  onHasEntries?: (hasEntries: boolean) => void;
 }
 
-export const JournalEntryList = ({ onEditEntry }: JournalEntryListProps) => {
+export const JournalEntryList = ({ onEditEntry, onHasEntries }: JournalEntryListProps) => {
   const { data: entries, isLoading } = useQuery({
     queryKey: ["journal_entries"],
     queryFn: async () => {
@@ -31,9 +33,21 @@ export const JournalEntryList = ({ onEditEntry }: JournalEntryListProps) => {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      return data;
+      return data || [];
     },
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
+    staleTime: 0,
   });
+
+  const hasEntries = entries && entries.length > 0;
+
+  // Notify parent about entries state
+  useEffect(() => {
+    if (onHasEntries) {
+      onHasEntries(hasEntries || false);
+    }
+  }, [hasEntries, onHasEntries]);
 
   if (isLoading) {
     return (
@@ -43,8 +57,8 @@ export const JournalEntryList = ({ onEditEntry }: JournalEntryListProps) => {
     );
   }
 
-  if (!entries || entries.length === 0) {
-    return null; // EmptyJournalState will show instead
+  if (!hasEntries) {
+    return null;
   }
 
   return (
