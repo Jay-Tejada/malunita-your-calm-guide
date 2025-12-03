@@ -1,5 +1,4 @@
 import { format } from "date-fns";
-import { useState } from "react";
 import { Camera, PenLine, Mic } from "lucide-react";
 
 interface JournalEntry {
@@ -15,11 +14,10 @@ interface JournalEntry {
 
 interface JournalEntryCardProps {
   entry: JournalEntry;
+  onEdit?: (entry: JournalEntry) => void;
 }
 
-export const JournalEntryCard = ({ entry }: JournalEntryCardProps) => {
-  const [isExpanded, setIsExpanded] = useState(false);
-
+export const JournalEntryCard = ({ entry, onEdit }: JournalEntryCardProps) => {
   const hasPhotos = entry.photos && entry.photos.length > 0;
 
   const EntryIcon = entry.entry_type === 'moment' ? Camera 
@@ -39,13 +37,19 @@ export const JournalEntryCard = ({ entry }: JournalEntryCardProps) => {
     }
   };
 
+  const handleClick = () => {
+    if (onEdit) {
+      onEdit(entry);
+    }
+  };
+
   return (
     <div
-      onClick={() => setIsExpanded(!isExpanded)}
+      onClick={handleClick}
       className="py-4 border-b border-foreground/5 cursor-pointer hover:bg-muted/5 transition-colors"
     >
-      {/* Photo grid - collapsed view */}
-      {hasPhotos && !isExpanded && (
+      {/* Photo grid */}
+      {hasPhotos && (
         <div className={`mb-3 grid gap-1 ${
           entry.photos!.length === 1 ? 'grid-cols-1' :
           entry.photos!.length === 2 ? 'grid-cols-2' :
@@ -84,39 +88,15 @@ export const JournalEntryCard = ({ entry }: JournalEntryCardProps) => {
             <span>{format(new Date(entry.created_at), "MMM d, yyyy")}</span>
           </div>
           
-          {isExpanded ? (
-            <div className="space-y-3">
-              {/* Full photos in expanded view */}
-              {hasPhotos && (
-                <div className="flex flex-wrap gap-2">
-                  {entry.photos!.map((photo, idx) => (
-                    <img 
-                      key={idx}
-                      src={photo} 
-                      alt="" 
-                      className="w-full max-w-xs aspect-square object-cover rounded-xl"
-                    />
-                  ))}
-                </div>
-              )}
-              <div className="whitespace-pre-wrap text-sm text-foreground/70">
-                <div className="font-medium mb-2">{entry.title}</div>
-                {entry.content}
-              </div>
-            </div>
-          ) : (
-            <>
-              {entry.title && (
-                <p className="font-mono text-sm text-foreground/70 mb-1 truncate">
-                  {entry.title}
-                </p>
-              )}
-              {entry.content && (
-                <p className="text-sm text-foreground/50 line-clamp-2">
-                  {entry.content.slice(0, 150)}{entry.content.length > 150 ? '...' : ''}
-                </p>
-              )}
-            </>
+          {entry.title && (
+            <p className="font-mono text-sm text-foreground/70 mb-1 truncate">
+              {entry.title}
+            </p>
+          )}
+          {entry.content && (
+            <p className="text-sm text-foreground/50 line-clamp-2">
+              {entry.content.slice(0, 150)}{entry.content.length > 150 ? '...' : ''}
+            </p>
           )}
         </div>
         

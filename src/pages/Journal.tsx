@@ -18,11 +18,19 @@ interface Suggestion {
   sessionId?: string;
 }
 
+interface JournalEntry {
+  id: string;
+  title: string;
+  content: string;
+  created_at: string;
+}
+
 export default function Journal() {
   const [showNewMenu, setShowNewMenu] = useState(false);
   const [showNewEntry, setShowNewEntry] = useState(false);
   const [entryMode, setEntryMode] = useState<EntryMode>('writer');
   const [prefillContent, setPrefillContent] = useState('');
+  const [editEntry, setEditEntry] = useState<JournalEntry | null>(null);
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
 
   useEffect(() => {
@@ -102,8 +110,16 @@ export default function Journal() {
   const handleOpenEntry = (mode: EntryMode, prefill = '') => {
     setEntryMode(mode);
     setPrefillContent(prefill);
+    setEditEntry(null);
     setShowNewEntry(true);
     setShowNewMenu(false);
+  };
+
+  const handleEditEntry = (entry: JournalEntry) => {
+    setEntryMode('writer');
+    setEditEntry(entry);
+    setPrefillContent('');
+    setShowNewEntry(true);
   };
 
   const handleSuggestionClick = (suggestion: Suggestion) => {
@@ -141,7 +157,7 @@ export default function Journal() {
       )}
 
       <div className="px-4 pt-4">
-        <JournalEntryList />
+        <JournalEntryList onEditEntry={handleEditEntry} />
         <EmptyJournalState />
       </div>
 
@@ -207,8 +223,10 @@ export default function Journal() {
           onClose={() => {
             setShowNewEntry(false);
             setPrefillContent('');
+            setEditEntry(null);
           }}
           prefillContent={prefillContent}
+          editEntry={editEntry}
         />
       )}
 
