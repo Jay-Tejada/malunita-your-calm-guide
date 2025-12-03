@@ -33,6 +33,7 @@ export const NewEntryDialog = ({ isOpen, onClose, prefillContent = '', editEntry
   const saveTimeoutRef = useRef<NodeJS.Timeout>();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const {
     images,
@@ -252,62 +253,68 @@ export const NewEntryDialog = ({ isOpen, onClose, prefillContent = '', editEntry
         </div>
       )}
 
-      {/* Header */}
-      <div className="flex items-center justify-between px-6 py-4 border-b border-foreground/5">
-        <div className="text-xs text-muted-foreground/40">
+      {/* Header - minimal with just date and close */}
+      <header className="flex items-center justify-between px-6 py-4">
+        <p className="text-xs uppercase tracking-widest text-muted-foreground/40 font-mono">
           {displayDate}
-        </div>
+        </p>
         <button
           onClick={onClose}
-          className="text-foreground/40 hover:text-foreground/60 transition-colors"
+          className="p-2 -mr-2 text-foreground/30 hover:text-foreground/50 transition-colors"
         >
           <X className="w-5 h-5" />
         </button>
-      </div>
+      </header>
 
       {/* Activity prompt */}
       {activityPrompt && (
-        <div className="px-6 py-3 bg-amber-500/5 border-b border-amber-500/10">
+        <div className="mx-6 mb-4 px-4 py-3 bg-amber-500/5 rounded-lg border border-amber-500/10">
           <div className="flex items-start gap-2">
             <Sparkles className="w-4 h-4 text-amber-500/70 mt-0.5 flex-shrink-0" />
-            <p className="text-sm text-foreground/60">
+            <p className="text-sm text-foreground/50">
               {activityPrompt}
             </p>
           </div>
         </div>
       )}
 
-      {/* Main content */}
-      <div className="flex-1 px-6 py-6 overflow-auto">
-        <textarea
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          placeholder="Start writing..."
-          autoFocus
-          className="w-full min-h-[30vh] font-mono text-base text-foreground/80 bg-transparent placeholder:text-foreground/30 focus:outline-none resize-none"
-        />
-
-        {/* Images */}
-        {(images.length > 0 || uploadingImages.length > 0) && (
-          <div className="mt-4">
-            <ImageGrid
-              images={images}
-              uploadingImages={uploadingImages}
-              onRemove={removeImage}
-              editable
+      {/* Main writing area - centered with max-width */}
+      <div className="flex-1 overflow-auto">
+        <div className="max-w-2xl mx-auto px-6 md:px-12 py-4">
+          <div className="border-l border-foreground/[0.03] pl-6">
+            <textarea
+              ref={textareaRef}
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              placeholder="Start writing..."
+              autoFocus
+              spellCheck={false}
+              className="w-full min-h-[50vh] font-mono text-sm text-foreground/70 leading-relaxed bg-transparent placeholder:text-foreground/20 focus:outline-none resize-none"
             />
+
+            {/* Images */}
+            {(images.length > 0 || uploadingImages.length > 0) && (
+              <div className="mt-6 pb-4">
+                <ImageGrid
+                  images={images}
+                  uploadingImages={uploadingImages}
+                  onRemove={removeImage}
+                  editable
+                />
+              </div>
+            )}
           </div>
-        )}
+        </div>
       </div>
 
-      {/* Footer with toolbar and Seal button */}
-      <div className="px-6 py-4 border-t border-foreground/5 flex items-center justify-between">
+      {/* Footer - minimal toolbar */}
+      <footer className="px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
           {/* Image upload button */}
           <button
             onClick={() => fileInputRef.current?.click()}
             disabled={isUploading}
-            className="p-2 text-foreground/40 hover:text-foreground/60 hover:bg-foreground/5 rounded-lg transition-colors"
+            className="p-2 text-foreground/30 hover:text-foreground/50 hover:bg-foreground/5 rounded-lg transition-colors"
             title="Add image"
           >
             <ImageIcon className="w-5 h-5" />
@@ -321,24 +328,31 @@ export const NewEntryDialog = ({ isOpen, onClose, prefillContent = '', editEntry
             className="hidden"
           />
 
-          <div className={`text-xs text-muted-foreground/40 transition-opacity duration-300 ${showSaved ? 'opacity-100' : 'opacity-0'}`}>
+          <span className={`text-[10px] uppercase tracking-widest text-muted-foreground/30 font-mono transition-opacity duration-300 ${showSaved ? 'opacity-100' : 'opacity-0'}`}>
             Saved
-          </div>
+          </span>
         </div>
         
         <button
           onClick={handleSeal}
           disabled={isSaving || isUploading}
-          className="flex items-center gap-2 px-4 py-2 rounded-full text-sm text-foreground/60 hover:text-foreground/90 hover:bg-foreground/5 transition-colors disabled:opacity-50"
+          className="flex items-center gap-2 px-5 py-2.5 rounded-full text-sm text-foreground/60 hover:text-foreground/80 transition-all disabled:opacity-50"
           style={{
-            background: (content.trim() || images.length > 0) ? 'radial-gradient(circle at 30% 30%, #fffbf0, #fef3e2, #fde9c9)' : undefined,
-            boxShadow: (content.trim() || images.length > 0) ? '0 4px 12px rgba(200, 170, 120, 0.15)' : undefined
+            background: (content.trim() || images.length > 0) 
+              ? 'radial-gradient(circle at 30% 30%, #fffbf0, #fef3e2, #fde9c9)' 
+              : 'transparent',
+            boxShadow: (content.trim() || images.length > 0) 
+              ? '0 4px 16px rgba(200, 170, 120, 0.12)' 
+              : undefined,
+            border: (content.trim() || images.length > 0) 
+              ? 'none' 
+              : '1px solid rgba(0,0,0,0.05)'
           }}
         >
           <Check className="w-4 h-4" />
           <span>{isUploading ? "Uploading..." : "Seal Entry"}</span>
         </button>
-      </div>
+      </footer>
     </div>
   );
 };
