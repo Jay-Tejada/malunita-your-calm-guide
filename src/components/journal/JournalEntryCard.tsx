@@ -1,5 +1,7 @@
+import { useState } from "react";
 import { format, isValid, isToday, isYesterday } from "date-fns";
 import { Camera, PenLine, Mic } from "lucide-react";
+import { ImageLightbox } from "./ImageLightbox";
 
 interface JournalEntry {
   id: string;
@@ -18,6 +20,7 @@ interface JournalEntryCardProps {
 }
 
 export const JournalEntryCard = ({ entry, onEdit }: JournalEntryCardProps) => {
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const hasPhotos = entry.photos && entry.photos.length > 0;
 
   const EntryIcon = entry.entry_type === 'moment' ? Camera 
@@ -62,45 +65,94 @@ export const JournalEntryCard = ({ entry, onEdit }: JournalEntryCardProps) => {
     }
   };
 
+  const handleImageClick = (e: React.MouseEvent, index: number) => {
+    e.stopPropagation();
+    setLightboxIndex(index);
+  };
+
   return (
-    <div
-      onClick={handleClick}
-      className="py-4 border-b border-foreground/5 cursor-pointer hover:bg-foreground/[0.02] transition-colors"
-    >
-      <div className="flex items-start gap-3">
-        <div className="flex-1 min-w-0">
-          {/* Date with icon */}
-          <div className="flex items-center gap-1.5 text-[11px] uppercase tracking-widest text-muted-foreground/40 font-mono">
-            <EntryIcon className="w-3 h-3" />
-            <span>{formatDate(entry.created_at)}</span>
+    <>
+      <div
+        onClick={handleClick}
+        className="py-4 border-b border-foreground/5 cursor-pointer hover:bg-foreground/[0.02] transition-colors"
+      >
+        <div className="flex items-start gap-3">
+          <div className="flex-1 min-w-0">
+            {/* Date with icon */}
+            <div className="flex items-center gap-1.5 text-[11px] uppercase tracking-widest text-muted-foreground/40 font-mono">
+              <EntryIcon className="w-3 h-3" />
+              <span>{formatDate(entry.created_at)}</span>
+            </div>
+            
+            {/* Title */}
+            {entry.title && (
+              <h3 className="text-base font-medium text-foreground/80 mt-1 truncate">
+                {entry.title}
+              </h3>
+            )}
+            
+            {/* Preview */}
+            {preview && (
+              <p className="text-sm text-muted-foreground/50 mt-2 line-clamp-2">
+                {preview}
+              </p>
+            )}
+
+            {/* Photo grid */}
+            {hasPhotos && (
+              <div className={`mt-3 grid gap-1.5 ${
+                entry.photos!.length === 1 ? 'grid-cols-1 max-w-[200px]' : 'grid-cols-2 max-w-[300px]'
+              }`}>
+                {entry.photos!.slice(0, 4).map((photo, index) => (
+                  <div 
+                    key={index} 
+                    className={`relative ${
+                      entry.photos!.length === 1 ? 'aspect-video' : 'aspect-square'
+                    }`}
+                    onClick={(e) => handleImageClick(e, index)}
+                  >
+                    <img 
+                      src={photo} 
+                      alt="" 
+                      className="w-full h-full object-cover rounded-lg hover:opacity-90 transition-opacity"
+                    />
+                    {/* Show +N overlay on 4th photo if more exist */}
+                    {entry.photos!.length > 4 && index === 3 && (
+                      <div className="absolute inset-0 bg-black/50 rounded-lg flex items-center justify-center">
+                        <span className="text-white font-mono text-sm">
+                          +{entry.photos!.length - 4}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
           
-          {/* Title */}
-          {entry.title && (
-            <h3 className="text-base font-medium text-foreground/80 mt-1 truncate">
-              {entry.title}
-            </h3>
-          )}
-          
-          {/* Preview */}
-          {preview && (
-            <p className="text-sm text-muted-foreground/50 mt-2 line-clamp-2">
-              {preview}
-            </p>
+          {/* Thumbnail on right if single image and no grid shown */}
+          {hasPhotos && entry.photos!.length === 1 && !preview && (
+            <div className="flex-shrink-0">
+              <img 
+                src={entry.photos![0]} 
+                alt="" 
+                className="w-10 h-10 rounded object-cover"
+                onClick={(e) => handleImageClick(e, 0)}
+              />
+            </div>
           )}
         </div>
-        
-        {/* Thumbnail */}
-        {hasPhotos && (
-          <div className="flex-shrink-0">
-            <img 
-              src={entry.photos![0]} 
-              alt="" 
-              className="w-10 h-10 rounded object-cover"
-            />
-          </div>
-        )}
       </div>
-    </div>
+
+      {/* Lightbox */}
+      {lightboxIndex !== null && entry.photos && (
+        <ImageLightbox
+          images={entry.photos}
+          currentIndex={lightboxIndex}
+          onClose={() => setLightboxIndex(null)}
+          onNavigate={setLightboxIndex}
+        />
+      )}
+    </>
   );
 };
