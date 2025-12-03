@@ -494,6 +494,20 @@ All colors MUST be HSL.
     }
   }
 
+  /* Mini orb breathing animation - slower, subtler */
+  @keyframes orb-breathe {
+    0%, 100% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.03);
+    }
+  }
+
+  .animate-orb-breathe {
+    animation: orb-breathe 8s ease-in-out infinite;
+  }
+
   /* Accessibility: reduce motion */
   @media (prefers-reduced-motion: reduce) {
     .orb,
