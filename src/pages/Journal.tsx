@@ -32,6 +32,7 @@ export default function Journal() {
   const [prefillContent, setPrefillContent] = useState('');
   const [editEntry, setEditEntry] = useState<JournalEntry | null>(null);
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
+  const [hasEntries, setHasEntries] = useState<boolean | null>(null);
 
   useEffect(() => {
     const fetchSuggestions = async () => {
@@ -157,8 +158,8 @@ export default function Journal() {
       )}
 
       <div className="px-4 pt-4">
-        <JournalEntryList onEditEntry={handleEditEntry} />
-        <EmptyJournalState />
+        <JournalEntryList onEditEntry={handleEditEntry} onHasEntries={setHasEntries} />
+        {hasEntries === false && <EmptyJournalState />}
       </div>
 
       {/* FAB with menu */}
