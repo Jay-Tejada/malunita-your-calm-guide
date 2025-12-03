@@ -482,6 +482,18 @@ All colors MUST be HSL.
     }
   }
 
+  /* Recording pulse animation */
+  @keyframes orb-pulse {
+    0%, 100% {
+      transform: scale(1);
+      filter: brightness(1);
+    }
+    50% {
+      transform: scale(1.03);
+      filter: brightness(1.05);
+    }
+  }
+
   /* Accessibility: reduce motion */
   @media (prefers-reduced-motion: reduce) {
     .orb,
