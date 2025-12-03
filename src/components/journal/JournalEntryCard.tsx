@@ -1,4 +1,4 @@
-import { format } from "date-fns";
+import { format, isValid } from "date-fns";
 import { Camera, PenLine, Mic } from "lucide-react";
 
 interface JournalEntry {
@@ -23,6 +23,17 @@ export const JournalEntryCard = ({ entry, onEdit }: JournalEntryCardProps) => {
   const EntryIcon = entry.entry_type === 'moment' ? Camera 
     : entry.entry_type === 'voice' ? Mic 
     : PenLine;
+
+  // Safe date formatting
+  const formatDate = (dateString: string | undefined) => {
+    if (!dateString) return "No date";
+    try {
+      const date = new Date(dateString);
+      return isValid(date) ? format(date, "MMM d, yyyy") : "No date";
+    } catch {
+      return "No date";
+    }
+  };
 
   const getMoodEmoji = (mood: string) => {
     switch (mood) {
@@ -85,7 +96,7 @@ export const JournalEntryCard = ({ entry, onEdit }: JournalEntryCardProps) => {
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 text-xs text-muted-foreground/40 mb-1">
             <EntryIcon className="w-3 h-3" />
-            <span>{format(new Date(entry.created_at), "MMM d, yyyy")}</span>
+            <span>{formatDate(entry.created_at)}</span>
           </div>
           
           {entry.title && (
