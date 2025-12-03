@@ -295,7 +295,7 @@ const Index = () => {
       const base64Audio = btoa(binary);
 
       // Transcribe via edge function
-      const { data, error } = await supabase.functions.invoke('voice-to-text', {
+      const { data, error } = await supabase.functions.invoke('transcribe-audio', {
         body: { audio: base64Audio }
       });
 
