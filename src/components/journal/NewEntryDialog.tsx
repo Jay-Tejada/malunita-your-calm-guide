@@ -258,9 +258,17 @@ export const NewEntryDialog = ({ isOpen, onClose, prefillContent = '', editEntry
 
       {/* Header - minimal with just date and close */}
       <header className="flex items-center justify-between px-6 py-4">
-        <p className="text-xs uppercase tracking-widest text-muted-foreground/40 font-mono">
-          {displayDate}
-        </p>
+        <div className="flex items-center gap-3">
+          <p className="text-xs uppercase tracking-widest text-muted-foreground/40 font-mono">
+            {displayDate}
+          </p>
+          {isReadOnly && editEntry && (
+            <span className="flex items-center gap-1.5 px-2 py-0.5 bg-amber-500/10 rounded-full text-[10px] uppercase tracking-wider text-amber-600/70 font-mono">
+              <Check className="w-3 h-3" />
+              Sealed
+            </span>
+          )}
+        </div>
         <button
           onClick={onClose}
           className="p-2 -mr-2 text-foreground/30 hover:text-foreground/50 transition-colors"
