@@ -24,6 +24,7 @@ import Search from "@/components/Search";
 import { useTasks } from "@/hooks/useTasks";
 import { useProfile } from "@/hooks/useProfile";
 import { StartMyDayModal } from "@/components/rituals/StartMyDayModal";
+import { TinyTaskFiestaCard } from "@/components/home/TinyTaskFiestaCard";
 
 const Index = () => {
   // Initialize daily reset monitoring
@@ -65,6 +66,9 @@ const Index = () => {
   
   // Start my day modal state
   const [showStartMyDay, setShowStartMyDay] = useState(false);
+  
+  // Tiny Task Fiesta card state - only shows after completing Start My Day flow
+  const [showTinyTaskFiesta, setShowTinyTaskFiesta] = useState(false);
   
   // Profile and tasks for modal
   const { profile } = useProfile();
@@ -324,6 +328,7 @@ const Index = () => {
         onNext={(intention) => {
           console.log("User's intention:", intention);
           setShowStartMyDay(false);
+          setShowTinyTaskFiesta(true); // Show fiesta card after completing flow
         }}
       />
       
@@ -362,14 +367,29 @@ const Index = () => {
               )}
             </div>
             
-            {/* Start my day button */}
-            <button
-              onClick={() => setShowStartMyDay(true)}
-              className="mt-8 flex items-center gap-2 px-5 py-2.5 rounded-full border border-foreground/10 text-xs text-foreground/40 hover:text-foreground/60 hover:bg-foreground/[0.02] transition-colors"
-            >
-              <Sun className="w-3.5 h-3.5" />
-              Start my day
-            </button>
+            {/* Start my day button - only show if fiesta card is not visible */}
+            {!showTinyTaskFiesta && (
+              <button
+                onClick={() => setShowStartMyDay(true)}
+                className="mt-8 flex items-center gap-2 px-5 py-2.5 rounded-full border border-foreground/10 text-xs text-foreground/40 hover:text-foreground/60 hover:bg-foreground/[0.02] transition-colors"
+              >
+                <Sun className="w-3.5 h-3.5" />
+                Start my day
+              </button>
+            )}
+            
+            {/* Tiny Task Fiesta Card - shows after Start My Day flow */}
+            {showTinyTaskFiesta && (
+              <div className="mt-8">
+                <TinyTaskFiestaCard
+                  onDismiss={() => setShowTinyTaskFiesta(false)}
+                  onStart={() => {
+                    console.log("Starting Tiny Task Fiesta");
+                    // TODO: Open actual fiesta session
+                  }}
+                />
+              </div>
+            )}
             
             {/* Search hint */}
             <p className="mt-6 text-[10px] text-muted-foreground/20">
@@ -411,14 +431,29 @@ const Index = () => {
               )}
             </div>
             
-            {/* Start my day button */}
-            <button
-              onClick={() => setShowStartMyDay(true)}
-              className="mt-8 flex items-center gap-2 px-5 py-2.5 rounded-full border border-foreground/10 text-xs text-foreground/40 hover:text-foreground/60 hover:bg-foreground/[0.02] transition-colors"
-            >
-              <Sun className="w-3.5 h-3.5" />
-              Start my day
-            </button>
+            {/* Start my day button - only show if fiesta card is not visible */}
+            {!showTinyTaskFiesta && (
+              <button
+                onClick={() => setShowStartMyDay(true)}
+                className="mt-8 flex items-center gap-2 px-5 py-2.5 rounded-full border border-foreground/10 text-xs text-foreground/40 hover:text-foreground/60 hover:bg-foreground/[0.02] transition-colors"
+              >
+                <Sun className="w-3.5 h-3.5" />
+                Start my day
+              </button>
+            )}
+            
+            {/* Tiny Task Fiesta Card - shows after Start My Day flow */}
+            {showTinyTaskFiesta && (
+              <div className="mt-8">
+                <TinyTaskFiestaCard
+                  onDismiss={() => setShowTinyTaskFiesta(false)}
+                  onStart={() => {
+                    console.log("Starting Tiny Task Fiesta");
+                    // TODO: Open actual fiesta session
+                  }}
+                />
+              </div>
+            )}
             
             {/* Search hint */}
             <p className="mt-6 text-[10px] text-muted-foreground/20">
