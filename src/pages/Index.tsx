@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useMemo, lazy, Suspense } from "react";
 import { Moon, Sun } from "lucide-react";
+import StartMyDayPhase1 from "@/components/rituals/StartMyDayPhase1";
 import { supabase } from "@/integrations/supabase/client";
 import { Auth } from "@/components/Auth";
 import { ThinkWithMe } from "@/components/ThinkWithMe";
@@ -711,6 +712,12 @@ const Index = () => {
               <div className="relative min-h-[85vh] flex flex-col">
               {/* CENTER STAGE - Focus task */}
                 <div className="flex-1 flex flex-col items-center justify-center">
+                  <StartMyDayPhase1 
+                    userName={profile?.companion_name || "Friend"}
+                    taskCount={tasks?.filter(t => t.scheduled_bucket === 'today' && !t.completed).length || 0}
+                    inboxCount={tasks?.filter(t => !t.scheduled_bucket && !t.completed).length || 0}
+                    onNext={(intention) => console.log("User's intention:", intention)}
+                  />
                   <FocusSection />
                   
                   {/* Flow session suggestion */}
