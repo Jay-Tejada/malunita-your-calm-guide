@@ -68,6 +68,8 @@ export interface Task {
     subtasks?: string[];
     scheduled_bucket?: string;
   } | null;
+  // Optimistic update flag - task is pending server confirmation
+  _optimistic?: boolean;
 }
 
 export const useTasks = () => {
@@ -127,17 +129,17 @@ export const useTasks = () => {
       if (error) throw error;
       return data;
     },
-    // Optimistic update for instant feedback
-    onMutate: async (newTasks) => {
-      await queryClient.cancelQueries({ queryKey: ['tasks'] });
+    // Optimistic update for instant feedback - NO async calls here for true instant UI
+    onMutate: (newTasks) => {
+      queryClient.cancelQueries({ queryKey: ['tasks'] });
       
       const previousTasks = queryClient.getQueryData<Task[]>(['tasks']);
       
-      // Create optimistic tasks with temp IDs
-      const { data: { user } } = await supabase.auth.getUser();
+      // Create optimistic tasks with temp IDs - use placeholder user_id (will be replaced on success)
+      const now = new Date().toISOString();
       const optimisticTasks = newTasks.map((task, index) => ({
         id: `temp-${Date.now()}-${index}`,
-        user_id: user?.id || '',
+        user_id: 'optimistic',
         title: task.title,
         completed: false,
         has_reminder: false,
@@ -145,8 +147,9 @@ export const useTasks = () => {
         is_time_based: false,
         input_method: 'text' as const,
         is_focus: false,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
+        created_at: now,
+        updated_at: now,
+        _optimistic: true, // Flag for pending visual state
         ...task,
       })) as Task[];
       
@@ -212,22 +215,19 @@ export const useTasks = () => {
       if (error) throw error;
       return data;
     },
-    // Optimistic update for instant feedback
-    onMutate: async ({ id, updates }) => {
-      // Cancel any outgoing refetches
-      await queryClient.cancelQueries({ queryKey: ['tasks'] });
+    // Optimistic update for instant feedback - synchronous for true instant UI
+    onMutate: ({ id, updates }) => {
+      queryClient.cancelQueries({ queryKey: ['tasks'] });
 
-      // Snapshot the previous value
       const previousTasks = queryClient.getQueryData<Task[]>(['tasks']);
 
-      // Optimistically update the cache
+      // Optimistically update the cache immediately
       queryClient.setQueryData<Task[]>(['tasks'], (old) =>
         old?.map((task) =>
-          task.id === id ? { ...task, ...updates } : task
+          task.id === id ? { ...task, ...updates, _optimistic: true } : task
         )
       );
 
-      // Return context with the snapshot
       return { previousTasks };
     },
     onError: (err, variables, context) => {
@@ -503,13 +503,13 @@ export const useTasks = () => {
 
       if (error) throw error;
     },
-    // Optimistic update for instant feedback
-    onMutate: async (id) => {
-      await queryClient.cancelQueries({ queryKey: ['tasks'] });
+    // Optimistic update for instant feedback - synchronous for true instant UI
+    onMutate: (id) => {
+      queryClient.cancelQueries({ queryKey: ['tasks'] });
       
       const previousTasks = queryClient.getQueryData<Task[]>(['tasks']);
       
-      // Optimistically remove the task
+      // Optimistically remove the task immediately
       queryClient.setQueryData<Task[]>(['tasks'], (old) =>
         old?.filter((task) => task.id !== id)
       );
