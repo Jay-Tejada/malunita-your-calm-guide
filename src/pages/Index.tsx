@@ -31,7 +31,6 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { ActionableBanner } from "@/components/home/ActionableBanner";
 import { FocusSection } from "@/components/home/FocusSection";
 import { OfflineIndicator } from "@/components/OfflineIndicator";
-import { VoiceSheet } from "@/components/mobile/VoiceSheet";
 import { useOfflineStatus } from "@/hooks/useOfflineStatus";
 import Orb from "@/components/Orb";
 import CompanionMessage from "@/components/CompanionMessage";
@@ -146,8 +145,11 @@ const Index = () => {
   const isMobile = useIsMobile();
   const { isOnline } = useOfflineStatus();
   
-  // Mobile-specific state
-  const [voiceSheetOpen, setVoiceSheetOpen] = useState(false);
+  // Direct orb recording state
+  const [isOrbRecording, setIsOrbRecording] = useState(false);
+  const [isOrbProcessing, setIsOrbProcessing] = useState(false);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
   
   // Daily rituals
   const {
@@ -479,32 +481,94 @@ const Index = () => {
   };
 
   const handleVoiceCapture = () => {
-    if (isMobile) {
-      setVoiceSheetOpen(true);
-    } else {
-      voiceRef.current?.startRecording();
+    if (isOrbRecording) {
+      // Stop recording
+      stopOrbRecording();
+    } else if (!isOrbProcessing) {
+      // Start recording
+      startOrbRecording();
     }
   };
 
-  // Handle voice transcript submission - create task in inbox
-  const handleVoiceTranscript = async (text: string) => {
+  const startOrbRecording = async () => {
     try {
-      await createTasks([{
-        title: text,
-        category: 'inbox',
-        input_method: 'voice',
-      }]);
-      
-      toast({
-        description: "Added to inbox",
-      });
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+      audioChunksRef.current = [];
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+
+      mediaRecorder.onstop = async () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        stream.getTracks().forEach(track => track.stop());
+        await processOrbRecording(audioBlob);
+      };
+
+      mediaRecorder.start();
+      setIsOrbRecording(true);
     } catch (error) {
-      console.error('Failed to create task from voice:', error);
+      console.error('Error accessing microphone:', error);
       toast({
-        title: "Error",
-        description: "Failed to add task. Please try again.",
+        title: "Microphone access needed",
+        description: "Please allow microphone access to use voice capture.",
         variant: "destructive"
       });
+    }
+  };
+
+  const stopOrbRecording = () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
+      mediaRecorderRef.current.stop();
+    }
+    setIsOrbRecording(false);
+    setIsOrbProcessing(true);
+  };
+
+  const processOrbRecording = async (audioBlob: Blob) => {
+    try {
+      // Convert to base64
+      const arrayBuffer = await audioBlob.arrayBuffer();
+      const bytes = new Uint8Array(arrayBuffer);
+      let binary = '';
+      for (let i = 0; i < bytes.length; i++) {
+        binary += String.fromCharCode(bytes[i]);
+      }
+      const base64Audio = btoa(binary);
+
+      // Transcribe via edge function
+      const { data, error } = await supabase.functions.invoke('voice-to-text', {
+        body: { audio: base64Audio }
+      });
+
+      if (error) throw error;
+
+      const text = data?.text?.trim();
+      if (text) {
+        await createTasks([{
+          title: text,
+          category: 'inbox',
+          input_method: 'voice',
+        }]);
+        
+        toast({
+          description: "Added to inbox",
+        });
+        handleTaskCreated();
+      }
+    } catch (error) {
+      console.error('Error processing voice:', error);
+      toast({
+        title: "Error",
+        description: "Failed to process voice. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsOrbProcessing(false);
     }
   };
 
@@ -598,13 +662,19 @@ const Index = () => {
               )}
             </div>
             
-            <div className={`transition-transform duration-200 ${showQuickCapture ? 'translate-y-5' : ''}`}>
+            <div className={`flex flex-col items-center transition-transform duration-200 ${showQuickCapture ? 'translate-y-5' : ''}`}>
               <Orb
                 size={140}
                 onClick={handleVoiceCapture}
-                isRecording={voiceStatus.isListening}
-                isProcessing={voiceStatus.isProcessing}
+                isRecording={isOrbRecording}
+                isProcessing={isOrbProcessing}
               />
+              {/* Status text below orb */}
+              {(isOrbRecording || isOrbProcessing) && (
+                <p className="mt-3 text-xs text-muted-foreground/40 animate-fade-in">
+                  {isOrbRecording ? 'listening...' : 'transcribing...'}
+                </p>
+              )}
             </div>
             
             {/* Companion zone - message and progress */}
@@ -615,13 +685,6 @@ const Index = () => {
               <ProgressIndicator />
             </div>
           </div>
-
-           {/* Voice sheet */}
-          <VoiceSheet
-            open={voiceSheetOpen}
-            onOpenChange={setVoiceSheetOpen}
-            onTranscriptSubmit={handleVoiceTranscript}
-          />
         </div>
       ) : (
         /* DESKTOP LAYOUT - Minimal & Focused */
@@ -686,15 +749,23 @@ const Index = () => {
                     )}
                   </div>
                   
-                  <Orb
-                    size={180}
-                    onClick={() => setShowDesktopCapture(true)}
-                    isRecording={voiceStatus.isListening}
-                    isProcessing={voiceStatus.isProcessing}
-                  />
+                  <div className="flex flex-col items-center">
+                    <Orb
+                      size={180}
+                      onClick={handleVoiceCapture}
+                      isRecording={isOrbRecording}
+                      isProcessing={isOrbProcessing}
+                    />
+                    {/* Status text below orb */}
+                    {(isOrbRecording || isOrbProcessing) && (
+                      <p className="mt-3 text-xs text-muted-foreground/40 animate-fade-in">
+                        {isOrbRecording ? 'listening...' : 'transcribing...'}
+                      </p>
+                    )}
+                  </div>
                   
                   {/* Keyboard hint - fades after first use */}
-                  {showKeyboardHint && (
+                  {showKeyboardHint && !isOrbRecording && !isOrbProcessing && (
                     <p className="text-[10px] text-muted-foreground/20 animate-fade-in">
                       Click orb or press Q to capture
                     </p>

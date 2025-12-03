@@ -77,19 +77,21 @@ const Orb = ({
   // Override colors based on recording/processing state
   const getActiveColors = () => {
     if (isRecording) {
+      // Warm coral gradient for recording state
       return {
-        primary: '#E8B4A4',
-        secondary: '#F5DDD4',
-        shadow: '#D4A090',
-        glow: 'rgba(232, 180, 164, 0.4)',
+        primary: '#FFF5F5',
+        secondary: '#FECACA',
+        shadow: '#F87171',
+        glow: 'rgba(248, 113, 113, 0.3)',
       };
     }
     if (isProcessing) {
+      // Soft blue/lavender for processing
       return {
-        primary: '#D4D8E8',
-        secondary: '#E4E8F5',
-        shadow: '#B0B8C8',
-        glow: 'rgba(212, 216, 232, 0.35)',
+        primary: '#F0F4FF',
+        secondary: '#E0E7FF',
+        shadow: '#A5B4FC',
+        glow: 'rgba(165, 180, 252, 0.3)',
       };
     }
     return palettes[timeOfDay];
@@ -119,7 +121,7 @@ const Orb = ({
     borderRadius: '50%',
     position: 'relative',
     cursor: onClick ? 'pointer' : 'default',
-    transition: 'all 2s ease-in-out, transform 0.15s ease-out',
+    transition: 'all 0.5s ease-in-out, transform 0.15s ease-out',
     transform: isPressed ? 'scale(0.97)' : 'scale(1)',
     background: `
       radial-gradient(
@@ -133,8 +135,9 @@ const Orb = ({
       inset -${size * 0.1}px -${size * 0.1}px ${size * 0.2}px rgba(0, 0, 0, 0.08),
       inset ${size * 0.05}px ${size * 0.05}px ${size * 0.15}px rgba(255, 255, 255, 0.5),
       0 ${size * 0.1}px ${size * 0.25}px rgba(0, 0, 0, 0.1),
-      0 0 ${size * 0.4}px ${colors.glow}
+      0 0 ${size * (isRecording ? 0.6 : 0.4)}px ${colors.glow}
     `,
+    animation: isRecording ? 'orb-pulse 2s ease-in-out infinite' : undefined,
   };
 
   return (
