@@ -19,9 +19,12 @@ interface NewEntryDialogProps {
   onClose: () => void;
   prefillContent?: string;
   editEntry?: ExistingEntry | null;
+  viewOnly?: boolean;
 }
 
-export const NewEntryDialog = ({ isOpen, onClose, prefillContent = '', editEntry }: NewEntryDialogProps) => {
+export const NewEntryDialog = ({ isOpen, onClose, prefillContent = '', editEntry, viewOnly = false }: NewEntryDialogProps) => {
+  // If editing an existing entry, it's always view-only (sealed)
+  const isReadOnly = viewOnly || !!editEntry;
   const [content, setContent] = useState(prefillContent);
   const [entryId, setEntryId] = useState<string | null>(null);
   const [showSaved, setShowSaved] = useState(false);
@@ -282,15 +285,21 @@ export const NewEntryDialog = ({ isOpen, onClose, prefillContent = '', editEntry
       <div className="flex-1 overflow-auto">
         <div className="max-w-2xl mx-auto px-6 md:px-12 py-4">
           <div className="border-l border-foreground/[0.03] pl-6">
-            <textarea
-              ref={textareaRef}
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              placeholder="Start writing..."
-              autoFocus
-              spellCheck={false}
-              className="w-full min-h-[50vh] font-mono text-sm text-foreground/70 leading-relaxed bg-transparent placeholder:text-foreground/20 focus:outline-none resize-none"
-            />
+            {isReadOnly ? (
+              <div className="w-full min-h-[50vh] font-mono text-sm text-foreground/70 leading-relaxed whitespace-pre-wrap">
+                {content || <span className="text-foreground/20">No content</span>}
+              </div>
+            ) : (
+              <textarea
+                ref={textareaRef}
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                placeholder="Start writing..."
+                autoFocus
+                spellCheck={false}
+                className="w-full min-h-[50vh] font-mono text-sm text-foreground/70 leading-relaxed bg-transparent placeholder:text-foreground/20 focus:outline-none resize-none"
+              />
+            )}
 
             {/* Images */}
             {(images.length > 0 || uploadingImages.length > 0) && (
@@ -298,8 +307,8 @@ export const NewEntryDialog = ({ isOpen, onClose, prefillContent = '', editEntry
                 <ImageGrid
                   images={images}
                   uploadingImages={uploadingImages}
-                  onRemove={removeImage}
-                  editable
+                  onRemove={isReadOnly ? undefined : removeImage}
+                  editable={!isReadOnly}
                 />
               </div>
             )}
@@ -310,48 +319,62 @@ export const NewEntryDialog = ({ isOpen, onClose, prefillContent = '', editEntry
       {/* Footer - minimal toolbar */}
       <footer className="px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          {/* Image upload button */}
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            disabled={isUploading}
-            className="p-2 text-foreground/30 hover:text-foreground/50 hover:bg-foreground/5 rounded-lg transition-colors"
-            title="Add image"
-          >
-            <ImageIcon className="w-5 h-5" />
-          </button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            multiple
-            onChange={handleFileSelect}
-            className="hidden"
-          />
+          {/* Image upload button - only show when not read-only */}
+          {!isReadOnly && (
+            <>
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isUploading}
+                className="p-2 text-foreground/30 hover:text-foreground/50 hover:bg-foreground/5 rounded-lg transition-colors"
+                title="Add image"
+              >
+                <ImageIcon className="w-5 h-5" />
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={handleFileSelect}
+                className="hidden"
+              />
 
-          <span className={`text-[10px] uppercase tracking-widest text-muted-foreground/30 font-mono transition-opacity duration-300 ${showSaved ? 'opacity-100' : 'opacity-0'}`}>
-            Saved
-          </span>
+              <span className={`text-[10px] uppercase tracking-widest text-muted-foreground/30 font-mono transition-opacity duration-300 ${showSaved ? 'opacity-100' : 'opacity-0'}`}>
+                Saved
+              </span>
+            </>
+          )}
         </div>
         
-        <button
-          onClick={handleSeal}
-          disabled={isSaving || isUploading}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-full text-sm text-foreground/60 hover:text-foreground/80 transition-all disabled:opacity-50"
-          style={{
-            background: (content.trim() || images.length > 0) 
-              ? 'radial-gradient(circle at 30% 30%, #fffbf0, #fef3e2, #fde9c9)' 
-              : 'transparent',
-            boxShadow: (content.trim() || images.length > 0) 
-              ? '0 4px 16px rgba(200, 170, 120, 0.12)' 
-              : undefined,
-            border: (content.trim() || images.length > 0) 
-              ? 'none' 
-              : '1px solid rgba(0,0,0,0.05)'
-          }}
-        >
-          <Check className="w-4 h-4" />
-          <span>{isUploading ? "Uploading..." : "Seal Entry"}</span>
-        </button>
+        {isReadOnly ? (
+          <button
+            onClick={onClose}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-full text-sm text-foreground/60 hover:text-foreground/80 transition-all border border-foreground/10"
+          >
+            <X className="w-4 h-4" />
+            <span>Close</span>
+          </button>
+        ) : (
+          <button
+            onClick={handleSeal}
+            disabled={isSaving || isUploading}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-full text-sm text-foreground/60 hover:text-foreground/80 transition-all disabled:opacity-50"
+            style={{
+              background: (content.trim() || images.length > 0) 
+                ? 'radial-gradient(circle at 30% 30%, #fffbf0, #fef3e2, #fde9c9)' 
+                : 'transparent',
+              boxShadow: (content.trim() || images.length > 0) 
+                ? '0 4px 16px rgba(200, 170, 120, 0.12)' 
+                : undefined,
+              border: (content.trim() || images.length > 0) 
+                ? 'none' 
+                : '1px solid rgba(0,0,0,0.05)'
+            }}
+          >
+            <Check className="w-4 h-4" />
+            <span>{isUploading ? "Uploading..." : "Seal Entry"}</span>
+          </button>
+        )}
       </footer>
     </div>
   );
