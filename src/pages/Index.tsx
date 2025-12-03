@@ -25,6 +25,7 @@ import { useTasks } from "@/hooks/useTasks";
 import { useProfile } from "@/hooks/useProfile";
 import { StartMyDayModal } from "@/components/rituals/StartMyDayModal";
 import { TinyTaskFiestaCard } from "@/components/home/TinyTaskFiestaCard";
+import TinyTaskParty from "@/components/TinyTaskParty";
 
 const Index = () => {
   // Initialize daily reset monitoring
@@ -70,13 +71,27 @@ const Index = () => {
   // Tiny Task Fiesta card state - only shows after completing Start My Day flow
   const [showTinyTaskFiesta, setShowTinyTaskFiesta] = useState(false);
   
+  // Tiny Task Party modal state
+  const [showTinyTaskParty, setShowTinyTaskParty] = useState(false);
+  
   // Profile and tasks for modal
   const { profile } = useProfile();
-  const { tasks, createTasks } = useTasks();
+  const { tasks, createTasks, updateTask } = useTasks();
+  
+  // Get tiny/small tasks for the party (tasks marked as tiny or inbox tasks)
+  const tinyTasks = tasks?.filter(t => 
+    !t.completed && 
+    (t.is_tiny_task || (!t.scheduled_bucket && t.title.length < 50))
+  ).slice(0, 5) || [];
   
   // Task counts for Start My Day modal
   const todayTaskCount = tasks?.filter(t => t.scheduled_bucket === 'today' && !t.completed).length || 0;
   const inboxCount = tasks?.filter(t => !t.scheduled_bucket && !t.completed).length || 0;
+  
+  // Handle completing a task in the party
+  const handlePartyTaskComplete = async (taskId: string) => {
+    await updateTask({ id: taskId, updates: { completed: true, completed_at: new Date().toISOString() } });
+  };
   
   // Quick capture state
   const [showQuickCapture, setShowQuickCapture] = useState(false);
@@ -384,8 +399,8 @@ const Index = () => {
                 <TinyTaskFiestaCard
                   onDismiss={() => setShowTinyTaskFiesta(false)}
                   onStart={() => {
-                    console.log("Starting Tiny Task Fiesta");
-                    // TODO: Open actual fiesta session
+                    setShowTinyTaskParty(true);
+                    setShowTinyTaskFiesta(false);
                   }}
                 />
               </div>
@@ -448,8 +463,8 @@ const Index = () => {
                 <TinyTaskFiestaCard
                   onDismiss={() => setShowTinyTaskFiesta(false)}
                   onStart={() => {
-                    console.log("Starting Tiny Task Fiesta");
-                    // TODO: Open actual fiesta session
+                    setShowTinyTaskParty(true);
+                    setShowTinyTaskFiesta(false);
                   }}
                 />
               </div>
@@ -515,6 +530,15 @@ const Index = () => {
       
       {/* Search modal */}
       <Search isOpen={showSearch} onClose={() => setShowSearch(false)} />
+      
+      {/* Tiny Task Party - full screen focus session */}
+      {showTinyTaskParty && tinyTasks.length > 0 && (
+        <TinyTaskParty
+          tasks={tinyTasks}
+          onComplete={handlePartyTaskComplete}
+          onClose={() => setShowTinyTaskParty(false)}
+        />
+      )}
     </>
   );
 };
