@@ -23,6 +23,7 @@ interface JournalEntry {
   title: string;
   content: string;
   created_at: string;
+  photos?: string[];
 }
 
 export default function Journal() {
