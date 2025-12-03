@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, lazy, Suspense } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Sun } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Auth } from "@/components/Auth";
@@ -22,16 +22,8 @@ import { useOfflineStatus } from "@/hooks/useOfflineStatus";
 import Orb from "@/components/Orb";
 import Search from "@/components/Search";
 import { useTasks } from "@/hooks/useTasks";
-
-// Lazy load heavy modal components
-const MorningSummary = lazy(() => import("@/components/MorningSummary"));
-
-// Minimal loader for modals
-const ModalLoader = () => (
-  <div className="flex items-center justify-center p-12">
-    <div className="w-6 h-6 rounded-full bg-gradient-to-br from-amber-100 to-amber-200 animate-pulse" />
-  </div>
-);
+import { useProfile } from "@/hooks/useProfile";
+import { StartMyDayModal } from "@/components/rituals/StartMyDayModal";
 
 const Index = () => {
   // Initialize daily reset monitoring
@@ -71,11 +63,16 @@ const Index = () => {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   
-  // Morning summary state
-  const [showMorningSummary, setShowMorningSummary] = useState(false);
+  // Start my day modal state
+  const [showStartMyDay, setShowStartMyDay] = useState(false);
   
-  // Tasks for voice capture
-  const { createTasks } = useTasks();
+  // Profile and tasks for modal
+  const { profile } = useProfile();
+  const { tasks, createTasks } = useTasks();
+  
+  // Task counts for Start My Day modal
+  const todayTaskCount = tasks?.filter(t => t.scheduled_bucket === 'today' && !t.completed).length || 0;
+  const inboxCount = tasks?.filter(t => !t.scheduled_bucket && !t.completed).length || 0;
   
   // Quick capture state
   const [showQuickCapture, setShowQuickCapture] = useState(false);
@@ -317,13 +314,18 @@ const Index = () => {
 
   return (
     <>
-      {/* Morning summary */}
-      <Suspense fallback={<ModalLoader />}>
-        <MorningSummary
-          isOpen={showMorningSummary}
-          onClose={() => setShowMorningSummary(false)}
-        />
-      </Suspense>
+      {/* Start My Day Modal */}
+      <StartMyDayModal
+        isOpen={showStartMyDay}
+        onClose={() => setShowStartMyDay(false)}
+        userName={profile?.companion_name || "Friend"}
+        taskCount={todayTaskCount}
+        inboxCount={inboxCount}
+        onNext={(intention) => {
+          console.log("User's intention:", intention);
+          setShowStartMyDay(false);
+        }}
+      />
       
       <OfflineIndicator />
       
@@ -362,7 +364,7 @@ const Index = () => {
             
             {/* Start my day button */}
             <button
-              onClick={() => setShowMorningSummary(true)}
+              onClick={() => setShowStartMyDay(true)}
               className="mt-8 flex items-center gap-2 px-5 py-2.5 rounded-full border border-foreground/10 text-xs text-foreground/40 hover:text-foreground/60 hover:bg-foreground/[0.02] transition-colors"
             >
               <Sun className="w-3.5 h-3.5" />
@@ -411,7 +413,7 @@ const Index = () => {
             
             {/* Start my day button */}
             <button
-              onClick={() => setShowMorningSummary(true)}
+              onClick={() => setShowStartMyDay(true)}
               className="mt-8 flex items-center gap-2 px-5 py-2.5 rounded-full border border-foreground/10 text-xs text-foreground/40 hover:text-foreground/60 hover:bg-foreground/[0.02] transition-colors"
             >
               <Sun className="w-3.5 h-3.5" />
