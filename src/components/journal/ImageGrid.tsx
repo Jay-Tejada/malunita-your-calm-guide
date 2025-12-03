@@ -27,20 +27,18 @@ export const ImageGrid = ({ images, uploadingImages, onRemove, editable = false 
 
   return (
     <>
-      <div className={`grid gap-2 ${
+      <div className={`grid gap-3 ${
         allImages.length === 1 ? "grid-cols-1" : "grid-cols-2"
       }`}>
         {allImages.map((img, index) => (
           <div
             key={img.type === "uploading" ? img.id : img.url}
-            className={`relative group ${
-              allImages.length === 1 ? "aspect-video" : "aspect-square"
-            }`}
+            className="relative group"
           >
             <img
               src={img.type === "uploading" ? img.preview : img.url}
               alt=""
-              className={`w-full h-full object-cover rounded-lg cursor-pointer transition-opacity ${
+              className={`w-full h-auto max-h-[400px] object-contain rounded-lg cursor-pointer transition-opacity bg-foreground/5 ${
                 img.type === "uploading" ? "opacity-60" : "hover:opacity-90"
               }`}
               onClick={() => {
