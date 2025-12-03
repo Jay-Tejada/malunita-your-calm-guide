@@ -2,7 +2,22 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { JournalEntryCard } from "./JournalEntryCard";
 
-export const JournalEntryList = () => {
+interface JournalEntry {
+  id: string;
+  title: string;
+  content: string;
+  created_at: string;
+  updated_at: string;
+  entry_type?: string;
+  photos?: string[];
+  mood?: string;
+}
+
+interface JournalEntryListProps {
+  onEditEntry?: (entry: JournalEntry) => void;
+}
+
+export const JournalEntryList = ({ onEditEntry }: JournalEntryListProps) => {
   const { data: entries, isLoading } = useQuery({
     queryKey: ["journal_entries"],
     queryFn: async () => {
@@ -35,7 +50,11 @@ export const JournalEntryList = () => {
   return (
     <div>
       {entries.map((entry) => (
-        <JournalEntryCard key={entry.id} entry={entry} />
+        <JournalEntryCard 
+          key={entry.id} 
+          entry={entry} 
+          onEdit={onEditEntry}
+        />
       ))}
     </div>
   );

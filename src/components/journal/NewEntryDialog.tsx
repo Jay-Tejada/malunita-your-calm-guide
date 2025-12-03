@@ -1,16 +1,24 @@
 import { useState, useEffect, useRef } from "react";
-import { X, Sparkles } from "lucide-react";
+import { X, Sparkles, Check } from "lucide-react";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
+
+interface ExistingEntry {
+  id: string;
+  title: string;
+  content: string;
+  created_at: string;
+}
 
 interface NewEntryDialogProps {
   isOpen: boolean;
   onClose: () => void;
   prefillContent?: string;
+  editEntry?: ExistingEntry | null;
 }
 
-export const NewEntryDialog = ({ isOpen, onClose, prefillContent = '' }: NewEntryDialogProps) => {
+export const NewEntryDialog = ({ isOpen, onClose, prefillContent = '', editEntry }: NewEntryDialogProps) => {
   const [content, setContent] = useState(prefillContent);
   const [entryId, setEntryId] = useState<string | null>(null);
   const [showSaved, setShowSaved] = useState(false);
@@ -20,20 +28,30 @@ export const NewEntryDialog = ({ isOpen, onClose, prefillContent = '' }: NewEntr
   const timeoutRef = useRef<NodeJS.Timeout>();
   const saveTimeoutRef = useRef<NodeJS.Timeout>();
 
-  // Set initial content from prefill
+  // Initialize from edit entry or prefill
   useEffect(() => {
-    if (isOpen && prefillContent) {
-      setContent(prefillContent);
+    if (isOpen) {
+      if (editEntry) {
+        setContent(editEntry.content);
+        setEntryId(editEntry.id);
+      } else if (prefillContent) {
+        setContent(prefillContent);
+        setEntryId(null);
+      } else {
+        setContent('');
+        setEntryId(null);
+      }
     }
-  }, [isOpen, prefillContent]);
+  }, [isOpen, editEntry, prefillContent]);
 
-  // Fetch activity-aware prompt
+  // Fetch activity-aware prompt (only for new entries)
   useEffect(() => {
     const fetchActivityPrompt = async () => {
+      if (editEntry) return; // Don't show prompt when editing
+      
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Get today's completed tasks
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       
@@ -45,7 +63,6 @@ export const NewEntryDialog = ({ isOpen, onClose, prefillContent = '' }: NewEntr
         .gte('completed_at', today.toISOString());
 
       if (completedTasks && completedTasks.length > 0) {
-        // Generate prompt based on activity
         if (completedTasks.length >= 5) {
           setActivityPrompt(`You crushed ${completedTasks.length} tasks today. What made today productive?`);
         } else if (completedTasks.length >= 3) {
@@ -56,10 +73,12 @@ export const NewEntryDialog = ({ isOpen, onClose, prefillContent = '' }: NewEntr
       }
     };
     
-    if (isOpen) {
+    if (isOpen && !editEntry) {
       fetchActivityPrompt();
+    } else {
+      setActivityPrompt(null);
     }
-  }, [isOpen]);
+  }, [isOpen, editEntry]);
 
   const saveEntry = async (text: string) => {
     if (!text.trim()) return;
@@ -69,11 +88,9 @@ export const NewEntryDialog = ({ isOpen, onClose, prefillContent = '' }: NewEntr
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      // Get first line as title
       const firstLine = text.split('\n')[0].slice(0, 100) || "Untitled";
 
       if (entryId) {
-        // Update existing entry
         const { error } = await supabase
           .from("journal_entries")
           .update({
@@ -84,7 +101,6 @@ export const NewEntryDialog = ({ isOpen, onClose, prefillContent = '' }: NewEntr
 
         if (error) throw error;
       } else {
-        // Create new entry
         const { data, error } = await supabase
           .from("journal_entries")
           .insert({
@@ -99,7 +115,6 @@ export const NewEntryDialog = ({ isOpen, onClose, prefillContent = '' }: NewEntr
         if (data) setEntryId(data.id);
       }
 
-      // Show saved indicator
       setShowSaved(true);
       if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
       saveTimeoutRef.current = setTimeout(() => setShowSaved(false), 2000);
@@ -125,19 +140,26 @@ export const NewEntryDialog = ({ isOpen, onClose, prefillContent = '' }: NewEntr
     };
   }, [content]);
 
-  // Save on blur
-  const handleBlur = () => {
-    if (content.trim()) saveEntry(content);
+  // Handle seal/done - save immediately and close
+  const handleSeal = async () => {
+    if (content.trim()) {
+      await saveEntry(content);
+    }
+    onClose();
   };
 
   if (!isOpen) return null;
+
+  const displayDate = editEntry 
+    ? format(new Date(editEntry.created_at), "MMMM d, yyyy")
+    : format(new Date(), "MMMM d, yyyy");
 
   return (
     <div className="fixed inset-0 bg-background z-50 flex flex-col">
       {/* Header */}
       <div className="flex items-center justify-between px-6 py-4 border-b border-foreground/5">
         <div className="text-xs text-muted-foreground/40">
-          {format(new Date(), "MMMM d, yyyy")}
+          {displayDate}
         </div>
         <button
           onClick={onClose}
@@ -164,18 +186,30 @@ export const NewEntryDialog = ({ isOpen, onClose, prefillContent = '' }: NewEntr
         <textarea
           value={content}
           onChange={(e) => setContent(e.target.value)}
-          onBlur={handleBlur}
           placeholder="Start writing..."
           autoFocus
           className="w-full h-full min-h-[50vh] font-mono text-base text-foreground/80 bg-transparent placeholder:text-foreground/30 focus:outline-none resize-none"
         />
       </div>
 
-      {/* Footer - Saved indicator */}
-      <div className="px-6 py-3 border-t border-foreground/5">
+      {/* Footer with Seal button */}
+      <div className="px-6 py-4 border-t border-foreground/5 flex items-center justify-between">
         <div className={`text-xs text-muted-foreground/40 transition-opacity duration-300 ${showSaved ? 'opacity-100' : 'opacity-0'}`}>
           Saved
         </div>
+        
+        <button
+          onClick={handleSeal}
+          disabled={isSaving}
+          className="flex items-center gap-2 px-4 py-2 rounded-full text-sm text-foreground/60 hover:text-foreground/90 hover:bg-foreground/5 transition-colors"
+          style={{
+            background: content.trim() ? 'radial-gradient(circle at 30% 30%, #fffbf0, #fef3e2, #fde9c9)' : undefined,
+            boxShadow: content.trim() ? '0 4px 12px rgba(200, 170, 120, 0.15)' : undefined
+          }}
+        >
+          <Check className="w-4 h-4" />
+          <span>Seal Entry</span>
+        </button>
       </div>
     </div>
   );
