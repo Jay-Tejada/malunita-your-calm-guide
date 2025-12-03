@@ -504,6 +504,35 @@ All colors MUST be HSL.
     }
   }
 
+  /* LivingOrb breathing animation */
+  @keyframes orbBreathing {
+    0% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.03);
+    }
+    100% {
+      transform: scale(1);
+    }
+  }
+
+  /* LivingOrb pulse animation for task completion */
+  @keyframes orbPulse {
+    0% {
+      transform: scale(1);
+      box-shadow: 0 0 0 rgba(240, 225, 210, 0.0);
+    }
+    50% {
+      transform: scale(1.07);
+      box-shadow: 0 0 25px rgba(240, 225, 210, 0.45);
+    }
+    100% {
+      transform: scale(1);
+      box-shadow: 0 0 0 rgba(240, 225, 210, 0.0);
+    }
+  }
+
   .animate-orb-breathe {
     animation: orb-breathe 8s ease-in-out infinite;
   }
