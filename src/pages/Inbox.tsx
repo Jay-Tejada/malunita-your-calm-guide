@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, Star, Briefcase, Home, Moon, Trash2 } from 'lucide-react';
+import { ChevronLeft, Star, Briefcase, Home, Moon, Trash2, Pencil } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
 const Inbox = () => {
@@ -8,6 +8,8 @@ const Inbox = () => {
   const [tasks, setTasks] = useState<any[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [expandedTask, setExpandedTask] = useState<string | null>(null);
+  const [editingTask, setEditingTask] = useState<string | null>(null);
+  const [editValue, setEditValue] = useState('');
   const [loading, setLoading] = useState(true);
 
   // Fetch inbox tasks
@@ -88,6 +90,25 @@ const Inbox = () => {
       .eq('id', taskId);
   };
 
+  const startEditing = (task: any) => {
+    setEditingTask(task.id);
+    setEditValue(task.title);
+  };
+
+  const saveEdit = async (taskId: string) => {
+    if (!editValue.trim()) return;
+    
+    setTasks(prev => prev.map(t => 
+      t.id === taskId ? { ...t, title: editValue.trim() } : t
+    ));
+    setEditingTask(null);
+
+    await supabase
+      .from('tasks')
+      .update({ title: editValue.trim() })
+      .eq('id', taskId);
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -122,7 +143,11 @@ const Inbox = () => {
             {/* Task row */}
             <div 
               className="flex items-start gap-3 px-4 py-3 cursor-pointer hover:bg-foreground/[0.01]"
-              onClick={() => setExpandedTask(expandedTask === task.id ? null : task.id)}
+              onClick={() => {
+                if (editingTask !== task.id) {
+                  setExpandedTask(expandedTask === task.id ? null : task.id);
+                }
+              }}
             >
               <button
                 onClick={(e) => {
@@ -131,9 +156,24 @@ const Inbox = () => {
                 }}
                 className="w-5 h-5 mt-0.5 rounded-full border border-foreground/20 hover:border-foreground/40 hover:bg-foreground/5 flex-shrink-0 transition-colors"
               />
-              <p className="flex-1 font-mono text-sm text-foreground/70 leading-relaxed">
-                {task.title}
-              </p>
+              {editingTask === task.id ? (
+                <input
+                  value={editValue}
+                  onChange={(e) => setEditValue(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') saveEdit(task.id);
+                    if (e.key === 'Escape') setEditingTask(null);
+                  }}
+                  onBlur={() => saveEdit(task.id)}
+                  autoFocus
+                  className="flex-1 font-mono text-sm text-foreground/70 leading-relaxed bg-transparent border-b border-foreground/20 focus:outline-none focus:border-foreground/40"
+                  onClick={(e) => e.stopPropagation()}
+                />
+              ) : (
+                <p className="flex-1 font-mono text-sm text-foreground/70 leading-relaxed">
+                  {task.title}
+                </p>
+              )}
             </div>
 
             {/* Expanded actions */}
@@ -168,8 +208,14 @@ const Inbox = () => {
                   Home
                 </button>
                 <button
+                  onClick={() => startEditing(task)}
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-foreground/50 hover:text-foreground/70 hover:bg-foreground/5 rounded transition-colors ml-auto"
+                >
+                  <Pencil className="w-3.5 h-3.5" />
+                </button>
+                <button
                   onClick={() => deleteTask(task.id)}
-                  className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-red-400/60 hover:text-red-400 hover:bg-red-400/5 rounded transition-colors ml-auto"
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-red-400/60 hover:text-red-400 hover:bg-red-400/5 rounded transition-colors"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>
