@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus, PenLine, Camera, Mic, Sparkles } from "lucide-react";
+import { Plus, PenLine, Camera, Mic, Sparkles, X } from "lucide-react";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { JournalEntryList } from "@/components/journal/JournalEntryList";
 import { EmptyJournalState } from "@/components/journal/EmptyJournalState";
@@ -176,13 +176,19 @@ export default function Journal() {
 
         <button
           onClick={() => setShowNewMenu(!showNewMenu)}
-          className="w-14 h-14 rounded-full flex items-center justify-center hover:scale-105 transition-transform duration-200"
+          className={`w-14 h-14 rounded-full flex items-center justify-center transition-all duration-300 ${
+            showNewMenu ? 'scale-110' : 'animate-orb-breathe hover:scale-110'
+          }`}
           style={{
-            background: 'radial-gradient(circle at 30% 30%, #fffbf0, #fef3e2, #fde9c9)',
-            boxShadow: '0 10px 25px -5px rgba(200, 170, 120, 0.15), 0 8px 10px -6px rgba(200, 170, 120, 0.1)'
+            background: 'radial-gradient(circle at 30% 30%, #fffbf0, #fef3e2, #fde9c9, #f5d9a8)',
+            boxShadow: showNewMenu 
+              ? '0 8px 32px rgba(200, 170, 120, 0.3)' 
+              : '0 8px 24px rgba(200, 170, 120, 0.2)'
           }}
         >
-          <Plus className={`w-6 h-6 text-foreground/40 transition-transform duration-200 ${showNewMenu ? 'rotate-45' : ''}`} />
+          {showNewMenu && (
+            <Plus className="w-5 h-5 text-foreground/30 rotate-45" />
+          )}
         </button>
       </div>
 
