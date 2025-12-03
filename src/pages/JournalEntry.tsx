@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { ChevronLeft, Trash2, X, ChevronRight } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
+import { MiniOrb } from '@/components/journal/MiniOrb';
 
 const JournalEntry = () => {
   const navigate = useNavigate();
@@ -49,7 +50,7 @@ const JournalEntry = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <p className="text-sm text-foreground/40">Loading...</p>
+        <p className="text-xs uppercase tracking-widest text-foreground/30 font-mono">Loading...</p>
       </div>
     );
   }
@@ -57,10 +58,10 @@ const JournalEntry = () => {
   if (!entry) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4">
-        <p className="text-sm text-foreground/40">Entry not found</p>
+        <p className="text-xs uppercase tracking-widest text-foreground/30 font-mono">Entry not found</p>
         <button 
           onClick={() => navigate('/journal')}
-          className="text-sm text-foreground/50 hover:text-foreground/70"
+          className="text-xs text-foreground/40 hover:text-foreground/60 transition-colors"
         >
           Back to Journal
         </button>
@@ -83,73 +84,88 @@ const JournalEntry = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="flex items-center justify-between px-4 py-3 border-b border-foreground/5 sticky top-0 bg-background z-10">
+      {/* Navigation bar */}
+      <header className="flex items-center justify-between px-4 py-3 sticky top-0 bg-background/80 backdrop-blur-sm z-10">
         <button onClick={() => navigate('/journal')} className="p-2 -ml-2">
-          <ChevronLeft className="w-5 h-5 text-foreground/40" />
+          <ChevronLeft className="w-5 h-5 text-foreground/30" />
         </button>
-        <span className="text-xs text-foreground/40">
-          {format(new Date(entry.created_at), 'EEEE, MMMM d, yyyy')}
-        </span>
-        <button onClick={handleDelete} className="p-2 -mr-2 text-foreground/40 hover:text-red-400">
-          <Trash2 className="w-5 h-5" />
+        <button onClick={handleDelete} className="p-2 -mr-2 text-foreground/30 hover:text-red-400 transition-colors">
+          <Trash2 className="w-4 h-4" />
         </button>
       </header>
 
-      {/* Photo gallery */}
-      {entry.photos && entry.photos.length > 0 && (
-        <div className={`grid gap-1 ${
-          entry.photos.length === 1 ? 'grid-cols-1' :
-          entry.photos.length === 2 ? 'grid-cols-2' :
-          'grid-cols-3'
-        }`}>
-          {entry.photos.map((photo: string, index: number) => (
-            <button
-              key={index}
-              onClick={() => setLightboxPhoto(index)}
-              className={`relative ${
-                entry.photos.length === 1 ? 'aspect-video' : 'aspect-square'
-              } overflow-hidden`}
-            >
-              <img 
-                src={photo} 
-                alt="" 
-                className="w-full h-full object-cover hover:opacity-90 transition-opacity"
-              />
-            </button>
-          ))}
-        </div>
-      )}
+      {/* Main content area */}
+      <div className="max-w-2xl mx-auto px-6 md:px-12">
+        {/* Header */}
+        <header className="pt-8 md:pt-12 mb-12">
+          <p className="text-xs uppercase tracking-widest text-muted-foreground/40 font-mono mb-3">
+            {format(new Date(entry.created_at), 'MMMM d, yyyy')}
+          </p>
+          {entry.title && (
+            <h1 className="text-xl font-light text-foreground/70 tracking-wide">
+              {entry.title}
+            </h1>
+          )}
+          {entry.mood && (
+            <div className="mt-4">
+              <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground/40">
+                {getMoodEmoji(entry.mood)}
+                <span className="capitalize">{entry.mood}</span>
+              </span>
+            </div>
+          )}
+        </header>
 
-      {/* Mood badge */}
-      {entry.mood && (
-        <div className="px-4 pt-4">
-          <span className="inline-flex items-center gap-1.5 px-2 py-1 bg-foreground/5 rounded-full text-sm">
-            {getMoodEmoji(entry.mood)}
-            <span className="text-xs text-foreground/50 capitalize">{entry.mood}</span>
-          </span>
-        </div>
-      )}
+        {/* Writing surface with optional guide line */}
+        <div className="border-l border-foreground/[0.03] pl-6">
+          {/* Content */}
+          <article className="text-foreground/70 leading-relaxed font-mono text-sm whitespace-pre-wrap">
+            {entry.content?.split('\n\n').map((paragraph: string, index: number) => (
+              <p 
+                key={index} 
+                className={`mb-6 ${index === 0 ? 'first-letter:text-lg first-letter:font-medium' : ''}`}
+              >
+                {paragraph}
+              </p>
+            ))}
+          </article>
 
-      {/* Content */}
-      <div className="px-4 py-4">
-        {entry.title && (
-          <h1 className="font-mono text-lg text-foreground/80 mb-3">
-            {entry.title}
-          </h1>
-        )}
-        <div className="font-mono text-sm text-foreground/70 leading-relaxed whitespace-pre-wrap">
-          {entry.content}
+          {/* Photo gallery */}
+          {entry.photos && entry.photos.length > 0 && (
+            <div className={`mt-10 grid gap-3 ${
+              entry.photos.length === 1 ? 'grid-cols-1' :
+              'grid-cols-2'
+            }`}>
+              {entry.photos.map((photo: string, index: number) => (
+                <button
+                  key={index}
+                  onClick={() => setLightboxPhoto(index)}
+                  className={`relative overflow-hidden rounded-lg ${
+                    entry.photos.length === 1 ? 'aspect-video' : 'aspect-square'
+                  }`}
+                >
+                  <img 
+                    src={photo} 
+                    alt="" 
+                    className="w-full h-full object-cover hover:opacity-90 transition-opacity"
+                  />
+                </button>
+              ))}
+            </div>
+          )}
         </div>
+
+        {/* Footer metadata */}
+        <footer className="mt-16 mb-24 pt-6 border-t border-foreground/5">
+          <div className="flex items-center justify-between text-[10px] uppercase tracking-widest text-foreground/20 font-mono">
+            <span>{entry.content?.split(/\s+/).filter(Boolean).length || 0} words</span>
+            <span>{format(new Date(entry.created_at), 'h:mm a')}</span>
+          </div>
+        </footer>
       </div>
 
-      {/* Metadata */}
-      <div className="px-4 py-4 border-t border-foreground/5">
-        <div className="flex items-center justify-between text-xs text-foreground/30">
-          <span>{entry.content?.split(/\s+/).filter(Boolean).length || 0} words</span>
-          <span>{format(new Date(entry.created_at), 'h:mm a')}</span>
-        </div>
-      </div>
+      {/* Mini orb companion */}
+      <MiniOrb />
 
       {/* Photo lightbox */}
       {lightboxPhoto !== null && entry.photos && (
@@ -191,7 +207,7 @@ const JournalEntry = () => {
           />
 
           {entry.photos.length > 1 && (
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 px-3 py-1 bg-black/50 rounded-full text-white/70 text-sm">
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 px-3 py-1 bg-black/50 rounded-full text-white/70 text-sm font-mono">
               {lightboxPhoto + 1} / {entry.photos.length}
             </div>
           )}

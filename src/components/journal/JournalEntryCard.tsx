@@ -74,9 +74,9 @@ export const JournalEntryCard = ({ entry, onEdit }: JournalEntryCardProps) => {
     <>
       <div
         onClick={handleClick}
-        className="py-4 border-b border-foreground/5 cursor-pointer hover:bg-foreground/[0.02] transition-colors"
+        className="py-5 border-b border-foreground/5 cursor-pointer hover:bg-foreground/[0.02] transition-colors"
       >
-        <div className="flex items-start gap-3">
+        <div className="flex items-start gap-4">
           <div className="flex-1 min-w-0">
             {/* Date with icon */}
             <div className="flex items-center gap-1.5 text-[11px] uppercase tracking-widest text-muted-foreground/40 font-mono">
@@ -86,14 +86,14 @@ export const JournalEntryCard = ({ entry, onEdit }: JournalEntryCardProps) => {
             
             {/* Title */}
             {entry.title && (
-              <h3 className="text-base font-medium text-foreground/80 mt-1 truncate">
+              <h3 className="text-base font-medium text-foreground/70 mt-1.5 line-clamp-1">
                 {entry.title}
               </h3>
             )}
             
             {/* Preview */}
             {preview && (
-              <p className="text-sm text-muted-foreground/50 mt-2 line-clamp-2">
+              <p className="text-sm text-muted-foreground/40 mt-1 line-clamp-2">
                 {preview}
               </p>
             )}
@@ -130,7 +130,7 @@ export const JournalEntryCard = ({ entry, onEdit }: JournalEntryCardProps) => {
             )}
           </div>
           
-          {/* Thumbnail on right if single image and no grid shown */}
+          {/* Thumbnail on right if single image and no content preview */}
           {hasPhotos && entry.photos!.length === 1 && !preview && (
             <div className="flex-shrink-0">
               <img 
