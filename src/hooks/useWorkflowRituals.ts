@@ -72,68 +72,11 @@ export function useWorkflowRituals() {
         contextText += "What's on your mind today?";
       }
 
-      // Call the intelligent Daily Command Center
-      const { data: commandData, error: commandError } = await supabase.functions.invoke('daily-command-center', {
-        body: { text: contextText }
-      });
-
-      if (commandError) {
-        console.error('Command center error:', commandError);
-        // Fallback to simple message
-        const fallbackMessage = '🌅 Good morning! Ready to capture your day?';
-        showMorningMessage(fallbackMessage);
-        return;
-      }
-
-      const summary = commandData?.summary;
-      if (!summary) {
-        throw new Error('No summary received');
-      }
-
-      // Format structured summary with exact template
-      let message = `🧭 **Daily Command Center**\nHere's your clarity for today.\n\n`;
-
-      // 🔥 Priority Tasks
-      message += `**🔥 Priority Tasks**\nWhat moves the needle the most.\n`;
-      if (summary.priorityTasks && summary.priorityTasks.length > 0) {
-        message += `${summary.priorityTasks.map((t: string) => `• ${t}`).join('\n')}\n\n`;
-      } else {
-        message += `• No items today\n\n`;
-      }
-
-      // 📅 Today's Schedule
-      message += `**📅 Today's Schedule**\nTime-sensitive items.\n`;
-      if (summary.todaysSchedule && summary.todaysSchedule.length > 0) {
-        message += `${summary.todaysSchedule.map((t: string) => `• ${t}`).join('\n')}\n\n`;
-      } else {
-        message += `• No items today\n\n`;
-      }
-
-      // 🪶 Quick Wins
-      message += `**🪶 Quick Wins**\nSimple clears to build momentum.\n`;
-      if (summary.quickWins && summary.quickWins.length > 0) {
-        message += `${summary.quickWins.map((t: string) => `• ${t}`).join('\n')}\n\n`;
-      } else {
-        message += `• No items today\n\n`;
-      }
-
-      // 🎉 Tiny Task Fiesta
-      if (summary.tinyTaskCount > 0) {
-        message += `**🎉 Tiny Task Fiesta**\nYou have ${summary.tinyTaskCount} tiny tasks queued.\nA perfect batch for a short sweep.\n\n`;
-      }
-
-      // 🧩 Context Notes
-      message += `**🧩 Context Notes**\nDetails worth remembering, not doing.\n`;
-      if (summary.contextNotes && summary.contextNotes.length > 0) {
-        message += `${summary.contextNotes.map((n: string) => `• ${n}`).join('\n')}\n\n`;
-      } else {
-        message += `• No items today\n\n`;
-      }
-
-      // 💡 Executive Insight
-      message += `**💡 Executive Insight**\n${summary.executiveInsight || 'Here is what actually matters today.'}`;
-
-      showMorningMessage(message);
+      // DEPRECATED: daily-command-center deleted in Phase 3C
+      // TODO: Replace with suggest-focus for morning ritual
+      console.log('daily-command-center removed - using fallback');
+      const fallbackMessage = '🌅 Good morning! Ready to capture your day?';
+      showMorningMessage(fallbackMessage);
 
     } catch (error) {
       console.error('Morning ritual error:', error);

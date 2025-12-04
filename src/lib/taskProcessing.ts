@@ -78,18 +78,12 @@ export async function processRawInput(
       };
     }
 
-    // Step 2: Analyze the idea/context (include clarification data if available)
-    const { data: ideaData, error: ideaError } = await supabase.functions.invoke<IdeaAnalysis>(
-      'idea-analyzer',
-      {
-        body: { 
-          text,
-          clarification: clarificationData 
-        }
-      }
-    );
+    // DEPRECATED: idea-analyzer deleted in Phase 3C
+    // TODO: Replace with process-input or suggest-focus for context analysis
+    // Using local fallback for idea analysis
+    console.log('idea-analyzer removed - using local fallback');
 
-    const ideaAnalysis: IdeaAnalysis = ideaData || {
+    const ideaAnalysis: IdeaAnalysis = {
       summary: text,
       topics: [],
       insights: [],

@@ -19,13 +19,14 @@ export const useTimeBlocker = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      const { data, error } = await supabase.functions.invoke('time-blocker', {
-        body: { user_id: user.id, date }
-      });
-
-      if (error) throw error;
-
-      setBlocks(data.blocks || []);
+      // DEPRECATED: time-blocker deleted in Phase 3C
+      // TODO: Build local time-blocking or use suggest-focus
+      // const { data, error } = await supabase.functions.invoke('time-blocker', {
+      //   body: { user_id: user.id, date }
+      // });
+      // if (error) throw error;
+      console.log('time-blocker removed - generating empty blocks');
+      setBlocks([]);
       toast.success('Day plan generated!');
     } catch (error) {
       console.error('Error generating time blocks:', error);

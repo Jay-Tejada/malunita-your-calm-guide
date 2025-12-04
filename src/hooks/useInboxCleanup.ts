@@ -96,20 +96,10 @@ export const useInboxCleanup = () => {
         return null;
       }
 
-      // Try edge function first
-      try {
-        const { data, error } = await supabase.functions.invoke('inbox-cleanup', {
-          body: { tasks: inboxTasks }
-        });
-        
-        if (!error && data) {
-          setAnalysis(data);
-          setIsAnalyzing(false);
-          return data;
-        }
-      } catch (e) {
-        console.log('Edge function unavailable, using local fallback');
-      }
+      // DEPRECATED: inbox-cleanup deleted in Phase 3C
+      // TODO: Use local categorization or suggest-focus
+      // Edge function removed - using local fallback directly
+      console.log('Using local inbox categorization (inbox-cleanup removed)');
 
       // Local fallback - categorize each task
       const localSuggestions = inboxTasks.map(task => {

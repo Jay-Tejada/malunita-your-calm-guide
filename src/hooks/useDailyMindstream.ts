@@ -74,15 +74,14 @@ export function useDailyMindstream(): MindstreamData {
         }
 
         // Call only the edge functions that work without specific user input
+        // DEPRECATED: daily-command-center deleted in Phase 3C
+        // TODO: Simplify to only use suggest-focus
         const [
           commandCenterResult,
           suggestFocusResult,
           personalizationResult,
-        // TODO: legacy reference (personalization-agent), removed in consolidation
         ] = await Promise.allSettled([
-          supabase.functions.invoke('daily-command-center', {
-            body: { mode: 'home_screen' }
-          }),
+          Promise.resolve({ data: null }), // daily-command-center removed
           supabase.functions.invoke('suggest-focus'),
           Promise.resolve({ data: null }), // personalization-agent removed
         ]);

@@ -49,16 +49,14 @@ export function useTaskPlan() {
 
   const buildPlan = async (): Promise<Plan | null> => {
     try {
-      const { data, error } = await supabase.functions.invoke('task-to-plan', {
-        body: {}
-      });
-
-      if (error) {
-        console.error('Error building plan:', error);
-        throw error;
-      }
-
-      return data?.plan || null;
+      // DEPRECATED: task-to-plan deleted in Phase 3C
+      // TODO: Replace with planning-breakdown or local logic
+      // const { data, error } = await supabase.functions.invoke('task-to-plan', {
+      //   body: {}
+      // });
+      // if (error) { throw error; }
+      console.log('task-to-plan removed - returning null');
+      return null;
     } catch (error) {
       console.error('Failed to build plan:', error);
       toast({

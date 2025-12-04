@@ -1,3 +1,5 @@
+// DEPRECATED: daily-prioritization deleted in Phase 3C
+// TODO: Replace with suggest-focus or local prioritization logic
 import { supabase } from "@/integrations/supabase/client";
 
 export interface DailyPlan {
@@ -13,24 +15,19 @@ export interface DailyPlan {
 }
 
 export async function fetchDailyPlan(userId: string): Promise<DailyPlan | null> {
-  try {
-    const { data, error } = await supabase.functions.invoke('daily-prioritization', {
-      body: { userId }
-    });
-
-    if (error) {
-      console.error('Failed to fetch daily plan:', error);
-      return null;
-    }
-
-    if (data?.error) {
-      console.error('Daily plan returned error:', data.error);
-      return null;
-    }
-
-    return data as DailyPlan;
-  } catch (error) {
-    console.error('Error calling daily-prioritization:', error);
-    return null;
-  }
+  // DEPRECATED: daily-prioritization deleted in Phase 3C
+  // TODO: Replace with suggest-focus or local prioritization
+  console.log('fetchDailyPlan: daily-prioritization removed, returning null');
+  return null;
+  
+  // Original implementation:
+  // try {
+  //   const { data, error } = await supabase.functions.invoke('daily-prioritization', {
+  //     body: { userId }
+  //   });
+  //   if (error) { return null; }
+  //   return data as DailyPlan;
+  // } catch (error) {
+  //   return null;
+  // }
 }
