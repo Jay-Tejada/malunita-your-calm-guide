@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { celebrationHaptic, focusHaptic } from '@/lib/haptics';
 
 export type OrbMood = 
   | "idle"
@@ -49,6 +50,7 @@ export const useOrbStore = create<OrbState & OrbActions>((set) => ({
   setEnergy: (energy) => set({ energy }),
   
   triggerCelebration: () => {
+    celebrationHaptic();
     set({ mood: "celebrating", isAnimating: true });
     setTimeout(() => set({ mood: "idle", isAnimating: false }), 1500);
   },
@@ -57,7 +59,10 @@ export const useOrbStore = create<OrbState & OrbActions>((set) => ({
     set({ mood: "thinking", isAnimating: true });
   },
   
-  enterFocusMode: () => set({ mood: "focused", energy: 4 }),
+  enterFocusMode: () => {
+    focusHaptic();
+    set({ mood: "focused", energy: 4 });
+  },
   
   exitFocusMode: () => set({ mood: "idle", energy: 3 }),
   

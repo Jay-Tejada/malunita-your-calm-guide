@@ -16,7 +16,8 @@ import { useQuickCapture } from "@/contexts/QuickCaptureContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useOrbSync } from "@/hooks/useOrbSync";
 import { useOrbEvolution } from "@/hooks/useOrbEvolution";
- 
+import { useOrbBackground } from "@/hooks/useOrbBackground";
+
 export const Layout = () => {
   const [leftDrawerOpen, setLeftDrawerOpen] = useState(false);
   const [rightDrawerOpen, setRightDrawerOpen] = useState(false);
@@ -30,9 +31,10 @@ export const Layout = () => {
   const { activeSession, completeSession, abandonSession } = useFlowSessions();
   const { isOpen: quickCaptureOpen, openQuickCapture, closeQuickCapture } = useQuickCapture();
 
-  // Orb state sync and evolution
+  // Orb state sync, evolution, and background
   useOrbSync(userId);
   useOrbEvolution(userId);
+  useOrbBackground();
 
   // Get user ID for orb sync
   useEffect(() => {
