@@ -1,3 +1,10 @@
+// =============================================================================
+// DEPRECATED: This function serves deprecated tables (Phase 3A)
+// Tables: ai_corrections (read), training_queue (write)
+// Date flagged: 2024-12-04
+// Status: No longer being called - safe to delete in Phase 3B
+// =============================================================================
+
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.80.0';
 
 const corsHeaders = {
