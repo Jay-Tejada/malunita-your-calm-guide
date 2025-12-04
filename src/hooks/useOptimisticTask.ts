@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { cacheInvalidation } from '@/lib/cache/invalidation';
 import { useToast } from '@/hooks/use-toast';
+import { useOrbStore } from '@/state/orbState';
 
 interface NewTask {
   title: string;
@@ -187,7 +188,8 @@ export function useOptimisticTask() {
         .single();
       
       if (error) throw error;
-      // TODO: Add useOrbTriggers().onTaskComplete() here
+      // Trigger orb celebration on task complete
+      useOrbStore.getState().triggerCelebration();
       return data;
     },
     

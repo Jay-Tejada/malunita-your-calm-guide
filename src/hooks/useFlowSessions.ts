@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { FlowSession as FlowSessionType } from '@/utils/taskCategorizer';
+import { useOrbStore } from '@/state/orbState';
 
 export interface FlowSessionRecord {
   id: string;
@@ -90,7 +91,7 @@ export const useFlowSessions = () => {
     if (data) {
       setActiveSession(data as FlowSessionRecord);
       setSessions(prev => prev.map(s => s.id === sessionId ? data as FlowSessionRecord : s));
-      // TODO: Add useOrbTriggers().onFocusStart() here
+      useOrbStore.getState().enterFocusMode();
     }
   };
 
@@ -128,7 +129,8 @@ export const useFlowSessions = () => {
 
     if (data) {
       setActiveSession(null);
-      // TODO: Add useOrbTriggers().onFocusEnd() here
+      useOrbStore.getState().exitFocusMode();
+      useOrbStore.getState().triggerCelebration();
       setSessions(prev => prev.map(s => s.id === sessionId ? data as FlowSessionRecord : s));
     }
     

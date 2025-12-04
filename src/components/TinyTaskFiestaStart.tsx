@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Sparkles, ArrowLeft, Clock } from "lucide-react";
 import { useTasks } from "@/hooks/useTasks";
 import { useFiestaSessions } from "@/hooks/useFiestaSessions";
+import { useOrbRituals } from "@/hooks/useOrbRituals";
 import { findTinyTasks, classifyTask } from "@/lib/tinyTaskDetector";
 import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -14,6 +15,7 @@ export const TinyTaskFiestaStart = () => {
   const navigate = useNavigate();
   const { tasks } = useTasks();
   const { createSession, activeSession } = useFiestaSessions();
+  const { onTinyTaskFiestaStart } = useOrbRituals();
   const [duration, setDuration] = useState<string>("45");
   const [selectedTaskIds, setSelectedTaskIds] = useState<string[]>([]);
   const [isStarting, setIsStarting] = useState(false);
@@ -44,7 +46,7 @@ export const TinyTaskFiestaStart = () => {
         tasks_included: selectedTaskIds,
         duration_minutes: parseInt(duration),
       });
-      // TODO: Call useOrbRituals().onTinyTaskFiestaStart() here
+      onTinyTaskFiestaStart();
       navigate('/tiny-task-fiesta');
     } catch (error) {
       console.error('Failed to start fiesta:', error);

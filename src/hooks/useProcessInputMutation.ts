@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useOrbStore } from "@/state/orbState";
 
 interface ProcessInputOptions {
   text: string;
@@ -41,7 +42,8 @@ export const useProcessInputMutation = () => {
       if (!user) throw new Error('Not authenticated');
 
       console.log('🤖 Processing input with AI:', text);
-      // TODO: Add useOrbTriggers().onAIStart() here
+      // Trigger orb thinking state
+      useOrbStore.getState().triggerThinking();
 
       const { data, error } = await supabase.functions.invoke('process-input', {
         body: {
@@ -55,12 +57,12 @@ export const useProcessInputMutation = () => {
 
       if (error) {
         console.error('❌ AI processing error:', error);
-        // TODO: Add useOrbTriggers().onAIEnd() here
+        useOrbStore.getState().reset();
         throw error;
       }
 
       console.log('✅ AI processing complete:', data);
-      // TODO: Add useOrbTriggers().onAIEnd() here
+      useOrbStore.getState().reset();
       return data;
     },
     onSuccess: async (data, variables) => {
