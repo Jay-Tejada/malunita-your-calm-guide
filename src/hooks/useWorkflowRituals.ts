@@ -174,12 +174,8 @@ export function useWorkflowRituals() {
         console.error('Failed to send morning ritual push notification:', error);
       }
 
-      await supabase.from('conversation_history').insert({
-        user_id: user.id,
-        session_id: `morning-${Date.now()}`,
-        role: 'assistant',
-        content: message,
-      });
+      // TODO: conversation_history deprecated in Phase 2C consolidation
+      // await supabase.from('conversation_history').insert({...});
     }
 
     if (document.visibilityState === 'visible') {
@@ -347,13 +343,8 @@ export function useWorkflowRituals() {
         console.error('Failed to send evening shutdown push notification:', error);
       }
 
-      // Log to conversation history
-      await supabase.from('conversation_history').insert({
-        user_id: user.id,
-        session_id: `evening-${Date.now()}`,
-        role: 'assistant',
-        content: message,
-      });
+      // TODO: conversation_history deprecated in Phase 2C consolidation
+      // await supabase.from('conversation_history').insert({...});
     }
 
     // Show toast only if app is active
@@ -440,13 +431,8 @@ export function useWorkflowRituals() {
         console.error('Failed to send weekly reset push notification:', error);
       }
 
-      // Log to conversation history
-      await supabase.from('conversation_history').insert({
-        user_id: user.id,
-        session_id: `weekly-${Date.now()}`,
-        role: 'assistant',
-        content: message,
-      });
+      // TODO: conversation_history deprecated in Phase 2C consolidation
+      // await supabase.from('conversation_history').insert({...});
     }
 
     // Show toast only if app is active

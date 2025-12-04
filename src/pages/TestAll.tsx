@@ -211,25 +211,7 @@ const TestAll = () => {
         </TabsContent>
 
         <TabsContent value="ai" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>chat-completion</CardTitle>
-              <CardDescription>Get AI chat responses</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button 
-                onClick={() => testFunction('chat-completion', { 
-                  messages: [
-                    { role: "user", content: "What should I focus on today?" }
-                  ]
-                })}
-                disabled={loading['chat-completion']}
-              >
-                {loading['chat-completion'] ? 'Testing...' : 'Test Chat'}
-              </Button>
-              <ResultDisplay name="chat-completion" />
-            </CardContent>
-          </Card>
+          {/* TODO: chat-completion removed in Phase 2C consolidation */}
 
           <Card>
             <CardHeader>
