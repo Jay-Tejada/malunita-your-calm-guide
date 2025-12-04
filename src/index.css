@@ -2229,3 +2229,41 @@ All colors MUST be HSL.
     opacity: 1 !important;
   }
 }
+
+/* Orb Background States - Subtle ambient color shifts */
+.orb-bg-idle {
+  /* No change from default */
+}
+
+.orb-bg-morning {
+  background-color: hsl(40 60% 98% / 0.3) !important;
+}
+
+.orb-bg-evening {
+  background-color: hsl(220 20% 96% / 0.5) !important;
+}
+
+.orb-bg-focused {
+  background-color: hsl(40 10% 97%) !important;
+}
+
+.orb-bg-celebrating {
+  background-color: hsl(45 60% 98% / 0.2) !important;
+}
+
+/* Dark mode orb backgrounds */
+.dark .orb-bg-morning {
+  background-color: hsl(40 30% 18% / 0.3) !important;
+}
+
+.dark .orb-bg-evening {
+  background-color: hsl(220 20% 15% / 0.5) !important;
+}
+
+.dark .orb-bg-focused {
+  background-color: hsl(0 0% 16%) !important;
+}
+
+.dark .orb-bg-celebrating {
+  background-color: hsl(45 30% 18% / 0.2) !important;
+}
