@@ -7,7 +7,7 @@ interface CompanionVisibilityState {
 }
 
 export const useCompanionVisibility = create<CompanionVisibilityState>((set) => ({
-  isVisible: true,
+  isVisible: false,
   show: () => set({ isVisible: true }),
   hide: () => set({ isVisible: false }),
 }));
