@@ -1,0 +1,52 @@
+/* Breathing - Default idle state */
+@keyframes orbBreathe {
+  0%, 100% { transform: scale(1); opacity: 0.92; }
+  50% { transform: scale(1.03); opacity: 1; }
+}
+
+/* Thinking - AI processing */
+@keyframes orbThink {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.15); }
+}
+
+/* Celebrating - Task complete */
+@keyframes orbCelebrate {
+  0% { transform: scale(1); box-shadow: 0 0 0 rgba(255, 245, 230, 0); }
+  50% { transform: scale(1.08); box-shadow: 0 0 30px rgba(255, 245, 230, 0.6); }
+  100% { transform: scale(1); box-shadow: 0 0 0 rgba(255, 245, 230, 0); }
+}
+
+/* Focus - Steady concentration */
+@keyframes orbFocus {
+  0%, 100% { transform: scale(1.02); filter: brightness(1.05); }
+  50% { transform: scale(1.02); filter: brightness(1.1); }
+}
+
+/* Morning - Warm wake */
+@keyframes orbMorning {
+  0%, 100% { transform: scale(1); filter: brightness(1) saturate(1); }
+  50% { transform: scale(1.02); filter: brightness(1.1) saturate(1.1); }
+}
+
+/* Evening - Cool rest */
+@keyframes orbEvening {
+  0%, 100% { transform: scale(1); opacity: 0.85; }
+  50% { transform: scale(0.98); opacity: 0.9; }
+}
+
+/* Evolving - Stage change */
+@keyframes orbEvolve {
+  0% { transform: scale(1) rotate(0deg); filter: brightness(1); }
+  50% { transform: scale(1.1) rotate(5deg); filter: brightness(1.3); }
+  100% { transform: scale(1) rotate(0deg); filter: brightness(1); }
+}
+
+/* Animation classes */
+.orb-idle { animation: orbBreathe 4s ease-in-out infinite; }
+.orb-thinking { animation: orbThink 1.5s ease-in-out infinite; }
+.orb-celebrating { animation: orbCelebrate 1.5s ease-out forwards; }
+.orb-focused { animation: orbFocus 3s ease-in-out infinite; }
+.orb-morning { animation: orbMorning 5s ease-in-out infinite; }
+.orb-evening { animation: orbEvening 6s ease-in-out infinite; }
+.orb-evolving { animation: orbEvolve 2s ease-in-out forwards; }
