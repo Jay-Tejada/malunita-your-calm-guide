@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from '@/hooks/use-toast';
 
@@ -10,44 +10,30 @@ interface KeyboardShortcutsOptions {
   onCloseModals?: () => void;
 }
 
-const HINTS_STORAGE_KEY = 'keyboard-shortcuts-hints-shown';
-
-// Track which hints we've already shown
-const getShownHints = (): Set<string> => {
+// Track usage counts for smart hints
+const USAGE_KEY = 'hint-usage';
+const getUsageCounts = (): Record<string, number> => {
   try {
-    const stored = localStorage.getItem(HINTS_STORAGE_KEY);
-    return stored ? new Set(JSON.parse(stored)) : new Set();
+    const stored = localStorage.getItem(USAGE_KEY);
+    return stored ? JSON.parse(stored) : {};
   } catch {
-    return new Set();
+    return {};
   }
 };
 
-const markHintShown = (shortcut: string) => {
+const incrementUsage = (id: string) => {
   try {
-    const shown = getShownHints();
-    shown.add(shortcut);
-    localStorage.setItem(HINTS_STORAGE_KEY, JSON.stringify([...shown]));
-  } catch {
-    // Silently fail if localStorage is unavailable
-  }
-};
-
-const showHintOnce = (shortcut: string, message: string) => {
-  const shown = getShownHints();
-  if (!shown.has(shortcut)) {
-    toast({
-      title: '⌨️ Keyboard Shortcut',
-      description: message,
-      duration: 3000,
-    });
-    markHintShown(shortcut);
-  }
+    const counts = getUsageCounts();
+    counts[id] = (counts[id] || 0) + 1;
+    localStorage.setItem(USAGE_KEY, JSON.stringify(counts));
+  } catch {}
 };
 
 /**
  * Global keyboard shortcuts system
  * 
  * Shortcuts:
+ * - Q: Quick capture (standalone)
  * - Cmd/Ctrl + K: Quick capture
  * - Cmd/Ctrl + /: Focus input
  * - Cmd/Ctrl + D: Daily review
@@ -92,7 +78,7 @@ export function useKeyboardShortcuts(options: KeyboardShortcutsOptions = {}) {
       if (e.key === 'q' && !modKey && !e.shiftKey) {
         e.preventDefault();
         options.onQuickCapture?.();
-        showHintOnce('quick-capture-q', `Press Q anytime to quickly capture tasks`);
+        incrementUsage('quick-capture');
         return;
       }
 
@@ -100,7 +86,7 @@ export function useKeyboardShortcuts(options: KeyboardShortcutsOptions = {}) {
       if (modKey && e.key === 'k') {
         e.preventDefault();
         options.onQuickCapture?.();
-        showHintOnce('quick-capture', `Press ${modKeyName}+K anytime to quickly capture tasks`);
+        incrementUsage('quick-capture');
         return;
       }
 
@@ -108,7 +94,7 @@ export function useKeyboardShortcuts(options: KeyboardShortcutsOptions = {}) {
       if (modKey && e.key === '/') {
         e.preventDefault();
         options.onFocusInput?.();
-        showHintOnce('focus-input', `Press ${modKeyName}+/ to focus the main input`);
+        incrementUsage('search');
         return;
       }
 
@@ -117,7 +103,7 @@ export function useKeyboardShortcuts(options: KeyboardShortcutsOptions = {}) {
         e.preventDefault();
         options.onDailyReview?.();
         navigate('/daily-session');
-        showHintOnce('daily-review', `Press ${modKeyName}+D to open daily review`);
+        incrementUsage('daily-session');
         return;
       }
 
@@ -125,7 +111,7 @@ export function useKeyboardShortcuts(options: KeyboardShortcutsOptions = {}) {
       if (modKey && e.key === 'f') {
         e.preventDefault();
         options.onSearch?.();
-        showHintOnce('search', `Press ${modKeyName}+F to search tasks`);
+        incrementUsage('search');
         return;
       }
 
@@ -133,7 +119,7 @@ export function useKeyboardShortcuts(options: KeyboardShortcutsOptions = {}) {
       if (modKey && e.key === 'j') {
         e.preventDefault();
         navigate('/journal');
-        showHintOnce('journal', `Press ${modKeyName}+J to open journal`);
+        incrementUsage('journal');
         return;
       }
 
@@ -141,7 +127,6 @@ export function useKeyboardShortcuts(options: KeyboardShortcutsOptions = {}) {
       if (modKey && e.key === 't') {
         e.preventDefault();
         navigate('/');
-        showHintOnce('today', `Press ${modKeyName}+T to go to Today view`);
         return;
       }
 
@@ -173,11 +158,11 @@ export function useShortcutsHelpTrigger(onShow: () => void) {
 }
 
 /**
- * Reset all shown hints (useful for testing or user preference)
+ * Reset all usage tracking (useful for testing or user preference)
  */
 export function resetShortcutHints() {
   try {
-    localStorage.removeItem(HINTS_STORAGE_KEY);
+    localStorage.removeItem(USAGE_KEY);
     toast({
       title: 'Hints Reset',
       description: 'Keyboard shortcut hints will show again',
