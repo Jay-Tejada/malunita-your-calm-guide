@@ -1071,6 +1071,7 @@ export type Database = {
           companion_name: string | null
           companion_personality_type: string | null
           companion_stage: number | null
+          companion_traits: Json | null
           companion_xp: number | null
           created_at: string
           current_goal: string | null
@@ -1093,6 +1094,9 @@ export type Database = {
           notification_preferences: Json | null
           notification_snooze_until: string | null
           often_time_based: boolean | null
+          orb_energy: number | null
+          orb_last_evolution: string | null
+          orb_mood: string | null
           peak_activity_time: string | null
           preferences_summary: string | null
           preferred_gpt_model: string | null
@@ -1133,6 +1137,7 @@ export type Database = {
           companion_name?: string | null
           companion_personality_type?: string | null
           companion_stage?: number | null
+          companion_traits?: Json | null
           companion_xp?: number | null
           created_at?: string
           current_goal?: string | null
@@ -1155,6 +1160,9 @@ export type Database = {
           notification_preferences?: Json | null
           notification_snooze_until?: string | null
           often_time_based?: boolean | null
+          orb_energy?: number | null
+          orb_last_evolution?: string | null
+          orb_mood?: string | null
           peak_activity_time?: string | null
           preferences_summary?: string | null
           preferred_gpt_model?: string | null
@@ -1195,6 +1203,7 @@ export type Database = {
           companion_name?: string | null
           companion_personality_type?: string | null
           companion_stage?: number | null
+          companion_traits?: Json | null
           companion_xp?: number | null
           created_at?: string
           current_goal?: string | null
@@ -1217,6 +1226,9 @@ export type Database = {
           notification_preferences?: Json | null
           notification_snooze_until?: string | null
           often_time_based?: boolean | null
+          orb_energy?: number | null
+          orb_last_evolution?: string | null
+          orb_mood?: string | null
           peak_activity_time?: string | null
           preferences_summary?: string | null
           preferred_gpt_model?: string | null
