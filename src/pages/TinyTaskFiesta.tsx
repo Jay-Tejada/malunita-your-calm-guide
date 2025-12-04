@@ -60,6 +60,7 @@ const TinyTaskFiesta = () => {
       BONDING_INCREMENTS.FIESTA_COMPLETED,
       "Fiesta fun! Malunita had a blast"
     );
+    // TODO: Call useOrbRituals().onTinyTaskFiestaComplete(completedTasksCount) here
   };
 
   const handleEndEarly = async () => {

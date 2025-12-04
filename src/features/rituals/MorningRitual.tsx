@@ -134,6 +134,7 @@ export function MorningRitual({ onComplete, onSkip }: MorningRitualProps) {
 
       updateMood("loving");
       setStep("complete");
+      // TODO: Call useOrbRituals().onStartMyDay() here
       
       toast({
         title: "Morning ritual complete! ✨",
