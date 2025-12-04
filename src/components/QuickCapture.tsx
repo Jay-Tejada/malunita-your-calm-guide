@@ -43,12 +43,12 @@ export const QuickCapture = ({ isOpen, onClose, variant, onCapture }: QuickCaptu
   
   useEffect(() => {
     if (isOpen) {
-      // Small delay to ensure modal is rendered before focusing
-      const timer = setTimeout(() => {
+      // Immediate focus attempt, then retry after render
+      textareaRef.current?.focus();
+      requestAnimationFrame(() => {
         textareaRef.current?.focus();
         adjustTextareaHeight();
-      }, 50);
-      return () => clearTimeout(timer);
+      });
     }
   }, [isOpen]);
   
@@ -97,20 +97,18 @@ export const QuickCapture = ({ isOpen, onClose, variant, onCapture }: QuickCaptu
   };
   
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    console.log('QuickCapture: handleKeyDown fired, key:', e.key, 'shiftKey:', e.shiftKey);
-    
-    if (e.key === 'Enter' && !e.shiftKey) {
-      console.log('QuickCapture: Enter pressed, calling handleSubmit');
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      setCaptureType(prev => prev === 'task' ? 'thought' : 'task');
+    } else if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       e.stopPropagation();
       handleSubmit(false);
     } else if (e.key === 'Enter' && e.shiftKey && variant === 'desktop') {
-      console.log('QuickCapture: Shift+Enter pressed, calling handleSubmit with keepOpen');
       e.preventDefault();
       e.stopPropagation();
       handleSubmit(true);
     } else if (e.key === 'Escape') {
-      console.log('QuickCapture: Escape pressed, closing');
       onClose();
       setInput('');
     }
@@ -218,7 +216,7 @@ export const QuickCapture = ({ isOpen, onClose, variant, onCapture }: QuickCaptu
           
           {/* Hint text */}
           <p className="mt-2 text-[10px] text-muted-foreground/40 font-mono">
-            Shift+Enter to save & continue
+            Tab to switch · Shift+Enter to save & continue
           </p>
         </div>
       </div>
