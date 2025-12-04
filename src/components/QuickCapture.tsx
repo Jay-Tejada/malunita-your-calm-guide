@@ -5,6 +5,7 @@ import { useThoughts } from '@/hooks/useThoughts';
 import { useQueryClient } from '@tanstack/react-query';
 import { useTasks } from '@/hooks/useTasks';
 import { useSmartHints, useModifierKey } from '@/hooks/useSmartHints';
+import { useSmartDateParsing } from '@/hooks/useSmartDateParsing';
 
 interface QuickCaptureProps {
   isOpen: boolean;
@@ -23,6 +24,9 @@ export const QuickCapture = ({ isOpen, onClose, variant, onCapture }: QuickCaptu
   const { createTasks } = useTasks();
   const { currentHint, trackUsage } = useSmartHints();
   const modKey = useModifierKey();
+  
+  // Parse natural language dates from input
+  const parsedDate = useSmartDateParsing(input);
   
   // Auto-resize textarea
   const adjustTextareaHeight = () => {
@@ -83,9 +87,32 @@ export const QuickCapture = ({ isOpen, onClose, variant, onCapture }: QuickCaptu
         
         onCapture?.();
       } else {
-        // Save task INSTANTLY using optimistic mutation
-        // This uses the useTasks hook which has built-in optimistic updates
-        createTasks([{ title: capturedText }]);
+        // Use parsed date info for scheduling
+        const taskTitle = parsedDate.cleanTitle || capturedText;
+        const taskData: any = { title: taskTitle };
+        
+        // If a date/time was detected, set reminder
+        if (parsedDate.detectedDate) {
+          taskData.reminder_time = parsedDate.detectedDate.toISOString();
+          taskData.has_reminder = true;
+          taskData.is_time_based = parsedDate.hasTime;
+          
+          // Show feedback about detected schedule
+          const timeStr = parsedDate.hasTime 
+            ? parsedDate.detectedDate.toLocaleString([], { 
+                dateStyle: 'short', 
+                timeStyle: 'short' 
+              })
+            : parsedDate.detectedDate.toLocaleDateString();
+          
+          toast({
+            description: `Scheduled for ${timeStr}`,
+            duration: 2000,
+          });
+        }
+        
+        // Save task with scheduling info
+        createTasks([taskData]);
         
         onCapture?.();
       }
@@ -161,6 +188,18 @@ export const QuickCapture = ({ isOpen, onClose, variant, onCapture }: QuickCaptu
             className="w-full bg-transparent border-b border-foreground/10 py-2 font-mono text-sm text-foreground/80 placeholder:text-muted-foreground/40 focus:outline-none focus:border-foreground/20 resize-none overflow-hidden"
             style={{ minHeight: '24px' }}
           />
+          
+          {/* Detected date indicator - mobile */}
+          {captureType === 'task' && parsedDate.detectedDate && (
+            <div className="mt-2 flex items-center gap-2 text-xs font-mono text-primary/70 animate-fade-in">
+              <span className="px-2 py-0.5 bg-primary/10 rounded">
+                ⏰ {parsedDate.hasTime 
+                  ? parsedDate.detectedDate.toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })
+                  : parsedDate.detectedDate.toLocaleDateString()
+                }
+              </span>
+            </div>
+          )}
         </div>
       </div>
     );
@@ -220,8 +259,21 @@ export const QuickCapture = ({ isOpen, onClose, variant, onCapture }: QuickCaptu
             style={{ minHeight: '24px' }}
           />
           
+          {/* Detected date indicator */}
+          {captureType === 'task' && parsedDate.detectedDate && (
+            <div className="mt-2 flex items-center gap-2 text-xs font-mono text-primary/70 animate-fade-in">
+              <span className="px-2 py-0.5 bg-primary/10 rounded">
+                ⏰ {parsedDate.hasTime 
+                  ? parsedDate.detectedDate.toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })
+                  : parsedDate.detectedDate.toLocaleDateString()
+                }
+              </span>
+              <span className="text-muted-foreground/50">"{parsedDate.detectedText}"</span>
+            </div>
+          )}
+          
           {/* Rotating hint */}
-          {currentHint && (
+          {currentHint && !parsedDate.detectedDate && (
             <p className="mt-2 text-[10px] text-muted-foreground/40 font-mono animate-fade-in">
               {currentHint.replace('⌘', modKey)}
             </p>
