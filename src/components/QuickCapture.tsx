@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useThoughts } from '@/hooks/useThoughts';
 import { useQueryClient } from '@tanstack/react-query';
+import { useTasks } from '@/hooks/useTasks';
 
 interface QuickCaptureProps {
   isOpen: boolean;
@@ -18,6 +19,7 @@ export const QuickCapture = ({ isOpen, onClose, variant, onCapture }: QuickCaptu
   const { toast } = useToast();
   const { addThought } = useThoughts();
   const queryClient = useQueryClient();
+  const { createTasks } = useTasks();
   
   // Auto-resize textarea
   const adjustTextareaHeight = () => {
@@ -57,18 +59,19 @@ export const QuickCapture = ({ isOpen, onClose, variant, onCapture }: QuickCaptu
   const handleSubmit = async (keepOpen = false) => {
     if (!input.trim()) return;
     
-    console.log('QuickCapture: handleSubmit called with input:', input.trim());
+    const capturedText = input.trim();
+    
+    // Clear input immediately for instant feedback
+    setInput('');
+    
+    if (!keepOpen) {
+      onClose();
+    }
     
     try {
       if (captureType === 'thought') {
         // Save as thought
-        addThought({ content: input.trim(), source: 'quick-capture' });
-        
-        setInput('');
-        
-        if (!keepOpen) {
-          onClose();
-        }
+        addThought({ content: capturedText, source: 'quick-capture' });
         
         toast({ 
           description: 'Thought captured',
@@ -77,56 +80,10 @@ export const QuickCapture = ({ isOpen, onClose, variant, onCapture }: QuickCaptu
         
         onCapture?.();
       } else {
-        // Save as task (existing logic)
-        console.log('QuickCapture: Getting user...');
-        const { data: { user } } = await supabase.auth.getUser();
+        // Save task INSTANTLY using optimistic mutation
+        // This uses the useTasks hook which has built-in optimistic updates
+        createTasks([{ title: capturedText }]);
         
-        if (!user) {
-          console.error('QuickCapture: No user found');
-          toast({
-            title: "Error",
-            description: "You must be logged in to capture tasks.",
-            variant: "destructive"
-          });
-          return;
-        }
-        
-        console.log('QuickCapture: Invoking process-input function...');
-        // Process text input using the processInput API
-        const { data, error } = await supabase.functions.invoke('process-input', {
-          body: { text: input.trim(), user_id: user.id }
-        });
-
-        console.log('QuickCapture: process-input response:', { data, error });
-
-        if (error) {
-          console.error('QuickCapture: process-input error:', error);
-          toast({
-            title: "Error",
-            description: "Failed to process your input. Please try again.",
-            variant: "destructive"
-          });
-          return;
-        }
-        
-        // Invalidate tasks query to refresh the list
-        console.log('QuickCapture: Invalidating tasks query...');
-        queryClient.invalidateQueries({ queryKey: ['tasks'] });
-        
-        // Clear input and close FIRST before showing toast
-        setInput('');
-        
-        if (!keepOpen) {
-          console.log('QuickCapture: Closing modal now');
-          onClose();
-        }
-        
-        // Show confirmation toast after close
-        toast({ 
-          description: 'Task captured',
-          duration: 1500 
-        });
-
         onCapture?.();
       }
     } catch (error) {
