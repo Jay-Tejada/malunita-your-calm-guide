@@ -26,8 +26,10 @@ export const GoalSuggestions = ({ onSelectGoal }: GoalSuggestionsProps) => {
   const loadSuggestions = async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('suggest-goals', {
-        body: {},
+      // DEPRECATED: suggest-goals consolidated to suggest-focus in Phase 3B
+      // TODO: Migrate to suggest-focus with goal mode
+      const { data, error } = await supabase.functions.invoke('suggest-focus', {
+        body: { includeGoalSuggestions: true },
       });
 
       if (error) {

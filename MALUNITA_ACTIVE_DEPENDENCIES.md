@@ -251,15 +251,38 @@ The following 16 edge functions were removed:
 ✅ DELETED: supabase/functions/weekly-recommendations/
 ```
 
-**Frontend references commented out in:**
-- src/features/rituals/EveningRitual.tsx (process-ritual)
-- src/features/rituals/MorningRitual.tsx (process-ritual)
-- src/hooks/useAdmin.ts (check-admin)
-- src/hooks/useAutoSplitTask.ts (generate-subtasks)
-- src/hooks/useDailyMindstream.ts (personalization-agent)
-- src/hooks/useTaskPlan.ts (quest-wrapper)
-- src/hooks/useWeeklyQuests.ts (generate-weekly-quests)
-- src/hooks/useWeeklyRecommendations.ts (weekly-recommendations)
+### ⚠️ DEPRECATED (Phase 2C - 2025-12-04)
+
+```
+⚠️ DEPRECATED: supabase/functions/chat-completion/ (DELETED)
+```
+
+### ⚠️ DEPRECATED (Phase 3A - 2025-12-04)
+
+Functions serving deprecated tables:
+
+```
+⚠️ DEPRECATED: supabase/functions/thought-engine-trainer/ (tables: ai_corrections, etc.)
+⚠️ DEPRECATED: supabase/functions/global-trends-analyzer/ (tables: learning_trends)
+⚠️ DEPRECATED: supabase/functions/weekly-retraining/ (tables: ai_corrections, training_queue)
+```
+
+### ⚠️ DEPRECATED (Phase 3B - 2025-12-04)
+
+Consolidated suggestion functions:
+
+```
+⚠️ DEPRECATED: supabase/functions/suggest-tasks/ → Use suggest-focus
+⚠️ DEPRECATED: supabase/functions/suggest-goals/ → Use suggest-focus
+⚠️ DEPRECATED: supabase/functions/suggest-micro-steps/ → Use planning-breakdown
+⚠️ DEPRECATED: supabase/functions/score-task-priority/ (no active callers)
+```
+
+**Frontend references updated:**
+- src/components/TaskSuggestions.tsx → suggest-focus
+- src/components/GoalSuggestions.tsx → suggest-focus
+- src/hooks/useMicroSuggestions.ts → planning-breakdown
+- src/pages/TestAll.tsx → marked deprecated
 
 ### VERIFY BEFORE DELETING (May be cron/internal)
 

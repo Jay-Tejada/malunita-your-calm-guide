@@ -27,12 +27,15 @@ export const useMicroSuggestions = () => {
         return;
       }
 
+      // DEPRECATED: suggest-micro-steps consolidated to planning-breakdown in Phase 3B
+      // TODO: Migrate to planning-breakdown for micro-step generation
       const { data, error } = await supabase.functions.invoke<MicroSuggestionsResult>(
-        'suggest-micro-steps',
+        'planning-breakdown',
         {
           body: {
             taskTitle,
-            taskContext: taskContext || undefined,
+            context: taskContext || undefined,
+            mode: 'micro-steps',
           }
         }
       );
