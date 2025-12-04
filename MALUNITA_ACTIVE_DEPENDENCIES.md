@@ -228,26 +228,38 @@ Files with potentially unused imports (require manual verification):
 
 ## 7. CONSOLIDATION RECOMMENDATIONS
 
-### SAFE TO DELETE (Zero Dependencies)
+### ✅ DELETED (Phase 1 - 2025-12-04)
+
+The following 16 edge functions were removed:
 
 ```
-supabase/functions/admin-stats/
-supabase/functions/behavior-predictor/
-supabase/functions/check-admin/
-supabase/functions/check-priority-task/
-supabase/functions/generate-subtasks/
-supabase/functions/generate-weekly-quests/
-supabase/functions/pattern-recognition/
-supabase/functions/personalization-agent/
-supabase/functions/preference-learner/
-supabase/functions/proactive-suggestions/
-supabase/functions/process-ritual/
-supabase/functions/quest-wrapper/
-supabase/functions/task-staleness-checker/
-supabase/functions/tomorrow-planner/
-supabase/functions/travel-time-reminders/
-supabase/functions/weekly-recommendations/
+✅ DELETED: supabase/functions/admin-stats/
+✅ DELETED: supabase/functions/behavior-predictor/
+✅ DELETED: supabase/functions/check-admin/
+✅ DELETED: supabase/functions/check-priority-task/
+✅ DELETED: supabase/functions/generate-subtasks/
+✅ DELETED: supabase/functions/generate-weekly-quests/
+✅ DELETED: supabase/functions/pattern-recognition/
+✅ DELETED: supabase/functions/personalization-agent/
+✅ DELETED: supabase/functions/preference-learner/
+✅ DELETED: supabase/functions/proactive-suggestions/
+✅ DELETED: supabase/functions/process-ritual/
+✅ DELETED: supabase/functions/quest-wrapper/
+✅ DELETED: supabase/functions/task-staleness-checker/
+✅ DELETED: supabase/functions/tomorrow-planner/
+✅ DELETED: supabase/functions/travel-time-reminders/
+✅ DELETED: supabase/functions/weekly-recommendations/
 ```
+
+**Frontend references commented out in:**
+- src/features/rituals/EveningRitual.tsx (process-ritual)
+- src/features/rituals/MorningRitual.tsx (process-ritual)
+- src/hooks/useAdmin.ts (check-admin)
+- src/hooks/useAutoSplitTask.ts (generate-subtasks)
+- src/hooks/useDailyMindstream.ts (personalization-agent)
+- src/hooks/useTaskPlan.ts (quest-wrapper)
+- src/hooks/useWeeklyQuests.ts (generate-weekly-quests)
+- src/hooks/useWeeklyRecommendations.ts (weekly-recommendations)
 
 ### VERIFY BEFORE DELETING (May be cron/internal)
 

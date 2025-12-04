@@ -19,23 +19,24 @@ export const useWeeklyRecommendations = (
   return useQuery({
     queryKey: ['weekly-recommendations', weekStart, weekEnd],
     enabled: enabled && !!sessions,
+    // TODO: legacy reference (weekly-recommendations), removed in consolidation
     queryFn: async (): Promise<Recommendation[]> => {
       if (!sessions || sessions.length === 0) {
         return [];
       }
 
-      const { data, error } = await supabase.functions.invoke('weekly-recommendations', {
-        body: {
-          weekStart,
-          weekEnd,
-          sessions
-        }
-      });
-
-      if (error) {
-        console.error('Error fetching recommendations:', error);
-        throw error;
-      }
+      // const { data, error } = await supabase.functions.invoke('weekly-recommendations', {
+      //   body: {
+      //     weekStart,
+      //     weekEnd,
+      //     sessions
+      //   }
+      // });
+      // if (error) {
+      //   console.error('Error fetching recommendations:', error);
+      //   throw error;
+      // }
+      const data = { recommendations: [] };
 
       const recommendations = data?.recommendations || [];
 

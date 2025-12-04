@@ -56,12 +56,13 @@ export const useWeeklyQuests = () => {
     },
   });
 
-  // Generate quests for current week
+  // TODO: legacy reference (generate-weekly-quests), removed in consolidation
   const generateQuests = useMutation({
     mutationFn: async () => {
-      const { data, error } = await supabase.functions.invoke('generate-weekly-quests');
-      if (error) throw error;
-      return data;
+      // const { data, error } = await supabase.functions.invoke('generate-weekly-quests');
+      // if (error) throw error;
+      // return data;
+      return []; // generate-weekly-quests removed in consolidation
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['weekly-quests'] });

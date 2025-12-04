@@ -70,18 +70,18 @@ export function useTaskPlan() {
     }
   };
 
+  // TODO: legacy reference (quest-wrapper), removed in consolidation
   const buildQuest = async (plan: Plan): Promise<Quest | null> => {
     try {
-      const { data, error } = await supabase.functions.invoke('quest-wrapper', {
-        body: { plan }
-      });
-
-      if (error) {
-        console.error('Error building quest:', error);
-        throw error;
-      }
-
-      return data as Quest;
+      // const { data, error } = await supabase.functions.invoke('quest-wrapper', {
+      //   body: { plan }
+      // });
+      // if (error) {
+      //   console.error('Error building quest:', error);
+      //   throw error;
+      // }
+      // return data as Quest;
+      return null; // Quest wrapper removed in consolidation
     } catch (error) {
       console.error('Failed to build quest:', error);
       toast({

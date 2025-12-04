@@ -85,17 +85,19 @@ export function MorningRitual({ onComplete, onSkip }: MorningRitualProps) {
         throw new Error('No active session');
       }
 
-      // Call AI to process ritual responses
-      const { data, error } = await supabase.functions.invoke('process-ritual', {
-        body: {
-          type: 'morning',
-          focusAnswer,
-          appointmentsAnswer: appointmentsAnswer || null
-        },
-        headers: {
-          Authorization: `Bearer ${session.access_token}`
-        }
-      });
+      // TODO: legacy reference, removed in consolidation
+      // const { data, error } = await supabase.functions.invoke('process-ritual', {
+      //   body: {
+      //     type: 'morning',
+      //     focusAnswer,
+      //     appointmentsAnswer: appointmentsAnswer || null
+      //   },
+      //   headers: {
+      //     Authorization: `Bearer ${session.access_token}`
+      //   }
+      // });
+      const data = null;
+      const error = null;
 
       if (error) throw error;
 

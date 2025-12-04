@@ -78,12 +78,13 @@ export function useDailyMindstream(): MindstreamData {
           commandCenterResult,
           suggestFocusResult,
           personalizationResult,
+        // TODO: legacy reference (personalization-agent), removed in consolidation
         ] = await Promise.allSettled([
           supabase.functions.invoke('daily-command-center', {
             body: { mode: 'home_screen' }
           }),
           supabase.functions.invoke('suggest-focus'),
-          supabase.functions.invoke('personalization-agent').catch(() => ({ data: null })),
+          Promise.resolve({ data: null }), // personalization-agent removed
         ]);
 
         // Extract data from results

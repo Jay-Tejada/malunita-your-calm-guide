@@ -41,13 +41,15 @@ export const useAutoSplitTask = () => {
     try {
       console.log('Auto-splitting task:', parentTask.title);
 
-      // Call edge function to generate subtasks
-      const { data, error } = await supabase.functions.invoke('generate-subtasks', {
-        body: { 
-          taskTitle: parentTask.title,
-          taskContext: parentTask.context
-        }
-      });
+      // TODO: legacy reference, removed in consolidation
+      // const { data, error } = await supabase.functions.invoke('generate-subtasks', {
+      //   body: { 
+      //     taskTitle: parentTask.title,
+      //     taskContext: parentTask.context
+      //   }
+      // });
+      const data = null;
+      const error = null;
 
       if (error) {
         console.error('Error generating subtasks:', error);

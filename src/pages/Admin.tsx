@@ -11,20 +11,20 @@ export default function Admin() {
   const navigate = useNavigate();
   const { isAdmin, isLoading: isCheckingAdmin } = useAdmin();
 
+  // TODO: legacy reference (admin-stats), removed in consolidation
   const { data: stats, isLoading: isLoadingStats } = useQuery({
     queryKey: ['admin-stats'],
     queryFn: async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error('Not authenticated');
-
-      const { data, error } = await supabase.functions.invoke('admin-stats', {
-        headers: {
-          Authorization: `Bearer ${session.access_token}`
-        }
-      });
-
-      if (error) throw error;
-      return data;
+      // const { data: { session } } = await supabase.auth.getSession();
+      // if (!session) throw new Error('Not authenticated');
+      // const { data, error } = await supabase.functions.invoke('admin-stats', {
+      //   headers: {
+      //     Authorization: `Bearer ${session.access_token}`
+      //   }
+      // });
+      // if (error) throw error;
+      // return data;
+      return null; // admin-stats removed in consolidation
     },
     enabled: isAdmin,
     refetchInterval: 30000, // Refresh every 30 seconds
