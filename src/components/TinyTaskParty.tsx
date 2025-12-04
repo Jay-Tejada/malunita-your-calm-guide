@@ -8,8 +8,8 @@ interface TinyTaskPartyProps {
 }
 
 const TinyTaskParty = ({ tasks, onComplete, onClose }: TinyTaskPartyProps) => {
-  const [currentIndex, setCurrentIndex] = useState(0);
   const [completed, setCompleted] = useState<string[]>([]);
+  const [skipped, setSkipped] = useState<string[]>([]);
   const [timeElapsed, setTimeElapsed] = useState(0);
   
   // Timer
@@ -26,19 +26,25 @@ const TinyTaskParty = ({ tasks, onComplete, onClose }: TinyTaskPartyProps) => {
     return `${mins}:${s.toString().padStart(2, '0')}`;
   };
   
-  const remaining = tasks.filter(t => !completed.includes(t.id));
+  // Get remaining tasks - not completed, prioritize non-skipped first
+  const notCompleted = tasks.filter(t => !completed.includes(t.id));
+  const notSkipped = notCompleted.filter(t => !skipped.includes(t.id));
+  const remaining = notSkipped.length > 0 ? notSkipped : notCompleted;
   const currentTask = remaining[0];
-  const isFinished = remaining.length === 0;
+  const isFinished = notCompleted.length === 0;
   
   const handleComplete = () => {
     if (!currentTask) return;
     setCompleted([...completed, currentTask.id]);
+    // Remove from skipped if it was there
+    setSkipped(s => s.filter(id => id !== currentTask.id));
     onComplete(currentTask.id);
   };
   
   const handleSkip = () => {
-    // Move current to end
-    setCurrentIndex(i => i + 1);
+    if (!currentTask) return;
+    // Add to skipped list to move to end
+    setSkipped([...skipped, currentTask.id]);
   };
 
   return (
@@ -64,7 +70,7 @@ const TinyTaskParty = ({ tasks, onComplete, onClose }: TinyTaskPartyProps) => {
             {completed.length} of {tasks.length} done
           </span>
           <span className="text-xs text-foreground/40">
-            {remaining.length} left
+            {notCompleted.length} left
           </span>
         </div>
         <div className="h-1 bg-foreground/10 rounded-full overflow-hidden">
