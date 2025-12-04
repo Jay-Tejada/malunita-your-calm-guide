@@ -4,6 +4,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useThoughts } from '@/hooks/useThoughts';
 import { useQueryClient } from '@tanstack/react-query';
 import { useTasks } from '@/hooks/useTasks';
+import { useSmartHints, useModifierKey } from '@/hooks/useSmartHints';
 
 interface QuickCaptureProps {
   isOpen: boolean;
@@ -20,6 +21,8 @@ export const QuickCapture = ({ isOpen, onClose, variant, onCapture }: QuickCaptu
   const { addThought } = useThoughts();
   const queryClient = useQueryClient();
   const { createTasks } = useTasks();
+  const { currentHint, trackUsage } = useSmartHints();
+  const modKey = useModifierKey();
   
   // Auto-resize textarea
   const adjustTextareaHeight = () => {
@@ -100,14 +103,17 @@ export const QuickCapture = ({ isOpen, onClose, variant, onCapture }: QuickCaptu
     if (e.key === 'Tab') {
       e.preventDefault();
       setCaptureType(prev => prev === 'task' ? 'thought' : 'task');
+      trackUsage('tab-switch');
     } else if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       e.stopPropagation();
       handleSubmit(false);
+      trackUsage('quick-capture');
     } else if (e.key === 'Enter' && e.shiftKey && variant === 'desktop') {
       e.preventDefault();
       e.stopPropagation();
       handleSubmit(true);
+      trackUsage('shift-enter');
     } else if (e.key === 'Escape') {
       onClose();
       setInput('');
@@ -214,10 +220,12 @@ export const QuickCapture = ({ isOpen, onClose, variant, onCapture }: QuickCaptu
             style={{ minHeight: '24px' }}
           />
           
-          {/* Hint text */}
-          <p className="mt-2 text-[10px] text-muted-foreground/40 font-mono">
-            Tab to switch · Shift+Enter to save & continue
-          </p>
+          {/* Rotating hint */}
+          {currentHint && (
+            <p className="mt-2 text-[10px] text-muted-foreground/40 font-mono animate-fade-in">
+              {currentHint.replace('⌘', modKey)}
+            </p>
+          )}
         </div>
       </div>
     </>
