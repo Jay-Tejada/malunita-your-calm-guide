@@ -41,6 +41,7 @@ export const useProcessInputMutation = () => {
       if (!user) throw new Error('Not authenticated');
 
       console.log('🤖 Processing input with AI:', text);
+      // TODO: Add useOrbTriggers().onAIStart() here
 
       const { data, error } = await supabase.functions.invoke('process-input', {
         body: {
@@ -54,10 +55,12 @@ export const useProcessInputMutation = () => {
 
       if (error) {
         console.error('❌ AI processing error:', error);
+        // TODO: Add useOrbTriggers().onAIEnd() here
         throw error;
       }
 
       console.log('✅ AI processing complete:', data);
+      // TODO: Add useOrbTriggers().onAIEnd() here
       return data;
     },
     onSuccess: async (data, variables) => {

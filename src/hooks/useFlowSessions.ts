@@ -90,6 +90,7 @@ export const useFlowSessions = () => {
     if (data) {
       setActiveSession(data as FlowSessionRecord);
       setSessions(prev => prev.map(s => s.id === sessionId ? data as FlowSessionRecord : s));
+      // TODO: Add useOrbTriggers().onFocusStart() here
     }
   };
 
@@ -127,6 +128,7 @@ export const useFlowSessions = () => {
 
     if (data) {
       setActiveSession(null);
+      // TODO: Add useOrbTriggers().onFocusEnd() here
       setSessions(prev => prev.map(s => s.id === sessionId ? data as FlowSessionRecord : s));
     }
     

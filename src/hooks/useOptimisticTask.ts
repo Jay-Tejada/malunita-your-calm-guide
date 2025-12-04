@@ -187,6 +187,7 @@ export function useOptimisticTask() {
         .single();
       
       if (error) throw error;
+      // TODO: Add useOrbTriggers().onTaskComplete() here
       return data;
     },
     
