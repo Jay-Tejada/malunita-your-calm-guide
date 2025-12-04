@@ -1,3 +1,11 @@
+// =============================================================================
+// DEPRECATED: This function serves deprecated tables (Phase 3A)
+// Tables: ai_corrections, model_confusion_matrix, user_bias_patterns, 
+//         learning_trends, memory_events, training_queue
+// Date flagged: 2024-12-04
+// Status: No longer being called - safe to delete in Phase 3B
+// =============================================================================
+
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
