@@ -10,11 +10,14 @@ export const useAdmin = () => {
         return { isAdmin: false };
       }
 
-      const { data, error } = await supabase.functions.invoke('check-admin', {
-        headers: {
-          Authorization: `Bearer ${session.access_token}`
-        }
-      });
+      // TODO: legacy reference, removed in consolidation
+      // const { data, error } = await supabase.functions.invoke('check-admin', {
+      //   headers: {
+      //     Authorization: `Bearer ${session.access_token}`
+      //   }
+      // });
+      const data = { isAdmin: false };
+      const error = null;
 
       if (error) {
         console.error('Error checking admin status:', error);

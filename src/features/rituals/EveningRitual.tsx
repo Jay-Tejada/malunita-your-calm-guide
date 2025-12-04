@@ -70,18 +70,20 @@ export function EveningRitual({ onComplete, onSkip }: EveningRitualProps) {
         throw new Error('No active session');
       }
 
-      // Call AI to process ritual responses
-      const { data, error } = await supabase.functions.invoke('process-ritual', {
-        body: {
-          type: 'evening',
-          winsAnswer: winsAnswer || null,
-          stressAnswer: stressAnswer || null,
-          tomorrowAnswer: tomorrowAnswer || null
-        },
-        headers: {
-          Authorization: `Bearer ${session.access_token}`
-        }
-      });
+      // TODO: legacy reference, removed in consolidation
+      // const { data, error } = await supabase.functions.invoke('process-ritual', {
+      //   body: {
+      //     type: 'evening',
+      //     winsAnswer: winsAnswer || null,
+      //     stressAnswer: stressAnswer || null,
+      //     tomorrowAnswer: tomorrowAnswer || null
+      //   },
+      //   headers: {
+      //     Authorization: `Bearer ${session.access_token}`
+      //   }
+      // });
+      const data = null;
+      const error = null;
 
       if (error) throw error;
 
