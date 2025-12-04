@@ -1,4 +1,5 @@
-import { supabase } from "@/integrations/supabase/client";
+// DEPRECATED: idea-analyzer deleted in Phase 3C
+// Using local fallback clarification only
 
 interface ClarificationRequest {
   originalText: string;
@@ -13,29 +14,10 @@ interface ClarificationResponse {
 }
 
 export async function getClarification(request: ClarificationRequest): Promise<ClarificationResponse> {
-  try {
-    const { data, error } = await supabase.functions.invoke('idea-analyzer', {
-      body: {
-        text: request.originalText,
-        mode: 'clarify',
-        taskData: request.task,
-        ambiguityReason: request.reason,
-      }
-    });
-
-    if (error) throw error;
-
-    // Return clarification from AI
-    if (data?.clarification) {
-      return data.clarification;
-    }
-
-    // Fallback clarification based on reason
-    return generateFallbackClarification(request.reason);
-  } catch (error) {
-    console.error('Clarification engine error:', error);
-    return generateFallbackClarification(request.reason);
-  }
+  // DEPRECATED: idea-analyzer deleted in Phase 3C
+  // TODO: Integrate with process-input or suggest-focus for clarification
+  console.log('getClarification: idea-analyzer removed, using local fallback');
+  return generateFallbackClarification(request.reason);
 }
 
 function generateFallbackClarification(reason: string): ClarificationResponse {

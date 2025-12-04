@@ -76,14 +76,14 @@ export function useDailyIntelligence(): UseDailyIntelligenceReturn {
         throw new Error('User not authenticated');
       }
 
-      const { data: responseData, error: functionError } = await supabase.functions.invoke(
-        'daily-command-center',
-        { body: { mode: 'home_screen' } }
-      );
-
-      if (functionError) {
-        throw functionError;
-      }
+      // DEPRECATED: daily-command-center deleted in Phase 3C
+      // TODO: Replace with suggest-focus for daily intelligence
+      // const { data: responseData, error: functionError } = await supabase.functions.invoke(
+      //   'daily-command-center',
+      //   { body: { mode: 'home_screen' } }
+      // );
+      // if (functionError) { throw functionError; }
+      const responseData = null; // Fallback to local data
 
       const intelligenceData: DailyIntelligenceData = {
         headline: responseData?.headline || null,

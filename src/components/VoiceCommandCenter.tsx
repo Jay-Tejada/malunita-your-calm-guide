@@ -130,11 +130,13 @@ export function VoiceCommandCenter({ onClose }: VoiceCommandCenterProps) {
         description: "Processing your daily plan",
       });
 
-      const { data: commandData, error: commandError } = await supabase.functions.invoke('daily-command-center', {
-        body: { text: transcribedText }
-      });
-
-      if (commandError) throw commandError;
+      // DEPRECATED: daily-command-center deleted in Phase 3C
+      // TODO: Replace with suggest-focus or process-input
+      // const { data: commandData, error: commandError } = await supabase.functions.invoke('daily-command-center', {
+      //   body: { text: transcribedText }
+      // });
+      // if (commandError) throw commandError;
+      const commandData = { summary: { headline: 'Voice input received', insights: [transcribedText] } };
 
       setProgress(75);
 

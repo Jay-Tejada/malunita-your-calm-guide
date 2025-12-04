@@ -17,14 +17,16 @@ export function usePredictiveLoad() {
       // Morning routine (6am - 9am)
       if (hour >= 6 && hour < 9) {
         // Preload daily plan
-        queryClient.prefetchQuery({
-          queryKey: ['daily-intelligence'],
-          queryFn: async () => {
-            const { data } = await supabase.functions.invoke('daily-command-center');
-            return data;
-          },
-          staleTime: 5 * 60 * 1000, // 5 minutes
-        });
+        // DEPRECATED: daily-command-center deleted in Phase 3C
+        // TODO: Replace with suggest-focus prefetch
+        // queryClient.prefetchQuery({
+        //   queryKey: ['daily-intelligence'],
+        //   queryFn: async () => {
+        //     const { data } = await supabase.functions.invoke('daily-command-center');
+        //     return data;
+        //   },
+        //   staleTime: 5 * 60 * 1000,
+        // });
         
         // Preload ONE thing suggestion
         queryClient.prefetchQuery({
