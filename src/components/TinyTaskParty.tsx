@@ -9,7 +9,8 @@ interface TinyTaskPartyProps {
 
 const TinyTaskParty = ({ tasks, onComplete, onClose }: TinyTaskPartyProps) => {
   const [completed, setCompleted] = useState<string[]>([]);
-  const [skipped, setSkipped] = useState<string[]>([]);
+  // Track task order - tasks get moved to end when skipped
+  const [taskQueue, setTaskQueue] = useState<string[]>(() => tasks.map(t => t.id));
   const [timeElapsed, setTimeElapsed] = useState(0);
   
   // Timer
@@ -26,25 +27,25 @@ const TinyTaskParty = ({ tasks, onComplete, onClose }: TinyTaskPartyProps) => {
     return `${mins}:${s.toString().padStart(2, '0')}`;
   };
   
-  // Get remaining tasks - not completed, prioritize non-skipped first
-  const notCompleted = tasks.filter(t => !completed.includes(t.id));
-  const notSkipped = notCompleted.filter(t => !skipped.includes(t.id));
-  const remaining = notSkipped.length > 0 ? notSkipped : notCompleted;
+  // Get remaining tasks in queue order, excluding completed
+  const remainingIds = taskQueue.filter(id => !completed.includes(id));
+  const remaining = remainingIds.map(id => tasks.find(t => t.id === id)).filter(Boolean);
   const currentTask = remaining[0];
-  const isFinished = notCompleted.length === 0;
+  const isFinished = remainingIds.length === 0;
   
   const handleComplete = () => {
     if (!currentTask) return;
     setCompleted([...completed, currentTask.id]);
-    // Remove from skipped if it was there
-    setSkipped(s => s.filter(id => id !== currentTask.id));
     onComplete(currentTask.id);
   };
   
   const handleSkip = () => {
     if (!currentTask) return;
-    // Add to skipped list to move to end
-    setSkipped([...skipped, currentTask.id]);
+    // Move current task to end of queue
+    setTaskQueue(queue => {
+      const filtered = queue.filter(id => id !== currentTask.id);
+      return [...filtered, currentTask.id];
+    });
   };
 
   return (
@@ -70,7 +71,7 @@ const TinyTaskParty = ({ tasks, onComplete, onClose }: TinyTaskPartyProps) => {
             {completed.length} of {tasks.length} done
           </span>
           <span className="text-xs text-foreground/40">
-            {notCompleted.length} left
+            {remainingIds.length} left
           </span>
         </div>
         <div className="h-1 bg-foreground/10 rounded-full overflow-hidden">
