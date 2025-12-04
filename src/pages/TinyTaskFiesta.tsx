@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useFiestaSessions } from "@/hooks/useFiestaSessions";
 import { useTasks } from "@/hooks/useTasks";
 import { useCompanionGrowth } from "@/hooks/useCompanionGrowth";
+import { useOrbRituals } from "@/hooks/useOrbRituals";
 import { TinyTaskFiestaStart } from "@/components/TinyTaskFiestaStart";
 import { TinyTaskFiestaTimer } from "@/components/TinyTaskFiestaTimer";
 import { TinyTaskFiestaTaskList } from "@/components/TinyTaskFiestaTaskList";
@@ -16,6 +17,7 @@ const TinyTaskFiesta = () => {
   const { activeSession, updateSession, endSession } = useFiestaSessions();
   const { tasks, updateTask, deleteTask } = useTasks();
   const growth = useCompanionGrowth();
+  const { onTinyTaskFiestaComplete } = useOrbRituals();
   const [isPaused, setIsPaused] = useState(false);
   const [pausedAt, setPausedAt] = useState<number | null>(null);
   const [totalPausedTime, setTotalPausedTime] = useState(0);
@@ -52,6 +54,7 @@ const TinyTaskFiesta = () => {
 
   const handleTimerComplete = async () => {
     if (!activeSession) return;
+    const completedTasksCount = activeSession.tasks_completed?.length || 0;
     await endSession(activeSession.id);
     // Award XP for completing a fiesta session
     await growth.addXp(2, 'Tiny Task Fiesta completed');
@@ -60,7 +63,7 @@ const TinyTaskFiesta = () => {
       BONDING_INCREMENTS.FIESTA_COMPLETED,
       "Fiesta fun! Malunita had a blast"
     );
-    // TODO: Call useOrbRituals().onTinyTaskFiestaComplete(completedTasksCount) here
+    onTinyTaskFiestaComplete(completedTasksCount);
   };
 
   const handleEndEarly = async () => {

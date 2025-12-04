@@ -8,6 +8,7 @@ import { useMoodStore } from "@/state/moodMachine";
 import { useEmotionalMemory } from "@/state/emotionalMemory";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useOrbRituals } from "@/hooks/useOrbRituals";
 import { Moon, Heart, AlertCircle, Sparkles } from "lucide-react";
 
 interface EveningRitualProps {
@@ -25,6 +26,7 @@ export function EveningRitual({ onComplete, onSkip }: EveningRitualProps) {
   const { mood, updateMood } = useMoodStore();
   const { toast } = useToast();
   const emotionalMemory = useEmotionalMemory();
+  const { onEndMyDay } = useOrbRituals();
 
   const getGreeting = () => {
     if (emotionalMemory.stress >= 70) {
@@ -96,7 +98,7 @@ export function EveningRitual({ onComplete, onSkip }: EveningRitualProps) {
       }
       emotionalMemory.adjustFatigue(3); // End of day fatigue
       emotionalMemory.recordActivity();
-      // TODO: Call useOrbRituals().onEndMyDay() here
+      onEndMyDay();
 
       // Update insights only (timestamp handled in App.tsx)
       const { data: { user } } = await supabase.auth.getUser();

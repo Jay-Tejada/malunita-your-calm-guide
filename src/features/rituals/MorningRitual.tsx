@@ -9,6 +9,7 @@ import { useEmotionalMemory } from "@/state/emotionalMemory";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useTasks } from "@/hooks/useTasks";
+import { useOrbRituals } from "@/hooks/useOrbRituals";
 import { Sparkles, Sun, Calendar } from "lucide-react";
 
 interface MorningRitualProps {
@@ -26,6 +27,7 @@ export function MorningRitual({ onComplete, onSkip }: MorningRitualProps) {
   const { createTasks } = useTasks();
   const { toast } = useToast();
   const emotionalMemory = useEmotionalMemory();
+  const { onStartMyDay } = useOrbRituals();
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -134,7 +136,7 @@ export function MorningRitual({ onComplete, onSkip }: MorningRitualProps) {
 
       updateMood("loving");
       setStep("complete");
-      // TODO: Call useOrbRituals().onStartMyDay() here
+      onStartMyDay();
       
       toast({
         title: "Morning ritual complete! ✨",
