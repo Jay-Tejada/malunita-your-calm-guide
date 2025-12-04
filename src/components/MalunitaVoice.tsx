@@ -1052,24 +1052,11 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
                 { role: 'assistant', content: reply_text }
               ]);
               
-              // Save to database
-              if (user) {
-                await supabase.from('conversation_history').insert([
-                  {
-                    user_id: user.id,
-                    session_id: sessionId,
-                    role: 'user',
-                    content: transcribed,
-                  },
-                  {
-                    user_id: user.id,
-                    session_id: sessionId,
-                    role: 'assistant',
-                    content: reply_text,
-                    audio_played: audioEnabled,
-                  }
-                ]);
-              }
+              // TODO: conversation_history deprecated in Phase 2C consolidation
+              // Database logging removed - local state only
+              // if (user) {
+              //   await supabase.from('conversation_history').insert([...]);
+              // }
               
               // Show mood selector for feedback
               setShowMoodSelector(true);
@@ -1311,18 +1298,12 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
     setCurrentMood(mood);
     setShowMoodSelector(false);
     
-    // Update the assistant's conversation history entry with mood
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      await supabase
-        .from('conversation_history')
-        .update({ mood })
-        .eq('user_id', user.id)
-        .eq('session_id', sessionId)
-        .eq('role', 'assistant')
-        .order('created_at', { ascending: false })
-        .limit(1);
-    }
+    // TODO: conversation_history deprecated in Phase 2C consolidation
+    // Mood tracking via database removed
+    // const { data: { user } } = await supabase.auth.getUser();
+    // if (user) {
+    //   await supabase.from('conversation_history').update({ mood })...
+    // }
 
     toast({
       title: "Mood noted",
