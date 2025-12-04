@@ -96,6 +96,7 @@ export function EveningRitual({ onComplete, onSkip }: EveningRitualProps) {
       }
       emotionalMemory.adjustFatigue(3); // End of day fatigue
       emotionalMemory.recordActivity();
+      // TODO: Call useOrbRituals().onEndMyDay() here
 
       // Update insights only (timestamp handled in App.tsx)
       const { data: { user } } = await supabase.auth.getUser();

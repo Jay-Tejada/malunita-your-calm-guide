@@ -44,6 +44,7 @@ export const TinyTaskFiestaStart = () => {
         tasks_included: selectedTaskIds,
         duration_minutes: parseInt(duration),
       });
+      // TODO: Call useOrbRituals().onTinyTaskFiestaStart() here
       navigate('/tiny-task-fiesta');
     } catch (error) {
       console.error('Failed to start fiesta:', error);

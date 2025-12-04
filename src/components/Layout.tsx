@@ -13,11 +13,15 @@ import { useCompanionVisibility } from "@/state/useCompanionVisibility";
 import ActiveSessionBar from "@/components/ActiveSessionBar";
 import { useFlowSessions } from "@/hooks/useFlowSessions";
 import { useQuickCapture } from "@/contexts/QuickCaptureContext";
+import { supabase } from "@/integrations/supabase/client";
+import { useOrbSync } from "@/hooks/useOrbSync";
+import { useOrbEvolution } from "@/hooks/useOrbEvolution";
  
 export const Layout = () => {
   const [leftDrawerOpen, setLeftDrawerOpen] = useState(false);
   const [rightDrawerOpen, setRightDrawerOpen] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
+  const [userId, setUserId] = useState<string | undefined>();
   const navigate = useNavigate();
   const location = useLocation();
   const processInputMutation = useProcessInputMutation();
@@ -25,6 +29,19 @@ export const Layout = () => {
   const { isVisible: isCompanionVisible, show: showCompanion, hide: hideCompanion } = useCompanionVisibility();
   const { activeSession, completeSession, abandonSession } = useFlowSessions();
   const { isOpen: quickCaptureOpen, openQuickCapture, closeQuickCapture } = useQuickCapture();
+
+  // Orb state sync and evolution
+  useOrbSync(userId);
+  useOrbEvolution(userId);
+
+  // Get user ID for orb sync
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUserId(user?.id);
+    };
+    getUser();
+  }, []);
 
   // Handle active session bar interactions
   const handleSessionTap = () => {
