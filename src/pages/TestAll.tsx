@@ -165,25 +165,16 @@ const TestAll = () => {
             </CardContent>
           </Card>
 
-          <Card>
+          {/* DEPRECATED: suggest-tasks consolidated to suggest-focus in Phase 3B */}
+          <Card className="opacity-50">
             <CardHeader>
-              <CardTitle>suggest-tasks</CardTitle>
-              <CardDescription>Get AI suggestions for new tasks</CardDescription>
+              <CardTitle>suggest-tasks (DEPRECATED)</CardTitle>
+              <CardDescription>Consolidated to suggest-focus</CardDescription>
             </CardHeader>
             <CardContent>
-              <Button 
-                onClick={() => testFunction('suggest-tasks', { 
-                  tasks: [
-                    { title: "Finish presentation", completed: false },
-                    { title: "Email client", completed: true }
-                  ],
-                  domain: "work"
-                })}
-                disabled={loading['suggest-tasks']}
-              >
-                {loading['suggest-tasks'] ? 'Testing...' : 'Test Suggestions'}
+              <Button disabled>
+                Deprecated
               </Button>
-              <ResultDisplay name="suggest-tasks" />
             </CardContent>
           </Card>
 

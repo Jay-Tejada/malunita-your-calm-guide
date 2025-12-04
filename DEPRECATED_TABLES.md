@@ -1,13 +1,13 @@
-# Deprecated Tables - Phase 3A
+# Deprecated Tables & Functions - Phase 3
 
 **Date Flagged:** 2024-12-04  
 **Status:** Write operations disabled, reads still active
 
-## Overview
+---
 
-These tables are flagged for removal. All write operations have been stopped. Read operations may still exist for backwards compatibility but will be removed in Phase 3B.
+## Phase 3A: Deprecated Tables
 
-## Deprecated Tables
+These tables are flagged for removal. All write operations have been stopped.
 
 | Table | Purpose | Write Status | Read Status |
 |-------|---------|--------------|-------------|
@@ -19,11 +19,34 @@ These tables are flagged for removal. All write operations have been stopped. Re
 | pattern_insights | Pattern analysis results | ❌ Deprecated | None |
 | memory_events | Event logging for analytics | ❌ Deprecated | None |
 | user_patterns | User behavior patterns | ❌ Deprecated | 📖 Active |
-| tomorrow_plan | Next-day planning | ❌ Deprecated | 📖 Active (daily-command-center) |
+| tomorrow_plan | Next-day planning | ❌ Deprecated | 📖 Active |
 
-## Deprecated Edge Functions
+---
 
-These functions primarily write to deprecated tables and are now deprecated:
+## Phase 3B: Consolidated Functions
+
+These functions are deprecated and replaced by unified alternatives:
+
+| Deprecated Function | Replacement | Reason |
+|---------------------|-------------|--------|
+| suggest-tasks | suggest-focus | Consolidation |
+| suggest-goals | suggest-focus | Consolidation |
+| suggest-micro-steps | planning-breakdown | Consolidation |
+| score-task-priority | (none) | No active callers |
+
+### Frontend Migration
+
+| File | Old Function | New Function |
+|------|--------------|--------------|
+| TaskSuggestions.tsx | suggest-tasks | suggest-focus |
+| GoalSuggestions.tsx | suggest-goals | suggest-focus |
+| useMicroSuggestions.ts | suggest-micro-steps | planning-breakdown |
+
+---
+
+## Phase 3A: Deprecated Edge Functions (Table Writers)
+
+These functions primarily write to deprecated tables:
 
 | Function | Tables Used | Status |
 |----------|-------------|--------|
@@ -31,9 +54,11 @@ These functions primarily write to deprecated tables and are now deprecated:
 | global-trends-analyzer | learning_trends | ⚠️ DEPRECATED |
 | weekly-retraining | ai_corrections, training_queue | ⚠️ DEPRECATED |
 
+---
+
 ## Files with Read Operations (Still Active)
 
-These files contain SELECT queries to deprecated tables. They will be cleaned up in Phase 3B:
+These files contain SELECT queries to deprecated tables:
 
 ### src/hooks/useAILearning.ts
 - Reads: ai_corrections, learning_trends, user_bias_patterns, model_confusion_matrix

@@ -56,12 +56,12 @@ export const TaskSuggestions = ({ tasks, domain, onAddTask }: TaskSuggestionsPro
         ? new Date(profile.burnout_recovery_until) > new Date()
         : false;
       
-      const { data, error } = await supabase.functions.invoke('suggest-tasks', {
+      // DEPRECATED: suggest-tasks consolidated to suggest-focus in Phase 3B
+      // TODO: Migrate to suggest-focus with appropriate parameters
+      const { data, error } = await supabase.functions.invoke('suggest-focus', {
         body: { 
-          tasks, 
-          domain,
-          userId: user?.id,
-          burnoutRecovery,
+          context: domain,
+          includeTaskSuggestions: true,
         }
       });
 
