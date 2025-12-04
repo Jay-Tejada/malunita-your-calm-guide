@@ -177,16 +177,61 @@ Return JSON in this format:
           reply_text = "I didn't find any tasks in what you said. Want to try rephrasing?";
         }
       }
-    } else {
-      // For non-task modes, analyze and generate a helpful response
-      console.log('💬 Generating conversational response...');
+    } else if (mode === 'journal' || mode === 'think_aloud') {
+      // Phase 2B: Route journal/think_aloud to generate-journal-summary (structured analysis)
+      console.log('📓 Processing reflection via journal summary...');
       
-      // Run idea analyzer for structured insights
+      const { data: journalResult, error: journalError } = await supabase.functions.invoke('generate-journal-summary', {
+        body: {
+          entries: [{ content: text, created_at: new Date().toISOString() }],
+          timeframe: 'day',
+        }
+      });
+
+      if (!journalError && journalResult?.summary) {
+        insights = { reflection_summary: journalResult.summary };
+        reply_text = mode === 'journal' 
+          ? "I've captured your thoughts. Taking a moment to reflect can be powerful."
+          : "I hear you. Sometimes it helps just to get thoughts out there.";
+      } else {
+        reply_text = "I've noted your thoughts. Anything specific you'd like to explore?";
+      }
+      
+    } else if (mode === 'request_suggestions') {
+      // Phase 2B: Route to suggest-focus for task suggestions
+      console.log('💡 Getting task suggestions via suggest-focus...');
+      
+      const { data: suggestResult, error: suggestError } = await supabase.functions.invoke('suggest-focus', {
+        body: { locationContext: null }
+      });
+
+      if (!suggestError && suggestResult) {
+        insights = { suggestions: suggestResult.suggestedTasks || [] };
+        reply_text = suggestResult.message || "Here are some suggestions based on your tasks.";
+        
+        // If suggest-focus returned tasks, include them
+        if (suggestResult.suggestedTasks?.length > 0) {
+          tasks = suggestResult.suggestedTasks.map((t: any) => ({
+            title: t.title || t,
+            suggested_category: t.category || 'inbox',
+            suggested_timeframe: 'today',
+            confidence: 0.7,
+            is_suggestion: true,
+          }));
+        }
+      } else {
+        reply_text = "I'd be happy to suggest some tasks. What area would you like help with?";
+      }
+      
+    } else {
+      // Phase 2B: ask_question and request_help return structured fallbacks (no chat-completion)
+      console.log('ℹ️ Returning structured fallback for mode:', mode);
+      
+      // Run idea analyzer for any useful insights
       const { data: analysisResult, error: analysisError } = await supabase.functions.invoke('idea-analyzer', {
         body: {
           text,
           extractedTasks: [],
-          conversationHistory,
         }
       });
 
@@ -194,34 +239,12 @@ Return JSON in this format:
         insights = analysisResult.analysis;
       }
 
-      // Generate appropriate reply based on mode with conversation history
-      const messagesWithHistory = [
-        ...conversationHistory,
-        { role: 'user', content: text }
-      ];
-
-      const { data: chatResult, error: chatError } = await supabase.functions.invoke('chat-completion', {
-        body: {
-          messages: messagesWithHistory,
-          userProfile,
-          analysis: insights,
-          personalityArchetype: userProfile?.companion_personality_type,
-        }
-      });
-
-      if (!chatError && chatResult?.reply) {
-        reply_text = chatResult.reply;
-      } else {
-        // Fallback response based on mode
-        const fallbackResponses: Record<string, string> = {
-          'ask_question': "That's a great question! Let me think about that for you.",
-          'journal': "I hear you. Sometimes it helps just to get thoughts out there.",
-          'request_help': "I'm here to help! What specifically can I assist you with?",
-          'think_aloud': "I appreciate you sharing your thoughts with me.",
-          'request_suggestions': "I'd be happy to suggest some tasks. What area would you like help with?"
-        };
-        reply_text = fallbackResponses[mode] || "I'm listening and here to help.";
-      }
+      // Structured responses - no conversational AI
+      const structuredResponses: Record<string, string> = {
+        'ask_question': "I can help you add tasks, journal your thoughts, or suggest what to focus on. What would you like to do?",
+        'request_help': "I'm here to help! You can add tasks by speaking them, or ask me to suggest what to focus on next.",
+      };
+      reply_text = structuredResponses[mode] || "I'm listening. Try adding a task or journaling your thoughts.";
     }
 
     // ===========================================================
