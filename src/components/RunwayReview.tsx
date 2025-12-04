@@ -292,33 +292,9 @@ export const RunwayReview = ({ onClose }: RunwayReviewProps) => {
       }
     }
 
-    // Ask AI to respond to general questions about tasks
-    try {
-      const { data, error } = await supabase.functions.invoke('chat-completion', {
-        body: { 
-          messages: [
-            { role: 'user', content: `User is in their Runway Review ritual. They have ${tasks.length} tasks. Their question: ${transcript}` }
-          ],
-          currentMood
-        }
-      });
-
-      if (error) throw error;
-      
-      // Generate speech for response
-      const { data: ttsData, error: ttsError } = await supabase.functions.invoke('text-to-speech', {
-        body: { text: data.reply, voice: 'alloy' }
-      });
-
-      if (!ttsError && ttsData) {
-        await playAudioResponse(ttsData.audioContent);
-      }
-
-      return data.reply;
-    } catch (error) {
-      console.error('Error processing voice command:', error);
-      return "I couldn't process that. Try again?";
-    }
+    // TODO: Phase 2A - Removed chat-completion. Voice commands now only support task actions.
+    // For general questions, return a helpful static message
+    return "I can help you mark tasks done or archive them. Say 'mark task 1 done' or 'archive task 2'.";
   };
 
   const handleVoiceInput = async () => {
