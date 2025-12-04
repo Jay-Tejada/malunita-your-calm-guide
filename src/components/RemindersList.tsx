@@ -204,29 +204,21 @@ export function RemindersList() {
 
   const updateReminderTime = async (reminderId: string, command: string) => {
     try {
-      // Parse new time using AI
-      const { data, error } = await supabase.functions.invoke('chat-completion', {
-        body: {
-          messages: [
-            {
-              role: 'system',
-              content: `You are a time parser. Extract a specific datetime from the user's input and return it in ISO 8601 format. 
-              If they say "10 AM" assume today at 10 AM. If they say "tomorrow at 3 PM" use tomorrow at 3 PM.
-              If they say "change to 5 PM" or "move to 5 PM" extract "5 PM".
-              Current time is ${new Date().toISOString()}.
-              Return ONLY the ISO datetime string, nothing else.`
-            },
-            {
-              role: 'user',
-              content: command
-            }
-          ]
-        }
-      });
+      // Parse new time using chrono-node (local parsing, no AI needed)
+      // TODO: Phase 2A - Removed chat-completion dependency
+      const chrono = await import('chrono-node');
+      const parsedDate = chrono.parseDate(command, new Date(), { forwardDate: true });
+      
+      if (!parsedDate) {
+        toast({
+          title: "Could not parse time",
+          description: "Try saying something like '5 PM' or 'tomorrow at 3'",
+          variant: "destructive"
+        });
+        return;
+      }
 
-      if (error) throw error;
-
-      const newReminderTime = data?.message?.trim();
+      const newReminderTime = parsedDate.toISOString();
 
       const { error: updateError } = await supabase
         .from('tasks')

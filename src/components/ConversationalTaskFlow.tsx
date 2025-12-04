@@ -328,29 +328,16 @@ export const ConversationalTaskFlow: React.FC<ConversationalTaskFlowProps> = ({
         recurrencePattern = 'monthly';
       }
 
-      // Parse time from response using AI
-      const { data, error } = await supabase.functions.invoke('chat-completion', {
-        body: {
-          messages: [
-            {
-              role: 'system',
-              content: `You are a time parser. Extract a specific datetime from the user's input and return it in ISO 8601 format. 
-              If they say "10 AM" assume today at 10 AM. If they say "tomorrow at 3 PM" use tomorrow at 3 PM.
-              If they say "every Monday at 9 AM", use next Monday at 9 AM.
-              Current time is ${new Date().toISOString()}.
-              Return ONLY the ISO datetime string, nothing else.`
-            },
-            {
-              role: 'user',
-              content: response
-            }
-          ]
-        }
-      });
+      // Parse time from response using chrono-node (local parsing, no AI needed)
+      // TODO: Phase 2A - Removed chat-completion dependency
+      const chrono = await import('chrono-node');
+      const parsedDate = chrono.parseDate(response, new Date(), { forwardDate: true });
+      
+      if (!parsedDate) {
+        throw new Error('Could not parse time');
+      }
 
-      if (error) throw error;
-
-      const reminderTime = data?.message?.trim();
+      const reminderTime = parsedDate.toISOString();
       
       // Update the last confirmed task with reminder time and recurrence
       setConfirmedTasks(prev => {
