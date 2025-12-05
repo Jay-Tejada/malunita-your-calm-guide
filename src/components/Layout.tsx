@@ -15,7 +15,7 @@ import { useFlowSessions } from "@/hooks/useFlowSessions";
 import { useQuickCapture } from "@/contexts/QuickCaptureContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useOrbSync } from "@/hooks/useOrbSync";
-import { SettingsMenu } from "@/components/SettingsMenu";
+
 import { useOrbEvolution } from "@/hooks/useOrbEvolution";
 import { useOrbBackground } from "@/hooks/useOrbBackground";
 
@@ -140,8 +140,6 @@ export const Layout = () => {
 
   return (
     <div className={activeSession ? 'pt-10' : ''}>
-      {/* Settings Menu - Top Right */}
-      <SettingsMenu />
 
       {/* Active Session Bar - shows on all pages */}
       {activeSession && activeSession.started_at && (
