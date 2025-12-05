@@ -31,12 +31,12 @@ export function HomeShell({
         {children}
       </div>
       
-      {/* Right Companion Sidebar - Desktop Only */}
-      {isVisible && (
+      {/* Right Companion Sidebar - HIDDEN until companion feature is ready */}
+      {/* {isVisible && (
         <aside className="hidden lg:block w-80 border-l border-border/20 bg-sidebar">
           <CompanionSidebar />
         </aside>
-      )}
+      )} */}
     </div>
   );
 }

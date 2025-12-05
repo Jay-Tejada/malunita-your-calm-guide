@@ -162,8 +162,8 @@ export const Layout = () => {
         />
       )}
 
-      {/* Top-Right Mini Orb - Companion Drawer / Visibility - Only show on home page */}
-      {location.pathname === '/' && (
+      {/* Top-Right Mini Orb - Companion Drawer / Visibility - HIDDEN until companion feature is ready */}
+      {/* {location.pathname === '/' && (
         <MiniOrb
           position="right"
           label={isCompanionVisible ? "companion" : "summon companion"}
@@ -175,7 +175,7 @@ export const Layout = () => {
             }
           }}
         />
-      )}
+      )} */}
 
       {/* Left Tasks Drawer */}
       <LeftDrawer
