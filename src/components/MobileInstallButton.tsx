@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
 import { Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 
 export const MobileInstallButton = () => {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [showButton, setShowButton] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Check if already installed
@@ -20,10 +22,10 @@ export const MobileInstallButton = () => {
       return;
     }
 
-    // Show the button on mobile/tablet
+    // Always show the button on mobile/tablet (not just when prompt is available)
     setShowButton(true);
 
-    // Listen for the beforeinstallprompt event
+    // Listen for the beforeinstallprompt event (Android/Chrome only)
     const handler = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e);
@@ -39,7 +41,7 @@ export const MobileInstallButton = () => {
   const handleInstallClick = async () => {
     if (!deferredPrompt) {
       // For iOS or if prompt not available, show install instructions
-      window.location.href = '/install';
+      navigate('/install');
       return;
     }
 
