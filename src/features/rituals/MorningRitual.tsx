@@ -9,10 +9,12 @@ import { useEmotionalMemory } from "@/state/emotionalMemory";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useTasks } from "@/hooks/useTasks";
+import { useHabits } from "@/hooks/useHabits";
 import { useOrbRituals } from "@/hooks/useOrbRituals";
 import { useOrbTriggers } from "@/hooks/useOrbTriggers";
 import { useRitualInsights, MorningInsight } from "@/hooks/useRitualInsights";
 import { RitualInsightCard } from "@/components/rituals/RitualInsightCard";
+import { HabitCard } from "@/components/habits/HabitCard";
 import { Sparkles, Sun, Calendar } from "lucide-react";
 
 interface MorningRitualProps {
@@ -29,11 +31,22 @@ export function MorningRitual({ onComplete, onSkip }: MorningRitualProps) {
   const [insight, setInsight] = useState<MorningInsight | null>(null);
   const { mood, updateMood } = useMoodStore();
   const { createTasks } = useTasks();
+  const { habits, toggleCompletion, isCompletedToday, getStreak } = useHabits();
   const { toast } = useToast();
   const emotionalMemory = useEmotionalMemory();
   const { onStartMyDay } = useOrbRituals();
   const { onAIStart, onAIEnd } = useOrbTriggers();
   const { getMorningInsight, loading: insightLoading } = useRitualInsights();
+
+  // Get today's habits for the ritual
+  const todaysHabits = habits.filter(h => {
+    const dayOfWeek = new Date().getDay();
+    const isWeekday = dayOfWeek >= 1 && dayOfWeek <= 5;
+    if (h.frequency === 'daily') return true;
+    if (h.frequency === 'weekdays' && isWeekday) return true;
+    if (h.frequency === 'weekly' && dayOfWeek === 0) return true;
+    return false;
+  });
 
   // Fetch insight on mount
   useEffect(() => {
@@ -215,6 +228,32 @@ export function MorningRitual({ onComplete, onSkip }: MorningRitualProps) {
                 </div>
               )}
               {insight && <RitualInsightCard type="morning" insight={insight} />}
+              
+              {/* Today's Habits */}
+              {todaysHabits.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                    Today's Habits
+                  </p>
+                  <div className="space-y-2">
+                    {todaysHabits.map(habit => (
+                      <HabitCard
+                        key={habit.id}
+                        habit={{
+                          id: habit.id,
+                          title: habit.title,
+                          icon: habit.icon,
+                          completed: isCompletedToday(habit.id),
+                          streak: getStreak(habit.id)
+                        }}
+                        onToggle={(id, completed) => {
+                          toggleCompletion.mutate({ habitId: id });
+                        }}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
               
               <div className="flex gap-3 justify-center">
                 <Button onClick={handleStart} size="lg" className="gap-2">

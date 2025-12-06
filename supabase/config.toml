@@ -199,3 +199,6 @@ verify_jwt = true
 
 [functions.detect-patterns]
 verify_jwt = true
+
+[functions.get-todays-habits]
+verify_jwt = true
