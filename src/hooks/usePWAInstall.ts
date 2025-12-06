@@ -2,14 +2,19 @@ import { useState, useEffect, useCallback } from 'react';
 
 // Global storage for the deferred prompt - persists across component mounts
 let globalDeferredPrompt: any = null;
+let promptCaptured = false;
 
 // Capture the event as early as possible
 if (typeof window !== 'undefined') {
   window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
     globalDeferredPrompt = e;
+    promptCaptured = true;
     console.log('[PWA] Install prompt captured globally');
   });
+  
+  // Log PWA debug info
+  console.log('[PWA] Standalone mode:', window.matchMedia('(display-mode: standalone)').matches);
 }
 
 export function usePWAInstall() {
