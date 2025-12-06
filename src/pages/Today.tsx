@@ -114,25 +114,25 @@ const Today = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 h-14 border-b border-foreground/5">
+      <div className="flex items-center justify-between px-4 h-14 border-b border-border">
         <button 
           onClick={() => navigate('/')} 
-          className="text-foreground/30 hover:text-foreground/50 p-3 -ml-3 transition-colors"
+          className="text-muted-foreground hover:text-foreground p-3 -ml-3 transition-colors"
         >
           <ChevronLeft className="w-6 h-6" />
         </button>
-        <span className="font-mono text-foreground/80">Today</span>
+        <span className="font-mono text-foreground font-medium">Today</span>
         <div className="w-10" /> {/* Spacer for alignment */}
       </div>
 
       <div className="px-4 pt-4 pb-24 md:pb-20">
         {/* Date */}
-        <p className="text-xs text-muted-foreground/40 text-center mb-4">{today}</p>
+        <p className="text-xs text-muted-foreground text-center mb-6">{today}</p>
 
         {/* Daily Habits (morning only) */}
         {isMorning && habits.length > 0 && (
           <div className="mb-6">
-            <p className="text-[10px] uppercase tracking-widest text-muted-foreground/30 mb-2">
+            <p className="text-[10px] uppercase tracking-widest text-accent font-medium mb-2">
               Daily Habits
             </p>
             <div className="space-y-1.5">
@@ -165,7 +165,7 @@ const Today = () => {
           }}
         />
         {(sessions.length > 0 || suggestedSession) && (
-          <div className="h-px bg-foreground/5 mx-0 my-4" />
+          <div className="h-px bg-border mx-0 my-4" />
         )}
 
         {/* Desktop quick add */}
@@ -178,19 +178,22 @@ const Today = () => {
 
         {/* TODAY'S FOCUS SECTION */}
         <div className="mb-8">
+          <h3 className="text-[10px] uppercase tracking-widest text-accent font-medium mb-3">
+            Today's Focus
+          </h3>
           {focusTask ? (
             // Show focus task
-            <div className={`flex items-start gap-3 py-4 ${completingTasks.has(focusTask.id) ? 'task-completing' : ''}`}>
+            <div className={`flex items-start gap-3 py-4 px-3 rounded-lg bg-card border border-border ${completingTasks.has(focusTask.id) ? 'task-completing' : ''}`}>
               <button
                 onClick={() => handleCompleteTask(focusTask.id)}
-                className="w-6 h-6 rounded-full border-2 border-foreground/30 hover:border-foreground/50 flex-shrink-0 mt-0.5"
+                className="w-6 h-6 rounded-full border-2 border-accent hover:border-foreground flex-shrink-0 mt-0.5 transition-colors"
               />
-              <span className="font-mono text-base text-foreground/90 font-medium">{focusTask.title}</span>
+              <span className="font-mono text-base text-foreground font-medium">{focusTask.title}</span>
             </div>
           ) : (
             // Show focus input
-            <div className="text-center">
-              <p className="text-lg font-light text-foreground/60 mb-4">
+            <div className="text-center py-4">
+              <p className="text-base font-light text-muted-foreground mb-4">
                 What's the ONE thing that would make today a success?
               </p>
               <input
@@ -199,7 +202,7 @@ const Today = () => {
                 onChange={(e) => setFocusInput(e.target.value)}
                 onKeyDown={handleSetFocus}
                 placeholder="Type your main focus..."
-                className="w-full max-w-md mx-auto bg-transparent border-b border-foreground/10 py-3 font-mono text-sm text-center text-foreground/80 placeholder:text-muted-foreground/40 focus:outline-none focus:border-foreground/20"
+                className="w-full max-w-md mx-auto bg-transparent border-b-2 border-border py-3 font-mono text-sm text-center text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-accent transition-colors"
               />
             </div>
           )}
@@ -208,19 +211,19 @@ const Today = () => {
         {/* TODAY'S TASKS SECTION */}
         {regularTasks.length > 0 && (
           <div className="mb-8">
-            <h3 className="text-[10px] uppercase tracking-widest text-muted-foreground/30 mb-3">
-              Today
+            <h3 className="text-[10px] uppercase tracking-widest text-accent font-medium mb-3">
+              Other Tasks
             </h3>
             <VirtualizedTaskList
               tasks={regularTasks}
               estimatedItemHeight={52}
               renderTask={(task: Task) => (
-                <div key={task.id} className={`flex items-start gap-3 py-3 border-b border-foreground/5 ${completingTasks.has(task.id) ? 'task-completing' : ''}`}>
+                <div key={task.id} className={`flex items-start gap-3 py-3 border-b border-border ${completingTasks.has(task.id) ? 'task-completing' : ''}`}>
                   <button
                     onClick={() => handleCompleteTask(task.id)}
-                    className="w-5 h-5 rounded-full border border-foreground/20 hover:border-foreground/40 flex-shrink-0 mt-0.5"
+                    className="w-5 h-5 rounded-full border border-muted-foreground hover:border-foreground flex-shrink-0 mt-0.5 transition-colors"
                   />
-                  <span className="font-mono text-sm text-foreground/80">{task.title}</span>
+                  <span className="font-mono text-sm text-foreground">{task.title}</span>
                 </div>
               )}
             />
@@ -230,28 +233,30 @@ const Today = () => {
         {/* FROM YOUR INBOX SECTION */}
         {inboxTasks.length > 0 && (
           <div className="mb-8">
-            <h3 className="text-[10px] uppercase tracking-widest text-muted-foreground/30 mb-3">
+            <h3 className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium mb-3">
               From your inbox
             </h3>
-            <VirtualizedTaskList
-              tasks={inboxTasks}
-              estimatedItemHeight={44}
-              renderTask={(task: Task) => (
-                <div key={task.id} className="flex items-center gap-3 py-2 border-b border-foreground/5">
-                  <button 
-                    onClick={() => handleMoveToToday(task.id)} 
-                    className="text-foreground/30 hover:text-foreground/50 flex-shrink-0"
-                  >
-                    <ArrowRight className="w-4 h-4" />
-                  </button>
-                  <span className="flex-1 font-mono text-sm text-foreground/60">{task.title}</span>
-                  <button 
-                    onClick={() => handleCompleteTask(task.id)} 
-                    className="w-5 h-5 rounded-full border border-foreground/20 hover:border-foreground/40 flex-shrink-0" 
-                  />
-                </div>
-              )}
-            />
+            <div className="rounded-lg bg-card border border-border overflow-hidden">
+              <VirtualizedTaskList
+                tasks={inboxTasks}
+                estimatedItemHeight={44}
+                renderTask={(task: Task) => (
+                  <div key={task.id} className="flex items-center gap-3 py-3 px-3 border-b border-border last:border-b-0">
+                    <button 
+                      onClick={() => handleMoveToToday(task.id)} 
+                      className="text-muted-foreground hover:text-foreground flex-shrink-0 transition-colors"
+                    >
+                      <ArrowRight className="w-4 h-4" />
+                    </button>
+                    <span className="flex-1 font-mono text-sm text-muted-foreground">{task.title}</span>
+                    <button 
+                      onClick={() => handleCompleteTask(task.id)} 
+                      className="w-5 h-5 rounded-full border border-muted-foreground hover:border-foreground flex-shrink-0 transition-colors" 
+                    />
+                  </div>
+                )}
+              />
+            </div>
           </div>
         )}
 
@@ -259,7 +264,7 @@ const Today = () => {
         {completedTasks.length > 0 && (
           <button
             onClick={() => setShowCompleted(!showCompleted)}
-            className="w-full text-center text-xs text-muted-foreground/30 hover:text-muted-foreground/50 py-4 mt-6"
+            className="w-full text-center text-xs text-muted-foreground hover:text-foreground py-4 mt-6 transition-colors"
           >
             {showCompleted ? 'Hide' : 'Show'} completed ({completedTasks.length})
           </button>
@@ -272,9 +277,9 @@ const Today = () => {
             estimatedItemHeight={44}
             className="mb-6"
             renderTask={(task: Task) => (
-              <div key={task.id} className="flex items-start gap-3 py-2 opacity-40 border-b border-foreground/5">
-                <div className="w-5 h-5 rounded-full border border-foreground/20 flex-shrink-0 mt-0.5 bg-foreground/10" />
-                <span className="font-mono text-sm text-foreground/60 line-through">{task.title}</span>
+              <div key={task.id} className="flex items-start gap-3 py-2 opacity-50 border-b border-border">
+                <div className="w-5 h-5 rounded-full border border-muted-foreground flex-shrink-0 mt-0.5 bg-muted" />
+                <span className="font-mono text-sm text-muted-foreground line-through">{task.title}</span>
               </div>
             )}
           />
