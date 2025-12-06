@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,9 @@ import { useEmotionalMemory } from "@/state/emotionalMemory";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useOrbRituals } from "@/hooks/useOrbRituals";
+import { useOrbTriggers } from "@/hooks/useOrbTriggers";
+import { useRitualInsights, NightInsight } from "@/hooks/useRitualInsights";
+import { RitualInsightCard } from "@/components/rituals/RitualInsightCard";
 import { Moon, Heart, AlertCircle, Sparkles } from "lucide-react";
 
 interface EveningRitualProps {
@@ -23,10 +26,24 @@ export function EveningRitual({ onComplete, onSkip }: EveningRitualProps) {
   const [winsAnswer, setWinsAnswer] = useState("");
   const [stressAnswer, setStressAnswer] = useState("");
   const [tomorrowAnswer, setTomorrowAnswer] = useState("");
+  const [insight, setInsight] = useState<NightInsight | null>(null);
   const { mood, updateMood } = useMoodStore();
   const { toast } = useToast();
   const emotionalMemory = useEmotionalMemory();
   const { onEndMyDay } = useOrbRituals();
+  const { onAIStart, onAIEnd } = useOrbTriggers();
+  const { getNightInsight, loading: insightLoading } = useRitualInsights();
+
+  // Fetch insight on mount
+  useEffect(() => {
+    const fetchInsight = async () => {
+      onAIStart();
+      const result = await getNightInsight();
+      onAIEnd();
+      setInsight(result);
+    };
+    fetchInsight();
+  }, []);
 
   const getGreeting = () => {
     if (emotionalMemory.stress >= 70) {
@@ -183,6 +200,15 @@ export function EveningRitual({ onComplete, onSkip }: EveningRitualProps) {
               <p className="text-lg text-center text-muted-foreground">
                 {getGreeting()}
               </p>
+              
+              {/* AI Insight Card */}
+              {insightLoading && (
+                <div className="flex justify-center py-4">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                </div>
+              )}
+              {insight && <RitualInsightCard type="night" insight={insight} />}
+              
               <div className="flex gap-3 justify-center">
                 <Button onClick={handleStart} size="lg" className="gap-2">
                   <Sparkles className="w-4 h-4" />
