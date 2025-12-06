@@ -1,15 +1,58 @@
-// Malunita Service Worker - Handles push notifications and notification actions
+// Malunita Service Worker - Handles push notifications, caching, and auto-updates
 
-// Install event
+const CACHE_NAME = 'malunita-v1';
+
+// Install: Skip waiting to activate immediately
 self.addEventListener('install', (event) => {
   console.log('[Service Worker] Installing...');
   self.skipWaiting();
 });
 
-// Activate event
+// Activate: Claim all clients immediately
 self.addEventListener('activate', (event) => {
   console.log('[Service Worker] Activating...');
-  event.waitUntil(self.clients.claim());
+  event.waitUntil(
+    Promise.all([
+      // Take control of all pages immediately
+      self.clients.claim(),
+      // Clear old caches
+      caches.keys().then((names) => {
+        return Promise.all(
+          names.map((name) => {
+            if (name !== CACHE_NAME) {
+              console.log('[Service Worker] Deleting old cache:', name);
+              return caches.delete(name);
+            }
+          })
+        );
+      })
+    ])
+  );
+});
+
+// Fetch: Network-first strategy (always get fresh content)
+self.addEventListener('fetch', (event) => {
+  // Skip non-GET requests
+  if (event.request.method !== 'GET') return;
+
+  // Skip push notification related requests
+  if (event.request.url.includes('/api/') || event.request.url.includes('supabase')) return;
+
+  event.respondWith(
+    fetch(event.request)
+      .then((response) => {
+        // Clone and cache the fresh response
+        const clone = response.clone();
+        caches.open(CACHE_NAME).then((cache) => {
+          cache.put(event.request, clone);
+        });
+        return response;
+      })
+      .catch(() => {
+        // Offline fallback
+        return caches.match(event.request);
+      })
+  );
 });
 
 // Push notification received
@@ -57,22 +100,16 @@ self.addEventListener('notificationclick', (event) => {
   let targetUrl = '/';
 
   if (action === 'start-planning') {
-    // Morning ritual: Open to main page with focus
     targetUrl = '/';
   } else if (action === 'view-tasks') {
-    // Midday: Open to main task list
     targetUrl = '/';
   } else if (action === 'review-day') {
-    // Evening: Open to main page (Runway Review can be triggered from there)
     targetUrl = '/';
   } else if (action === 'view-insights') {
-    // Weekly: Open to weekly insights
     targetUrl = '/weekly-insights';
   } else if (action === 'dismiss') {
-    // Just close the notification, don't open app
     return;
   } else {
-    // Default click (no action button) - open app based on ritual type
     if (ritualType === 'morning-ritual') {
       targetUrl = '/';
     } else if (ritualType === 'midday-checkin') {
@@ -89,7 +126,6 @@ self.addEventListener('notificationclick', (event) => {
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
       console.log('[Service Worker] Client list:', clientList.length);
       
-      // Check if app is already open
       for (const client of clientList) {
         if (client.url.includes(self.registration.scope) && 'focus' in client) {
           console.log('[Service Worker] Focusing existing client');
@@ -103,7 +139,6 @@ self.addEventListener('notificationclick', (event) => {
         }
       }
       
-      // App not open, open new window
       console.log('[Service Worker] Opening new window:', targetUrl);
       if (clients.openWindow) {
         return clients.openWindow(targetUrl);
@@ -112,15 +147,19 @@ self.addEventListener('notificationclick', (event) => {
   );
 });
 
+// Listen for update messages
+self.addEventListener('message', (event) => {
+  if (event.data === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+});
+
 // Handle background sync (future enhancement)
 self.addEventListener('sync', (event) => {
   console.log('[Service Worker] Sync event:', event.tag);
   
   if (event.tag === 'sync-tasks') {
-    event.waitUntil(
-      // Could sync tasks with server when back online
-      Promise.resolve()
-    );
+    event.waitUntil(Promise.resolve());
   }
 });
 
