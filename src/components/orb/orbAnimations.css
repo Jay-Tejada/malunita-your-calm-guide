@@ -42,7 +42,7 @@
   100% { transform: scale(1) rotate(0deg); filter: brightness(1); }
 }
 
-/* Animation classes */
+/* Base animation classes */
 .orb-idle { animation: orbBreathe 4s ease-in-out infinite; }
 .orb-thinking { animation: orbThink 1.5s ease-in-out infinite; }
 .orb-celebrating { animation: orbCelebrate 1.5s ease-out forwards; }
@@ -50,3 +50,11 @@
 .orb-morning { animation: orbMorning 5s ease-in-out infinite; }
 .orb-evening { animation: orbEvening 6s ease-in-out infinite; }
 .orb-evolving { animation: orbEvolve 2s ease-in-out forwards; }
+
+/* Energy-based breathing speeds - Low energy (slower, calmer) */
+.orb-idle-low { animation: orbBreathe 6s ease-in-out infinite; }
+.orb-focused-low { animation: orbFocus 5s ease-in-out infinite; }
+
+/* Energy-based breathing speeds - High energy (faster, more active) */
+.orb-idle-high { animation: orbBreathe 2.5s ease-in-out infinite; }
+.orb-focused-high { animation: orbFocus 2s ease-in-out infinite; }

@@ -1,4 +1,5 @@
-import { useOrbStore } from '@/state/orbState';
+import { useOrbStore, OrbMood, OrbEnergy } from '@/state/orbState';
+import { useOrbMicroVariation } from '@/hooks/useOrbMicroVariation';
 import './orbAnimations.css';
 
 const moodToClass: Record<string, string> = {
@@ -9,6 +10,18 @@ const moodToClass: Record<string, string> = {
   morning: 'orb-morning',
   evening: 'orb-evening',
   evolving: 'orb-evolving',
+};
+
+const getAnimationClass = (mood: OrbMood, energy: OrbEnergy): string => {
+  const base = moodToClass[mood] || 'orb-idle';
+  
+  // Apply energy-based speed variants for idle and focused states
+  if (mood === 'idle' || mood === 'focused') {
+    if (energy <= 2) return `${base}-low`;
+    if (energy >= 4) return `${base}-high`;
+  }
+  
+  return base;
 };
 
 const stageToStyle = (stage: number) => {
@@ -24,9 +37,10 @@ const stageToStyle = (stage: number) => {
 };
 
 export function LivingOrbV2() {
-  const { mood, energy, stage, glowColor } = useOrbStore();
+  const { mood, energy, stage, palette } = useOrbStore();
+  const { scaleOffset, glowOffset } = useOrbMicroVariation();
   
-  const animationClass = moodToClass[mood] || 'orb-idle';
+  const animationClass = getAnimationClass(mood, energy);
   const { size, ringOpacity, innerGlow, hasRing } = stageToStyle(stage);
   
   const energyBrightness = 0.85 + (energy * 0.05); // 0.9 to 1.1
@@ -40,8 +54,9 @@ export function LivingOrbV2() {
           style={{
             width: size + 30,
             height: size + 30,
-            borderColor: glowColor,
+            borderColor: palette.accent,
             opacity: ringOpacity,
+            transition: 'all 0.8s ease',
           }}
         />
       )}
@@ -52,19 +67,20 @@ export function LivingOrbV2() {
         style={{
           width: size,
           height: size,
-          background: `radial-gradient(circle at 30% 30%, ${glowColor}, #E8E0D5)`,
-          filter: `brightness(${energyBrightness})`,
+          background: `radial-gradient(circle at 30% 30%, ${palette.base}, ${palette.accent})`,
+          filter: `brightness(${energyBrightness + glowOffset})`,
+          transform: `scale(${1 + scaleOffset})`,
           boxShadow: innerGlow 
-            ? `inset 0 0 ${20 + stage * 5}px rgba(255,255,255,0.3), 0 0 ${15 + stage * 3}px ${glowColor}`
-            : `0 0 15px ${glowColor}`,
-          transition: 'all 0.5s ease',
+            ? `inset 0 0 ${20 + stage * 5}px rgba(255,255,255,0.3), 0 0 ${15 + stage * 3}px ${palette.glow}`
+            : `0 0 15px ${palette.glow}`,
+          transition: 'all 0.8s ease',
         }}
       />
       
       {/* Stage indicator (subtle) */}
       <div 
         className="absolute bottom-0 text-xs opacity-30"
-        style={{ color: glowColor }}
+        style={{ color: palette.accent }}
       >
         {stage > 1 && `✦`.repeat(Math.min(stage - 1, 5))}
       </div>
