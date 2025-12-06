@@ -31,8 +31,6 @@ max_rows = 1000
 [functions.transcribe-audio]
 verify_jwt = true
 
-# [functions.chat-completion] - DELETED in Phase 2C
-
 [functions.text-to-speech]
 verify_jwt = true
 
@@ -198,3 +196,5 @@ verify_jwt = true
 [functions.openai-test]
 verify_jwt = false
 
+[functions.analyze-inbox]
+verify_jwt = true
