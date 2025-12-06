@@ -18,15 +18,17 @@ export default defineConfig(({ mode }) => ({
     mode === "development" && componentTagger(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'icon-192.png', 'icon-512.png', 'icon-maskable-192.png', 'icon-maskable-512.png'],
+      includeAssets: ['favicon.png', 'icon-192.png', 'icon-512.png', 'icon-maskable-192.png', 'icon-maskable-512.png', 'apple-touch-icon.png'],
       manifest: {
-        name: 'Malunita - Your Calm Guide',
+        name: 'Malunita',
         short_name: 'Malunita',
-        description: 'Minimalist productivity that feels like a conversation. Capture ideas, clarify next actions, and stay focused with your AI thinking partner.',
-        theme_color: '#8B5CF6',
-        background_color: '#ffffff',
+        description: 'Your gentle guide. A living journal, task manager, and thinking partner.',
+        theme_color: '#121212',
+        background_color: '#121212',
         display: 'standalone',
+        orientation: 'portrait',
         start_url: '/',
+        categories: ['productivity', 'lifestyle'],
         icons: [
           {
             src: 'icon-192.png',
@@ -51,6 +53,14 @@ export default defineConfig(({ mode }) => ({
             sizes: '512x512',
             type: 'image/png',
             purpose: 'maskable'
+          }
+        ],
+        screenshots: [
+          {
+            src: 'screenshots/home.png',
+            sizes: '1080x1920',
+            type: 'image/png',
+            form_factor: 'narrow'
           }
         ]
       },
