@@ -32,21 +32,7 @@ export function useRitualTrigger() {
 
         // Morning ritual disabled - using DailyPriorityPrompt instead
 
-        // Check evening ritual (7pm - 1am)
-        if (hour >= 19 || hour < 1) {
-          const lastEvening = ritualPrefs?.last_evening_ritual;
-          const lastEveningDate = lastEvening ? new Date(lastEvening).toISOString().split('T')[0] : null;
-          
-          // For times after midnight, check against yesterday
-          const checkDate = hour < 1 ? 
-            new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString().split('T')[0] :
-            today;
-          
-          if (lastEveningDate !== checkDate && ritualPrefs?.evening_ritual?.enabled !== false) {
-            setShouldShowRitual("evening");
-            return;
-          }
-        }
+        // Evening ritual disabled - no longer auto-triggers
       } catch (error) {
         console.error('Error checking ritual trigger:', error);
       }
