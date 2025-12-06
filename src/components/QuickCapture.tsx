@@ -17,8 +17,8 @@ interface QuickCaptureProps {
 export const QuickCapture = ({ isOpen, onClose, variant, onCapture }: QuickCaptureProps) => {
   const [input, setInput] = useState('');
   const [captureType, setCaptureType] = useState<'task' | 'thought'>('task');
-  const justClosedRef = useRef(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const focusAchievedRef = useRef(false);
   const { toast } = useToast();
   const { addThought } = useThoughts();
   const queryClient = useQueryClient();
@@ -49,53 +49,57 @@ export const QuickCapture = ({ isOpen, onClose, variant, onCapture }: QuickCaptu
     textarea.style.overflowY = textarea.scrollHeight > maxHeight ? 'auto' : 'hidden';
   };
   
-  // Clear input and reset when modal opens
+  // Reset state when modal opens
   useEffect(() => {
     if (isOpen) {
-      // Always start fresh when opening
       setInput('');
-      justClosedRef.current = false;
+      focusAchievedRef.current = false;
     }
   }, [isOpen]);
 
-  // Aggressive autofocus - keeps trying until successful user interaction
+  // Aggressive autofocus - completely separate from input state
   useEffect(() => {
     if (!isOpen) return;
 
-    const textarea = textareaRef.current;
-    if (!textarea) return;
-
-    // Small delay to ensure input is cleared first
-    const initialDelay = setTimeout(() => {
+    const focusTextarea = () => {
+      const textarea = textareaRef.current;
+      if (!textarea) return false;
+      
       textarea.focus();
-      // Select all to ensure any stray input is replaceable
-      textarea.select();
-    }, 10);
+      textarea.setSelectionRange(0, 0);
+      return document.activeElement === textarea;
+    };
+
+    // Immediate focus attempt
+    const immediate = requestAnimationFrame(() => {
+      if (focusTextarea()) {
+        focusAchievedRef.current = true;
+      }
+    });
     
-    // Keep checking and refocusing until we detect user has started typing
+    // Keep trying until focus is achieved
     let attempts = 0;
-    const maxAttempts = 20; // Try for ~1 second
+    const maxAttempts = 30; // 1.5 seconds
     
     const focusInterval = setInterval(() => {
       attempts++;
       
-      // Stop if we've tried enough or user has typed something
-      if (attempts >= maxAttempts || input.length > 0) {
+      if (focusAchievedRef.current || attempts >= maxAttempts) {
         clearInterval(focusInterval);
         return;
       }
       
-      // Only refocus if the textarea doesn't have focus
-      if (document.activeElement !== textarea) {
-        textarea.focus();
+      if (focusTextarea()) {
+        focusAchievedRef.current = true;
+        clearInterval(focusInterval);
       }
     }, 50);
 
     return () => {
-      clearTimeout(initialDelay);
+      cancelAnimationFrame(immediate);
       clearInterval(focusInterval);
     };
-  }, [isOpen, input.length]);
+  }, [isOpen]);
   
   useEffect(() => {
     adjustTextareaHeight();
