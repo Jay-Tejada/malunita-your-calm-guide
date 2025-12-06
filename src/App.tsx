@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
+import { useTheme } from "@/hooks/useTheme";
 import { useEffect, lazy, Suspense } from "react";
 import { startEmotionalMemoryMonitoring } from "@/state/emotionalMemory";
 import { initializeAILearningListeners } from "@/state/aiLearningEvents";
@@ -104,6 +105,9 @@ const queryClient = new QueryClient({
 const App = () => {
   const { shouldShowRitual, dismissRitual } = useRitualTrigger();
   const { showRitualCutscene } = useCutsceneManager();
+  
+  // Initialize theme on app load
+  useTheme();
 
   const handleRitualComplete = async (type: 'morning' | 'evening') => {
     // Update profile with ritual completion timestamp FIRST
@@ -241,7 +245,7 @@ const App = () => {
   return (
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
-        <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem={true}>
           <TooltipProvider>
             <ProgressProvider>
               <FocusTimerProvider>
