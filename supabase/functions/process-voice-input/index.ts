@@ -77,7 +77,7 @@ serve(async (req) => {
       )
     }
 
-    console.log('📝 Processing text:', text.substring(0, 100));
+    console.log('📝 Processing voice input - textLength:', text.length);
 
     // ===========================================================
     // STEP 1: Detect intent/mode using AI

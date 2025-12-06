@@ -139,7 +139,7 @@ serve(async (req) => {
     }
 
     const result = await response.json()
-    console.log('Transcription successful:', result.text)
+    console.log('Transcription successful - textLength:', result.text?.length || 0)
 
     return new Response(
       JSON.stringify({ text: result.text }),

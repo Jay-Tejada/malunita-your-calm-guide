@@ -276,8 +276,7 @@ Examples for reminder_time (using current date ${currentDateStr}):
 - "today at 5 PM" → "${currentDateStr}T17:00:00Z"
 - No reminder mentioned → null`;
 
-    console.log('Extracting tasks from:', text);
-    console.log('Using model:', preferredModel);
+    console.log('Extracting tasks - textLength:', text.length, 'model:', preferredModel);
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -315,7 +314,7 @@ Examples for reminder_time (using current date ${currentDateStr}):
     const data = await response.json();
     const result = JSON.parse(data.choices[0].message.content);
 
-    console.log('Extracted tasks:', result);
+    console.log('Extracted tasks count:', result.tasks?.length || 0);
 
     // ===========================================================
     // DEEP REASONING: Analyze extracted tasks for hidden intent

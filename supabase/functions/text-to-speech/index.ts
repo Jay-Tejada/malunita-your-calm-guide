@@ -81,7 +81,7 @@ serve(async (req) => {
       throw new Error('OpenAI API key not configured');
     }
 
-    console.log('Generating speech for:', text);
+    console.log('Generating speech - textLength:', text.length, 'voice:', voice);
 
     const response = await fetch('https://api.openai.com/v1/audio/speech', {
       method: 'POST',
