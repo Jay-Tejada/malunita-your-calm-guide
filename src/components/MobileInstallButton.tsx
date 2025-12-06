@@ -57,61 +57,61 @@ export const MobileInstallButton = () => {
 
       {showIOSGuide && (
         <div 
-          className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-end justify-center"
+          className="fixed inset-0 z-[100] bg-background/95 backdrop-blur-sm flex flex-col items-center justify-center p-6"
           onClick={() => setShowIOSGuide(false)}
         >
           <div 
-            className="bg-card border-t border-border rounded-t-2xl p-6 w-full max-w-md animate-in slide-in-from-bottom"
+            className="bg-card border border-border rounded-2xl p-6 w-full max-w-sm shadow-lg"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-medium text-foreground">Install Malunita</h3>
-              <button onClick={() => setShowIOSGuide(false)} className="text-muted-foreground">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-semibold text-foreground">Install Malunita</h3>
+              <button onClick={() => setShowIOSGuide(false)} className="text-muted-foreground hover:text-foreground">
                 <X className="w-5 h-5" />
               </button>
             </div>
             
             {isIOS ? (
-              <div className="space-y-3 text-sm text-muted-foreground">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                    <span className="text-primary font-medium">1</span>
+              <div className="space-y-4 text-foreground">
+                <div className="flex items-start gap-4">
+                  <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
+                    <span className="text-primary font-bold">1</span>
                   </div>
-                  <p>Tap the <Share className="inline w-4 h-4 text-primary" /> share button below</p>
+                  <p className="pt-1">Tap the <Share className="inline w-5 h-5 text-primary mx-1" /> Share button in Safari's toolbar</p>
                 </div>
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                    <span className="text-primary font-medium">2</span>
+                <div className="flex items-start gap-4">
+                  <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
+                    <span className="text-primary font-bold">2</span>
                   </div>
-                  <p>Scroll down and tap "Add to Home Screen"</p>
+                  <p className="pt-1">Scroll down and tap <strong>"Add to Home Screen"</strong></p>
                 </div>
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                    <span className="text-primary font-medium">3</span>
+                <div className="flex items-start gap-4">
+                  <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
+                    <span className="text-primary font-bold">3</span>
                   </div>
-                  <p>Tap "Add" to install</p>
+                  <p className="pt-1">Tap <strong>"Add"</strong> in the top right</p>
                 </div>
               </div>
             ) : (
-              <div className="space-y-3 text-sm text-muted-foreground">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                    <span className="text-primary font-medium">1</span>
+              <div className="space-y-4 text-foreground">
+                <div className="flex items-start gap-4">
+                  <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
+                    <span className="text-primary font-bold">1</span>
                   </div>
-                  <p>Tap the menu (⋮) in your browser</p>
+                  <p className="pt-1">Tap the <strong>⋮ menu</strong> in your browser</p>
                 </div>
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                    <span className="text-primary font-medium">2</span>
+                <div className="flex items-start gap-4">
+                  <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
+                    <span className="text-primary font-bold">2</span>
                   </div>
-                  <p>Select "Add to Home screen" or "Install app"</p>
+                  <p className="pt-1">Select <strong>"Add to Home screen"</strong> or <strong>"Install app"</strong></p>
                 </div>
               </div>
             )}
 
             <Button 
-              variant="outline" 
-              className="w-full mt-6" 
+              variant="default" 
+              className="w-full mt-8" 
               onClick={() => setShowIOSGuide(false)}
             >
               Got it
