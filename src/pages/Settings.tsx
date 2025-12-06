@@ -9,6 +9,17 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { AudioToggle } from '@/components/settings/AudioToggle';
 import { ThemeToggle } from '@/components/settings/ThemeToggle';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 export default function Settings() {
   const navigate = useNavigate();
@@ -101,20 +112,40 @@ export default function Settings() {
             <CardDescription>Manage your account</CardDescription>
           </CardHeader>
           <CardContent>
-            <Button
-              variant="destructive"
-              className="w-full justify-start"
-              onClick={async () => {
-                await supabase.auth.signOut();
-                toast({
-                  title: "Signed out",
-                  description: "You've been signed out successfully.",
-                });
-              }}
-            >
-              <LogOut className="w-4 h-4 mr-2" />
-              Sign Out
-            </Button>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="destructive"
+                  className="w-full justify-start"
+                >
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Sign Out
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Sign out?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    You'll need to sign in again to access your tasks and data.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={async () => {
+                      await supabase.auth.signOut();
+                      toast({
+                        title: "Signed out",
+                        description: "You've been signed out successfully.",
+                      });
+                    }}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  >
+                    Sign Out
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </CardContent>
         </Card>
 
