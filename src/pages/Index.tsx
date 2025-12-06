@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Auth } from "@/components/Auth";
 import { ThinkWithMe } from "@/components/ThinkWithMe";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { motion, AnimatePresence } from "framer-motion";
 import { CompanionOnboarding } from "@/components/CompanionOnboarding";
 import { MalunitaVoice, MalunitaVoiceRef } from "@/components/MalunitaVoice";
 import { useCompanionIdentity, PersonalityType } from "@/hooks/useCompanionIdentity";
@@ -200,7 +201,19 @@ const Index = () => {
   }
 
   if (!user) {
-    return <Auth />;
+    return (
+      <AnimatePresence mode="wait">
+        <motion.div
+          key="auth"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.3, ease: "easeInOut" }}
+        >
+          <Auth />
+        </motion.div>
+      </AnimatePresence>
+    );
   }
 
   if (needsOnboarding) {
@@ -332,9 +345,17 @@ const Index = () => {
   };
 
   return (
-    <>
-      {/* Start My Day Modal */}
-      <StartMyDayModal
+    <AnimatePresence mode="wait">
+      <motion.div
+        key="home"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.3, ease: "easeInOut" }}
+        className="contents"
+      >
+        {/* Start My Day Modal */}
+        <StartMyDayModal
         isOpen={showStartMyDay}
         onClose={() => setShowStartMyDay(false)}
         userName={profile?.companion_name || "Friend"}
@@ -539,7 +560,8 @@ const Index = () => {
           onClose={() => setShowTinyTaskParty(false)}
         />
       )}
-    </>
+      </motion.div>
+    </AnimatePresence>
   );
 };
 
