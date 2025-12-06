@@ -1,8 +1,9 @@
+import { useState, useEffect } from 'react';
 import { SimpleHeader } from '@/components/SimpleHeader';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Wrench, Database, Activity, FileText, LogOut } from 'lucide-react';
+import { ArrowLeft, Wrench, Database, Activity, FileText, LogOut, Download, Check } from 'lucide-react';
 import { hapticLight } from '@/utils/haptics';
 import { getPerformanceMetrics, clearPerformanceMetrics } from '@/lib/performance';
 import { useToast } from '@/hooks/use-toast';
@@ -24,6 +25,44 @@ import {
 export default function Settings() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [isInstalled, setIsInstalled] = useState(false);
+
+  useEffect(() => {
+    // Check if already installed
+    if (window.matchMedia('(display-mode: standalone)').matches) {
+      setIsInstalled(true);
+      return;
+    }
+
+    const handler = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+
+    window.addEventListener('beforeinstallprompt', handler);
+    return () => window.removeEventListener('beforeinstallprompt', handler);
+  }, []);
+
+  const handleInstall = async () => {
+    if (!deferredPrompt) {
+      // For iOS or if prompt not available
+      navigate('/install');
+      return;
+    }
+
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    
+    if (outcome === 'accepted') {
+      setIsInstalled(true);
+      toast({
+        title: "Installing...",
+        description: "Malunita is being added to your home screen",
+      });
+    }
+    setDeferredPrompt(null);
+  };
 
   const showMetrics = () => {
     const metrics = getPerformanceMetrics();
@@ -96,6 +135,32 @@ export default function Settings() {
           <CardContent className="space-y-4">
             <ThemeToggle />
             <AudioToggle />
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-medium">Install App</p>
+                <p className="text-sm text-muted-foreground">
+                  {isInstalled ? "App is installed" : "Add to your home screen"}
+                </p>
+              </div>
+              <Button
+                variant={isInstalled ? "outline" : "default"}
+                size="sm"
+                onClick={handleInstall}
+                disabled={isInstalled}
+              >
+                {isInstalled ? (
+                  <>
+                    <Check className="w-4 h-4 mr-2" />
+                    Installed
+                  </>
+                ) : (
+                  <>
+                    <Download className="w-4 h-4 mr-2" />
+                    Install
+                  </>
+                )}
+              </Button>
+            </div>
             <div className="flex items-center justify-between">
               <div>
                 <p className="font-medium">Version</p>
