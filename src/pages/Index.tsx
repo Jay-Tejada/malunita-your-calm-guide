@@ -111,6 +111,11 @@ const Index = () => {
       if (e.key === 'q') {
         e.preventDefault();
         setShowDesktopCapture(true);
+        
+        // Force focus after state update
+        setTimeout(() => {
+          document.querySelector<HTMLTextAreaElement>('[data-task-input]')?.focus();
+        }, 50);
       }
       
       if (e.key === 'Escape') {
