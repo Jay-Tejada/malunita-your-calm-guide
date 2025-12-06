@@ -48,15 +48,33 @@ export const QuickCapture = ({ isOpen, onClose, variant, onCapture }: QuickCaptu
     textarea.style.overflowY = textarea.scrollHeight > maxHeight ? 'auto' : 'hidden';
   };
   
+  // Robust autofocus with multiple retries to handle timing issues
   useEffect(() => {
-    if (isOpen) {
-      // Immediate focus attempt, then retry after render
-      textareaRef.current?.focus();
-      requestAnimationFrame(() => {
-        textareaRef.current?.focus();
-        adjustTextareaHeight();
-      });
-    }
+    if (!isOpen) return;
+
+    const focusInput = () => {
+      if (textareaRef.current) {
+        textareaRef.current.focus();
+      }
+    };
+
+    // Immediate focus
+    focusInput();
+    
+    // Retry after animation frames (catches most timing issues)
+    requestAnimationFrame(focusInput);
+    requestAnimationFrame(() => requestAnimationFrame(focusInput));
+    
+    // Fallback timers for stubborn cases (modal animations, etc.)
+    const t1 = setTimeout(focusInput, 50);
+    const t2 = setTimeout(focusInput, 100);
+    const t3 = setTimeout(focusInput, 200);
+
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
+    };
   }, [isOpen]);
   
   useEffect(() => {
@@ -180,6 +198,9 @@ export const QuickCapture = ({ isOpen, onClose, variant, onCapture }: QuickCaptu
           
           <textarea
             ref={textareaRef}
+            data-task-input
+            autoFocus
+            tabIndex={0}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
@@ -246,6 +267,9 @@ export const QuickCapture = ({ isOpen, onClose, variant, onCapture }: QuickCaptu
           
           <textarea
             ref={textareaRef}
+            data-task-input
+            autoFocus
+            tabIndex={0}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
