@@ -2,15 +2,17 @@ import { useState, useEffect } from "react";
 import { Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { usePWAInstall } from "@/hooks/usePWAInstall";
 
 export const MobileInstallButton = () => {
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [showButton, setShowButton] = useState(false);
+  const { canInstall, isInstalled, install } = usePWAInstall();
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Check if already installed
-    if (window.matchMedia('(display-mode: standalone)').matches) {
+    // Don't show if already installed
+    if (isInstalled) {
+      setShowButton(false);
       return;
     }
 
@@ -18,39 +20,18 @@ export const MobileInstallButton = () => {
     const isMobileOrTablet = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || 
       (window.innerWidth <= 1024 && 'ontouchstart' in window);
     
-    if (!isMobileOrTablet) {
-      return;
-    }
-
-    // Always show the button on mobile/tablet (not just when prompt is available)
-    setShowButton(true);
-
-    // Listen for the beforeinstallprompt event (Android/Chrome only)
-    const handler = (e: Event) => {
-      e.preventDefault();
-      setDeferredPrompt(e);
-    };
-
-    window.addEventListener('beforeinstallprompt', handler);
-
-    return () => {
-      window.removeEventListener('beforeinstallprompt', handler);
-    };
-  }, []);
+    setShowButton(isMobileOrTablet);
+  }, [isInstalled]);
 
   const handleInstallClick = async () => {
-    if (!deferredPrompt) {
+    if (canInstall) {
+      const success = await install();
+      if (success) {
+        setShowButton(false);
+      }
+    } else {
       // For iOS or if prompt not available, show install instructions
       navigate('/install');
-      return;
-    }
-
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    
-    if (outcome === 'accepted') {
-      setShowButton(false);
-      setDeferredPrompt(null);
     }
   };
 

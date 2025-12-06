@@ -1,43 +1,16 @@
-import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Download, Share, MoreVertical, Smartphone } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { usePWAInstall } from "@/hooks/usePWAInstall";
 
 const Install = () => {
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
-  const [isInstalled, setIsInstalled] = useState(false);
+  const { canInstall, isInstalled, install } = usePWAInstall();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    // Check if app is already installed
-    if (window.matchMedia('(display-mode: standalone)').matches) {
-      setIsInstalled(true);
-    }
-
-    // Listen for the beforeinstallprompt event
-    const handler = (e: Event) => {
-      e.preventDefault();
-      setDeferredPrompt(e);
-    };
-
-    window.addEventListener('beforeinstallprompt', handler);
-
-    return () => {
-      window.removeEventListener('beforeinstallprompt', handler);
-    };
-  }, []);
-
   const handleInstallClick = async () => {
-    if (!deferredPrompt) {
-      return;
-    }
-
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    
-    if (outcome === 'accepted') {
-      setDeferredPrompt(null);
-      setIsInstalled(true);
+    const success = await install();
+    if (success) {
+      // Will automatically update isInstalled state
     }
   };
 
@@ -79,7 +52,7 @@ const Install = () => {
                 </div>
                 <div className="flex-1">
                   <h3 className="text-lg font-medium text-foreground mb-2">Android</h3>
-                  {deferredPrompt ? (
+                {canInstall ? (
                     <Button onClick={handleInstallClick} className="mb-4">
                       <Download className="w-4 h-4 mr-2" />
                       Install Now
