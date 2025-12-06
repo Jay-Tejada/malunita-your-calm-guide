@@ -453,46 +453,47 @@ All colors MUST be HSL.
      ORB RECORDING & LOADING ANIMATIONS
      ======================================== */
 
-  /* Recording state: breathing animation */
+  /* Recording state: planetary rotation + scale transition */
   .orb-recording {
-    animation: orb-breath 2.4s ease-in-out infinite;
+    animation: orb-scale-in 0.2s ease-out forwards;
   }
 
-  @keyframes orb-breath {
-    0%, 100% {
+  @keyframes orb-scale-in {
+    0% {
       transform: scale(1);
-      opacity: 0.9;
     }
-    50% {
-      transform: scale(1.03);
-      opacity: 1;
+    100% {
+      transform: scale(1.02);
     }
   }
 
-  /* Recording ring: thin ring with pulse expansion */
-  .orb-recording-ring {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 20px;
-    height: 20px;
-    transform: translate(-50%, -50%);
-    border: 2px solid currentColor;
-    border-radius: 50%;
-    opacity: 0.4;
-    animation: orb-ring-pulse 2s ease-in-out infinite;
+  /* Planetary 3D rotation for recording */
+  .orb-rotate {
+    animation: orb-planet-rotate 16s linear infinite, orb-scale-in 0.2s ease-out forwards;
+    transform-style: preserve-3d;
   }
 
-  @keyframes orb-ring-pulse {
+  @keyframes orb-planet-rotate {
+    0% {
+      transform: scale(1.02) rotateY(0deg);
+    }
+    100% {
+      transform: scale(1.02) rotateY(360deg);
+    }
+  }
+
+  /* Recording breathing glow */
+  .orb-glow {
+    animation: orb-glow-breath 3s ease-in-out infinite;
+    pointer-events: none;
+  }
+
+  @keyframes orb-glow-breath {
     0%, 100% {
-      width: 20px;
-      height: 20px;
-      opacity: 0.4;
+      opacity: 0.85;
     }
     50% {
-      width: 26px;
-      height: 26px;
-      opacity: 0.15;
+      opacity: 1;
     }
   }
 
@@ -556,7 +557,7 @@ All colors MUST be HSL.
 
   /* Transition crossfade for all state changes */
   .orb,
-  .orb-recording-ring,
+  .orb-glow,
   .orb-progress-ring,
   .orb-loading-glow {
     transition: opacity 0.2s ease-out, transform 0.2s ease-out;

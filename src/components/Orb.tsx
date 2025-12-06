@@ -94,7 +94,7 @@ const Orb = ({
   };
 
   const getStateClass = () => {
-    if (isRecording) return 'orb-recording';
+    if (isRecording) return 'orb-recording orb-rotate';
     if (isProcessing) return 'orb-loading';
     return '';
   };
@@ -157,9 +157,18 @@ const Orb = ({
         }}
       />
 
-      {/* Recording: Thin ring with pulse expansion */}
+      {/* Recording: Breathing glow effect */}
       {isRecording && (
-        <div className="orb-recording-ring" />
+        <div 
+          className="orb-glow"
+          style={{
+            position: 'absolute',
+            inset: -8,
+            borderRadius: '50%',
+            background: `radial-gradient(circle, ${colors.glow} 0%, transparent 70%)`,
+            pointerEvents: 'none',
+          }}
+        />
       )}
 
       {/* Loading: Circular progress stroke */}
