@@ -7,6 +7,7 @@ import { hapticLight } from '@/utils/haptics';
 import { getPerformanceMetrics, clearPerformanceMetrics } from '@/lib/performance';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { AudioToggle } from '@/components/settings/AudioToggle';
 
 export default function Settings() {
   const navigate = useNavigate();
@@ -81,6 +82,7 @@ export default function Settings() {
             <CardDescription>Basic app settings</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            <AudioToggle />
             <div className="flex items-center justify-between">
               <div>
                 <p className="font-medium">Version</p>
