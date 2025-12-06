@@ -58,3 +58,54 @@
 /* Energy-based breathing speeds - High energy (faster, more active) */
 .orb-idle-high { animation: orbBreathe 2.5s ease-in-out infinite; }
 .orb-focused-high { animation: orbFocus 2s ease-in-out infinite; }
+
+/* Dark mode pulsing halo glow */
+@keyframes orbDarkHaloGlow {
+  0%, 100% { 
+    box-shadow: 
+      0 0 50px rgba(160, 150, 135, 0.2),
+      0 0 25px rgba(120, 110, 95, 0.12),
+      inset 0 -20px 40px rgba(0,0,0,0.3),
+      inset 0 10px 20px rgba(255,255,255,0.05);
+  }
+  50% { 
+    box-shadow: 
+      0 0 70px rgba(160, 150, 135, 0.3),
+      0 0 40px rgba(120, 110, 95, 0.2),
+      inset 0 -20px 40px rgba(0,0,0,0.3),
+      inset 0 10px 20px rgba(255,255,255,0.05);
+  }
+}
+
+.orb-dark {
+  animation: orbDarkHaloGlow 4s ease-in-out infinite;
+}
+
+/* Combine dark halo with other animations */
+.orb-dark.orb-idle { 
+  animation: orbBreathe 4s ease-in-out infinite, orbDarkHaloGlow 4s ease-in-out infinite; 
+}
+.orb-dark.orb-idle-low { 
+  animation: orbBreathe 6s ease-in-out infinite, orbDarkHaloGlow 5s ease-in-out infinite; 
+}
+.orb-dark.orb-idle-high { 
+  animation: orbBreathe 2.5s ease-in-out infinite, orbDarkHaloGlow 3s ease-in-out infinite; 
+}
+.orb-dark.orb-thinking { 
+  animation: orbThink 1.5s ease-in-out infinite, orbDarkHaloGlow 2s ease-in-out infinite; 
+}
+.orb-dark.orb-focused { 
+  animation: orbFocus 3s ease-in-out infinite, orbDarkHaloGlow 4s ease-in-out infinite; 
+}
+.orb-dark.orb-focused-low { 
+  animation: orbFocus 5s ease-in-out infinite, orbDarkHaloGlow 5s ease-in-out infinite; 
+}
+.orb-dark.orb-focused-high { 
+  animation: orbFocus 2s ease-in-out infinite, orbDarkHaloGlow 2.5s ease-in-out infinite; 
+}
+.orb-dark.orb-morning { 
+  animation: orbMorning 5s ease-in-out infinite, orbDarkHaloGlow 5s ease-in-out infinite; 
+}
+.orb-dark.orb-evening { 
+  animation: orbEvening 6s ease-in-out infinite, orbDarkHaloGlow 6s ease-in-out infinite; 
+}
