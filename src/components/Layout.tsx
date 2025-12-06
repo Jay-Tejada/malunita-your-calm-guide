@@ -24,6 +24,7 @@ export const Layout = () => {
   const [rightDrawerOpen, setRightDrawerOpen] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const [userId, setUserId] = useState<string | undefined>();
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
   const processInputMutation = useProcessInputMutation();
@@ -37,13 +38,19 @@ export const Layout = () => {
   useOrbEvolution(userId);
   useOrbBackground();
 
-  // Get user ID for orb sync
+  // Get user ID and auth state
   useEffect(() => {
-    const getUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      setUserId(user?.id);
-    };
-    getUser();
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUserId(session?.user?.id);
+      setIsAuthenticated(!!session?.user);
+    });
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUserId(session?.user?.id);
+      setIsAuthenticated(!!session?.user);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   // Handle active session bar interactions
@@ -155,8 +162,8 @@ export const Layout = () => {
         />
       )}
       
-      {/* Top-Left Mini Orb - Notebook Drawer - Only show on home page */}
-      {location.pathname === '/' && (
+      {/* Top-Left Mini Orb - Notebook Drawer - Only show on home page when authenticated */}
+      {location.pathname === '/' && isAuthenticated && (
         <MiniOrb
           position="left"
           label="notebook"
