@@ -25,15 +25,16 @@ export const MobileInstallButton = () => {
   }, [isInstalled]);
 
   const handleInstallClick = async () => {
-    if (isIOS) {
-      setShowIOSGuide(true);
-    } else if (canInstall) {
+    console.log('[PWA] Install clicked - isIOS:', isIOS, 'canInstall:', canInstall);
+    
+    if (canInstall) {
+      // Native install prompt available (Android Chrome)
       const success = await install();
       if (success) {
         setShowButton(false);
       }
     } else {
-      // Fallback for Android browsers without prompt
+      // Show manual instructions (iOS or when prompt not available)
       setShowIOSGuide(true);
     }
   };
