@@ -48,32 +48,37 @@ export const QuickCapture = ({ isOpen, onClose, variant, onCapture }: QuickCaptu
     textarea.style.overflowY = textarea.scrollHeight > maxHeight ? 'auto' : 'hidden';
   };
   
-  // Robust autofocus with multiple retries to handle timing issues
+  // Aggressive autofocus - keeps trying until successful user interaction
   useEffect(() => {
     if (!isOpen) return;
 
-    const focusInput = () => {
-      if (textareaRef.current) {
-        textareaRef.current.focus();
-      }
-    };
+    const textarea = textareaRef.current;
+    if (!textarea) return;
 
-    // Immediate focus
-    focusInput();
+    // Focus immediately
+    textarea.focus();
     
-    // Retry after animation frames (catches most timing issues)
-    requestAnimationFrame(focusInput);
-    requestAnimationFrame(() => requestAnimationFrame(focusInput));
+    // Keep checking and refocusing until we detect user has started typing
+    let attempts = 0;
+    const maxAttempts = 20; // Try for ~1 second
     
-    // Fallback timers for stubborn cases (modal animations, etc.)
-    const t1 = setTimeout(focusInput, 50);
-    const t2 = setTimeout(focusInput, 100);
-    const t3 = setTimeout(focusInput, 200);
+    const focusInterval = setInterval(() => {
+      attempts++;
+      
+      // Stop if we've tried enough or user has typed something
+      if (attempts >= maxAttempts || (textarea.value && textarea.value.length > 0)) {
+        clearInterval(focusInterval);
+        return;
+      }
+      
+      // Only refocus if the textarea doesn't have focus
+      if (document.activeElement !== textarea) {
+        textarea.focus();
+      }
+    }, 50);
 
     return () => {
-      clearTimeout(t1);
-      clearTimeout(t2);
-      clearTimeout(t3);
+      clearInterval(focusInterval);
     };
   }, [isOpen]);
   
