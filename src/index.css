@@ -449,6 +449,119 @@ All colors MUST be HSL.
     }
   }
 
+  /* ========================================
+     ORB RECORDING & LOADING ANIMATIONS
+     ======================================== */
+
+  /* Recording state: breathing animation */
+  .orb-recording {
+    animation: orb-breath 2.4s ease-in-out infinite;
+  }
+
+  @keyframes orb-breath {
+    0%, 100% {
+      transform: scale(1);
+      opacity: 0.9;
+    }
+    50% {
+      transform: scale(1.03);
+      opacity: 1;
+    }
+  }
+
+  /* Recording ring: thin ring with pulse expansion */
+  .orb-recording-ring {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    transform: translate(-50%, -50%);
+    border: 2px solid currentColor;
+    border-radius: 50%;
+    opacity: 0.4;
+    animation: orb-ring-pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes orb-ring-pulse {
+    0%, 100% {
+      width: 20px;
+      height: 20px;
+      opacity: 0.4;
+    }
+    50% {
+      width: 26px;
+      height: 26px;
+      opacity: 0.15;
+    }
+  }
+
+  /* Loading state */
+  .orb-loading {
+    animation: none;
+  }
+
+  /* Loading progress ring: circular sweep animation */
+  .orb-progress-ring {
+    animation: orb-progress-sweep 1.2s linear infinite;
+    transform-origin: center;
+  }
+
+  .orb-progress-ring circle {
+    stroke-dasharray: 283;
+    stroke-dashoffset: 212;
+    animation: orb-progress-dash 1.2s linear infinite;
+    transform-origin: center;
+  }
+
+  @keyframes orb-progress-sweep {
+    0% {
+      transform: rotate(-90deg);
+    }
+    100% {
+      transform: rotate(270deg);
+    }
+  }
+
+  @keyframes orb-progress-dash {
+    0% {
+      stroke-dashoffset: 283;
+    }
+    100% {
+      stroke-dashoffset: 0;
+    }
+  }
+
+  /* Loading glow pulse */
+  .orb-loading-glow {
+    position: absolute;
+    inset: -8px;
+    border-radius: 50%;
+    background: radial-gradient(circle, currentColor 0%, transparent 70%);
+    opacity: 0;
+    animation: orb-glow-pulse 1.2s ease-in-out infinite;
+    pointer-events: none;
+  }
+
+  @keyframes orb-glow-pulse {
+    0%, 100% {
+      opacity: 0;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.05;
+      transform: scale(1.02);
+    }
+  }
+
+  /* Transition crossfade for all state changes */
+  .orb,
+  .orb-recording-ring,
+  .orb-progress-ring,
+  .orb-loading-glow {
+    transition: opacity 0.2s ease-out, transform 0.2s ease-out;
+  }
+
   /* Mood-based orb animations */
   .orb-thinking {
     animation: orb-thinking-pulse 1.5s ease-in-out infinite;
