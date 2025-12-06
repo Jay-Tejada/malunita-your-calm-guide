@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Mail, Lock, Shield } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
-import { InstallPromptBanner } from "@/components/InstallPromptBanner";
+import { MobileInstallButton } from "@/components/MobileInstallButton";
 import { 
   validateAuthCredentials, 
   isLockedOut, 
@@ -171,7 +171,7 @@ export const Auth = ({ onAuthSuccess }: AuthProps) => {
 
   return (
     <>
-      <InstallPromptBanner />
+      <MobileInstallButton />
       <div className="min-h-screen flex items-center justify-center px-6 bg-background">
         <div className="w-full max-w-md">
         <div className="text-center mb-8">
