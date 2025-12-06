@@ -453,48 +453,56 @@ All colors MUST be HSL.
      ORB RECORDING & LOADING ANIMATIONS
      ======================================== */
 
-  /* Recording state: planetary rotation + scale transition */
-  .orb-recording {
-    animation: orb-scale-in 0.2s ease-out forwards;
-  }
-
-  @keyframes orb-scale-in {
+  /* Planet rotation animation (slow + smooth) */
+  @keyframes orbPlanetRotate {
     0% {
-      transform: scale(1);
+      transform: rotateY(0deg);
     }
     100% {
-      transform: scale(1.02);
+      transform: rotateY(360deg);
     }
   }
 
-  /* Planetary 3D rotation for recording */
-  .orb-rotate {
-    animation: orb-planet-rotate 16s linear infinite, orb-scale-in 0.2s ease-out forwards;
-    transform-style: preserve-3d;
-  }
-
-  @keyframes orb-planet-rotate {
+  /* Soft breathing glow animation */
+  @keyframes orbGlow {
     0% {
-      transform: scale(1.02) rotateY(0deg);
-    }
-    100% {
-      transform: scale(1.02) rotateY(360deg);
-    }
-  }
-
-  /* Recording breathing glow */
-  .orb-glow {
-    animation: orb-glow-breath 3s ease-in-out infinite;
-    pointer-events: none;
-  }
-
-  @keyframes orb-glow-breath {
-    0%, 100% {
-      opacity: 0.85;
+      box-shadow: 0 0 40px rgba(0, 0, 0, 0.05);
     }
     50% {
-      opacity: 1;
+      box-shadow: 0 0 65px rgba(0, 0, 0, 0.10);
     }
+    100% {
+      box-shadow: 0 0 40px rgba(0, 0, 0, 0.05);
+    }
+  }
+
+  /* Optional subtle scale breathing */
+  @keyframes orbScaleBreath {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.015); }
+    100% { transform: scale(1); }
+  }
+
+  /* Main class applied during RECORDING mode */
+  .orb-recording {
+    animation:
+      orbPlanetRotate 16s linear infinite,
+      orbGlow 3s ease-in-out infinite;
+    
+    /* Needed to allow 3D rotation to show highlight movement */
+    transform-style: preserve-3d;
+    backface-visibility: hidden;
+
+    /* Slight lift so it feels "alive" */
+    transform: translateZ(0);
+  }
+
+  /* With scale breathing enabled */
+  .orb-recording.breath {
+    animation:
+      orbPlanetRotate 16s linear infinite,
+      orbGlow 3s ease-in-out infinite,
+      orbScaleBreath 4s ease-in-out infinite;
   }
 
   /* Loading state */
