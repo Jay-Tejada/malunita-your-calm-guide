@@ -163,7 +163,7 @@ export const Layout = () => {
       )}
       
       {/* Top-Left Mini Orb - Notebook Drawer - Only show on home page when authenticated */}
-      {location.pathname === '/' && isAuthenticated && (
+      {location.pathname === '/' && isAuthenticated === true && (
         <MiniOrb
           position="left"
           label="notebook"
