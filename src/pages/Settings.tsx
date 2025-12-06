@@ -8,6 +8,7 @@ import { getPerformanceMetrics, clearPerformanceMetrics } from '@/lib/performanc
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { AudioToggle } from '@/components/settings/AudioToggle';
+import { ThemeToggle } from '@/components/settings/ThemeToggle';
 
 export default function Settings() {
   const navigate = useNavigate();
@@ -82,6 +83,7 @@ export default function Settings() {
             <CardDescription>Basic app settings</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            <ThemeToggle />
             <AudioToggle />
             <div className="flex items-center justify-between">
               <div>
