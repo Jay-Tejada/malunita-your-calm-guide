@@ -112,10 +112,19 @@ const Index = () => {
         e.preventDefault();
         setShowDesktopCapture(true);
         
-        // Force focus after state update
-        setTimeout(() => {
-          document.querySelector<HTMLTextAreaElement>('[data-task-input]')?.focus();
-        }, 50);
+        // Aggressive focus - multiple attempts to ensure it works
+        const focusInput = () => {
+          const input = document.querySelector<HTMLTextAreaElement>('[data-task-input]');
+          if (input && document.activeElement !== input) {
+            input.focus();
+          }
+        };
+        
+        // Try immediately and several times after
+        setTimeout(focusInput, 0);
+        setTimeout(focusInput, 50);
+        setTimeout(focusInput, 100);
+        setTimeout(focusInput, 150);
       }
       
       if (e.key === 'Escape') {
