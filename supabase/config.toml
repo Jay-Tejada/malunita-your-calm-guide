@@ -193,8 +193,6 @@ verify_jwt = true
 [functions.batch-categorize-inbox]
 verify_jwt = true
 
-[functions.openai-test]
-verify_jwt = false
 
 [functions.analyze-inbox]
 verify_jwt = true
