@@ -6,6 +6,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useTasks } from '@/hooks/useTasks';
 import { useSmartHints, useModifierKey } from '@/hooks/useSmartHints';
 import { useSmartDateParsing } from '@/hooks/useSmartDateParsing';
+import { useHaptics } from '@/hooks/useHaptics';
 
 interface QuickCaptureProps {
   isOpen: boolean;
@@ -25,6 +26,7 @@ export const QuickCapture = ({ isOpen, onClose, variant, onCapture }: QuickCaptu
   const { createTasks } = useTasks();
   const { currentHint, trackUsage } = useSmartHints();
   const modKey = useModifierKey();
+  const haptics = useHaptics();
   
   // Parse natural language dates from input
   const parsedDate = useSmartDateParsing(input);
@@ -109,6 +111,9 @@ export const QuickCapture = ({ isOpen, onClose, variant, onCapture }: QuickCaptu
     if (!input.trim()) return;
     
     const capturedText = input.trim();
+    
+    // Haptic feedback for capture
+    haptics.mediumTap();
     
     // Clear input immediately for instant feedback
     setInput('');

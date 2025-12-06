@@ -31,6 +31,7 @@ import { usePlanTasks } from "@/hooks/usePlanTasks";
 import { TaskPlanModal } from "@/components/TaskPlanModal";
 import { SwipeableTaskRow } from "@/components/SwipeableTaskRow";
 import { useIsMobile } from "@/hooks/useIsMobile";
+import { useHaptics } from "@/hooks/useHaptics";
 import {
   Drawer,
   DrawerClose,
@@ -70,6 +71,7 @@ export const TaskList = ({
   const { checkForRelatedTasks } = useRelatedTaskSuggestions();
   const { generatePlan, createPlanTasks, isGenerating, isCreating } = usePlanTasks();
   const isMobile = useIsMobile();
+  const haptics = useHaptics();
   const [internalDomain, setInternalDomain] = useState("inbox");
   const [activeId, setActiveId] = useState<string | null>(null);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
@@ -259,6 +261,13 @@ export const TaskList = ({
   const handleToggleComplete = async (task: Task) => {
     const wasCompleted = task.completed;
     const nowCompleted = !task.completed;
+    
+    // Haptic feedback
+    if (nowCompleted) {
+      haptics.success();
+    } else {
+      haptics.lightTap();
+    }
     
     updateTask({
       id: task.id,
