@@ -112,37 +112,37 @@ const Inbox = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="flex items-center justify-center px-4 py-3 border-b border-foreground/5 relative">
+      <header className="flex items-center justify-center px-4 py-3 border-b border-border relative">
         <button 
           onClick={() => navigate('/')} 
           className="absolute left-4 p-2 -ml-2"
         >
-          <ChevronLeft className="w-5 h-5 text-foreground/40" />
+          <ChevronLeft className="w-5 h-5 text-muted-foreground hover:text-foreground transition-colors" />
         </button>
-        <h1 className="font-mono text-sm text-foreground/70">Inbox</h1>
-        <span className="absolute right-4 text-xs text-foreground/30">
+        <h1 className="font-mono text-sm text-foreground font-medium">Inbox</h1>
+        <span className="absolute right-4 text-xs text-muted-foreground">
           {tasks.length}
         </span>
       </header>
 
       {/* Quick capture */}
-      <div className="px-4 py-3 border-b border-foreground/5">
+      <div className="px-4 py-3 border-b border-border">
         <input
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && addTask()}
           placeholder="Capture a thought..."
-          className="w-full bg-transparent font-mono text-sm text-foreground/70 placeholder:text-foreground/30 focus:outline-none"
+          className="w-full bg-transparent font-mono text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
         />
       </div>
 
       {/* Task list */}
-      <div className="divide-y divide-foreground/5">
+      <div className="divide-y divide-border">
         {tasks.map(task => (
           <div key={task.id}>
             {/* Task row */}
             <div 
-              className="flex items-start gap-3 px-4 py-3 cursor-pointer hover:bg-foreground/[0.01]"
+              className="flex items-start gap-3 px-4 py-3 cursor-pointer hover:bg-muted/50 transition-colors"
               onClick={() => {
                 if (editingTask !== task.id) {
                   setExpandedTask(expandedTask === task.id ? null : task.id);
@@ -154,7 +154,7 @@ const Inbox = () => {
                   e.stopPropagation();
                   completeTask(task.id);
                 }}
-                className="w-5 h-5 mt-0.5 rounded-full border border-foreground/20 hover:border-foreground/40 hover:bg-foreground/5 flex-shrink-0 transition-colors"
+                className="w-5 h-5 mt-0.5 rounded-full border border-muted-foreground hover:border-foreground hover:bg-muted flex-shrink-0 transition-colors"
               />
               {editingTask === task.id ? (
                 <input
@@ -166,11 +166,11 @@ const Inbox = () => {
                   }}
                   onBlur={() => saveEdit(task.id)}
                   autoFocus
-                  className="flex-1 font-mono text-sm text-foreground/70 leading-relaxed bg-transparent border-b border-foreground/20 focus:outline-none focus:border-foreground/40"
+                  className="flex-1 font-mono text-sm text-foreground leading-relaxed bg-transparent border-b border-border focus:outline-none focus:border-accent"
                   onClick={(e) => e.stopPropagation()}
                 />
               ) : (
-                <p className="flex-1 font-mono text-sm text-foreground/70 leading-relaxed">
+                <p className="flex-1 font-mono text-sm text-foreground leading-relaxed">
                   {task.title}
                 </p>
               )}
@@ -178,44 +178,44 @@ const Inbox = () => {
 
             {/* Expanded actions */}
             {expandedTask === task.id && (
-              <div className="flex items-center gap-1 px-4 py-2 pl-12 bg-foreground/[0.01] border-t border-foreground/5">
+              <div className="flex items-center gap-1 px-4 py-2 pl-12 bg-muted/30 border-t border-border">
                 <button
                   onClick={() => moveTask(task.id, 'today')}
-                  className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-foreground/50 hover:text-foreground/70 hover:bg-foreground/5 rounded transition-colors"
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-colors"
                 >
                   <Star className="w-3.5 h-3.5" />
                   Today
                 </button>
                 <button
                   onClick={() => moveTask(task.id, 'someday')}
-                  className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-foreground/50 hover:text-foreground/70 hover:bg-foreground/5 rounded transition-colors"
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-colors"
                 >
                   <Moon className="w-3.5 h-3.5" />
                   Someday
                 </button>
                 <button
                   onClick={() => moveTask(task.id, 'work')}
-                  className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-foreground/50 hover:text-foreground/70 hover:bg-foreground/5 rounded transition-colors"
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-colors"
                 >
                   <Briefcase className="w-3.5 h-3.5" />
                   Work
                 </button>
                 <button
                   onClick={() => moveTask(task.id, 'home')}
-                  className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-foreground/50 hover:text-foreground/70 hover:bg-foreground/5 rounded transition-colors"
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-colors"
                 >
                   <Home className="w-3.5 h-3.5" />
                   Home
                 </button>
                 <button
                   onClick={() => startEditing(task)}
-                  className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-foreground/50 hover:text-foreground/70 hover:bg-foreground/5 rounded transition-colors ml-auto"
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-colors ml-auto"
                 >
                   <Pencil className="w-3.5 h-3.5" />
                 </button>
                 <button
                   onClick={() => deleteTask(task.id)}
-                  className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-red-400/60 hover:text-red-400 hover:bg-red-400/5 rounded transition-colors"
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-destructive/70 hover:text-destructive hover:bg-destructive/10 rounded transition-colors"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>
@@ -228,8 +228,8 @@ const Inbox = () => {
       {/* Empty state */}
       {!loading && tasks.length === 0 && (
         <div className="px-4 py-16 text-center">
-          <p className="text-sm text-foreground/40 mb-1">Inbox empty</p>
-          <p className="text-xs text-foreground/30">
+          <p className="text-sm text-muted-foreground mb-1">Inbox empty</p>
+          <p className="text-xs text-muted-foreground/70">
             Capture thoughts above, organize later
           </p>
         </div>
@@ -238,7 +238,7 @@ const Inbox = () => {
       {/* Loading state */}
       {loading && (
         <div className="px-4 py-16 text-center">
-          <p className="text-sm text-foreground/30">Loading...</p>
+          <p className="text-sm text-muted-foreground">Loading...</p>
         </div>
       )}
     </div>
