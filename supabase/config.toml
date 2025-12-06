@@ -198,3 +198,6 @@ verify_jwt = false
 
 [functions.analyze-inbox]
 verify_jwt = true
+
+[functions.detect-patterns]
+verify_jwt = true

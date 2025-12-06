@@ -6,6 +6,7 @@ interface EvolutionMetrics {
   focusSessionsCompleted: number;
   daysActive: number;
   tinyFiestasCompleted: number;
+  ritualConsistency: number;
 }
 
 const STAGE_THRESHOLDS = [
@@ -70,12 +71,23 @@ export async function fetchEvolutionMetrics(userId: string): Promise<EvolutionMe
     .select('*', { count: 'exact', head: true })
     .eq('user_id', userId);
 
+  // Fetch ritual consistency (last 14 days)
+  const twoWeeksAgo = new Date();
+  twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
+  
+  const { count: ritualCount } = await supabase
+    .from('ritual_history')
+    .select('*', { count: 'exact', head: true })
+    .eq('user_id', userId)
+    .gte('created_at', twoWeeksAgo.toISOString());
+
   return {
     totalTasksCompleted: tasksCount || 0,
     journalStreak: 0, // TODO: Calculate from journal_entries
     focusSessionsCompleted: focusCount || 0,
     daysActive: uniqueDays.size,
     tinyFiestasCompleted: fiestaCount || 0,
+    ritualConsistency: ritualCount || 0,
   };
 }
 
