@@ -13,6 +13,7 @@ import { useRelatedTaskSuggestions } from "@/hooks/useRelatedTaskSuggestions";
 import { RelatedTaskSuggestions } from "@/components/RelatedTaskSuggestions";
 import { useCompanionEmotion } from "@/hooks/useCompanionEmotion";
 import { useCompanionIdentity } from "@/hooks/useCompanionIdentity";
+import { useHaptics } from "@/hooks/useHaptics";
 
 interface TodaysFocusProps {
   onReflectClick?: () => void;
@@ -28,6 +29,7 @@ export const TodaysFocus = ({ onReflectClick }: TodaysFocusProps) => {
   const [isSuggesting, setIsSuggesting] = React.useState(false);
   const { toast } = useToast();
   const { generateAndCreateSubtasks } = useAutoSplitTask();
+  const haptics = useHaptics();
   const {
     suggestions,
     isProcessing: isSuggestionsProcessing,
@@ -56,6 +58,13 @@ export const TodaysFocus = ({ onReflectClick }: TodaysFocusProps) => {
   }, [focusTasks.length]);
 
   const handleToggleComplete = (task: Task) => {
+    // Haptic feedback
+    if (!task.completed) {
+      haptics.success();
+    } else {
+      haptics.lightTap();
+    }
+    
     updateTask({
       id: task.id,
       updates: {

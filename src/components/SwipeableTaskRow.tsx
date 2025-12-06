@@ -3,6 +3,7 @@ import { useSwipeable } from 'react-swipeable';
 import { Check, Trash2, Calendar, Star } from 'lucide-react';
 import { Task } from '@/hooks/useTasks';
 import { cn } from '@/lib/utils';
+import { haptics } from '@/hooks/useHaptics';
 
 interface SwipeableTaskRowProps {
   task: Task;
@@ -33,14 +34,21 @@ export const SwipeableTaskRow = ({
       const maxSwipe = 160;
       const offset = Math.max(-maxSwipe, Math.min(maxSwipe, e.deltaX));
       setSwipeOffset(offset);
+      
+      // Haptic feedback at threshold crossings
+      if (Math.abs(e.deltaX) > ACTION_THRESHOLD && Math.abs(swipeOffset) <= ACTION_THRESHOLD) {
+        haptics.selectionChanged();
+      }
     },
     onSwipedLeft: (e) => {
       if (Math.abs(e.deltaX) > FULL_SWIPE_THRESHOLD) {
         // Full swipe left = delete
+        haptics.error();
         onDelete(task.id);
         resetSwipe();
       } else if (Math.abs(e.deltaX) > ACTION_THRESHOLD) {
         // Reveal right actions (delete, schedule)
+        haptics.lightTap();
         setIsRevealed('left');
         setSwipeOffset(-ACTION_THRESHOLD);
       } else {
@@ -51,10 +59,12 @@ export const SwipeableTaskRow = ({
     onSwipedRight: (e) => {
       if (e.deltaX > FULL_SWIPE_THRESHOLD) {
         // Full swipe right = complete
+        haptics.success();
         onComplete(task.id);
         resetSwipe();
       } else if (e.deltaX > ACTION_THRESHOLD) {
         // Reveal left actions (complete, star)
+        haptics.lightTap();
         setIsRevealed('right');
         setSwipeOffset(ACTION_THRESHOLD);
       } else {
