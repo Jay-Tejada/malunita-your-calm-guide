@@ -17,6 +17,7 @@ interface QuickCaptureProps {
 export const QuickCapture = ({ isOpen, onClose, variant, onCapture }: QuickCaptureProps) => {
   const [input, setInput] = useState('');
   const [captureType, setCaptureType] = useState<'task' | 'thought'>('task');
+  const justClosedRef = useRef(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { toast } = useToast();
   const { addThought } = useThoughts();
@@ -48,6 +49,15 @@ export const QuickCapture = ({ isOpen, onClose, variant, onCapture }: QuickCaptu
     textarea.style.overflowY = textarea.scrollHeight > maxHeight ? 'auto' : 'hidden';
   };
   
+  // Clear input and reset when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      // Always start fresh when opening
+      setInput('');
+      justClosedRef.current = false;
+    }
+  }, [isOpen]);
+
   // Aggressive autofocus - keeps trying until successful user interaction
   useEffect(() => {
     if (!isOpen) return;
@@ -55,8 +65,12 @@ export const QuickCapture = ({ isOpen, onClose, variant, onCapture }: QuickCaptu
     const textarea = textareaRef.current;
     if (!textarea) return;
 
-    // Focus immediately
-    textarea.focus();
+    // Small delay to ensure input is cleared first
+    const initialDelay = setTimeout(() => {
+      textarea.focus();
+      // Select all to ensure any stray input is replaceable
+      textarea.select();
+    }, 10);
     
     // Keep checking and refocusing until we detect user has started typing
     let attempts = 0;
@@ -66,7 +80,7 @@ export const QuickCapture = ({ isOpen, onClose, variant, onCapture }: QuickCaptu
       attempts++;
       
       // Stop if we've tried enough or user has typed something
-      if (attempts >= maxAttempts || (textarea.value && textarea.value.length > 0)) {
+      if (attempts >= maxAttempts || input.length > 0) {
         clearInterval(focusInterval);
         return;
       }
@@ -78,9 +92,10 @@ export const QuickCapture = ({ isOpen, onClose, variant, onCapture }: QuickCaptu
     }, 50);
 
     return () => {
+      clearTimeout(initialDelay);
       clearInterval(focusInterval);
     };
-  }, [isOpen]);
+  }, [isOpen, input.length]);
   
   useEffect(() => {
     adjustTextareaHeight();
