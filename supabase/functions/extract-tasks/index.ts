@@ -75,8 +75,9 @@ serve(async (req) => {
       );
     }
     
-    // Get user's preferred model - locked to gpt-4-turbo for all users
-    const preferredModel = 'gpt-4-turbo';
+    // Updated to gpt-4.1 for improved performance
+    const preferredModel = 'gpt-4.1-2025-04-14';
+    console.log("OPENAI_CALL", preferredModel, Date.now());
     
     // Fetch learning data if userId provided
     let learningInsights = '';

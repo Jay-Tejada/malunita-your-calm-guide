@@ -81,8 +81,9 @@ serve(async (req) => {
       throw new Error('OPENAI_API_KEY is not configured');
     }
 
-    // Locked to gpt-4-turbo for consistency
-    const model = 'gpt-4-turbo';
+    // Updated to gpt-4.1 for improved performance
+    const model = 'gpt-4.1-2025-04-14';
+    console.log("OPENAI_CALL", model, Date.now());
 
     console.log('Categorizing task:', text);
     console.log('Using model:', model);

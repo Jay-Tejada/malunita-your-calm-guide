@@ -113,7 +113,8 @@ Return JSON in this format:
   "reasoning": "Brief explanation of why you chose this mode"
 }`;
 
-    console.log('🔍 Detecting intent...');
+    const model = 'gpt-4.1-2025-04-14';
+    console.log('🔍 Detecting intent...', "OPENAI_CALL", model, Date.now());
     const intentResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -121,7 +122,7 @@ Return JSON in this format:
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4-turbo',
+        model: model,
         messages: [
           { role: 'system', content: intentSystemPrompt },
           { role: 'user', content: text }
