@@ -99,7 +99,7 @@ const Orb = ({
     return '';
   };
 
-  const orbStyle: React.CSSProperties = {
+  const orbStyle: React.CSSProperties & { '--orbGlowColor'?: string } = {
     width: size,
     height: size,
     borderRadius: '50%',
@@ -107,6 +107,7 @@ const Orb = ({
     cursor: onClick ? 'pointer' : 'default',
     transition: 'all 0.2s ease-out',
     transform: isPressed ? 'scale(0.97)' : 'scale(1)',
+    '--orbGlowColor': colors.glow,
     background: `
       radial-gradient(
         circle at 35% 35%,

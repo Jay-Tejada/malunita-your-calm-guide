@@ -463,16 +463,16 @@ All colors MUST be HSL.
     }
   }
 
-  /* Soft breathing glow animation */
+  /* Soft breathing glow animation - uses dynamic orb color */
   @keyframes orbGlow {
     0% {
-      box-shadow: 0 0 40px rgba(0, 0, 0, 0.05);
+      box-shadow: 0 0 40px var(--orbGlowColor, rgba(0, 0, 0, 0.05));
     }
     50% {
-      box-shadow: 0 0 65px rgba(0, 0, 0, 0.10);
+      box-shadow: 0 0 65px var(--orbGlowColor, rgba(0, 0, 0, 0.10));
     }
     100% {
-      box-shadow: 0 0 40px rgba(0, 0, 0, 0.05);
+      box-shadow: 0 0 40px var(--orbGlowColor, rgba(0, 0, 0, 0.05));
     }
   }
 
