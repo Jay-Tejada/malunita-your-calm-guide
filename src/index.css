@@ -93,6 +93,13 @@ All colors MUST be HSL.
     --sidebar-bg: 0 0% 17%;
     --sidebar-active: 0 0% 23%;
     --focus-glow: 0 0% 22%;
+    
+    /* Softer orb for dark mode - moon-like glow */
+    --orb-dark-base: 30 8% 22%; /* #3D3832 warm dark gray */
+    --orb-dark-accent: 30 6% 27%; /* #4A4540 slightly lighter */
+    --orb-dark-inner: 30 10% 32%; /* #5A524A inner highlight */
+    --orb-dark-glow-color: 35 12% 66%; /* rgba(180, 170, 155) */
+    --orb-dark-glow-opacity: 0.25;
   }
 
   :root {
