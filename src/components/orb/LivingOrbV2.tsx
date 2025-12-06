@@ -47,27 +47,36 @@ export function LivingOrbV2() {
   
   const isDark = resolved === 'dark';
   
-  // Dark mode: softer moon-like orb
-  // Light mode: original bright orb
-  const orbGradient = isDark
-    ? 'radial-gradient(circle at 30% 30%, hsl(30 10% 32%), hsl(30 8% 22%))'
-    : `radial-gradient(circle at 30% 30%, ${palette.base}, ${palette.accent})`;
+  // Dark mode: layered moon-like orb with depth
+  const darkModeStyle = {
+    background: `
+      radial-gradient(circle at 35% 25%, rgba(255,255,255,0.08) 0%, transparent 50%),
+      radial-gradient(circle at 70% 80%, rgba(0,0,0,0.3) 0%, transparent 40%),
+      radial-gradient(circle at 30% 30%, #6A6158, #3D3832)
+    `,
+    boxShadow: `
+      0 0 60px rgba(160, 150, 135, 0.25),
+      0 0 30px rgba(120, 110, 95, 0.15),
+      inset 0 -20px 40px rgba(0,0,0,0.3),
+      inset 0 10px 20px rgba(255,255,255,0.05)
+    `,
+  };
   
-  const orbGlow = isDark
-    ? innerGlow
-      ? `inset 0 0 ${15 + stage * 3}px rgba(255, 255, 255, 0.05), 0 0 ${30 + stage * 5}px rgba(180, 170, 155, 0.3)`
-      : `0 0 40px rgba(180, 170, 155, 0.25)`
-    : innerGlow 
+  // Light mode: original bright orb
+  const lightModeStyle = {
+    background: `radial-gradient(circle at 30% 30%, ${palette.base}, ${palette.accent})`,
+    boxShadow: innerGlow 
       ? `inset 0 0 ${20 + stage * 5}px rgba(255,255,255,0.3), 0 0 ${15 + stage * 3}px ${palette.glow}`
-      : `0 0 15px ${palette.glow}`;
+      : `0 0 15px ${palette.glow}`,
+  };
   
   // Softer brightness in dark mode
   const energyBrightness = isDark 
-    ? 0.9 + (energy * 0.02) // 0.92 to 1.0 in dark
+    ? 0.95 + (energy * 0.015) // 0.965 to 1.025 in dark (very subtle)
     : 0.85 + (energy * 0.05); // 0.9 to 1.1 in light
   
-  const ringColor = isDark ? 'rgba(180, 170, 155, 0.4)' : palette.accent;
-  const stageColor = isDark ? 'rgba(180, 170, 155, 0.5)' : palette.accent;
+  const ringColor = isDark ? 'rgba(160, 150, 135, 0.3)' : palette.accent;
+  const stageColor = isDark ? 'rgba(160, 150, 135, 0.5)' : palette.accent;
   
   return (
     <div className="relative flex items-center justify-center">
@@ -87,17 +96,29 @@ export function LivingOrbV2() {
       
       {/* Main orb */}
       <div
-        className={`rounded-full ${animationClass}`}
+        className={`rounded-full ${animationClass} ${isDark ? 'orb-dark' : ''}`}
         style={{
           width: size,
           height: size,
-          background: orbGradient,
+          ...(isDark ? darkModeStyle : lightModeStyle),
           filter: `brightness(${energyBrightness + glowOffset})`,
           transform: `scale(${1 + scaleOffset})`,
-          boxShadow: orbGlow,
           transition: 'all 0.8s ease',
+          position: 'relative',
         }}
-      />
+      >
+        {/* Noise texture overlay for dark mode */}
+        {isDark && (
+          <div 
+            className="absolute inset-0 rounded-full pointer-events-none"
+            style={{
+              backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
+              opacity: 0.04,
+              mixBlendMode: 'overlay',
+            }}
+          />
+        )}
+      </div>
       
       {/* Stage indicator (subtle) */}
       <div 
