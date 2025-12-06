@@ -3,12 +3,18 @@ import { useToast } from '@/hooks/use-toast';
 import { Volume2, VolumeX } from 'lucide-react';
 
 export function AudioToggle() {
-  const { enabled, toggle } = useOrbAudio();
+  const { enabled, toggle, init, play } = useOrbAudio();
   const { toast } = useToast();
 
-  const handleToggle = () => {
+  const handleToggle = async () => {
     const newValue = !enabled;
     toggle(newValue);
+    
+    if (newValue) {
+      await init();
+      play('task_added');
+    }
+    
     toast({
       title: newValue ? "Orb sounds enabled" : "Orb sounds disabled",
       description: newValue ? "You'll hear gentle chimes for actions" : "Audio feedback is now muted",
