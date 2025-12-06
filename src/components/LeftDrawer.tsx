@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, ChevronLeft, Circle, Check, Search as SearchIcon } from "lucide-react";
+import { Plus, ChevronLeft, Circle, Check, Search as SearchIcon, Settings, LogOut } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import { useSwipeable } from "react-swipeable";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -567,8 +568,39 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate, onSearchOpen }: LeftDr
                     <div className="flex-1" />
 
                     {/* Keyboard Shortcuts - At bottom */}
-                    <div className="mt-auto pt-4 px-6 pb-6 border-t border-border/50">
+                    <div className="mt-auto pt-4 border-t border-border/50">
                       <ShortcutsHelp />
+                      
+                      {/* Settings & Sign Out */}
+                      <div className="mt-4 space-y-1">
+                        <button
+                          onClick={() => {
+                            hapticLight();
+                            onClose();
+                            requestAnimationFrame(() => {
+                              navigate('/settings');
+                            });
+                          }}
+                          className="w-full flex items-center gap-3 py-2 px-2 font-mono text-sm text-foreground/70 hover:bg-foreground/[0.03] rounded-md transition-colors"
+                        >
+                          <Settings className="w-4 h-4" />
+                          Settings
+                        </button>
+                        <button
+                          onClick={async () => {
+                            hapticLight();
+                            await supabase.auth.signOut();
+                            toast({
+                              title: "Signed out",
+                              description: "You've been signed out successfully.",
+                            });
+                          }}
+                          className="w-full flex items-center gap-3 py-2 px-2 font-mono text-sm text-foreground/70 hover:bg-foreground/[0.03] rounded-md transition-colors"
+                        >
+                          <LogOut className="w-4 h-4" />
+                          Sign Out
+                        </button>
+                      </div>
                     </div>
                   </motion.div>
                 ) : drawerMode === "calendar" ? (
