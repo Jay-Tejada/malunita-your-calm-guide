@@ -12,6 +12,12 @@ export type OrbMood =
 
 export type OrbEnergy = 1 | 2 | 3 | 4 | 5;
 
+export interface OrbPalette {
+  base: string;
+  glow: string;
+  accent: string;
+}
+
 export interface OrbState {
   mood: OrbMood;
   energy: OrbEnergy;
@@ -19,6 +25,7 @@ export interface OrbState {
   streak: number;
   isAnimating: boolean;
   glowColor: string;
+  palette: OrbPalette;
   lastTrigger: string | null;
 }
 
@@ -34,6 +41,12 @@ interface OrbActions {
   reset: () => void;
 }
 
+const defaultPalette: OrbPalette = {
+  base: '#F5F0E6',
+  glow: 'rgba(245, 240, 230, 0.4)',
+  accent: '#E8E0D5'
+};
+
 export const useOrbStore = create<OrbState & OrbActions>((set) => ({
   // State
   mood: "idle",
@@ -42,6 +55,7 @@ export const useOrbStore = create<OrbState & OrbActions>((set) => ({
   streak: 0,
   isAnimating: false,
   glowColor: "#F5F0E6",
+  palette: defaultPalette,
   lastTrigger: null,
 
   // Actions
@@ -67,13 +81,38 @@ export const useOrbStore = create<OrbState & OrbActions>((set) => ({
   exitFocusMode: () => set({ mood: "idle", energy: 3 }),
   
   setTimeOfDay: (hour) => {
-    if (hour >= 5 && hour < 12) {
-      set({ mood: "morning", glowColor: "#FFF5E6" });
-    } else if (hour >= 18 || hour < 5) {
-      set({ mood: "evening", glowColor: "#E6E8F0" });
+    let mood: OrbMood;
+    let glowColor: string;
+    let palette: OrbPalette;
+
+    if (hour >= 5 && hour < 8) {
+      // Dawn
+      mood = 'morning';
+      glowColor = '#FFF5E6';
+      palette = { base: '#FFF5E6', glow: 'rgba(255, 220, 180, 0.4)', accent: '#FFE4C4' };
+    } else if (hour >= 8 && hour < 12) {
+      // Morning
+      mood = 'morning';
+      glowColor = '#FFFEF5';
+      palette = { base: '#FFFEF5', glow: 'rgba(255, 255, 240, 0.3)', accent: '#F5F5DC' };
+    } else if (hour >= 12 && hour < 17) {
+      // Midday
+      mood = 'idle';
+      glowColor = '#F5F0E6';
+      palette = { base: '#F5F0E6', glow: 'rgba(245, 240, 230, 0.35)', accent: '#E8E0D5' };
+    } else if (hour >= 17 && hour < 20) {
+      // Dusk
+      mood = 'evening';
+      glowColor = '#F0E6E0';
+      palette = { base: '#F0E6E0', glow: 'rgba(220, 180, 160, 0.3)', accent: '#E0D0C8' };
     } else {
-      set({ mood: "idle", glowColor: "#F5F0E6" });
+      // Night
+      mood = 'evening';
+      glowColor = '#E6E8F0';
+      palette = { base: '#E0E4EE', glow: 'rgba(180, 190, 220, 0.25)', accent: '#C8D0E0' };
     }
+
+    set({ mood, glowColor, palette });
   },
   
   evolve: () => set((state) => ({ 
@@ -82,5 +121,5 @@ export const useOrbStore = create<OrbState & OrbActions>((set) => ({
     isAnimating: true 
   })),
   
-  reset: () => set({ mood: "idle", energy: 3, isAnimating: false })
+  reset: () => set({ mood: "idle", energy: 3, isAnimating: false, palette: defaultPalette })
 }));
