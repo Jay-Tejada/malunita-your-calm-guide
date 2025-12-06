@@ -96,7 +96,7 @@ export function LivingOrbV2() {
       
       {/* Main orb */}
       <div
-        className={`rounded-full ${animationClass} ${isDark ? 'orb-dark' : ''}`}
+        className={`rounded-full ${animationClass} ${isDark ? 'orb-dark' : ''} overflow-hidden`}
         style={{
           width: size,
           height: size,
@@ -107,6 +107,15 @@ export function LivingOrbV2() {
           position: 'relative',
         }}
       >
+        {/* Mystical rotating line texture */}
+        <div className={`orb-texture absolute inset-0 rounded-full ${isDark ? 'dark' : ''}`} />
+        
+        {/* Floating particles */}
+        <div className="orb-particles absolute inset-0 rounded-full" />
+        
+        {/* Inner glow highlight */}
+        <div className="absolute inset-0 rounded-full bg-gradient-to-br from-white/10 via-transparent to-transparent pointer-events-none" />
+        
         {/* Noise texture overlay for dark mode */}
         {isDark && (
           <div 
