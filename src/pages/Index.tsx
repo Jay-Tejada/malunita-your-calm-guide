@@ -99,6 +99,7 @@ const Index = () => {
   
   // Desktop quick capture modal state
   const [showDesktopCapture, setShowDesktopCapture] = useState(false);
+  const captureClosedAtRef = useRef<number>(0);
   
   // Global keyboard shortcuts for desktop
   useEffect(() => {
@@ -110,6 +111,13 @@ const Index = () => {
       
       if (e.key === 'q') {
         e.preventDefault();
+        
+        // Add cooldown to prevent immediate reopening after close
+        const timeSinceClose = Date.now() - captureClosedAtRef.current;
+        if (timeSinceClose < 300) {
+          return; // Too soon after closing, ignore
+        }
+        
         setShowDesktopCapture(true);
         
         // Aggressive focus - multiple attempts to ensure it works
@@ -129,6 +137,7 @@ const Index = () => {
       
       if (e.key === 'Escape') {
         setShowDesktopCapture(false);
+        captureClosedAtRef.current = Date.now();
       }
     };
     
@@ -527,7 +536,10 @@ const Index = () => {
       {!isMobile && (
         <QuickCapture
           isOpen={showDesktopCapture}
-          onClose={() => setShowDesktopCapture(false)}
+          onClose={() => {
+            setShowDesktopCapture(false);
+            captureClosedAtRef.current = Date.now();
+          }}
           variant="desktop"
           onCapture={handleTaskCreated}
         />
