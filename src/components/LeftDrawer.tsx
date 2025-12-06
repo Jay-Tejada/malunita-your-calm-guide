@@ -434,23 +434,35 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate, onSearchOpen }: LeftDr
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: -20 }}
                     transition={{ duration: 0.14 }}
-                    className="h-full flex flex-col p-6 md:p-8 pt-16"
+                    className="h-full flex flex-col p-6 md:p-8 pt-6"
                   >
-                    {/* Search Button */}
-                    <button
-                      onClick={() => {
-                        hapticLight();
-                        onSearchOpen?.();
-                        onClose();
-                      }}
-                      className="w-full flex items-center gap-3 px-4 py-4 text-foreground/50 hover:text-foreground/70 hover:bg-foreground/[0.03] transition-colors rounded-lg min-h-[48px]"
-                    >
-                      <SearchIcon className="w-4 h-4" />
-                      <span className="font-mono text-sm">Search</span>
-                      <span className="ml-auto text-[10px] text-muted-foreground/30">/</span>
-                    </button>
-
-                    <div className="border-b border-foreground/5 my-4" />
+                    {/* Header Row - Burger + Search */}
+                    <div className="flex items-center gap-3 mb-4">
+                      {/* Close/Burger Button */}
+                      <button
+                        onClick={onClose}
+                        className="p-2 -ml-2 text-foreground/40 hover:text-foreground/60 transition-colors"
+                        aria-label="Close drawer"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 6h16M4 12h16M4 18h16" />
+                        </svg>
+                      </button>
+                      
+                      {/* Search Button */}
+                      <button
+                        onClick={() => {
+                          hapticLight();
+                          onSearchOpen?.();
+                          onClose();
+                        }}
+                        className="flex-1 flex items-center gap-3 px-3 py-2 text-foreground/50 hover:text-foreground/70 hover:bg-foreground/[0.03] transition-colors rounded-lg"
+                      >
+                        <SearchIcon className="w-4 h-4" />
+                        <span className="font-mono text-sm">Search</span>
+                        <span className="ml-auto text-[10px] text-muted-foreground/30">/</span>
+                      </button>
+                    </div>
 
                     {/* Add New Task Button */}
                     <button
