@@ -1,9 +1,13 @@
 import { useOrbStore } from '@/state/orbState';
+import { useOrbAudio } from '@/hooks/useOrbAudio';
 
 export function useOrbRituals() {
   const { setMood, setEnergy, triggerCelebration } = useOrbStore();
+  const { play, init } = useOrbAudio();
 
   const onStartMyDay = () => {
+    init();
+    play('ritual_start');
     setMood('morning');
     setEnergy(4);
     // Warm activation for 3 seconds, then idle
@@ -11,6 +15,8 @@ export function useOrbRituals() {
   };
 
   const onEndMyDay = () => {
+    init();
+    play('ritual_end');
     setMood('evening');
     setEnergy(2);
   };
@@ -21,6 +27,8 @@ export function useOrbRituals() {
 
   const onTinyTaskFiestaComplete = (tasksCleared: number) => {
     if (tasksCleared >= 3) {
+      init();
+      play('celebrate');
       triggerCelebration();
     }
   };
