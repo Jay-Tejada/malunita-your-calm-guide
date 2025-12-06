@@ -11,7 +11,9 @@ import { useToast } from "@/hooks/use-toast";
 import { useOrbRituals } from "@/hooks/useOrbRituals";
 import { useOrbTriggers } from "@/hooks/useOrbTriggers";
 import { useRitualInsights, NightInsight } from "@/hooks/useRitualInsights";
+import { usePatternAwareness, PatternResult } from "@/hooks/usePatternAwareness";
 import { RitualInsightCard } from "@/components/rituals/RitualInsightCard";
+import { PatternObservation } from "@/components/insights/PatternObservation";
 import { Moon, Heart, AlertCircle, Sparkles } from "lucide-react";
 
 interface EveningRitualProps {
@@ -27,22 +29,28 @@ export function EveningRitual({ onComplete, onSkip }: EveningRitualProps) {
   const [stressAnswer, setStressAnswer] = useState("");
   const [tomorrowAnswer, setTomorrowAnswer] = useState("");
   const [insight, setInsight] = useState<NightInsight | null>(null);
+  const [patternData, setPatternData] = useState<PatternResult | null>(null);
   const { mood, updateMood } = useMoodStore();
   const { toast } = useToast();
   const emotionalMemory = useEmotionalMemory();
   const { onEndMyDay } = useOrbRituals();
   const { onAIStart, onAIEnd } = useOrbTriggers();
   const { getNightInsight, loading: insightLoading } = useRitualInsights();
+  const { detectPatterns, loading: patternLoading } = usePatternAwareness();
 
-  // Fetch insight on mount
+  // Fetch insight and patterns on mount
   useEffect(() => {
-    const fetchInsight = async () => {
+    const fetchData = async () => {
       onAIStart();
-      const result = await getNightInsight();
+      const [insightResult, patternResult] = await Promise.all([
+        getNightInsight(),
+        detectPatterns()
+      ]);
       onAIEnd();
-      setInsight(result);
+      setInsight(insightResult);
+      setPatternData(patternResult);
     };
-    fetchInsight();
+    fetchData();
   }, []);
 
   const getGreeting = () => {
@@ -202,12 +210,20 @@ export function EveningRitual({ onComplete, onSkip }: EveningRitualProps) {
               </p>
               
               {/* AI Insight Card */}
-              {insightLoading && (
+              {(insightLoading || patternLoading) && (
                 <div className="flex justify-center py-4">
                   <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
                 </div>
               )}
               {insight && <RitualInsightCard type="night" insight={insight} />}
+              
+              {/* Pattern Observation */}
+              {patternData?.has_patterns && (
+                <PatternObservation 
+                  observation={patternData.observation} 
+                  trend={patternData.trend} 
+                />
+              )}
               
               <div className="flex gap-3 justify-center">
                 <Button onClick={handleStart} size="lg" className="gap-2">
