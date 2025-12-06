@@ -12,6 +12,7 @@ import { generateFlowSessions } from '@/utils/taskCategorizer';
 import { useHabits } from '@/hooks/useHabits';
 import { HabitQuickToggle } from '@/components/habits/HabitQuickToggle';
 import VirtualizedTaskList from '@/components/VirtualizedTaskList';
+import { TodaySection } from '@/components/today/TodaySection';
 
 const Today = () => {
   const navigate = useNavigate();
@@ -131,10 +132,7 @@ const Today = () => {
 
         {/* Daily Habits (morning only) */}
         {isMorning && habits.length > 0 && (
-          <div className="mb-6">
-            <p className="text-[10px] uppercase tracking-widest text-accent font-medium mb-2">
-              Daily Habits
-            </p>
+          <TodaySection label="Daily Habits" icon="✨">
             <div className="space-y-1.5">
               {habits.slice(0, 3).map(habit => (
                 <HabitQuickToggle
@@ -145,7 +143,7 @@ const Today = () => {
                 />
               ))}
             </div>
-          </div>
+          </TodaySection>
         )}
 
         {/* Flow Timeline */}
@@ -165,25 +163,13 @@ const Today = () => {
           }}
         />
         {(sessions.length > 0 || suggestedSession) && (
-          <div className="h-px bg-border mx-0 my-4" />
-        )}
-
-        {/* Desktop quick add */}
-        {todayTasks.length > 0 && (
-          <DesktopTaskCapture 
-            placeholder="Add to today..." 
-            onCapture={handleQuickAdd} 
-          />
+          <div className="h-px bg-border mx-0 my-6" />
         )}
 
         {/* TODAY'S FOCUS SECTION */}
-        <div className="mb-8">
-          <h3 className="text-[10px] uppercase tracking-widest text-accent font-medium mb-3">
-            Today's Focus
-          </h3>
+        <TodaySection label="Focus" icon="⭐" variant="focus">
           {focusTask ? (
-            // Show focus task
-            <div className={`flex items-start gap-3 py-4 px-3 rounded-lg bg-card border border-border ${completingTasks.has(focusTask.id) ? 'task-completing' : ''}`}>
+            <div className={`focus-task flex items-start gap-3 ${completingTasks.has(focusTask.id) ? 'task-completing' : ''}`}>
               <button
                 onClick={() => handleCompleteTask(focusTask.id)}
                 className="w-6 h-6 rounded-full border-2 border-accent hover:border-foreground flex-shrink-0 mt-0.5 transition-colors"
@@ -191,7 +177,6 @@ const Today = () => {
               <span className="font-mono text-base text-foreground font-medium">{focusTask.title}</span>
             </div>
           ) : (
-            // Show focus input
             <div className="text-center py-4">
               <p className="text-base font-light text-muted-foreground mb-4">
                 What's the ONE thing that would make today a success?
@@ -206,19 +191,16 @@ const Today = () => {
               />
             </div>
           )}
-        </div>
+        </TodaySection>
 
         {/* TODAY'S TASKS SECTION */}
         {regularTasks.length > 0 && (
-          <div className="mb-8">
-            <h3 className="text-[10px] uppercase tracking-widest text-accent font-medium mb-3">
-              Other Tasks
-            </h3>
+          <TodaySection label="Today" icon="📋">
             <VirtualizedTaskList
               tasks={regularTasks}
               estimatedItemHeight={52}
               renderTask={(task: Task) => (
-                <div key={task.id} className={`flex items-start gap-3 py-3 border-b border-border ${completingTasks.has(task.id) ? 'task-completing' : ''}`}>
+                <div key={task.id} className={`flex items-start gap-3 py-3 border-b border-border last:border-b-0 ${completingTasks.has(task.id) ? 'task-completing' : ''}`}>
                   <button
                     onClick={() => handleCompleteTask(task.id)}
                     className="w-5 h-5 rounded-full border border-muted-foreground hover:border-foreground flex-shrink-0 mt-0.5 transition-colors"
@@ -227,36 +209,41 @@ const Today = () => {
                 </div>
               )}
             />
-          </div>
+          </TodaySection>
         )}
 
         {/* FROM YOUR INBOX SECTION */}
         {inboxTasks.length > 0 && (
-          <div className="mb-8">
-            <h3 className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium mb-3">
-              From your inbox
-            </h3>
-            <div className="rounded-lg bg-card border border-border overflow-hidden">
-              <VirtualizedTaskList
-                tasks={inboxTasks}
-                estimatedItemHeight={44}
-                renderTask={(task: Task) => (
-                  <div key={task.id} className="flex items-center gap-3 py-3 px-3 border-b border-border last:border-b-0">
-                    <button 
-                      onClick={() => handleMoveToToday(task.id)} 
-                      className="text-muted-foreground hover:text-foreground flex-shrink-0 transition-colors"
-                    >
-                      <ArrowRight className="w-4 h-4" />
-                    </button>
-                    <span className="flex-1 font-mono text-sm text-muted-foreground">{task.title}</span>
-                    <button 
-                      onClick={() => handleCompleteTask(task.id)} 
-                      className="w-5 h-5 rounded-full border border-muted-foreground hover:border-foreground flex-shrink-0 transition-colors" 
-                    />
-                  </div>
-                )}
-              />
-            </div>
+          <TodaySection label="Inbox" icon="📥" variant="card">
+            <VirtualizedTaskList
+              tasks={inboxTasks}
+              estimatedItemHeight={44}
+              renderTask={(task: Task) => (
+                <div key={task.id} className="flex items-center gap-3 py-3 px-3 border-b border-border last:border-b-0">
+                  <button 
+                    onClick={() => handleMoveToToday(task.id)} 
+                    className="text-muted-foreground hover:text-foreground flex-shrink-0 transition-colors"
+                  >
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
+                  <span className="flex-1 font-mono text-sm text-muted-foreground">{task.title}</span>
+                  <button 
+                    onClick={() => handleCompleteTask(task.id)} 
+                    className="w-5 h-5 rounded-full border border-muted-foreground hover:border-foreground flex-shrink-0 transition-colors" 
+                  />
+                </div>
+              )}
+            />
+          </TodaySection>
+        )}
+
+        {/* Desktop quick add - moved to bottom */}
+        {todayTasks.length > 0 && (
+          <div className="mt-6 pt-4 border-t border-border">
+            <DesktopTaskCapture 
+              placeholder="Add to today..." 
+              onCapture={handleQuickAdd} 
+            />
           </div>
         )}
 
