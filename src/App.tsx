@@ -25,6 +25,7 @@ import { ProgressProvider } from "@/contexts/ProgressContext";
 import { FocusTimerProvider } from "@/contexts/FocusTimerContext";
 import { FocusTimerFloating } from "@/components/FocusTimerFloating";
 import { QuickCaptureProvider } from "@/contexts/QuickCaptureContext";
+import { InstallPrompt } from "@/components/InstallPrompt";
 
 // Lazy load all pages
 const Index = lazy(() => import("./pages/Index"));
@@ -158,6 +159,12 @@ const App = () => {
     // Initialize performance monitoring
     initPerformanceMonitoring();
     
+    // Check if running as installed PWA
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+    if (isStandalone) {
+      document.body.classList.add('pwa-standalone');
+    }
+    
     // Track session start
     localStorage.setItem('session_start', Date.now().toString());
     
@@ -254,6 +261,7 @@ const App = () => {
                 <Sonner />
                 <NetworkStatusBanner />
                 <FocusTimerFloating />
+                <InstallPrompt />
           
           {/* Ritual overlays */}
           <AnimatePresence>
