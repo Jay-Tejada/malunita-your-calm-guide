@@ -74,30 +74,8 @@ const Orb = ({
     },
   };
 
-  // Override colors based on recording/processing state
-  const getActiveColors = () => {
-    if (isRecording) {
-      // Warm coral gradient for recording state
-      return {
-        primary: '#FFF5F5',
-        secondary: '#FECACA',
-        shadow: '#F87171',
-        glow: 'rgba(248, 113, 113, 0.3)',
-      };
-    }
-    if (isProcessing) {
-      // Soft blue/lavender for processing
-      return {
-        primary: '#F0F4FF',
-        secondary: '#E0E7FF',
-        shadow: '#A5B4FC',
-        glow: 'rgba(165, 180, 252, 0.3)',
-      };
-    }
-    return palettes[timeOfDay];
-  };
-
-  const colors = getActiveColors();
+  // Keep base colors - no color override for recording/processing states
+  const colors = palettes[timeOfDay];
 
   const handleClick = () => {
     setRipple(true);
@@ -115,13 +93,19 @@ const Orb = ({
     }
   };
 
+  const getStateClass = () => {
+    if (isRecording) return 'orb-recording';
+    if (isProcessing) return 'orb-loading';
+    return '';
+  };
+
   const orbStyle: React.CSSProperties = {
     width: size,
     height: size,
     borderRadius: '50%',
     position: 'relative',
     cursor: onClick ? 'pointer' : 'default',
-    transition: 'all 0.5s ease-in-out, transform 0.15s ease-out',
+    transition: 'all 0.2s ease-out',
     transform: isPressed ? 'scale(0.97)' : 'scale(1)',
     background: `
       radial-gradient(
@@ -135,9 +119,8 @@ const Orb = ({
       inset -${size * 0.1}px -${size * 0.1}px ${size * 0.2}px rgba(0, 0, 0, 0.08),
       inset ${size * 0.05}px ${size * 0.05}px ${size * 0.15}px rgba(255, 255, 255, 0.5),
       0 ${size * 0.1}px ${size * 0.25}px rgba(0, 0, 0, 0.1),
-      0 0 ${size * (isRecording ? 0.6 : 0.4)}px ${colors.glow}
+      0 0 ${size * 0.4}px ${colors.glow}
     `,
-    animation: isRecording ? 'orb-pulse 2s ease-in-out infinite' : undefined,
   };
 
   return (
@@ -148,7 +131,7 @@ const Orb = ({
       onMouseLeave={() => setIsPressed(false)}
       onTouchStart={() => setIsPressed(true)}
       onTouchEnd={() => setIsPressed(false)}
-      className={`orb ${getMoodClass()} ${className}`}
+      className={`orb ${getMoodClass()} ${getStateClass()} ${className}`}
       style={orbStyle}
       role={onClick ? 'button' : undefined}
       tabIndex={onClick ? 0 : undefined}
@@ -170,21 +153,40 @@ const Orb = ({
           )`,
           filter: 'blur(8px)',
           pointerEvents: 'none',
+          transition: 'opacity 0.2s ease',
         }}
       />
 
-      {/* Recording indicator */}
+      {/* Recording: Thin ring with pulse expansion */}
       {isRecording && (
-        <div 
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-red-400/80 animate-pulse"
-        />
+        <div className="orb-recording-ring" />
       )}
 
-      {/* Processing spinner */}
+      {/* Loading: Circular progress stroke */}
       {isProcessing && (
-        <div 
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-6 h-6 border-2 border-foreground/20 border-t-foreground/60 rounded-full animate-spin"
-        />
+        <>
+          <svg 
+            className="orb-progress-ring"
+            style={{
+              position: 'absolute',
+              inset: -4,
+              width: 'calc(100% + 8px)',
+              height: 'calc(100% + 8px)',
+            }}
+          >
+            <circle
+              cx="50%"
+              cy="50%"
+              r="calc(50% - 2px)"
+              fill="none"
+              stroke={colors.shadow}
+              strokeWidth="1.5"
+              strokeOpacity="0.25"
+              strokeLinecap="round"
+            />
+          </svg>
+          <div className="orb-loading-glow" />
+        </>
       )}
 
       {/* Ripple effect on tap */}
