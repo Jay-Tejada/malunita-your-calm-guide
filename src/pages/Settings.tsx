@@ -2,10 +2,11 @@ import { SimpleHeader } from '@/components/SimpleHeader';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Wrench, Database, Activity, FileText } from 'lucide-react';
+import { ArrowLeft, Wrench, Database, Activity, FileText, LogOut } from 'lucide-react';
 import { hapticLight } from '@/utils/haptics';
 import { getPerformanceMetrics, clearPerformanceMetrics } from '@/lib/performance';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 export default function Settings() {
   const navigate = useNavigate();
@@ -86,6 +87,30 @@ export default function Settings() {
                 <p className="text-sm text-muted-foreground">1.0.0</p>
               </div>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Account */}
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>Account</CardTitle>
+            <CardDescription>Manage your account</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button
+              variant="destructive"
+              className="w-full justify-start"
+              onClick={async () => {
+                await supabase.auth.signOut();
+                toast({
+                  title: "Signed out",
+                  description: "You've been signed out successfully.",
+                });
+              }}
+            >
+              <LogOut className="w-4 h-4 mr-2" />
+              Sign Out
+            </Button>
           </CardContent>
         </Card>
 

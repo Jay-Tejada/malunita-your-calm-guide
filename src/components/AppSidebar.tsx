@@ -8,7 +8,6 @@ import {
   Dumbbell,
   Settings, 
   Shield, 
-  LogOut,
   Sparkles,
   Palette,
   Globe,
@@ -75,13 +74,6 @@ export function AppSidebar({
   const [feelingsHubOpen, setFeelingsHubOpen] = React.useState(false);
   const [teachMalunitaOpen, setTeachMalunitaOpen] = React.useState(false);
 
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    toast({
-      title: "Signed out",
-      description: "You've been signed out successfully.",
-    });
-  };
 
   const isActive = (category: string) => activeCategory === category;
 
@@ -353,13 +345,6 @@ export function AppSidebar({
                 <SidebarMenuButton onClick={onSettingsClick}>
                   <Settings className="w-4 h-4" />
                   <span>Settings</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              
-              <SidebarMenuItem>
-                <SidebarMenuButton onClick={handleSignOut}>
-                  <LogOut className="w-4 h-4" />
-                  <span>Sign Out</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>
