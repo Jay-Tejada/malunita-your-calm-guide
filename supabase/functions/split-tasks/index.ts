@@ -75,7 +75,7 @@ serve(async (req) => {
       throw new Error('LOVABLE_API_KEY not configured');
     }
 
-    console.log('Splitting tasks from text:', text);
+    console.log('Splitting tasks - textLength:', text.length);
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
@@ -183,7 +183,7 @@ serve(async (req) => {
     }
 
     const result = JSON.parse(toolCall.function.arguments);
-    console.log('Extracted tasks:', result.tasks);
+    console.log('Extracted tasks count:', result.tasks?.length || 0);
 
     return new Response(
       JSON.stringify({ tasks: result.tasks }),

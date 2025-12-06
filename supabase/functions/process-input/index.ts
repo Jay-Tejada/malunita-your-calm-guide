@@ -29,8 +29,7 @@ serve(async (req) => {
       );
     }
 
-    console.log('Processing input for user:', user_id);
-    console.log('Input text:', text);
+    console.log('Processing input for user:', user_id?.substring(0, 8) + '...', 'textLength:', text?.length);
 
     // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -142,7 +141,7 @@ serve(async (req) => {
       routing,
     };
 
-    console.log('Processing complete. Output:', JSON.stringify(output, null, 2));
+    console.log('Processing complete. Tasks:', output.tasks?.length, 'Ideas:', output.ideas?.length);
 
     return new Response(
       JSON.stringify(output),

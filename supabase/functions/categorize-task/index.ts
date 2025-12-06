@@ -85,9 +85,9 @@ serve(async (req) => {
     const model = 'gpt-4.1-2025-04-14';
     console.log("OPENAI_CALL", model, Date.now());
 
-    console.log('Categorizing task:', text);
+    console.log('Categorizing task for user:', user.id.substring(0, 8) + '...', 'textLength:', text.length);
     console.log('Using model:', model);
-    console.log('User has custom categories:', customCategories?.map(c => c.name).join(', '));
+    console.log('User has custom categories:', customCategories?.length || 0);
 
     // Build system prompt with custom categories
     let systemPrompt = `You are Malunita, a helpful AI assistant that categorizes tasks. 
@@ -187,7 +187,7 @@ Examples:
     const data = await response.json();
     const result = JSON.parse(data.choices[0].message.content);
 
-    console.log('Categorized as:', result.category, 'with', result.confidence, 'confidence');
+    console.log('Categorization complete - category:', result.category, 'confidence:', result.confidence);
 
     // Log API usage for admin tracking
     if (userId) {
