@@ -68,14 +68,14 @@ const Work = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 h-14 border-b border-foreground/5">
-        <button onClick={() => navigate('/')} className="text-foreground/30 hover:text-foreground/50">
+      <div className="flex items-center justify-between px-4 h-14 border-b border-border">
+        <button onClick={() => navigate('/')} className="text-muted-foreground hover:text-foreground transition-colors">
           <ChevronLeft className="w-5 h-5" />
         </button>
-        <span className="font-mono text-foreground/80">Work</span>
+        <span className="font-mono text-foreground font-medium">Work</span>
         <button 
           onClick={() => setShowNewProject(true)}
-          className="text-foreground/30 hover:text-foreground/50"
+          className="text-muted-foreground hover:text-foreground transition-colors"
         >
           <Plus className="w-5 h-5" />
         </button>
@@ -109,7 +109,7 @@ const Work = () => {
           {tasksByProject.uncategorized.length > 0 && (
             <div className="px-4 py-3">
               {projects.length > 0 && (
-                <p className="text-[10px] uppercase tracking-widest text-foreground/30 mb-3">
+                <p className="text-[10px] uppercase tracking-widest text-accent font-medium mb-3">
                   Other
                 </p>
               )}
@@ -117,9 +117,9 @@ const Work = () => {
                 <div key={task.id} className="flex items-start gap-3 py-2">
                   <button
                     onClick={() => handleToggleTask(task.id)}
-                    className="w-4 h-4 rounded-full border border-foreground/20 hover:border-foreground/40 flex-shrink-0 mt-0.5"
+                    className="w-4 h-4 rounded-full border border-muted-foreground hover:border-foreground flex-shrink-0 mt-0.5 transition-colors"
                   />
-                  <span className="font-mono text-sm text-foreground/70">{task.title}</span>
+                  <span className="font-mono text-sm text-foreground">{task.title}</span>
                 </div>
               ))}
             </div>
@@ -127,7 +127,7 @@ const Work = () => {
 
           {/* Empty state */}
           {projects.length === 0 && tasksByProject.uncategorized.length === 0 && (
-            <p className="text-muted-foreground/30 text-center py-12">No work tasks</p>
+            <p className="text-muted-foreground text-center py-12">No work tasks</p>
           )}
         </div>
 
@@ -135,7 +135,7 @@ const Work = () => {
         {completedTasks.length > 0 && (
           <button
             onClick={() => setShowCompleted(!showCompleted)}
-            className="w-full text-center text-xs text-muted-foreground/30 hover:text-muted-foreground/50 py-4"
+            className="w-full text-center text-xs text-muted-foreground hover:text-foreground py-4 transition-colors"
           >
             {showCompleted ? 'Hide' : 'Show'} completed ({completedTasks.length})
           </button>
