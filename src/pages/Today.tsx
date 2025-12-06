@@ -99,10 +99,10 @@ const Today = () => {
     setTimeout(async () => {
       await updateTask({ 
         id: taskId, 
-        updates: { completed: true } 
-      });
-      toast({
-        description: "Completed",
+        updates: { 
+          completed: true,
+          completed_at: new Date().toISOString()
+        } 
       });
       setCompletingTasks(prev => {
         const next = new Set(prev);
