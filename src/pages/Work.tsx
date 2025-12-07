@@ -18,17 +18,18 @@ const Work = () => {
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // 'q' key focuses the input for quick capture
+  // 'q' key focuses the input for quick capture - use capture phase to intercept before global handler
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
       if (e.key === 'q' && !e.metaKey && !e.ctrlKey && !e.shiftKey) {
         e.preventDefault();
+        e.stopImmediatePropagation(); // Stop global handler from firing
         inputRef.current?.focus();
       }
     };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener('keydown', handleKeyDown, true); // capture phase
+    return () => window.removeEventListener('keydown', handleKeyDown, true);
   }, []);
   
   const workTasks = tasks?.filter(t => 
