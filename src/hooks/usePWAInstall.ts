@@ -2,19 +2,18 @@ import { useState, useEffect, useCallback } from 'react';
 
 // Global storage for the deferred prompt - persists across component mounts
 let globalDeferredPrompt: any = null;
-let promptCaptured = false;
 
-// Capture the event as early as possible
+// Capture the event as early as possible - this runs once when the module loads
 if (typeof window !== 'undefined') {
-  window.addEventListener('beforeinstallprompt', (e) => {
+  const capturePrompt = (e: Event) => {
     e.preventDefault();
     globalDeferredPrompt = e;
-    promptCaptured = true;
-    console.log('[PWA] Install prompt captured globally');
-  });
+    console.log('[PWA] beforeinstallprompt captured!');
+    // Dispatch custom event so components can react
+    window.dispatchEvent(new CustomEvent('pwa-prompt-ready'));
+  };
   
-  // Log PWA debug info
-  console.log('[PWA] Standalone mode:', window.matchMedia('(display-mode: standalone)').matches);
+  window.addEventListener('beforeinstallprompt', capturePrompt);
 }
 
 export function usePWAInstall() {
@@ -33,26 +32,36 @@ export function usePWAInstall() {
       setCanInstall(true);
     }
 
+    // Listen for prompt ready event
+    const onPromptReady = () => {
+      console.log('[PWA] Hook received prompt-ready event');
+      setCanInstall(true);
+    };
+
     // Listen for new prompts
-    const handler = (e: Event) => {
+    const onBeforeInstall = (e: Event) => {
       e.preventDefault();
       globalDeferredPrompt = e;
       setCanInstall(true);
-      console.log('[PWA] Install prompt captured in hook');
+      console.log('[PWA] Hook captured beforeinstallprompt');
     };
 
-    window.addEventListener('beforeinstallprompt', handler);
-
     // Listen for successful install
-    window.addEventListener('appinstalled', () => {
+    const onInstalled = () => {
       setIsInstalled(true);
       setCanInstall(false);
       globalDeferredPrompt = null;
       console.log('[PWA] App installed');
-    });
+    };
+
+    window.addEventListener('pwa-prompt-ready', onPromptReady);
+    window.addEventListener('beforeinstallprompt', onBeforeInstall);
+    window.addEventListener('appinstalled', onInstalled);
 
     return () => {
-      window.removeEventListener('beforeinstallprompt', handler);
+      window.removeEventListener('pwa-prompt-ready', onPromptReady);
+      window.removeEventListener('beforeinstallprompt', onBeforeInstall);
+      window.removeEventListener('appinstalled', onInstalled);
     };
   }, []);
 
