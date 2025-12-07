@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, Plus } from 'lucide-react';
 import { useTasks, Task } from '@/hooks/useTasks';
@@ -16,6 +16,20 @@ const Work = () => {
   const [showCompleted, setShowCompleted] = useState(false);
   const [showNewProject, setShowNewProject] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // 'q' key focuses the input for quick capture
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (e.key === 'q' && !e.metaKey && !e.ctrlKey && !e.shiftKey) {
+        e.preventDefault();
+        inputRef.current?.focus();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
   
   const workTasks = tasks?.filter(t => 
     t.category === 'work' && !t.completed
@@ -85,6 +99,7 @@ const Work = () => {
         {/* Desktop capture input */}
         <div className="px-4 pt-4">
           <DesktopTaskCapture 
+            ref={inputRef}
             placeholder="Add a work task..." 
             onCapture={handleCapture} 
           />
