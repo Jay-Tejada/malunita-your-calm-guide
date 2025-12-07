@@ -3,6 +3,22 @@ import { ChevronDown, ChevronRight, MoreHorizontal, Pencil, Trash2 } from 'lucid
 import { Project } from '@/hooks/useProjects';
 import { Task } from '@/hooks/useTasks';
 import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { SortableTaskItem } from './SortableTaskItem';
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -17,6 +33,7 @@ interface ProjectSectionProps {
   onAddTask: (text: string, projectId: string) => void;
   onEditProject: (project: Project) => void;
   onDeleteProject: (projectId: string) => void;
+  onReorderTasks?: (taskIds: string[]) => void;
 }
 
 export const ProjectSection = ({
@@ -26,16 +43,39 @@ export const ProjectSection = ({
   onToggleTask,
   onAddTask,
   onEditProject,
-  onDeleteProject
+  onDeleteProject,
+  onReorderTasks
 }: ProjectSectionProps) => {
   const [inputValue, setInputValue] = useState('');
   const incompleteTasks = tasks.filter(t => !t.completed);
   const isCollapsed = project.is_collapsed;
 
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && inputValue.trim()) {
       onAddTask(inputValue.trim(), project.id);
       setInputValue('');
+    }
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      const oldIndex = incompleteTasks.findIndex((t) => t.id === active.id);
+      const newIndex = incompleteTasks.findIndex((t) => t.id === over.id);
+      const reordered = arrayMove(incompleteTasks, oldIndex, newIndex);
+      onReorderTasks?.(reordered.map(t => t.id));
     }
   };
 
@@ -90,15 +130,24 @@ export const ProjectSection = ({
           {incompleteTasks.length === 0 ? (
             <p className="text-xs text-foreground/30 py-2">No tasks</p>
           ) : (
-            incompleteTasks.map(task => (
-              <div key={task.id} className="flex items-start gap-3 py-2">
-                <button
-                  onClick={() => onToggleTask(task.id)}
-                  className="w-4 h-4 rounded-full border border-foreground/20 hover:border-foreground/40 flex-shrink-0 mt-0.5"
-                />
-                <span className="font-mono text-sm text-foreground/70">{task.title}</span>
-              </div>
-            ))
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+            >
+              <SortableContext
+                items={incompleteTasks.map(t => t.id)}
+                strategy={verticalListSortingStrategy}
+              >
+                {incompleteTasks.map(task => (
+                  <SortableTaskItem
+                    key={task.id}
+                    task={task}
+                    onToggleTask={onToggleTask}
+                  />
+                ))}
+              </SortableContext>
+            </DndContext>
           )}
           
           {/* Add task to project */}

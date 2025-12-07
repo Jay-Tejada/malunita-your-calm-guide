@@ -40,7 +40,7 @@ const Work = () => {
     t.category === 'work' && t.completed
   ) || [];
 
-  // Group tasks by project
+  // Group tasks by project, sorted by display_order
   const tasksByProject = useMemo(() => {
     const grouped: Record<string, Task[]> = { uncategorized: [] };
     
@@ -48,7 +48,12 @@ const Work = () => {
       grouped[p.id] = [];
     });
     
-    workTasks.forEach(task => {
+    // Sort by display_order first
+    const sortedTasks = [...workTasks].sort((a, b) => 
+      (a.display_order ?? 0) - (b.display_order ?? 0)
+    );
+    
+    sortedTasks.forEach(task => {
       if (task.project_id && grouped[task.project_id]) {
         grouped[task.project_id].push(task);
       } else {
@@ -74,6 +79,15 @@ const Work = () => {
 
   const handleToggleTask = (taskId: string) => {
     updateTask({ id: taskId, updates: { completed: true } });
+  };
+
+  const handleReorderTasks = async (taskIds: string[]) => {
+    // Update display_order for each task
+    await Promise.all(
+      taskIds.map((id, index) =>
+        updateTask({ id, updates: { display_order: index } })
+      )
+    );
   };
 
   return (
@@ -114,6 +128,7 @@ const Work = () => {
               onAddTask={(text, projectId) => handleCapture(text, projectId)}
               onEditProject={setEditingProject}
               onDeleteProject={deleteProject}
+              onReorderTasks={handleReorderTasks}
             />
           ))}
 
