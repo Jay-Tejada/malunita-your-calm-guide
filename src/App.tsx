@@ -159,8 +159,27 @@ const App = () => {
     // Initialize performance monitoring
     initPerformanceMonitoring();
     
+    // PWA Debug - check installability
+    console.log('[PWA Debug] Checking installability...');
+    
+    fetch('/manifest.webmanifest')
+      .then(r => r.ok ? r.json() : Promise.reject('No manifest'))
+      .then(m => {
+        console.log('[PWA] Manifest found:', m);
+        m.icons?.forEach((icon: any) => {
+          fetch(icon.src)
+            .then(r => console.log('[PWA] Icon', icon.src, r.ok ? '✅' : '❌'))
+            .catch(() => console.log('[PWA] Icon', icon.src, '❌ MISSING'));
+        });
+      })
+      .catch(e => console.log('[PWA] Manifest error:', e));
+
+    navigator.serviceWorker?.getRegistrations()
+      .then(regs => console.log('[PWA] Service Workers:', regs.length || 'None'));
+    
     // Check if running as installed PWA
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+    console.log('[PWA] Standalone mode:', isStandalone);
     if (isStandalone) {
       document.body.classList.add('pwa-standalone');
     }
