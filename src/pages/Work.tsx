@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, Plus } from 'lucide-react';
 import { useTasks, Task } from '@/hooks/useTasks';
 import { useProjects, Project } from '@/hooks/useProjects';
-import { supabase } from '@/integrations/supabase/client';
+
 import { MobileTaskCapture } from '@/components/shared/MobileTaskCapture';
 import { DesktopTaskCapture } from '@/components/shared/DesktopTaskCapture';
 import { ProjectSection } from '@/components/projects/ProjectSection';
@@ -11,7 +11,7 @@ import { NewProjectModal } from '@/components/projects/NewProjectModal';
 
 const Work = () => {
   const navigate = useNavigate();
-  const { tasks, updateTask } = useTasks();
+  const { tasks, updateTask, createTasks } = useTasks();
   const { projects, createProject, updateProject, deleteProject, toggleCollapsed } = useProjects('work');
   const [showCompleted, setShowCompleted] = useState(false);
   const [showNewProject, setShowNewProject] = useState(false);
@@ -60,15 +60,11 @@ const Work = () => {
   }, [workTasks, projects]);
 
   const handleCapture = async (text: string, projectId?: string) => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-    
-    await supabase.from('tasks').insert({
-      user_id: user.id,
+    await createTasks([{
       title: text,
       category: 'work',
       project_id: projectId || null
-    });
+    }]);
   };
 
   const handleCreateProject = async (project: { name: string; space: string; icon?: string; color?: string }) => {
