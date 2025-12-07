@@ -3,20 +3,45 @@ import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, Plus } from 'lucide-react';
 import { useTasks, Task } from '@/hooks/useTasks';
 import { useProjects, Project } from '@/hooks/useProjects';
-
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
 import { MobileTaskCapture } from '@/components/shared/MobileTaskCapture';
 import { DesktopTaskCapture } from '@/components/shared/DesktopTaskCapture';
-import { ProjectSection } from '@/components/projects/ProjectSection';
+import { SortableProjectSection } from '@/components/projects/SortableProjectSection';
 import { NewProjectModal } from '@/components/projects/NewProjectModal';
 
 const Work = () => {
   const navigate = useNavigate();
   const { tasks, updateTask, createTasks } = useTasks();
-  const { projects, createProject, updateProject, deleteProject, toggleCollapsed } = useProjects('work');
+  const { projects, createProject, updateProject, deleteProject, toggleCollapsed, reorderProjects } = useProjects('work');
   const [showCompleted, setShowCompleted] = useState(false);
   const [showNewProject, setShowNewProject] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   // 'q' key focuses the input for quick capture - use capture phase to intercept before global handler
   useEffect(() => {
@@ -90,6 +115,16 @@ const Work = () => {
     );
   };
 
+  const handleProjectDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      const oldIndex = projects.findIndex((p) => p.id === active.id);
+      const newIndex = projects.findIndex((p) => p.id === over.id);
+      const reordered = arrayMove(projects, oldIndex, newIndex);
+      reorderProjects(reordered.map(p => p.id));
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -118,19 +153,30 @@ const Work = () => {
 
         {/* Projects */}
         <div className="mt-4">
-          {projects.map(project => (
-            <ProjectSection
-              key={project.id}
-              project={project}
-              tasks={tasksByProject[project.id] || []}
-              onToggleCollapse={() => toggleCollapsed(project.id)}
-              onToggleTask={handleToggleTask}
-              onAddTask={(text, projectId) => handleCapture(text, projectId)}
-              onEditProject={setEditingProject}
-              onDeleteProject={deleteProject}
-              onReorderTasks={handleReorderTasks}
-            />
-          ))}
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleProjectDragEnd}
+          >
+            <SortableContext
+              items={projects.map(p => p.id)}
+              strategy={verticalListSortingStrategy}
+            >
+              {projects.map(project => (
+                <SortableProjectSection
+                  key={project.id}
+                  project={project}
+                  tasks={tasksByProject[project.id] || []}
+                  onToggleCollapse={() => toggleCollapsed(project.id)}
+                  onToggleTask={handleToggleTask}
+                  onAddTask={(text, projectId) => handleCapture(text, projectId)}
+                  onEditProject={setEditingProject}
+                  onDeleteProject={deleteProject}
+                  onReorderTasks={handleReorderTasks}
+                />
+              ))}
+            </SortableContext>
+          </DndContext>
 
           {/* Uncategorized tasks */}
           {tasksByProject.uncategorized.length > 0 && (

@@ -122,6 +122,21 @@ export const useProjects = (space?: string) => {
     await updateProject(id, { is_collapsed: !project.is_collapsed });
   };
 
+  const reorderProjects = async (projectIds: string[]) => {
+    // Optimistically update local state
+    const reordered = projectIds
+      .map(id => projects.find(p => p.id === id))
+      .filter((p): p is Project => p !== undefined);
+    setProjects(reordered);
+
+    // Update sort_order in database
+    await Promise.all(
+      projectIds.map((id, index) =>
+        supabase.from('projects').update({ sort_order: index }).eq('id', id)
+      )
+    );
+  };
+
   return {
     projects,
     loading,
@@ -129,6 +144,7 @@ export const useProjects = (space?: string) => {
     updateProject,
     deleteProject,
     toggleCollapsed,
+    reorderProjects,
     refetch: fetchProjects
   };
 };
