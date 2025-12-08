@@ -20,7 +20,7 @@ export const SortableTaskItem = ({ task, onToggleTask }: SortableTaskItemProps) 
 
   const style = {
     transform: CSS.Transform.toString(transform),
-    transition,
+    transition: transition || 'transform 200ms cubic-bezier(0.25, 1, 0.5, 1)',
   };
 
   return (
