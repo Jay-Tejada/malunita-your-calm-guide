@@ -44,8 +44,16 @@ export const SortableProjectSection = ({
     <div
       ref={setNodeRef}
       style={style}
-      className={`relative group/project ${isDragging ? 'opacity-50 bg-foreground/5 z-10' : ''}`}
+      className={`relative group/project ${
+        isDragging 
+          ? 'opacity-50 bg-primary/5 rounded-md shadow-md z-20' 
+          : ''
+      }`}
     >
+      {/* Drop indicator line */}
+      {!isDragging && (
+        <div className="absolute -top-px left-0 right-0 h-0.5 bg-primary opacity-0 group-hover/project:opacity-0 transition-opacity pointer-events-none data-[over=true]:opacity-100" />
+      )}
       {/* Drag handle for project */}
       <button
         {...attributes}
