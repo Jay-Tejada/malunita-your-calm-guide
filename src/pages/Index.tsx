@@ -101,40 +101,11 @@ const Index = () => {
   const [showDesktopCapture, setShowDesktopCapture] = useState(false);
   const captureClosedAtRef = useRef<number>(0);
   
-  // Global keyboard shortcuts for desktop
+  // Global keyboard shortcuts for desktop - only handle Escape
   useEffect(() => {
     if (isMobile) return;
     
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Don't trigger if already typing somewhere
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
-      
-      if (e.key === 'q') {
-        e.preventDefault();
-        
-        // Add cooldown to prevent immediate reopening after close
-        const timeSinceClose = Date.now() - captureClosedAtRef.current;
-        if (timeSinceClose < 300) {
-          return; // Too soon after closing, ignore
-        }
-        
-        setShowDesktopCapture(true);
-        
-        // Aggressive focus - multiple attempts to ensure it works
-        const focusInput = () => {
-          const input = document.querySelector<HTMLTextAreaElement>('[data-task-input]');
-          if (input && document.activeElement !== input) {
-            input.focus();
-          }
-        };
-        
-        // Try immediately and several times after
-        setTimeout(focusInput, 0);
-        setTimeout(focusInput, 50);
-        setTimeout(focusInput, 100);
-        setTimeout(focusInput, 150);
-      }
-      
       if (e.key === 'Escape') {
         setShowDesktopCapture(false);
         captureClosedAtRef.current = Date.now();
@@ -147,11 +118,27 @@ const Index = () => {
 
   // Initialize keyboard shortcuts
   useKeyboardShortcuts({
-    onQuickCapture: () => setQuickCaptureOpen(true),
+    onQuickCapture: () => {
+      // Use correct modal for desktop vs mobile
+      if (isMobile) {
+        setQuickCaptureOpen(true);
+      } else {
+        // Add cooldown to prevent immediate reopening after close
+        const timeSinceClose = Date.now() - captureClosedAtRef.current;
+        if (timeSinceClose < 300) return;
+        setShowDesktopCapture(true);
+        // Focus input after modal opens
+        setTimeout(() => {
+          const input = document.querySelector<HTMLTextAreaElement>('[data-task-input]');
+          input?.focus();
+        }, 50);
+      }
+    },
     onFocusInput: () => inputRef.current?.focus(),
     onDailyReview: () => navigate('/daily-session'),
     onCloseModals: () => {
       setQuickCaptureOpen(false);
+      setShowDesktopCapture(false);
       setShowThinkWithMe(false);
       setShowCaptureHistory(false);
       setShowSearch(false);
