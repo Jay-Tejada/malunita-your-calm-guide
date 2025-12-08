@@ -11,6 +11,8 @@ import {
   useSensor,
   useSensors,
   DragEndEvent,
+  DragOverlay,
+  DragStartEvent,
 } from '@dnd-kit/core';
 import {
   arrayMove,
@@ -30,6 +32,7 @@ const Work = () => {
   const [showCompleted, setShowCompleted] = useState(false);
   const [showNewProject, setShowNewProject] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
+  const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const sensors = useSensors(
@@ -115,8 +118,13 @@ const Work = () => {
     );
   };
 
+  const handleProjectDragStart = (event: DragStartEvent) => {
+    setActiveProjectId(event.active.id as string);
+  };
+
   const handleProjectDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
+    setActiveProjectId(null);
     if (over && active.id !== over.id) {
       const oldIndex = projects.findIndex((p) => p.id === active.id);
       const newIndex = projects.findIndex((p) => p.id === over.id);
@@ -124,6 +132,8 @@ const Work = () => {
       reorderProjects(reordered.map(p => p.id));
     }
   };
+
+  const activeProject = activeProjectId ? projects.find(p => p.id === activeProjectId) : null;
 
   return (
     <div className="min-h-screen bg-background">
@@ -156,6 +166,7 @@ const Work = () => {
           <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}
+            onDragStart={handleProjectDragStart}
             onDragEnd={handleProjectDragEnd}
           >
             <SortableContext
@@ -176,6 +187,16 @@ const Work = () => {
                 />
               ))}
             </SortableContext>
+            <DragOverlay>
+              {activeProject && (
+                <div className="bg-background border border-primary/30 rounded-md shadow-lg px-4 py-3 opacity-90">
+                  <span className="font-mono text-sm text-foreground/70">
+                    {activeProject.icon && <span className="mr-2">{activeProject.icon}</span>}
+                    {activeProject.name}
+                  </span>
+                </div>
+              )}
+            </DragOverlay>
           </DndContext>
 
           {/* Uncategorized tasks */}

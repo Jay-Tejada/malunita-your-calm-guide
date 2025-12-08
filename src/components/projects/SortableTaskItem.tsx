@@ -27,8 +27,16 @@ export const SortableTaskItem = ({ task, onToggleTask }: SortableTaskItemProps) 
     <div
       ref={setNodeRef}
       style={style}
-      className={`flex items-start gap-2 py-2 group ${isDragging ? 'opacity-50 bg-foreground/5 rounded' : ''}`}
+      className={`flex items-start gap-2 py-2 group relative ${
+        isDragging 
+          ? 'opacity-50 bg-primary/5 rounded-md shadow-sm z-10' 
+          : 'hover:bg-foreground/[0.02]'
+      }`}
     >
+      {/* Drop indicator line */}
+      {!isDragging && (
+        <div className="absolute -top-px left-0 right-0 h-0.5 bg-primary/50 opacity-0 transition-opacity pointer-events-none" />
+      )}
       <button
         {...attributes}
         {...listeners}

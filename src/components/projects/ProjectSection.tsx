@@ -10,6 +10,8 @@ import {
   useSensor,
   useSensors,
   DragEndEvent,
+  DragOverlay,
+  DragStartEvent,
 } from '@dnd-kit/core';
 import {
   arrayMove,
@@ -47,6 +49,7 @@ export const ProjectSection = ({
   onReorderTasks
 }: ProjectSectionProps) => {
   const [inputValue, setInputValue] = useState('');
+  const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
   const incompleteTasks = tasks.filter(t => !t.completed);
   const isCollapsed = project.is_collapsed;
 
@@ -68,8 +71,13 @@ export const ProjectSection = ({
     }
   };
 
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveTaskId(event.active.id as string);
+  };
+
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
+    setActiveTaskId(null);
 
     if (over && active.id !== over.id) {
       const oldIndex = incompleteTasks.findIndex((t) => t.id === active.id);
@@ -78,6 +86,8 @@ export const ProjectSection = ({
       onReorderTasks?.(reordered.map(t => t.id));
     }
   };
+
+  const activeTask = activeTaskId ? incompleteTasks.find(t => t.id === activeTaskId) : null;
 
   return (
     <div className="border-b border-foreground/5">
@@ -133,6 +143,7 @@ export const ProjectSection = ({
             <DndContext
               sensors={sensors}
               collisionDetection={closestCenter}
+              onDragStart={handleDragStart}
               onDragEnd={handleDragEnd}
             >
               <SortableContext
@@ -147,6 +158,13 @@ export const ProjectSection = ({
                   />
                 ))}
               </SortableContext>
+              <DragOverlay>
+                {activeTask && (
+                  <div className="bg-background border border-primary/30 rounded-md shadow-lg px-3 py-2 opacity-90">
+                    <span className="font-mono text-sm text-foreground/70">{activeTask.title}</span>
+                  </div>
+                )}
+              </DragOverlay>
             </DndContext>
           )}
           
