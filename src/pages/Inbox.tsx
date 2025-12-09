@@ -2,6 +2,9 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, Star, Briefcase, Home, Moon, Trash2, Pencil } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { TaskRow } from '@/ui/tasks/TaskRow';
+import { CaptureInput } from '@/ui/CaptureInput';
+import { colors } from '@/ui/tokens';
 
 const Inbox = () => {
   const navigate = useNavigate();
@@ -32,8 +35,9 @@ const Inbox = () => {
     fetchTasks();
   }, []);
 
-  const addTask = async () => {
-    if (!inputValue.trim()) return;
+  const addTask = async (title?: string) => {
+    const taskTitle = title || inputValue.trim();
+    if (!taskTitle) return;
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
@@ -42,7 +46,7 @@ const Inbox = () => {
       .from('tasks')
       .insert({
         user_id: user.id,
-        title: inputValue.trim(),
+        title: taskTitle,
         category: 'inbox',
       })
       .select()
@@ -126,13 +130,10 @@ const Inbox = () => {
       </header>
 
       {/* Quick capture */}
-      <div className="px-4 py-3 border-b border-border">
-        <input
-          value={inputValue}
-          onChange={(e) => setInputValue(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && addTask()}
+      <div className="px-4 py-3" style={{ borderBottom: `1px solid ${colors.border.subtle}` }}>
+        <CaptureInput
           placeholder="Capture a thought..."
-          className="w-full bg-transparent font-mono text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
+          onSubmit={(value) => addTask(value)}
         />
       </div>
 
