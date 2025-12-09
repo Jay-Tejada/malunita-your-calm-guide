@@ -11,8 +11,9 @@ import { useFlowSessions } from '@/hooks/useFlowSessions';
 import { generateFlowSessions } from '@/utils/taskCategorizer';
 import { useHabits } from '@/hooks/useHabits';
 import { HabitQuickToggle } from '@/components/habits/HabitQuickToggle';
-import VirtualizedTaskList from '@/components/VirtualizedTaskList';
 import { TodaySection } from '@/components/today/TodaySection';
+import { TaskRow } from '@/ui/tasks/TaskRow';
+import { TaskGroup } from '@/ui/tasks/TaskGroup';
 
 const Today = () => {
   const navigate = useNavigate();
@@ -167,16 +168,17 @@ const Today = () => {
         )}
 
         {/* TODAY'S FOCUS SECTION */}
-        <TodaySection label="Focus" icon="⭐" variant="focus">
-          {focusTask ? (
-            <div className={`focus-task flex items-start gap-3 ${completingTasks.has(focusTask.id) ? 'task-completing' : ''}`}>
-              <button
-                onClick={() => handleCompleteTask(focusTask.id)}
-                className="w-6 h-6 rounded-full border-2 border-accent hover:border-foreground flex-shrink-0 mt-0.5 transition-colors"
-              />
-              <span className="font-mono text-base text-foreground font-medium">{focusTask.title}</span>
-            </div>
-          ) : (
+        {focusTask ? (
+          <TaskGroup title="Focus" icon={<span>⭐</span>}>
+            <TaskRow
+              title={focusTask.title}
+              isCompleted={focusTask.completed || false}
+              onToggleComplete={() => handleCompleteTask(focusTask.id)}
+              onPress={() => console.log('Task pressed:', focusTask.id)}
+            />
+          </TaskGroup>
+        ) : (
+          <TodaySection label="Focus" icon="⭐" variant="focus">
             <div className="text-center py-4">
               <p className="text-base font-light text-muted-foreground mb-4">
                 What's the ONE thing that would make today a success?
@@ -190,51 +192,37 @@ const Today = () => {
                 className="w-full max-w-md mx-auto bg-transparent border-b-2 border-border py-3 font-mono text-sm text-center text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-accent transition-colors"
               />
             </div>
-          )}
-        </TodaySection>
+          </TodaySection>
+        )}
 
         {/* TODAY'S TASKS SECTION */}
         {regularTasks.length > 0 && (
-          <TodaySection label="Today" icon="📋">
-            <VirtualizedTaskList
-              tasks={regularTasks}
-              estimatedItemHeight={52}
-              renderTask={(task: Task) => (
-                <div key={task.id} className={`flex items-start gap-3 py-3 border-b border-border last:border-b-0 ${completingTasks.has(task.id) ? 'task-completing' : ''}`}>
-                  <button
-                    onClick={() => handleCompleteTask(task.id)}
-                    className="w-5 h-5 rounded-full border border-muted-foreground hover:border-foreground flex-shrink-0 mt-0.5 transition-colors"
-                  />
-                  <span className="font-mono text-sm text-foreground">{task.title}</span>
-                </div>
-              )}
-            />
-          </TodaySection>
+          <TaskGroup title="Today" icon={<span>📋</span>} count={regularTasks.length}>
+            {regularTasks.map((task: Task) => (
+              <TaskRow
+                key={task.id}
+                title={task.title}
+                isCompleted={task.completed || false}
+                onToggleComplete={() => handleCompleteTask(task.id)}
+                onPress={() => console.log('Task pressed:', task.id)}
+              />
+            ))}
+          </TaskGroup>
         )}
 
         {/* FROM YOUR INBOX SECTION */}
         {inboxTasks.length > 0 && (
-          <TodaySection label="Inbox" icon="📥" variant="card">
-            <VirtualizedTaskList
-              tasks={inboxTasks}
-              estimatedItemHeight={44}
-              renderTask={(task: Task) => (
-                <div key={task.id} className="flex items-center gap-3 py-3 px-3 border-b border-border last:border-b-0">
-                  <button 
-                    onClick={() => handleMoveToToday(task.id)} 
-                    className="text-muted-foreground hover:text-foreground flex-shrink-0 transition-colors"
-                  >
-                    <ArrowRight className="w-4 h-4" />
-                  </button>
-                  <span className="flex-1 font-mono text-sm text-muted-foreground">{task.title}</span>
-                  <button 
-                    onClick={() => handleCompleteTask(task.id)} 
-                    className="w-5 h-5 rounded-full border border-muted-foreground hover:border-foreground flex-shrink-0 transition-colors" 
-                  />
-                </div>
-              )}
-            />
-          </TodaySection>
+          <TaskGroup title="Inbox" icon={<span>📥</span>} count={inboxTasks.length}>
+            {inboxTasks.map((task: Task) => (
+              <TaskRow
+                key={task.id}
+                title={task.title}
+                isCompleted={task.completed || false}
+                onToggleComplete={() => handleCompleteTask(task.id)}
+                onPress={() => handleMoveToToday(task.id)}
+              />
+            ))}
+          </TaskGroup>
         )}
 
         {/* Desktop quick add - moved to bottom */}
@@ -259,17 +247,16 @@ const Today = () => {
 
         {/* Completed tasks */}
         {showCompleted && completedTasks.length > 0 && (
-          <VirtualizedTaskList
-            tasks={completedTasks}
-            estimatedItemHeight={44}
-            className="mb-6"
-            renderTask={(task: Task) => (
-              <div key={task.id} className="flex items-start gap-3 py-2 opacity-50 border-b border-border">
-                <div className="w-5 h-5 rounded-full border border-muted-foreground flex-shrink-0 mt-0.5 bg-muted" />
-                <span className="font-mono text-sm text-muted-foreground line-through">{task.title}</span>
-              </div>
-            )}
-          />
+          <TaskGroup title="Completed" count={completedTasks.length}>
+            {completedTasks.map((task: Task) => (
+              <TaskRow
+                key={task.id}
+                title={task.title}
+                isCompleted={true}
+                onToggleComplete={() => {}}
+              />
+            ))}
+          </TaskGroup>
         )}
       </div>
 
