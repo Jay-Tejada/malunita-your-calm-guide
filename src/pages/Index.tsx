@@ -27,6 +27,8 @@ import { useProfile } from "@/hooks/useProfile";
 import { StartMyDayModal } from "@/components/rituals/StartMyDayModal";
 import { TinyTaskFiestaCard } from "@/components/home/TinyTaskFiestaCard";
 import TinyTaskParty from "@/components/TinyTaskParty";
+import { CaptureSheet } from "@/components/capture/CaptureSheet";
+import { useCaptureFlow } from "@/hooks/useCaptureFlow";
 
 const Index = () => {
   // Initialize daily reset monitoring
@@ -60,7 +62,10 @@ const Index = () => {
   const isMobile = useIsMobile();
   const { isOnline } = useOfflineStatus();
   
-  // Direct orb recording state
+  // Capture flow hook
+  const captureFlow = useCaptureFlow();
+  
+  // Direct orb recording state (kept for legacy/desktop direct recording)
   const [isOrbRecording, setIsOrbRecording] = useState(false);
   const [isOrbProcessing, setIsOrbProcessing] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -392,19 +397,19 @@ const Index = () => {
 
           {/* CENTER - Everything vertically & horizontally centered */}
           <div className="flex-1 flex flex-col items-center justify-center px-4">
-            {/* Orb */}
+            {/* Orb - opens capture sheet on mobile */}
             <div className="flex flex-col items-center">
               <Orb
                 size={140}
-                onClick={handleVoiceCapture}
-                isRecording={isOrbRecording}
-                isProcessing={isOrbProcessing}
+                onClick={captureFlow.openCapture}
+                isRecording={captureFlow.isRecording}
+                isProcessing={captureFlow.isProcessing}
               />
               
               {/* Status text below orb */}
-              {(isOrbRecording || isOrbProcessing) ? (
+              {(captureFlow.isRecording || captureFlow.isProcessing) ? (
                 <p className="mt-4 text-xs text-muted-foreground/40 animate-fade-in">
-                  {isOrbRecording ? 'listening...' : 'transcribing...'}
+                  {captureFlow.isRecording ? 'listening...' : 'transcribing...'}
                 </p>
               ) : (
                 <p className="mt-6 text-sm text-muted-foreground/50 text-center font-light">
@@ -573,6 +578,16 @@ const Index = () => {
           onClose={() => setShowTinyTaskParty(false)}
         />
       )}
+      
+      {/* Capture Sheet - Mobile voice/text capture */}
+      <CaptureSheet
+        isOpen={captureFlow.isOpen}
+        onClose={captureFlow.closeCapture}
+        onSubmit={captureFlow.submitText}
+        onVoiceStart={captureFlow.startRecording}
+        onVoiceStop={captureFlow.stopRecording}
+        isRecording={captureFlow.isRecording}
+      />
       </motion.div>
     </AnimatePresence>
   );
