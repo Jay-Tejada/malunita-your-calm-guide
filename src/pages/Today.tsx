@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, ArrowRight } from 'lucide-react';
 import { useTasks, Task } from '@/hooks/useTasks';
@@ -15,6 +15,7 @@ import { TodaySection } from '@/components/today/TodaySection';
 import { TaskRow } from '@/ui/tasks/TaskRow';
 import { TaskGroup } from '@/ui/tasks/TaskGroup';
 import { AppLayout } from '@/ui/AppLayout';
+import { TinyTaskPrompt } from '@/components/tasks/TinyTaskPrompt';
 
 const Today = () => {
   const navigate = useNavigate();
@@ -25,6 +26,14 @@ const Today = () => {
   const [focusInput, setFocusInput] = useState('');
   const [showCompleted, setShowCompleted] = useState(false);
   const [completingTasks, setCompletingTasks] = useState<Set<string>>(new Set());
+  const [userId, setUserId] = useState<string | null>(null);
+  
+  // Fetch user ID for TinyTaskPrompt
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setUserId(user?.id || null);
+    });
+  }, []);
 
   // Show habits in the morning (before noon)
   const isMorning = new Date().getHours() < 12;
@@ -120,7 +129,17 @@ const Today = () => {
         {/* Date */}
         <p className="text-xs text-muted-foreground text-center mb-6">{today}</p>
 
-        {/* Daily Habits (morning only) */}
+        {/* Tiny Task Fiesta Prompt */}
+        {userId && (
+          <TinyTaskPrompt
+            userId={userId}
+            onCreateFiesta={(fiestaTasks) => {
+              console.log('Creating fiesta with tasks:', fiestaTasks);
+              // Could navigate to a focus session or trigger TinyTaskParty
+            }}
+          />
+        )}
+
         {isMorning && habits.length > 0 && (
           <TodaySection label="Daily Habits" icon="✨">
             <div className="space-y-1.5">

@@ -4,13 +4,14 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { OrbButton } from "@/components/orb/OrbButton";
 import { useVoiceCapture } from "@/hooks/useVoiceCapture";
+import { categorizeTask } from "@/hooks/useTaskCategorization";
 import { colors, typography, layout } from "@/ui/tokens";
 import type { OrbState } from "@/ui/tokens";
 
 interface CaptureSheetProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (text: string) => Promise<void>;
+  onSubmit: (text: string) => Promise<{ id: string } | void>;
 }
 
 export function CaptureSheet({ isOpen, onClose, onSubmit }: CaptureSheetProps) {
@@ -43,7 +44,18 @@ export function CaptureSheet({ isOpen, onClose, onSubmit }: CaptureSheetProps) {
     if (!text.trim()) return;
     setOrbState("loading");
     try {
-      await onSubmit(text.trim());
+      // Save task and get the new task ID
+      const newTask = await onSubmit(text.trim());
+      
+      // Auto-categorize in background (don't block UI)
+      if (newTask && 'id' in newTask) {
+        categorizeTask(newTask.id, text.trim()).then((result) => {
+          if (result.isTinyTask) {
+            console.log("Tiny task detected:", result.estimatedMinutes, "min");
+          }
+        });
+      }
+
       setOrbState("success");
       setTimeout(() => {
         setText("");
