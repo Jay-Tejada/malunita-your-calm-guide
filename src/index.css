@@ -356,6 +356,12 @@ All colors MUST be HSL.
     50% { opacity: 1; transform: scale(1.03); }
   }
   
+  /* Pulsing placeholder animation for empty inputs */
+  @keyframes placeholder-pulse {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 0.25; }
+  }
+  
   @keyframes paper-texture-shift {
     0%, 100% { 
       background-position: 50% 50%;

@@ -222,9 +222,9 @@ export const QuickCapture = ({ isOpen, onClose, variant, onCapture }: QuickCaptu
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder={captureType === 'thought' ? "What's on your mind..." : "Capture a task..."}
+            placeholder={captureType === 'thought' ? "What's on your mind...|" : "Capture a task...|"}
             rows={1}
-            className="w-full bg-transparent border-b border-foreground/10 py-2 font-mono text-sm text-foreground/80 placeholder:text-muted-foreground/40 focus:outline-none focus:border-primary/50 focus:shadow-[0_2px_8px_-2px_hsl(var(--primary)/0.3)] transition-all duration-300 resize-none overflow-hidden"
+            className="w-full bg-transparent border-b border-foreground/10 py-2 font-mono text-sm text-foreground/80 placeholder:text-muted-foreground/40 placeholder:animate-[placeholder-pulse_1.2s_ease-in-out_infinite] focus:outline-none focus:border-primary/50 focus:shadow-[0_2px_8px_-2px_hsl(var(--primary)/0.3)] transition-all duration-300 resize-none overflow-hidden"
             style={{ minHeight: '24px' }}
           />
           
@@ -293,11 +293,11 @@ export const QuickCapture = ({ isOpen, onClose, variant, onCapture }: QuickCaptu
             onKeyDown={handleKeyDown}
             placeholder={
               captureType === 'thought' 
-                ? "What's on your mind... (Enter to save, Esc to close)"
-                : "Capture a task... (Enter to save, Esc to close)"
+                ? "What's on your mind...|"
+                : "Capture a task...|"
             }
             rows={1}
-            className="w-full bg-transparent font-mono text-base text-foreground/80 placeholder:text-muted-foreground/50 focus:outline-none border-b-2 border-transparent focus:border-primary/40 focus:shadow-[0_4px_12px_-4px_hsl(var(--primary)/0.25)] transition-all duration-300 resize-none overflow-hidden"
+            className="w-full bg-transparent font-mono text-base text-foreground/80 placeholder:text-muted-foreground/50 placeholder:animate-[placeholder-pulse_1.2s_ease-in-out_infinite] focus:outline-none border-b-2 border-transparent focus:border-primary/40 focus:shadow-[0_4px_12px_-4px_hsl(var(--primary)/0.25)] transition-all duration-300 resize-none overflow-hidden"
             style={{ minHeight: '24px' }}
           />
           
