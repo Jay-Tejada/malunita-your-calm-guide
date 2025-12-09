@@ -3,7 +3,8 @@ import { SimpleHeader } from '@/components/SimpleHeader';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Wrench, Database, Activity, FileText, LogOut, Download, Check } from 'lucide-react';
+import { ArrowLeft, Wrench, Database, Activity, FileText, LogOut, Download, Check, RefreshCw } from 'lucide-react';
+import { useAppUpdate } from '@/hooks/useAppUpdate';
 import { hapticLight } from '@/utils/haptics';
 import { getPerformanceMetrics, clearPerformanceMetrics } from '@/lib/performance';
 import { useToast } from '@/hooks/use-toast';
@@ -25,6 +26,7 @@ import {
 export default function Settings() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { updateAvailable, applyUpdate } = useAppUpdate();
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [isInstalled, setIsInstalled] = useState(false);
 
@@ -166,6 +168,21 @@ export default function Settings() {
                 <p className="font-medium">Version</p>
                 <p className="text-sm text-muted-foreground">1.0.0</p>
               </div>
+              <Button
+                variant={updateAvailable ? "default" : "outline"}
+                size="sm"
+                onClick={() => {
+                  hapticLight();
+                  applyUpdate();
+                  toast({
+                    title: "Updating...",
+                    description: "The app will refresh with the latest version",
+                  });
+                }}
+              >
+                <RefreshCw className="w-4 h-4 mr-2" />
+                {updateAvailable ? "Update Available" : "Check Update"}
+              </Button>
             </div>
           </CardContent>
         </Card>
