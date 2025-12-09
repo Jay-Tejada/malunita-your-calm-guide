@@ -59,29 +59,53 @@ export const QuickCapture = ({ isOpen, onClose, variant, onCapture }: QuickCaptu
     }
   }, [isOpen]);
 
-  // Aggressive autofocus - completely separate from input state
+  // Aggressive autofocus - multiple strategies to ensure focus
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen) {
+      focusAchievedRef.current = false;
+      return;
+    }
 
     const focusTextarea = () => {
       const textarea = textareaRef.current;
       if (!textarea) return false;
       
-      textarea.focus();
+      // Force focus with multiple methods
+      textarea.focus({ preventScroll: true });
       textarea.setSelectionRange(0, 0);
-      return document.activeElement === textarea;
+      
+      // Double-check focus was achieved
+      if (document.activeElement === textarea) {
+        focusAchievedRef.current = true;
+        return true;
+      }
+      return false;
     };
 
-    // Immediate focus attempt
-    const immediate = requestAnimationFrame(() => {
-      if (focusTextarea()) {
-        focusAchievedRef.current = true;
-      }
+    // Strategy 1: Immediate microtask
+    queueMicrotask(focusTextarea);
+    
+    // Strategy 2: After paint
+    requestAnimationFrame(() => {
+      if (!focusAchievedRef.current) focusTextarea();
     });
     
-    // Keep trying until focus is achieved
+    // Strategy 3: After a brief delay (for modal animation)
+    const t1 = setTimeout(() => {
+      if (!focusAchievedRef.current) focusTextarea();
+    }, 0);
+    
+    const t2 = setTimeout(() => {
+      if (!focusAchievedRef.current) focusTextarea();
+    }, 16);
+    
+    const t3 = setTimeout(() => {
+      if (!focusAchievedRef.current) focusTextarea();
+    }, 50);
+    
+    // Strategy 4: Polling as fallback
     let attempts = 0;
-    const maxAttempts = 30; // 1.5 seconds
+    const maxAttempts = 20;
     
     const focusInterval = setInterval(() => {
       attempts++;
@@ -91,14 +115,13 @@ export const QuickCapture = ({ isOpen, onClose, variant, onCapture }: QuickCaptu
         return;
       }
       
-      if (focusTextarea()) {
-        focusAchievedRef.current = true;
-        clearInterval(focusInterval);
-      }
-    }, 50);
+      focusTextarea();
+    }, 100);
 
     return () => {
-      cancelAnimationFrame(immediate);
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
       clearInterval(focusInterval);
     };
   }, [isOpen]);
