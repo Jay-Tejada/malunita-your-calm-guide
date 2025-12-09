@@ -50,7 +50,6 @@ const Index = () => {
   const { sessions } = useCaptureSessions();
   const [showCaptureHistory, setShowCaptureHistory] = useState(false);
   const [showThinkWithMe, setShowThinkWithMe] = useState(false);
-  const [quickCaptureOpen, setQuickCaptureOpen] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
@@ -125,23 +124,19 @@ const Index = () => {
     onQuickCapture: () => {
       // Use correct modal for desktop vs mobile
       if (isMobile) {
-        setQuickCaptureOpen(true);
+        setShowQuickCapture(true);
       } else {
         // Add cooldown to prevent immediate reopening after close
         const timeSinceClose = Date.now() - captureClosedAtRef.current;
         if (timeSinceClose < 300) return;
         setShowDesktopCapture(true);
-        // Focus input after modal opens
-        setTimeout(() => {
-          const input = document.querySelector<HTMLTextAreaElement>('[data-task-input]');
-          input?.focus();
-        }, 50);
+        // Let QuickCapture handle its own focus - don't interfere
       }
     },
     onFocusInput: () => inputRef.current?.focus(),
     onDailyReview: () => navigate('/daily-session'),
     onCloseModals: () => {
-      setQuickCaptureOpen(false);
+      setShowQuickCapture(false);
       setShowDesktopCapture(false);
       setShowThinkWithMe(false);
       setShowCaptureHistory(false);
