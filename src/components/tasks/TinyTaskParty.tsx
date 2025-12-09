@@ -1,10 +1,11 @@
 // src/components/tasks/TinyTaskParty.tsx
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { colors, typography } from "@/ui/tokens";
 import { TaskRow } from "@/ui/tasks/TaskRow";
 import { OrbButton } from "@/components/orb/OrbButton";
+import { haptics } from "@/hooks/useHaptics";
 
 interface Task {
   id: string;
@@ -31,9 +32,16 @@ export function TinyTaskParty({
   const [localTasks, setLocalTasks] = useState(tasks);
   const [celebrating, setCelebrating] = useState(false);
 
+  // Sync localTasks when tasks prop changes
+  useEffect(() => {
+    setLocalTasks(tasks);
+  }, [tasks]);
+
   const completedCount = localTasks.filter((t) => t.completed).length;
 
   const handleToggle = async (taskId: string) => {
+    haptics.success(); // Satisfying click
+    
     // Optimistic update
     setLocalTasks((prev) =>
       prev.map((t) => (t.id === taskId ? { ...t, completed: !t.completed } : t))
@@ -45,6 +53,7 @@ export function TinyTaskParty({
       // Check if all done
       const nowCompleted = localTasks.filter((t) => t.id === taskId || t.completed).length;
       if (nowCompleted === localTasks.length) {
+        haptics.success();
         setCelebrating(true);
       }
     } catch {
@@ -152,6 +161,7 @@ export function TinyTaskParty({
                 style={{ backgroundColor: colors.bg.base }}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
+                onAnimationComplete={() => haptics.success()}
               >
                 <OrbButton state="success" size={120} onPress={() => {}} />
                 <motion.p

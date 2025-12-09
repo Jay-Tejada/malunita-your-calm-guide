@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import { colors, getTimeOfDay, getOrbGradient, type OrbState, type TimeOfDay } from "@/ui/tokens";
+import { haptics } from "@/hooks/useHaptics";
 
 interface OrbButtonProps {
   state?: OrbState;
@@ -29,7 +30,10 @@ export function OrbButton({
 
   return (
     <button
-      onClick={onPress}
+      onClick={() => {
+        haptics.lightTap();
+        onPress?.();
+      }}
       className="relative flex items-center justify-center focus:outline-none"
       aria-label="Capture with Malunita"
     >
