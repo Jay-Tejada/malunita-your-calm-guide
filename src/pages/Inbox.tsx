@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { TaskRow } from '@/ui/tasks/TaskRow';
 import { CaptureInput } from '@/ui/CaptureInput';
 import { colors } from '@/ui/tokens';
+import { AppLayout } from '@/ui/AppLayout';
 
 const Inbox = () => {
   const navigate = useNavigate();
@@ -114,20 +115,11 @@ const Inbox = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="flex items-center justify-center px-4 py-3 border-b border-border relative">
-        <button 
-          onClick={() => navigate('/')} 
-          className="absolute left-4 p-2 -ml-2"
-        >
-          <ChevronLeft className="w-5 h-5 text-muted-foreground hover:text-foreground transition-colors" />
-        </button>
-        <h1 className="font-mono text-sm text-foreground font-medium">Inbox</h1>
-        <span className="absolute right-4 text-xs text-muted-foreground">
-          {tasks.length}
-        </span>
-      </header>
+    <AppLayout 
+      title="Inbox" 
+      showBack 
+      rightAction={<span style={{ color: colors.text.muted }}>{tasks.length}</span>}
+    >
 
       {/* Quick capture */}
       <div className="px-4 py-3" style={{ borderBottom: `1px solid ${colors.border.subtle}` }}>
@@ -242,7 +234,7 @@ const Inbox = () => {
           <p className="text-sm text-muted-foreground">Loading...</p>
         </div>
       )}
-    </div>
+    </AppLayout>
   );
 };
 
