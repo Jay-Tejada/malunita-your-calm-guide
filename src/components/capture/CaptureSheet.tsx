@@ -1,11 +1,10 @@
 // src/components/capture/CaptureSheet.tsx
 
-import { useState } from "react";
-import { BottomSheet } from "@/ui/BottomSheet";
-import { CaptureInput } from "@/ui/CaptureInput";
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { OrbButton } from "@/components/orb/OrbButton";
 import { useVoiceCapture } from "@/hooks/useVoiceCapture";
-import { colors, typography } from "@/ui/tokens";
+import { colors, typography, layout } from "@/ui/tokens";
 import type { OrbState } from "@/ui/tokens";
 
 interface CaptureSheetProps {
@@ -15,32 +14,12 @@ interface CaptureSheetProps {
 }
 
 export function CaptureSheet({ isOpen, onClose, onSubmit }: CaptureSheetProps) {
-  const [isLoading, setIsLoading] = useState(false);
+  const [text, setText] = useState("");
   const [orbState, setOrbState] = useState<OrbState>("resting");
-  const [pendingText, setPendingText] = useState("");
-
-  const handleFinalSubmit = async (text: string) => {
-    setIsLoading(true);
-    setOrbState("loading");
-    try {
-      await onSubmit(text);
-      setOrbState("success");
-      setPendingText("");
-      setTimeout(() => {
-        setOrbState("resting");
-        onClose();
-      }, 600);
-    } catch {
-      setOrbState("error");
-      setTimeout(() => setOrbState("resting"), 400);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const { isRecording, isProcessing, startRecording, stopRecording } = useVoiceCapture({
-    onTranscript: (text) => {
-      setPendingText(text);
+    onTranscript: (t) => {
+      setText(t);
       setOrbState("resting");
     },
     onError: () => {
@@ -49,76 +28,167 @@ export function CaptureSheet({ isOpen, onClose, onSubmit }: CaptureSheetProps) {
     },
   });
 
+  // Sync orb state with recording/processing
+  useEffect(() => {
+    if (isProcessing) setOrbState("loading");
+    else if (isRecording) setOrbState("listening");
+  }, [isRecording, isProcessing]);
+
   const handleVoiceToggle = () => {
-    if (isRecording) {
-      stopRecording();
-      setOrbState("loading");
-    } else {
-      startRecording();
-      setOrbState("listening");
+    if (isRecording) stopRecording();
+    else startRecording();
+  };
+
+  const handleSubmit = async () => {
+    if (!text.trim()) return;
+    setOrbState("loading");
+    try {
+      await onSubmit(text.trim());
+      setOrbState("success");
+      setTimeout(() => {
+        setText("");
+        setOrbState("resting");
+        onClose();
+      }, 500);
+    } catch {
+      setOrbState("error");
+      setTimeout(() => setOrbState("resting"), 400);
     }
   };
 
-  // Auto-update orb state when processing
-  const currentOrbState = isProcessing ? "loading" : orbState;
+  const getStatusText = () => {
+    if (isRecording) return "Listening...";
+    if (isProcessing) return "Processing...";
+    if (text) return "Ready to capture";
+    return "Tap orb to speak";
+  };
 
   return (
-    <BottomSheet isOpen={isOpen} onClose={onClose}>
-      <div className="flex flex-col items-center gap-6 py-4">
-        {/* Voice orb */}
-        <div className="flex flex-col items-center gap-3">
-          <OrbButton state={currentOrbState} size={56} onPress={handleVoiceToggle} />
-          <span
+    <AnimatePresence>
+      {isOpen && (
+        <>
+          {/* Backdrop with blur */}
+          <motion.div
+            className="fixed inset-0 z-40"
+            style={{ backgroundColor: "rgba(5,5,9,0.85)", backdropFilter: "blur(12px)" }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={onClose}
+          />
+
+          {/* Sheet */}
+          <motion.div
+            className="fixed bottom-0 left-0 right-0 z-50"
             style={{
-              fontFamily: typography.fontFamily,
-              fontSize: typography.bodyS.size,
-              color: colors.text.muted,
+              background: `linear-gradient(180deg, ${colors.bg.surface} 0%, ${colors.bg.base} 100%)`,
+              borderTopLeftRadius: 24,
+              borderTopRightRadius: 24,
+              paddingBottom: "env(safe-area-inset-bottom, 24px)",
             }}
+            initial={{ y: "100%" }}
+            animate={{ y: 0 }}
+            exit={{ y: "100%" }}
+            transition={{ type: "spring", damping: 28, stiffness: 320 }}
           >
-            {isRecording ? "Listening..." : isProcessing ? "Processing..." : "Tap to speak"}
-          </span>
-        </div>
+            {/* Handle */}
+            <div className="flex justify-center pt-3">
+              <div
+                style={{
+                  width: 40,
+                  height: 4,
+                  borderRadius: 99,
+                  backgroundColor: colors.border.strong,
+                }}
+              />
+            </div>
 
-        {/* Show transcribed text if exists */}
-        {pendingText && (
-          <div
-            className="w-full p-3 rounded-lg"
-            style={{ backgroundColor: colors.bg.elevated, border: `1px solid ${colors.border.subtle}` }}
-          >
-            <p style={{ color: colors.text.primary, fontFamily: typography.fontFamily, fontSize: typography.bodyM.size }}>
-              {pendingText}
-            </p>
-            <div className="flex gap-2 mt-3">
-              <button
-                onClick={() => setPendingText("")}
-                style={{ color: colors.text.muted, fontSize: typography.bodyS.size }}
-              >
-                Clear
-              </button>
-              <button
-                onClick={() => handleFinalSubmit(pendingText)}
-                style={{ color: colors.accent.primary, fontSize: typography.bodyS.size, fontWeight: 500 }}
-              >
-                Add Task
-              </button>
-            </div>
-          </div>
-        )}
+            {/* Content */}
+            <div className="flex flex-col items-center px-6 pt-8 pb-6 gap-8">
+              
+              {/* Orb with glow ring */}
+              <div className="relative">
+                <motion.div
+                  className="absolute inset-0 rounded-full"
+                  style={{
+                    background: `radial-gradient(circle, ${colors.accent.primary}22 0%, transparent 70%)`,
+                    transform: "scale(1.8)",
+                  }}
+                  animate={{
+                    opacity: isRecording ? [0.4, 0.7, 0.4] : 0.3,
+                  }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                />
+                <OrbButton state={orbState} size={100} onPress={handleVoiceToggle} />
+              </div>
 
-        {/* Divider */}
-        {!pendingText && (
-          <>
-            <div className="flex items-center gap-3 w-full">
-              <div className="flex-1 h-px" style={{ backgroundColor: colors.border.subtle }} />
-              <span style={{ color: colors.text.muted, fontSize: typography.labelS.size }}>or type</span>
-              <div className="flex-1 h-px" style={{ backgroundColor: colors.border.subtle }} />
+              {/* Status */}
+              <p
+                style={{
+                  fontFamily: typography.fontFamily,
+                  fontSize: typography.bodyS.size,
+                  color: colors.text.muted,
+                  textAlign: "center",
+                }}
+              >
+                {getStatusText()}
+              </p>
+
+              {/* Text input area */}
+              <div className="w-full">
+                <textarea
+                  value={text}
+                  onChange={(e) => setText(e.target.value)}
+                  placeholder="Or type your thought..."
+                  rows={3}
+                  className="w-full resize-none outline-none"
+                  style={{
+                    fontFamily: typography.fontFamily,
+                    fontSize: typography.bodyM.size,
+                    color: colors.text.primary,
+                    backgroundColor: colors.bg.elevated,
+                    border: `1px solid ${colors.border.subtle}`,
+                    borderRadius: layout.radius.md,
+                    padding: "14px 16px",
+                  }}
+                />
+              </div>
+
+              {/* Action buttons */}
+              <div className="flex gap-3 w-full">
+                <button
+                  onClick={onClose}
+                  className="flex-1 py-3 rounded-xl transition-colors"
+                  style={{
+                    fontFamily: typography.fontFamily,
+                    fontSize: typography.bodyM.size,
+                    color: colors.text.secondary,
+                    backgroundColor: colors.bg.elevated,
+                    border: `1px solid ${colors.border.subtle}`,
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSubmit}
+                  disabled={!text.trim() || orbState === "loading"}
+                  className="flex-1 py-3 rounded-xl transition-opacity"
+                  style={{
+                    fontFamily: typography.fontFamily,
+                    fontSize: typography.bodyM.size,
+                    fontWeight: 500,
+                    color: colors.bg.base,
+                    backgroundColor: colors.accent.primary,
+                    opacity: text.trim() ? 1 : 0.5,
+                  }}
+                >
+                  {orbState === "loading" ? "Saving..." : "Capture"}
+                </button>
+              </div>
             </div>
-            <div className="w-full">
-              <CaptureInput placeholder="Capture a thought..." onSubmit={handleFinalSubmit} isLoading={isLoading} />
-            </div>
-          </>
-        )}
-      </div>
-    </BottomSheet>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
   );
 }
