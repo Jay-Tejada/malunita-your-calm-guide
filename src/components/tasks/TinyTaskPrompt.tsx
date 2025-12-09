@@ -7,7 +7,7 @@ import { checkTinyTaskCluster } from "@/hooks/useTaskCategorization";
 
 interface TinyTaskPromptProps {
   userId: string;
-  onCreateFiesta: (tasks: any[]) => void;
+  onCreateFiesta: (tasks: any[], totalMinutes: number) => void;
 }
 
 export function TinyTaskPrompt({ userId, onCreateFiesta }: TinyTaskPromptProps) {
@@ -51,7 +51,7 @@ export function TinyTaskPrompt({ userId, onCreateFiesta }: TinyTaskPromptProps) 
 
         <div className="flex gap-2">
           <button
-            onClick={() => onCreateFiesta(cluster.tasks)}
+            onClick={() => onCreateFiesta(cluster.tasks, cluster.totalMinutes)}
             className="px-4 py-2 rounded-lg transition-colors"
             style={{
               fontFamily: typography.fontFamily,

@@ -16,6 +16,7 @@ import { TaskRow } from '@/ui/tasks/TaskRow';
 import { TaskGroup } from '@/ui/tasks/TaskGroup';
 import { AppLayout } from '@/ui/AppLayout';
 import { TinyTaskPrompt } from '@/components/tasks/TinyTaskPrompt';
+import { TinyTaskParty } from '@/components/tasks/TinyTaskParty';
 
 const Today = () => {
   const navigate = useNavigate();
@@ -28,12 +29,33 @@ const Today = () => {
   const [completingTasks, setCompletingTasks] = useState<Set<string>>(new Set());
   const [userId, setUserId] = useState<string | null>(null);
   
+  // Tiny Task Party state
+  const [partyOpen, setPartyOpen] = useState(false);
+  const [partyTasks, setPartyTasks] = useState<any[]>([]);
+  const [partyMinutes, setPartyMinutes] = useState(0);
+  
   // Fetch user ID for TinyTaskPrompt
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
       setUserId(user?.id || null);
     });
   }, []);
+  
+  const handleCreateFiesta = (fiestaTasks: any[], totalMinutes: number) => {
+    setPartyTasks(fiestaTasks);
+    setPartyMinutes(totalMinutes);
+    setPartyOpen(true);
+  };
+  
+  const handlePartyComplete = async (taskId: string) => {
+    await updateTask({ 
+      id: taskId, 
+      updates: { 
+        completed: true,
+        completed_at: new Date().toISOString()
+      } 
+    });
+  };
 
   // Show habits in the morning (before noon)
   const isMorning = new Date().getHours() < 12;
@@ -133,10 +155,7 @@ const Today = () => {
         {userId && (
           <TinyTaskPrompt
             userId={userId}
-            onCreateFiesta={(fiestaTasks) => {
-              console.log('Creating fiesta with tasks:', fiestaTasks);
-              // Could navigate to a focus session or trigger TinyTaskParty
-            }}
+            onCreateFiesta={handleCreateFiesta}
           />
         )}
 
@@ -285,6 +304,15 @@ const Today = () => {
           onCapture={handleQuickAdd} 
         />
       )}
+      
+      {/* Tiny Task Party overlay */}
+      <TinyTaskParty
+        isOpen={partyOpen}
+        tasks={partyTasks}
+        totalMinutes={partyMinutes}
+        onClose={() => setPartyOpen(false)}
+        onComplete={handlePartyComplete}
+      />
     </AppLayout>
   );
 };
