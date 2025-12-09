@@ -28,7 +28,6 @@ import { StartMyDayModal } from "@/components/rituals/StartMyDayModal";
 import { TinyTaskFiestaCard } from "@/components/home/TinyTaskFiestaCard";
 import TinyTaskParty from "@/components/TinyTaskParty";
 import { CaptureSheet } from "@/components/capture/CaptureSheet";
-import { useCaptureFlow } from "@/hooks/useCaptureFlow";
 
 const Index = () => {
   // Initialize daily reset monitoring
@@ -62,8 +61,8 @@ const Index = () => {
   const isMobile = useIsMobile();
   const { isOnline } = useOfflineStatus();
   
-  // Capture flow hook
-  const captureFlow = useCaptureFlow();
+  // Capture sheet state
+  const [captureOpen, setCaptureOpen] = useState(false);
   
   // Direct orb recording state (kept for legacy/desktop direct recording)
   const [isOrbRecording, setIsOrbRecording] = useState(false);
@@ -401,21 +400,15 @@ const Index = () => {
             <div className="flex flex-col items-center">
               <Orb
                 size={140}
-                onClick={captureFlow.openCapture}
-                isRecording={captureFlow.isRecording}
-                isProcessing={captureFlow.isProcessing}
+                onClick={() => setCaptureOpen(true)}
+                isRecording={false}
+                isProcessing={false}
               />
               
               {/* Status text below orb */}
-              {(captureFlow.isRecording || captureFlow.isProcessing) ? (
-                <p className="mt-4 text-xs text-muted-foreground/40 animate-fade-in">
-                  {captureFlow.isRecording ? 'listening...' : 'transcribing...'}
-                </p>
-              ) : (
-                <p className="mt-6 text-sm text-muted-foreground/50 text-center font-light">
-                  {getOneLiner()}
-                </p>
-              )}
+              <p className="mt-6 text-sm text-muted-foreground/50 text-center font-light">
+                {getOneLiner()}
+              </p>
             </div>
             
             {/* Start my day button - only show if fiesta card is not visible */}
@@ -581,12 +574,17 @@ const Index = () => {
       
       {/* Capture Sheet - Mobile voice/text capture */}
       <CaptureSheet
-        isOpen={captureFlow.isOpen}
-        onClose={captureFlow.closeCapture}
-        onSubmit={captureFlow.submitText}
-        onVoiceStart={captureFlow.startRecording}
-        onVoiceStop={captureFlow.stopRecording}
-        isRecording={captureFlow.isRecording}
+        isOpen={captureOpen}
+        onClose={() => setCaptureOpen(false)}
+        onSubmit={async (text) => {
+          await createTasks([{
+            title: text,
+            category: 'inbox',
+            input_method: 'voice',
+          }]);
+          toast({ description: "Added to inbox" });
+          handleTaskCreated();
+        }}
       />
       </motion.div>
     </AnimatePresence>
