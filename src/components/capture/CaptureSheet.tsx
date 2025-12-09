@@ -6,6 +6,7 @@ import { OrbButton } from "@/components/orb/OrbButton";
 import { useVoiceCapture } from "@/hooks/useVoiceCapture";
 import { categorizeTask } from "@/hooks/useTaskCategorization";
 import { colors, typography, layout } from "@/ui/tokens";
+import { haptics } from "@/hooks/useHaptics";
 import type { OrbState } from "@/ui/tokens";
 
 interface CaptureSheetProps {
@@ -24,6 +25,7 @@ export function CaptureSheet({ isOpen, onClose, onSubmit }: CaptureSheetProps) {
       setOrbState("resting");
     },
     onError: () => {
+      haptics.error();
       setOrbState("error");
       setTimeout(() => setOrbState("resting"), 400);
     },
@@ -36,6 +38,7 @@ export function CaptureSheet({ isOpen, onClose, onSubmit }: CaptureSheetProps) {
   }, [isRecording, isProcessing]);
 
   const handleVoiceToggle = () => {
+    haptics.lightTap();
     if (isRecording) stopRecording();
     else startRecording();
   };
@@ -56,6 +59,7 @@ export function CaptureSheet({ isOpen, onClose, onSubmit }: CaptureSheetProps) {
         });
       }
 
+      haptics.success();
       setOrbState("success");
       setTimeout(() => {
         setText("");
@@ -63,6 +67,7 @@ export function CaptureSheet({ isOpen, onClose, onSubmit }: CaptureSheetProps) {
         onClose();
       }, 500);
     } catch {
+      haptics.error();
       setOrbState("error");
       setTimeout(() => setOrbState("resting"), 400);
     }

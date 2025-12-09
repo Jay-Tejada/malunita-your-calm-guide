@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import { colors, typography } from "@/ui/tokens";
+import { haptics } from "@/hooks/useHaptics";
 
 interface TaskRowProps {
   title: string;
@@ -32,6 +33,11 @@ export function TaskRow({
       <button
         onClick={(e) => {
           e.stopPropagation();
+          if (!isCompleted) {
+            haptics.success(); // Satisfying click when completing
+          } else {
+            haptics.lightTap(); // Light tap when uncompleting
+          }
           onToggleComplete?.();
         }}
         className="flex-shrink-0 mt-1"
