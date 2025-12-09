@@ -577,13 +577,15 @@ const Index = () => {
         isOpen={captureOpen}
         onClose={() => setCaptureOpen(false)}
         onSubmit={async (text) => {
-          await createTasks([{
+          const result = await createTasks([{
             title: text,
             category: 'inbox',
             input_method: 'voice',
           }]);
           toast({ description: "Added to inbox" });
           handleTaskCreated();
+          // Return the first created task for auto-categorization
+          return result?.[0] ? { id: result[0].id } : undefined;
         }}
       />
       </motion.div>
