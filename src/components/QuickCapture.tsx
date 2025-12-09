@@ -59,70 +59,36 @@ export const QuickCapture = ({ isOpen, onClose, variant, onCapture }: QuickCaptu
     }
   }, [isOpen]);
 
-  // Aggressive autofocus - multiple strategies to ensure focus
+  // Autofocus with delay to let keyboard event complete
   useEffect(() => {
     if (!isOpen) {
       focusAchievedRef.current = false;
       return;
     }
 
-    const focusTextarea = () => {
+    // Key insight: The 'Q' keydown event is still active when this runs.
+    // We need to wait for the event loop to clear before focusing.
+    // Using 100ms delay to ensure keyboard event is fully processed.
+    const focusTimer = setTimeout(() => {
       const textarea = textareaRef.current;
-      if (!textarea) return false;
-      
-      // Force focus with multiple methods
-      textarea.focus({ preventScroll: true });
-      textarea.setSelectionRange(0, 0);
-      
-      // Double-check focus was achieved
-      if (document.activeElement === textarea) {
-        focusAchievedRef.current = true;
-        return true;
+      if (textarea && !focusAchievedRef.current) {
+        textarea.focus();
+        focusAchievedRef.current = document.activeElement === textarea;
       }
-      return false;
-    };
-
-    // Strategy 1: Immediate microtask
-    queueMicrotask(focusTextarea);
-    
-    // Strategy 2: After paint
-    requestAnimationFrame(() => {
-      if (!focusAchievedRef.current) focusTextarea();
-    });
-    
-    // Strategy 3: After a brief delay (for modal animation)
-    const t1 = setTimeout(() => {
-      if (!focusAchievedRef.current) focusTextarea();
-    }, 0);
-    
-    const t2 = setTimeout(() => {
-      if (!focusAchievedRef.current) focusTextarea();
-    }, 16);
-    
-    const t3 = setTimeout(() => {
-      if (!focusAchievedRef.current) focusTextarea();
-    }, 50);
-    
-    // Strategy 4: Polling as fallback
-    let attempts = 0;
-    const maxAttempts = 20;
-    
-    const focusInterval = setInterval(() => {
-      attempts++;
-      
-      if (focusAchievedRef.current || attempts >= maxAttempts) {
-        clearInterval(focusInterval);
-        return;
-      }
-      
-      focusTextarea();
     }, 100);
 
+    // Backup at 200ms in case first attempt fails
+    const backupTimer = setTimeout(() => {
+      const textarea = textareaRef.current;
+      if (textarea && !focusAchievedRef.current) {
+        textarea.focus();
+        focusAchievedRef.current = document.activeElement === textarea;
+      }
+    }, 200);
+
     return () => {
-      clearTimeout(t1);
-      clearTimeout(t2);
-      clearTimeout(t3);
-      clearInterval(focusInterval);
+      clearTimeout(focusTimer);
+      clearTimeout(backupTimer);
     };
   }, [isOpen]);
   
