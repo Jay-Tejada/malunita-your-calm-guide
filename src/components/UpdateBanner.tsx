@@ -1,7 +1,29 @@
+import { useEffect, useRef } from 'react';
 import { useAppUpdate } from '@/hooks/useAppUpdate';
+import { useToast } from '@/hooks/use-toast';
 
 export function UpdateBanner() {
   const { updateAvailable, applyUpdate } = useAppUpdate();
+  const { toast } = useToast();
+  const hasShownToast = useRef(false);
+
+  useEffect(() => {
+    if (updateAvailable && !hasShownToast.current) {
+      hasShownToast.current = true;
+      toast({
+        title: "New version available",
+        description: "Tap to update to the latest version",
+        action: (
+          <button
+            onClick={applyUpdate}
+            className="px-3 py-1.5 rounded text-xs font-medium bg-primary text-primary-foreground"
+          >
+            Update
+          </button>
+        ),
+      });
+    }
+  }, [updateAvailable, applyUpdate, toast]);
 
   if (!updateAvailable) return null;
 
