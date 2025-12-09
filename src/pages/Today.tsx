@@ -14,6 +14,7 @@ import { HabitQuickToggle } from '@/components/habits/HabitQuickToggle';
 import { TodaySection } from '@/components/today/TodaySection';
 import { TaskRow } from '@/ui/tasks/TaskRow';
 import { TaskGroup } from '@/ui/tasks/TaskGroup';
+import { AppLayout } from '@/ui/AppLayout';
 
 const Today = () => {
   const navigate = useNavigate();
@@ -114,19 +115,7 @@ const Today = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 h-14 border-b border-border">
-        <button 
-          onClick={() => navigate('/')} 
-          className="text-muted-foreground hover:text-foreground p-3 -ml-3 transition-colors"
-        >
-          <ChevronLeft className="w-6 h-6" />
-        </button>
-        <span className="font-mono text-foreground font-medium">Today</span>
-        <div className="w-10" /> {/* Spacer for alignment */}
-      </div>
-
+    <AppLayout title="Today" showBack>
       <div className="px-4 pt-4 pb-24 md:pb-20">
         {/* Date */}
         <p className="text-xs text-muted-foreground text-center mb-6">{today}</p>
@@ -258,6 +247,16 @@ const Today = () => {
             ))}
           </TaskGroup>
         )}
+
+        {/* Desktop quick add - moved to bottom */}
+        {todayTasks.length > 0 && (
+          <div className="mt-6 pt-4 border-t border-border hidden md:block">
+            <DesktopTaskCapture 
+              placeholder="Add to today..." 
+              onCapture={handleQuickAdd} 
+            />
+          </div>
+        )}
       </div>
 
       {/* Mobile quick add at bottom */}
@@ -267,7 +266,7 @@ const Today = () => {
           onCapture={handleQuickAdd} 
         />
       )}
-    </div>
+    </AppLayout>
   );
 };
 

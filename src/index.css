@@ -2519,3 +2519,45 @@ body {
 .safe-area-top {
   padding-top: max(0.5rem, env(safe-area-inset-top));
 }
+
+/* ========================================
+   MALUNITA GLOBAL OVERRIDES
+   ======================================== */
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Hide scrollbars but keep functionality */
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Focus states for Malunita */
+button:focus-visible,
+input:focus-visible {
+  outline: 1px solid #A78BFA;
+  outline-offset: 2px;
+}
+
+/* Placeholder styling for Malunita dark theme */
+.malunita-input::placeholder {
+  color: #5C5C70;
+}
+
+/* Malunita dark theme class */
+.malunita-dark {
+  background-color: #050509;
+  color: #FFFFFF;
+  font-family: "IBM Plex Mono", monospace;
+  -webkit-font-smoothing: antialiased;
+}
