@@ -18,6 +18,7 @@ interface QuickCaptureProps {
 export const QuickCapture = ({ isOpen, onClose, variant, onCapture }: QuickCaptureProps) => {
   const [input, setInput] = useState('');
   const [captureType, setCaptureType] = useState<'task' | 'thought'>('task');
+  const [isClosing, setIsClosing] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const focusAchievedRef = useRef(false);
   const { toast } = useToast();
@@ -30,6 +31,17 @@ export const QuickCapture = ({ isOpen, onClose, variant, onCapture }: QuickCaptu
   
   // Parse natural language dates from input
   const parsedDate = useSmartDateParsing(input);
+  
+  // Animated close handler
+  const handleClose = () => {
+    if (isClosing) return;
+    setIsClosing(true);
+    setTimeout(() => {
+      setIsClosing(false);
+      setInput('');
+      onClose();
+    }, 200); // Match animation duration
+  };
   
   // Auto-resize textarea
   const adjustTextareaHeight = () => {
@@ -178,17 +190,16 @@ export const QuickCapture = ({ isOpen, onClose, variant, onCapture }: QuickCaptu
       handleSubmit(true);
       trackUsage('shift-enter');
     } else if (e.key === 'Escape') {
-      onClose();
-      setInput('');
+      handleClose();
     }
   };
 
-  if (!isOpen) return null;
+  if (!isOpen && !isClosing) return null;
 
   // Mobile: appears above orb area
   if (variant === 'mobile') {
     return (
-      <div className="fixed inset-x-0 bottom-48 flex justify-center px-6 z-50 animate-[slide-up_0.25s_ease-out]">
+      <div className={`fixed inset-x-0 bottom-48 flex justify-center px-6 z-50 ${isClosing ? 'animate-[slide-down_0.2s_ease-out_forwards]' : 'animate-[slide-up_0.25s_ease-out]'}`}>
         <div className="w-full max-w-sm bg-background/90 backdrop-blur-sm rounded-lg border border-foreground/10 p-3">
           {/* Type toggle */}
           <div className="flex items-center gap-2 mb-2">
@@ -249,15 +260,12 @@ export const QuickCapture = ({ isOpen, onClose, variant, onCapture }: QuickCaptu
     <>
       {/* Backdrop */}
       <div 
-        className="fixed inset-0 bg-background/80 backdrop-blur-sm z-40 animate-[fade-in_0.2s_ease-out]"
-        onClick={() => {
-          onClose();
-          setInput('');
-        }}
+        className={`fixed inset-0 bg-background/80 backdrop-blur-sm z-40 ${isClosing ? 'animate-[fade-out_0.2s_ease-out_forwards]' : 'animate-[fade-in_0.2s_ease-out]'}`}
+        onClick={handleClose}
       />
       
       {/* Modal */}
-      <div className="fixed top-[20vh] left-1/2 w-full max-w-xl px-4 z-50 origin-top animate-[modal-enter_0.25s_ease-out_forwards]">
+      <div className={`fixed top-[20vh] left-1/2 w-full max-w-xl px-4 z-50 origin-top ${isClosing ? 'animate-[modal-exit_0.2s_ease-out_forwards]' : 'animate-[modal-enter_0.25s_ease-out_forwards]'}`}>
         <div className="bg-background border border-foreground/10 rounded-xl shadow-lg p-4">
           {/* Type toggle */}
           <div className="flex items-center gap-2 mb-3">
