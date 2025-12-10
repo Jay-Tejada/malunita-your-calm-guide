@@ -257,7 +257,7 @@ export const QuickCapture = ({ isOpen, onClose, variant, onCapture }: QuickCaptu
       />
       
       {/* Modal */}
-      <div className="fixed top-[20vh] left-1/2 -translate-x-1/2 w-full max-w-xl px-4 z-50 origin-top animate-[modal-enter_0.25s_ease-out]">
+      <div className="fixed top-[20vh] left-1/2 w-full max-w-xl px-4 z-50 origin-top animate-[modal-enter_0.25s_ease-out_forwards]">
         <div className="bg-background border border-foreground/10 rounded-xl shadow-lg p-4">
           {/* Type toggle */}
           <div className="flex items-center gap-2 mb-3">
