@@ -188,7 +188,7 @@ export const QuickCapture = ({ isOpen, onClose, variant, onCapture }: QuickCaptu
   // Mobile: appears above orb area
   if (variant === 'mobile') {
     return (
-      <div className="fixed inset-x-0 bottom-48 flex justify-center px-6 z-50 animate-fade-in">
+      <div className="fixed inset-x-0 bottom-48 flex justify-center px-6 z-50 animate-[slide-up_0.25s_ease-out]">
         <div className="w-full max-w-sm bg-background/90 backdrop-blur-sm rounded-lg border border-foreground/10 p-3">
           {/* Type toggle */}
           <div className="flex items-center gap-2 mb-2">
@@ -249,7 +249,7 @@ export const QuickCapture = ({ isOpen, onClose, variant, onCapture }: QuickCaptu
     <>
       {/* Backdrop */}
       <div 
-        className="fixed inset-0 bg-background/80 backdrop-blur-sm z-40"
+        className="fixed inset-0 bg-background/80 backdrop-blur-sm z-40 animate-[fade-in_0.2s_ease-out]"
         onClick={() => {
           onClose();
           setInput('');
@@ -257,7 +257,7 @@ export const QuickCapture = ({ isOpen, onClose, variant, onCapture }: QuickCaptu
       />
       
       {/* Modal */}
-      <div className="fixed top-[20vh] left-1/2 -translate-x-1/2 w-full max-w-xl px-4 z-50">
+      <div className="fixed top-[20vh] left-1/2 -translate-x-1/2 w-full max-w-xl px-4 z-50 origin-top animate-[modal-enter_0.25s_ease-out]">
         <div className="bg-background border border-foreground/10 rounded-xl shadow-lg p-4">
           {/* Type toggle */}
           <div className="flex items-center gap-2 mb-3">
