@@ -14,7 +14,7 @@ import { useDailyReset } from "@/hooks/useDailyReset";
 import { usePrimaryFocusPrediction } from "@/hooks/usePrimaryFocusPrediction";
 import { useCaptureSessions } from "@/hooks/useCaptureSessions";
 import { CaptureHistoryModal } from "@/components/CaptureHistoryModal";
-import { QuickCapture } from "@/components/QuickCapture";
+import { useQuickCapture } from "@/contexts/QuickCaptureContext";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { useNavigate } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -97,47 +97,16 @@ const Index = () => {
     await updateTask({ id: taskId, updates: { completed: true, completed_at: new Date().toISOString() } });
   };
   
-  // Quick capture state
-  const [showQuickCapture, setShowQuickCapture] = useState(false);
+  // Quick capture from global context
+  const { openQuickCapture, closeQuickCapture } = useQuickCapture();
   
-  // Desktop quick capture modal state
-  const [showDesktopCapture, setShowDesktopCapture] = useState(false);
-  const captureClosedAtRef = useRef<number>(0);
-  
-  // Global keyboard shortcuts for desktop - only handle Escape
-  useEffect(() => {
-    if (isMobile) return;
-    
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        setShowDesktopCapture(false);
-        captureClosedAtRef.current = Date.now();
-      }
-    };
-    
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isMobile]);
-
-  // Initialize keyboard shortcuts
+  // Initialize keyboard shortcuts - use global context for quick capture
   useKeyboardShortcuts({
-    onQuickCapture: () => {
-      // Use correct modal for desktop vs mobile
-      if (isMobile) {
-        setShowQuickCapture(true);
-      } else {
-        // Add cooldown to prevent immediate reopening after close
-        const timeSinceClose = Date.now() - captureClosedAtRef.current;
-        if (timeSinceClose < 300) return;
-        setShowDesktopCapture(true);
-        // Let QuickCapture handle its own focus - don't interfere
-      }
-    },
+    onQuickCapture: openQuickCapture,
     onFocusInput: () => inputRef.current?.focus(),
     onDailyReview: () => navigate('/daily-session'),
     onCloseModals: () => {
-      setShowQuickCapture(false);
-      setShowDesktopCapture(false);
+      closeQuickCapture();
       setShowThinkWithMe(false);
       setShowCaptureHistory(false);
       setShowSearch(false);
@@ -502,28 +471,7 @@ const Index = () => {
         </HomeShell>
       )}
       
-      {/* Quick Capture - Mobile variant */}
-      {isMobile && (
-        <QuickCapture
-          isOpen={showQuickCapture}
-          onClose={() => setShowQuickCapture(false)}
-          variant="mobile"
-          onCapture={handleTaskCreated}
-        />
-      )}
-      
-      {/* Quick Capture - Desktop variant */}
-      {!isMobile && (
-        <QuickCapture
-          isOpen={showDesktopCapture}
-          onClose={() => {
-            setShowDesktopCapture(false);
-            captureClosedAtRef.current = Date.now();
-          }}
-          variant="desktop"
-          onCapture={handleTaskCreated}
-        />
-      )}
+      {/* QuickCapture is now rendered globally via Layout.tsx */}
 
       {/* Capture history modal (desktop only) */}
       {!isMobile && (
