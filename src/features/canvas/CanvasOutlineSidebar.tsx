@@ -112,20 +112,20 @@ function SortablePageItem({
     <div ref={setNodeRef} style={style}>
       <div
         className={cn(
-          "group flex items-center gap-1 px-2 py-1.5 rounded-md cursor-pointer transition-colors",
+          "group flex items-center gap-1 px-2 py-1.5 rounded-md cursor-pointer transition-colors relative",
           isActive
             ? "bg-canvas-active text-canvas-text"
             : "text-canvas-text-muted hover:bg-canvas-bg hover:text-canvas-text",
           isDragging && "shadow-md bg-canvas-sidebar"
         )}
-        style={{ paddingLeft: `${level * 12 + 8}px` }}
+        style={{ paddingLeft: `${level * 8 + 6}px` }}
         onClick={() => !isEditing && onPageSelect(page.id)}
       >
-        {/* Drag Handle */}
+        {/* Drag Handle - absolute positioned */}
         <button
           {...attributes}
           {...listeners}
-          className="w-4 h-4 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing"
+          className="absolute left-0 top-1/2 -translate-y-1/2 w-5 h-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing"
           onClick={(e) => e.stopPropagation()}
         >
           <GripVertical className="w-3 h-3" />
