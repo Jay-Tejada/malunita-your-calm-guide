@@ -63,6 +63,8 @@ const Learning = lazy(() => import("./pages/Learning"));
 const Settings = lazy(() => import("./pages/Settings"));
 const Habits = lazy(() => import("./pages/Habits"));
 const WeeklyReview = lazy(() => import("./pages/WeeklyReview"));
+const ProjectCanvasIndex = lazy(() => import("./pages/ProjectCanvasIndex"));
+const ProjectCanvas = lazy(() => import("./pages/ProjectCanvas"));
 import { JOURNAL_EVENTS } from "./features/journal/journalEvents";
 import { bondingMeter, BONDING_INCREMENTS } from "./state/bondingMeter";
 
@@ -324,6 +326,9 @@ const App = () => {
                   <Route path="/settings" element={<Settings />} />
                   <Route path="/habits" element={<Habits />} />
                   <Route path="/weekly-review" element={<WeeklyReview />} />
+                  <Route path="/canvas" element={<ProjectCanvasIndex />} />
+                  <Route path="/canvas/:projectId" element={<ProjectCanvas />} />
+                  <Route path="/canvas/:projectId/:pageId" element={<ProjectCanvas />} />
                   {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                   <Route path="*" element={<NotFound />} />
                 </Route>

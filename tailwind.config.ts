@@ -60,6 +60,15 @@ export default {
           responding: "hsl(var(--orb-responding))",
           waveform: "hsl(var(--orb-waveform))",
         },
+        canvas: {
+          bg: "hsl(var(--canvas-bg))",
+          sidebar: "hsl(var(--canvas-sidebar))",
+          text: "hsl(var(--canvas-text))",
+          "text-muted": "hsl(var(--canvas-text-muted))",
+          accent: "hsl(var(--canvas-accent))",
+          border: "hsl(var(--canvas-border))",
+          active: "hsl(var(--canvas-active))",
+        },
       },
       fontFamily: {
         mono: ['"IBM Plex Mono"', 'monospace'],
