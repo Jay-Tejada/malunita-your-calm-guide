@@ -144,7 +144,7 @@ export default function ProjectCanvasIndex() {
             Project Canvas
           </h1>
           <p className="text-canvas-text-muted font-mono text-sm">
-            A calm space for long-term thinking and planning
+            Zero Noise Thinking Space
           </p>
         </div>
 
