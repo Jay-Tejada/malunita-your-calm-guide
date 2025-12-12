@@ -111,7 +111,7 @@ export default function ProjectCanvas() {
         <div
           className={cn(
             "transition-all duration-300 ease-in-out border-r border-canvas-border bg-canvas-sidebar flex-shrink-0",
-            leftSidebarOpen ? "w-56" : "w-0"
+            leftSidebarOpen ? "w-64" : "w-0"
           )}
         >
           {leftSidebarOpen && (
