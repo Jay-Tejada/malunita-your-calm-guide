@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Plus, FolderOpen, MoreHorizontal, Trash2 } from "lucide-react";
+import { Plus, FolderOpen, MoreHorizontal, Trash2, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -133,6 +133,13 @@ export default function ProjectCanvasIndex() {
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="mb-10">
+          <button
+            onClick={() => navigate("/")}
+            className="flex items-center gap-2 text-canvas-text-muted hover:text-canvas-text font-mono text-sm mb-4 transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to Malunita
+          </button>
           <h1 className="font-mono text-2xl text-canvas-text font-medium mb-2">
             Project Canvas
           </h1>
