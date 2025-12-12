@@ -181,45 +181,6 @@ export type Database = {
         }
         Relationships: []
       }
-      canvas_projects: {
-        Row: {
-          color: string | null
-          cover_image: string | null
-          created_at: string
-          description: string | null
-          icon: string | null
-          id: string
-          is_archived: boolean | null
-          name: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          color?: string | null
-          cover_image?: string | null
-          created_at?: string
-          description?: string | null
-          icon?: string | null
-          id?: string
-          is_archived?: boolean | null
-          name: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          color?: string | null
-          cover_image?: string | null
-          created_at?: string
-          description?: string | null
-          icon?: string | null
-          id?: string
-          is_archived?: boolean | null
-          name?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
       capture_sessions: {
         Row: {
           created_at: string
@@ -629,50 +590,6 @@ export type Database = {
         }
         Relationships: []
       }
-      gallery_items: {
-        Row: {
-          caption: string | null
-          created_at: string
-          id: string
-          image_url: string
-          metadata: Json | null
-          page_id: string
-          sort_order: number | null
-          tags: string[] | null
-          user_id: string
-        }
-        Insert: {
-          caption?: string | null
-          created_at?: string
-          id?: string
-          image_url: string
-          metadata?: Json | null
-          page_id: string
-          sort_order?: number | null
-          tags?: string[] | null
-          user_id: string
-        }
-        Update: {
-          caption?: string | null
-          created_at?: string
-          id?: string
-          image_url?: string
-          metadata?: Json | null
-          page_id?: string
-          sort_order?: number | null
-          tags?: string[] | null
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "gallery_items_page_id_fkey"
-            columns: ["page_id"]
-            isOneToOne: false
-            referencedRelation: "project_pages"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       habit_completions: {
         Row: {
           completed_at: string | null
@@ -820,65 +737,6 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
-      }
-      idea_board_items: {
-        Row: {
-          color: string | null
-          content: Json | null
-          created_at: string
-          height: number | null
-          id: string
-          item_type: string
-          metadata: Json | null
-          page_id: string
-          position_x: number | null
-          position_y: number | null
-          updated_at: string
-          user_id: string
-          width: number | null
-          z_index: number | null
-        }
-        Insert: {
-          color?: string | null
-          content?: Json | null
-          created_at?: string
-          height?: number | null
-          id?: string
-          item_type?: string
-          metadata?: Json | null
-          page_id: string
-          position_x?: number | null
-          position_y?: number | null
-          updated_at?: string
-          user_id: string
-          width?: number | null
-          z_index?: number | null
-        }
-        Update: {
-          color?: string | null
-          content?: Json | null
-          created_at?: string
-          height?: number | null
-          id?: string
-          item_type?: string
-          metadata?: Json | null
-          page_id?: string
-          position_x?: number | null
-          position_y?: number | null
-          updated_at?: string
-          user_id?: string
-          width?: number | null
-          z_index?: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "idea_board_items_page_id_fkey"
-            columns: ["page_id"]
-            isOneToOne: false
-            referencedRelation: "project_pages"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       inbox_cleanup_log: {
         Row: {
@@ -1104,53 +962,6 @@ export type Database = {
           predicted_priority?: string | null
         }
         Relationships: []
-      }
-      page_blocks: {
-        Row: {
-          block_type: string
-          content: Json | null
-          created_at: string
-          id: string
-          indent_level: number | null
-          metadata: Json | null
-          page_id: string
-          sort_order: number | null
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          block_type?: string
-          content?: Json | null
-          created_at?: string
-          id?: string
-          indent_level?: number | null
-          metadata?: Json | null
-          page_id: string
-          sort_order?: number | null
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          block_type?: string
-          content?: Json | null
-          created_at?: string
-          id?: string
-          indent_level?: number | null
-          metadata?: Json | null
-          page_id?: string
-          sort_order?: number | null
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "page_blocks_page_id_fkey"
-            columns: ["page_id"]
-            isOneToOne: false
-            referencedRelation: "project_pages"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       pattern_insights: {
         Row: {
@@ -1445,63 +1256,6 @@ export type Database = {
           wants_voice_playback?: boolean | null
         }
         Relationships: []
-      }
-      project_pages: {
-        Row: {
-          created_at: string
-          icon: string | null
-          id: string
-          is_collapsed: boolean | null
-          page_type: string
-          parent_page_id: string | null
-          project_id: string
-          sort_order: number | null
-          title: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          icon?: string | null
-          id?: string
-          is_collapsed?: boolean | null
-          page_type?: string
-          parent_page_id?: string | null
-          project_id: string
-          sort_order?: number | null
-          title?: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          icon?: string | null
-          id?: string
-          is_collapsed?: boolean | null
-          page_type?: string
-          parent_page_id?: string | null
-          project_id?: string
-          sort_order?: number | null
-          title?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "project_pages_parent_page_id_fkey"
-            columns: ["parent_page_id"]
-            isOneToOne: false
-            referencedRelation: "project_pages"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "project_pages_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "canvas_projects"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       projects: {
         Row: {
