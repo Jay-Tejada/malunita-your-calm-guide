@@ -101,6 +101,15 @@ All colors MUST be HSL.
     --sidebar-bg: 40 20% 98%; /* same as background - warm cream */
     --sidebar-active: 40 14% 97%; /* card-strong */
 
+    /* Canvas Design System */
+    --canvas-bg: 42 33% 96%; /* #FAF7F2 warm cream */
+    --canvas-sidebar: 40 30% 94%; /* #F5F0E8 */
+    --canvas-text: 30 8% 16%; /* #2D2A26 */
+    --canvas-text-muted: 30 6% 45%; /* muted text */
+    --canvas-accent: 28 52% 64%; /* #D4A574 warm tan */
+    --canvas-border: 30 10% 88%; /* subtle border */
+    --canvas-active: 28 40% 90%; /* active highlight */
+
     --radius: 10px; /* rounded corners: 10px */
   }
 
@@ -142,6 +151,16 @@ All colors MUST be HSL.
     --surface: 30 5% 16%;
     --sidebar-bg: 30 6% 14%;
     --sidebar-active: 30 4% 19%;
+
+    /* Canvas Design System - Dark Mode */
+    --canvas-bg: 20 8% 10%; /* #1C1917 matte charcoal */
+    --canvas-sidebar: 20 6% 13%; /* #252220 */
+    --canvas-text: 35 15% 90%; /* #E8E4DF */
+    --canvas-text-muted: 30 8% 55%;
+    --canvas-accent: 30 30% 53%; /* #A68B6A */
+    --canvas-border: 20 6% 20%;
+    --canvas-active: 20 8% 18%;
+
     --focus-glow: 30 5% 18%;
     
     /* Softer orb for dark mode - moon-like glow */
