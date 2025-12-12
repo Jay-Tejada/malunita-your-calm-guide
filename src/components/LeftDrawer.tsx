@@ -6,7 +6,7 @@ import { useSwipeable } from "react-swipeable";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useTasks } from "@/hooks/useTasks";
-import { useProjectTasks } from "@/hooks/useProjectTasks";
+import { useCanvasProjects } from "@/hooks/useCanvasProjects";
 import { hapticLight, hapticMedium, hapticSuccess, hapticSwipe } from "@/utils/haptics";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -60,7 +60,7 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate, onSearchOpen }: LeftDr
   const navigate = useNavigate();
   const [drawerMode, setDrawerMode] = useState<DrawerMode>("root");
   const { tasks, updateTask, createTasks, deleteTask } = useTasks();
-  const { data: projectTasks } = useProjectTasks();
+  const { projects: canvasProjects, createProject } = useCanvasProjects();
   const { toast } = useToast();
   const { recordEventTitle } = useRecentEventTitles();
   const { token: mapboxToken } = useMapboxToken();
@@ -535,36 +535,62 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate, onSearchOpen }: LeftDr
                         <button
                           onClick={() => {
                             hapticLight();
-                            toast({
-                              title: "Coming soon",
-                              description: "Project creation will be available soon.",
+                            onClose();
+                            requestAnimationFrame(() => {
+                              onNavigate("/canvas");
                             });
                           }}
                           className="p-1 text-foreground/30 hover:text-foreground/50 transition-colors"
-                          title="Create new project"
+                          title="View all projects"
                         >
                           <Plus className="w-3.5 h-3.5" />
                         </button>
                       </div>
                       <div className="space-y-0.5">
-                        {!projectTasks || projectTasks.length === 0 ? (
-                          <p className="text-xs text-foreground/30 py-1">Nothing here yet</p>
+                        {!canvasProjects || canvasProjects.length === 0 ? (
+                          <button
+                            onClick={() => {
+                              hapticLight();
+                              onClose();
+                              requestAnimationFrame(() => {
+                                onNavigate("/canvas");
+                              });
+                            }}
+                            className="w-full text-left py-2 px-2 font-mono text-xs text-foreground/30 hover:text-foreground/50 hover:bg-foreground/[0.03] rounded-md transition-colors"
+                          >
+                            + Create your first project
+                          </button>
                         ) : (
-                          projectTasks.map((project) => (
+                          canvasProjects.slice(0, 5).map((project) => (
                             <button
                               key={project.id}
                               onClick={() => {
                                 hapticLight();
                                 onClose();
                                 requestAnimationFrame(() => {
-                                  onNavigate(`/project/${project.id}`);
+                                  onNavigate(`/canvas/${project.id}`);
                                 });
                               }}
-                              className="w-full text-left py-2 px-2 font-mono text-sm text-foreground/70 hover:bg-foreground/[0.03] rounded-md transition-colors"
+                              className="w-full text-left py-2 px-2 font-mono text-sm text-foreground/70 hover:bg-foreground/[0.03] rounded-md transition-colors flex items-center gap-2"
                             >
-                              {project.title}
+                              <span>{project.icon || "📁"}</span>
+                              <span className="truncate">{project.name}</span>
                             </button>
                           ))
+                        )}
+                        {canvasProjects && canvasProjects.length > 5 && (
+                          <button
+                            onClick={() => {
+                              hapticLight();
+                              onClose();
+                              requestAnimationFrame(() => {
+                                onNavigate("/canvas");
+                              });
+                            }}
+                            className="w-full text-left py-2 px-2 font-mono text-xs text-foreground/40 hover:text-foreground/60 hover:bg-foreground/[0.03] rounded-md transition-colors"
+                          >
+                            View all {canvasProjects.length} projects →
+                          </button>
                         )}
                       </div>
                     </div>
