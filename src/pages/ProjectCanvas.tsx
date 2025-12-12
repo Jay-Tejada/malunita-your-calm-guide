@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { CanvasOutlineSidebar } from "@/features/canvas/CanvasOutlineSidebar";
 import { CanvasDocument } from "@/features/canvas/CanvasDocument";
@@ -11,7 +11,6 @@ import { cn } from "@/lib/utils";
 export default function ProjectCanvas() {
   const { projectId, pageId } = useParams();
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const [leftSidebarOpen, setLeftSidebarOpen] = useState(true);
   const [rightSidebarOpen, setRightSidebarOpen] = useState(true);
   const [activeSection, setActiveSection] = useState<string | null>(null);
@@ -97,57 +96,56 @@ export default function ProjectCanvas() {
 
   return (
     <div className="h-screen flex flex-col bg-canvas-bg overflow-hidden">
-        {/* Top Bar */}
-        <CanvasTopBar
-          projectName={project?.name || "Untitled Project"}
-          pageName={currentPage?.title}
-          onToggleLeftSidebar={() => setLeftSidebarOpen(!leftSidebarOpen)}
-          onToggleRightSidebar={() => setRightSidebarOpen(!rightSidebarOpen)}
-          leftSidebarOpen={leftSidebarOpen}
-          rightSidebarOpen={rightSidebarOpen}
-        />
+      {/* Top Bar */}
+      <CanvasTopBar
+        projectName={project?.name || "Untitled Project"}
+        pageName={currentPage?.title}
+        onToggleLeftSidebar={() => setLeftSidebarOpen(!leftSidebarOpen)}
+        onToggleRightSidebar={() => setRightSidebarOpen(!rightSidebarOpen)}
+        leftSidebarOpen={leftSidebarOpen}
+        rightSidebarOpen={rightSidebarOpen}
+      />
 
-        <div className="flex-1 flex overflow-hidden">
-          {/* Left Sidebar - Outline */}
-          <div
-            className={cn(
-              "transition-all duration-300 ease-in-out border-r border-canvas-border bg-canvas-sidebar flex-shrink-0",
-              leftSidebarOpen ? "w-60" : "w-0"
-            )}
-          >
-            {leftSidebarOpen && (
-              <CanvasOutlineSidebar
-                projectId={projectId || ""}
-                pages={pages}
-                currentPageId={currentPage?.id}
-                onPageSelect={(id) => navigate(`/canvas/${projectId}/${id}`)}
-              />
-            )}
-          </div>
-
-          {/* Main Document Canvas */}
-          <div className="flex-1 overflow-y-auto">
-            <CanvasDocument
-              page={currentPage}
-              blocks={blocks}
-              onSectionChange={setActiveSection}
+      <div className="flex-1 flex overflow-hidden">
+        {/* Left Sidebar - Outline */}
+        <div
+          className={cn(
+            "transition-all duration-300 ease-in-out border-r border-canvas-border bg-canvas-sidebar flex-shrink-0",
+            leftSidebarOpen ? "w-60" : "w-0"
+          )}
+        >
+          {leftSidebarOpen && (
+            <CanvasOutlineSidebar
+              projectId={projectId || ""}
+              pages={pages}
+              currentPageId={currentPage?.id}
+              onPageSelect={(id) => navigate(`/canvas/${projectId}/${id}`)}
             />
-          </div>
+          )}
+        </div>
 
-          {/* Right Sidebar - Table of Contents */}
-          <div
-            className={cn(
-              "transition-all duration-300 ease-in-out border-l border-canvas-border bg-canvas-sidebar flex-shrink-0",
-              rightSidebarOpen ? "w-52" : "w-0"
-            )}
-          >
-            {rightSidebarOpen && (
-              <CanvasTableOfContents
-                blocks={blocks}
-                activeSection={activeSection}
-              />
-            )}
-          </div>
+        {/* Main Document Canvas */}
+        <div className="flex-1 overflow-y-auto">
+          <CanvasDocument
+            page={currentPage}
+            blocks={blocks}
+            onSectionChange={setActiveSection}
+          />
+        </div>
+
+        {/* Right Sidebar - Table of Contents */}
+        <div
+          className={cn(
+            "transition-all duration-300 ease-in-out border-l border-canvas-border bg-canvas-sidebar flex-shrink-0",
+            rightSidebarOpen ? "w-52" : "w-0"
+          )}
+        >
+          {rightSidebarOpen && (
+            <CanvasTableOfContents
+              blocks={blocks}
+              activeSection={activeSection}
+            />
+          )}
         </div>
       </div>
     </div>

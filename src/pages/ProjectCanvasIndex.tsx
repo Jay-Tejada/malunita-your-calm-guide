@@ -130,131 +130,130 @@ export default function ProjectCanvasIndex() {
 
   return (
     <div className="min-h-screen bg-canvas-bg p-6 md:p-10">
-        <div className="max-w-4xl mx-auto">
-          {/* Header */}
-          <div className="mb-10">
-            <h1 className="font-mono text-2xl text-canvas-text font-medium mb-2">
-              Project Canvas
-            </h1>
-            <p className="text-canvas-text-muted font-mono text-sm">
-              A calm space for long-term thinking and planning
-            </p>
-          </div>
-
-          {/* Projects Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {/* Create New Project Card */}
-            <button
-              onClick={() => setCreateDialogOpen(true)}
-              className="group flex flex-col items-center justify-center p-8 rounded-lg border-2 border-dashed border-canvas-border hover:border-canvas-accent hover:bg-canvas-sidebar transition-all duration-200 min-h-[160px]"
-            >
-              <Plus className="w-8 h-8 text-canvas-text-muted group-hover:text-canvas-accent mb-3 transition-colors" />
-              <span className="font-mono text-sm text-canvas-text-muted group-hover:text-canvas-accent transition-colors">
-                New Project
-              </span>
-            </button>
-
-            {/* Existing Projects */}
-            {projects.map((project) => (
-              <div
-                key={project.id}
-                className="group relative flex flex-col p-5 rounded-lg border border-canvas-border bg-canvas-sidebar hover:border-canvas-accent transition-all duration-200 cursor-pointer min-h-[160px]"
-                onClick={() => navigate(`/canvas/${project.id}`)}
-              >
-                <div className="flex items-start justify-between mb-3">
-                  <div
-                    className="w-10 h-10 rounded-lg flex items-center justify-center text-lg"
-                    style={{ backgroundColor: project.color || "#D4A574" }}
-                  >
-                    {project.icon || "📁"}
-                  </div>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8"
-                      >
-                        <MoreHorizontal className="w-4 h-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          deleteProject.mutate(project.id);
-                        }}
-                        className="text-destructive"
-                      >
-                        <Trash2 className="w-4 h-4 mr-2" />
-                        Archive
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-                <h3 className="font-mono text-base text-canvas-text font-medium mb-1 line-clamp-2">
-                  {project.name}
-                </h3>
-                {project.description && (
-                  <p className="text-sm text-canvas-text-muted line-clamp-2 mb-auto">
-                    {project.description}
-                  </p>
-                )}
-                <p className="font-mono text-xs text-canvas-text-muted mt-3">
-                  {format(new Date(project.updated_at), "MMM d, yyyy")}
-                </p>
-              </div>
-            ))}
-          </div>
-
-          {/* Empty State */}
-          {!isLoading && projects.length === 0 && (
-            <div className="text-center py-16">
-              <FolderOpen className="w-12 h-12 text-canvas-text-muted mx-auto mb-4" />
-              <p className="font-mono text-canvas-text-muted">
-                No projects yet. Create your first one.
-              </p>
-            </div>
-          )}
+      <div className="max-w-4xl mx-auto">
+        {/* Header */}
+        <div className="mb-10">
+          <h1 className="font-mono text-2xl text-canvas-text font-medium mb-2">
+            Project Canvas
+          </h1>
+          <p className="text-canvas-text-muted font-mono text-sm">
+            A calm space for long-term thinking and planning
+          </p>
         </div>
 
-        {/* Create Dialog */}
-        <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
-          <DialogContent className="bg-canvas-sidebar border-canvas-border">
-            <DialogHeader>
-              <DialogTitle className="font-mono text-canvas-text">
-                New Project
-              </DialogTitle>
-            </DialogHeader>
-            <div className="py-4">
-              <Input
-                placeholder="Project name..."
-                value={newProjectName}
-                onChange={(e) => setNewProjectName(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleCreate()}
-                className="bg-canvas-bg border-canvas-border text-canvas-text"
-                autoFocus
-              />
+        {/* Projects Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {/* Create New Project Card */}
+          <button
+            onClick={() => setCreateDialogOpen(true)}
+            className="group flex flex-col items-center justify-center p-8 rounded-lg border-2 border-dashed border-canvas-border hover:border-canvas-accent hover:bg-canvas-sidebar transition-all duration-200 min-h-[160px]"
+          >
+            <Plus className="w-8 h-8 text-canvas-text-muted group-hover:text-canvas-accent mb-3 transition-colors" />
+            <span className="font-mono text-sm text-canvas-text-muted group-hover:text-canvas-accent transition-colors">
+              New Project
+            </span>
+          </button>
+
+          {/* Existing Projects */}
+          {projects.map((project) => (
+            <div
+              key={project.id}
+              className="group relative flex flex-col p-5 rounded-lg border border-canvas-border bg-canvas-sidebar hover:border-canvas-accent transition-all duration-200 cursor-pointer min-h-[160px]"
+              onClick={() => navigate(`/canvas/${project.id}`)}
+            >
+              <div className="flex items-start justify-between mb-3">
+                <div
+                  className="w-10 h-10 rounded-lg flex items-center justify-center text-lg"
+                  style={{ backgroundColor: project.color || "#D4A574" }}
+                >
+                  {project.icon || "📁"}
+                </div>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8"
+                    >
+                      <MoreHorizontal className="w-4 h-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        deleteProject.mutate(project.id);
+                      }}
+                      className="text-destructive"
+                    >
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Archive
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+              <h3 className="font-mono text-base text-canvas-text font-medium mb-1 line-clamp-2">
+                {project.name}
+              </h3>
+              {project.description && (
+                <p className="text-sm text-canvas-text-muted line-clamp-2 mb-auto">
+                  {project.description}
+                </p>
+              )}
+              <p className="font-mono text-xs text-canvas-text-muted mt-3">
+                {format(new Date(project.updated_at), "MMM d, yyyy")}
+              </p>
             </div>
-            <DialogFooter>
-              <Button
-                variant="ghost"
-                onClick={() => setCreateDialogOpen(false)}
-                className="text-canvas-text-muted"
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={handleCreate}
-                disabled={!newProjectName.trim()}
-                className="bg-canvas-accent text-canvas-bg hover:bg-canvas-accent/90"
-              >
-                Create
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+          ))}
+        </div>
+
+        {/* Empty State */}
+        {!isLoading && projects.length === 0 && (
+          <div className="text-center py-16">
+            <FolderOpen className="w-12 h-12 text-canvas-text-muted mx-auto mb-4" />
+            <p className="font-mono text-canvas-text-muted">
+              No projects yet. Create your first one.
+            </p>
+          </div>
+        )}
       </div>
+
+      {/* Create Dialog */}
+      <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+        <DialogContent className="bg-canvas-sidebar border-canvas-border">
+          <DialogHeader>
+            <DialogTitle className="font-mono text-canvas-text">
+              New Project
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <Input
+              placeholder="Project name..."
+              value={newProjectName}
+              onChange={(e) => setNewProjectName(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleCreate()}
+              className="bg-canvas-bg border-canvas-border text-canvas-text"
+              autoFocus
+            />
+          </div>
+          <DialogFooter>
+            <Button
+              variant="ghost"
+              onClick={() => setCreateDialogOpen(false)}
+              className="text-canvas-text-muted"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleCreate}
+              disabled={!newProjectName.trim()}
+              className="bg-canvas-accent text-canvas-bg hover:bg-canvas-accent/90"
+            >
+              Create
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
