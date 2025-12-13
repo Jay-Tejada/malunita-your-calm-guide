@@ -146,16 +146,18 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
     <div ref={containerRef} className="h-full overflow-y-auto">
       <div className="py-12 md:py-16">
         
-        {/* 1. MOBILE Layout (< 640px) - TEMP TESTING */}
-        <div className="sm:hidden space-y-6 px-4">
-          {/* Page Title */}
-          <input
-            type="text"
-            value={pageTitle}
-            onChange={(e) => handleTitleChange(e.target.value)}
-            placeholder="Untitled"
-            className="w-full text-3xl font-mono font-medium text-canvas-text bg-transparent border-none outline-none placeholder:text-canvas-text-muted/50"
-          />
+        {/* 1. MOBILE Layout (< 640px) */}
+        <div className="sm:hidden space-y-6 px-8">
+          {/* Title Area with separator */}
+          <div className="border-b border-white/5 pb-6 mb-8">
+            <input
+              type="text"
+              value={pageTitle}
+              onChange={(e) => handleTitleChange(e.target.value)}
+              placeholder="Untitled"
+              className="w-full text-4xl font-medium text-canvas-text bg-transparent border-none outline-none placeholder:text-canvas-text-muted/50 mb-4"
+            />
+          </div>
 
           {/* All Text Blocks */}
           {textBlocks.map((block) => (
@@ -193,16 +195,18 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
           </Button>
         </div>
 
-        {/* 2. TABLET Layout (640px - 767px) - TEMP TESTING */}
-        <div className="hidden sm:block md:hidden space-y-6 px-6">
-          {/* Page Title */}
-          <input
-            type="text"
-            value={pageTitle}
-            onChange={(e) => handleTitleChange(e.target.value)}
-            placeholder="Untitled"
-            className="w-full text-5xl font-mono font-medium text-canvas-text bg-transparent border-none outline-none placeholder:text-canvas-text-muted/50"
-          />
+        {/* 2. TABLET Layout (640px - 767px) */}
+        <div className="hidden sm:block md:hidden space-y-6 px-12">
+          {/* Title Area with separator */}
+          <div className="border-b border-white/5 pb-6 mb-8">
+            <input
+              type="text"
+              value={pageTitle}
+              onChange={(e) => handleTitleChange(e.target.value)}
+              placeholder="Untitled"
+              className="w-full text-5xl font-medium text-canvas-text bg-transparent border-none outline-none placeholder:text-canvas-text-muted/50 mb-4"
+            />
+          </div>
 
           {/* All Text Blocks with hover add buttons */}
           {textBlocks.map((block, index) => (
@@ -239,18 +243,20 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
           )}
         </div>
 
-        {/* 3. DESKTOP Layout (>= 768px) - TEMP TESTING */}
-        <div className="hidden md:grid grid-cols-[1.5fr_1fr] gap-10 max-w-7xl mx-auto px-6">
+        {/* 3. DESKTOP Layout (>= 768px) */}
+        <div className="hidden md:grid grid-cols-[1.5fr_1fr] gap-10 max-w-7xl mx-auto px-16">
           {/* LEFT Column - Title, Description, Text Blocks */}
           <div className="space-y-6">
-            {/* Page Title */}
-            <input
-              type="text"
-              value={pageTitle}
-              onChange={(e) => handleTitleChange(e.target.value)}
-              placeholder="Untitled"
-              className="w-full text-5xl font-mono font-medium text-canvas-text bg-transparent border-none outline-none placeholder:text-canvas-text-muted/50 break-words"
-            />
+            {/* Title Area with separator */}
+            <div className="border-b border-white/5 pb-6 mb-8">
+              <input
+                type="text"
+                value={pageTitle}
+                onChange={(e) => handleTitleChange(e.target.value)}
+                placeholder="Untitled"
+                className="w-full text-5xl font-medium text-canvas-text bg-transparent border-none outline-none placeholder:text-canvas-text-muted/50 break-words mb-4"
+              />
+            </div>
 
             {/* Text Blocks with hover add buttons */}
             {textBlocks.map((block, index) => (
