@@ -74,7 +74,10 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
   const [mobileFullscreenImage, setMobileFullscreenImage] = useState<string | null>(null);
   const [layoutMode, setLayoutMode] = useState<LayoutMode>(() => {
     if (typeof window !== "undefined") {
-      return (localStorage.getItem("canvas-layout-mode") as LayoutMode) || "split";
+      const stored = localStorage.getItem("canvas-layout-mode");
+      // Convert legacy "inline" to "grid" for backwards compatibility
+      if (stored === "inline") return "grid";
+      if (stored === "grid" || stored === "split") return stored;
     }
     return "split";
   });
