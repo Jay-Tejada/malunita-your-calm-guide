@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { CanvasBlock } from "./CanvasBlock";
+import { ReferenceCard } from "./ReferenceCard";
 import { Input } from "@/components/ui/input";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -185,15 +186,19 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
             <div className="space-y-4">
               {artBlocks.length > 0 ? (
                 artBlocks.map((block) => (
-                  <CanvasBlock
+                  <ReferenceCard 
                     key={block.id}
-                    block={block}
-                    pageId={page.id}
-                    onCreateBelow={() => createBlock.mutate("image")}
-                  />
+                    caption={block.content?.caption}
+                  >
+                    <CanvasBlock
+                      block={block}
+                      pageId={page.id}
+                      onCreateBelow={() => createBlock.mutate("image")}
+                    />
+                  </ReferenceCard>
                 ))
               ) : (
-                <div className="border border-dashed border-canvas-border rounded-lg p-8 text-center text-canvas-text-muted font-mono text-sm">
+                <div className="rounded-[14px] border border-dashed border-border/50 bg-muted/30 p-8 text-center text-muted-foreground font-mono text-sm">
                   Add image or gallery blocks to see them here
                 </div>
               )}
@@ -204,12 +209,16 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
         {/* Mobile: Show art blocks inline after text */}
         <div className="lg:hidden mt-8 space-y-4">
           {artBlocks.map((block) => (
-            <CanvasBlock
+            <ReferenceCard 
               key={block.id}
-              block={block}
-              pageId={page.id}
-              onCreateBelow={() => createBlock.mutate("image")}
-            />
+              caption={block.content?.caption}
+            >
+              <CanvasBlock
+                block={block}
+                pageId={page.id}
+                onCreateBelow={() => createBlock.mutate("image")}
+              />
+            </ReferenceCard>
           ))}
         </div>
 
