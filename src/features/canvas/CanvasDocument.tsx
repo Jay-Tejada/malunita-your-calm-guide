@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { CanvasBlock } from "./CanvasBlock";
 import { ReferenceCard } from "./ReferenceCard";
+import { HoverAddButton } from "./HoverAddButton";
 import { Input } from "@/components/ui/input";
 import { Plus, Pin, Upload, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -203,14 +204,19 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
             className="w-full text-5xl font-mono font-medium text-canvas-text bg-transparent border-none outline-none placeholder:text-canvas-text-muted/50"
           />
 
-          {/* All Text Blocks */}
-          {textBlocks.map((block) => (
-            <CanvasBlock
-              key={block.id}
-              block={block}
-              pageId={page.id}
-              onCreateBelow={() => createBlock.mutate("text")}
-            />
+          {/* All Text Blocks with hover add buttons */}
+          {textBlocks.map((block, index) => (
+            <div key={block.id}>
+              {index === 0 && (
+                <HoverAddButton onAddBlock={(type) => createBlock.mutate(type)} />
+              )}
+              <CanvasBlock
+                block={block}
+                pageId={page.id}
+                onCreateBelow={() => createBlock.mutate("text")}
+              />
+              <HoverAddButton onAddBlock={(type) => createBlock.mutate(type)} />
+            </div>
           ))}
 
           {/* Art Blocks */}
@@ -227,16 +233,10 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
             </ReferenceCard>
           ))}
 
-          {/* Add Block Button */}
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-canvas-text-muted hover:text-canvas-text font-mono text-sm opacity-50 hover:opacity-100 transition-opacity"
-            onClick={() => createBlock.mutate("text")}
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Add block
-          </Button>
+          {/* Initial add button when no blocks */}
+          {textBlocks.length === 0 && (
+            <HoverAddButton onAddBlock={(type) => createBlock.mutate(type)} />
+          )}
         </div>
 
         {/* 3. DESKTOP Layout (>= 768px) - TEMP TESTING */}
@@ -252,26 +252,25 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
               className="w-full text-5xl font-mono font-medium text-canvas-text bg-transparent border-none outline-none placeholder:text-canvas-text-muted/50 break-words"
             />
 
-            {/* Text Blocks Only */}
-            {textBlocks.map((block) => (
-              <CanvasBlock
-                key={block.id}
-                block={block}
-                pageId={page.id}
-                onCreateBelow={() => createBlock.mutate("text")}
-              />
+            {/* Text Blocks with hover add buttons */}
+            {textBlocks.map((block, index) => (
+              <div key={block.id}>
+                {index === 0 && (
+                  <HoverAddButton onAddBlock={(type) => createBlock.mutate(type)} />
+                )}
+                <CanvasBlock
+                  block={block}
+                  pageId={page.id}
+                  onCreateBelow={() => createBlock.mutate("text")}
+                />
+                <HoverAddButton onAddBlock={(type) => createBlock.mutate(type)} />
+              </div>
             ))}
 
-            {/* Add Block Button */}
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-canvas-text-muted hover:text-canvas-text font-mono text-sm opacity-50 hover:opacity-100 transition-opacity"
-              onClick={() => createBlock.mutate("text")}
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Add block
-            </Button>
+            {/* Initial add button when no blocks */}
+            {textBlocks.length === 0 && (
+              <HoverAddButton onAddBlock={(type) => createBlock.mutate(type)} />
+            )}
           </div>
 
           {/* RIGHT Column - Art/Image Blocks Only (sticky) */}
