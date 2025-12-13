@@ -631,7 +631,7 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
 
           {/* SPLIT MODE - Two column editorial layout */}
           {layoutMode === "split" && (
-            <div className="grid grid-cols-[1.5fr_1fr] gap-10 transition-all duration-300 ease-out motion-reduce:transition-none">
+            <div className="grid grid-cols-[1.5fr_1fr] gap-8 max-w-7xl mx-auto px-6">
             {/* LEFT Column - Title, Description, Text Blocks */}
             <div className="space-y-6">
               {/* Title Area with separator */}
