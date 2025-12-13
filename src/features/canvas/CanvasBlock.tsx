@@ -14,6 +14,8 @@ import {
   Minus,
   Upload,
   Loader2,
+  LayoutGrid,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -48,6 +50,7 @@ const blockTypes = [
   { type: "header", label: "Heading 2", icon: Heading2, level: 2 },
   { type: "checklist", label: "Checklist", icon: CheckSquare },
   { type: "image", label: "Image", icon: Image },
+  { type: "gallery", label: "Gallery", icon: LayoutGrid },
   { type: "callout", label: "Callout", icon: Quote },
   { type: "divider", label: "Divider", icon: Minus },
 ];
@@ -94,6 +97,10 @@ export function CanvasBlock({ block, pageId, onCreateBelow }: CanvasBlockProps) 
           ? { text: content?.text || "", checked: false }
           : type === "divider"
           ? {}
+          : type === "gallery"
+          ? { images: [] }
+          : type === "image"
+          ? { url: "", caption: "" }
           : { text: content?.text || "" };
 
       const { error } = await supabase
@@ -184,9 +191,62 @@ export function CanvasBlock({ block, pageId, onCreateBelow }: CanvasBlockProps) 
     }
   };
 
+  // Gallery image upload handler (adds to array)
+  const handleGalleryUpload = async (file: File) => {
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please upload an image file");
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error("Not authenticated");
+        return;
+      }
+
+      const ext = file.name.split(".").pop() || "jpg";
+      const filename = `${user.id}/${Date.now()}-${crypto.randomUUID()}.${ext}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("canvas-images")
+        .upload(filename, file, {
+          contentType: file.type,
+          upsert: false,
+        });
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from("canvas-images")
+        .getPublicUrl(filename);
+
+      const currentImages = content?.images || [];
+      const newContent = { images: [...currentImages, publicUrl] };
+      setContent(newContent);
+      updateBlock.mutate(newContent);
+      toast.success("Image added to gallery!");
+    } catch (error) {
+      console.error("Upload failed:", error);
+      toast.error("Failed to upload image");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  // Remove image from gallery
+  const handleRemoveFromGallery = (index: number) => {
+    const currentImages = content?.images || [];
+    const newImages = currentImages.filter((_: string, i: number) => i !== index);
+    const newContent = { images: newImages };
+    setContent(newContent);
+    updateBlock.mutate(newContent);
+  };
+
   // Handle paste event for images
   const handlePaste = useCallback((e: React.ClipboardEvent) => {
-    if (block.block_type !== "image") return;
+    if (block.block_type !== "image" && block.block_type !== "gallery") return;
     
     const items = e.clipboardData?.items;
     if (!items) return;
@@ -196,12 +256,16 @@ export function CanvasBlock({ block, pageId, onCreateBelow }: CanvasBlockProps) 
         e.preventDefault();
         const file = item.getAsFile();
         if (file) {
-          handleImageUpload(file);
+          if (block.block_type === "gallery") {
+            handleGalleryUpload(file);
+          } else {
+            handleImageUpload(file);
+          }
         }
         break;
       }
     }
-  }, [block.block_type]);
+  }, [block.block_type, content]);
 
   // Render based on block type
   const renderBlockContent = () => {
@@ -312,6 +376,82 @@ export function CanvasBlock({ block, pageId, onCreateBelow }: CanvasBlockProps) 
                     <Upload className="w-8 h-8 mx-auto text-canvas-text-muted mb-2" />
                     <p className="text-canvas-text-muted font-mono text-sm">
                       Click or paste (Ctrl+V) to add image
+                    </p>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+        );
+
+      case "gallery":
+        const images = content?.images || [];
+        return (
+          <div 
+            ref={imageBlockRef}
+            className="relative group outline-none" 
+            onPaste={handlePaste}
+            onMouseEnter={() => imageBlockRef.current?.focus()}
+            tabIndex={0}
+          >
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              multiple
+              className="hidden"
+              onChange={(e) => {
+                const files = e.target.files;
+                if (files) {
+                  Array.from(files).forEach(file => handleGalleryUpload(file));
+                }
+              }}
+            />
+            {images.length > 0 ? (
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                {images.map((url: string, index: number) => (
+                  <div key={index} className="relative group/image aspect-square">
+                    <img
+                      src={url}
+                      alt={`Gallery image ${index + 1}`}
+                      className="w-full h-full object-cover rounded-lg"
+                    />
+                    <button
+                      onClick={() => handleRemoveFromGallery(index)}
+                      className="absolute top-2 right-2 p-1 bg-black/50 rounded-full opacity-0 group-hover/image:opacity-100 transition-opacity hover:bg-black/70"
+                    >
+                      <X className="w-4 h-4 text-white" />
+                    </button>
+                  </div>
+                ))}
+                <div 
+                  className="aspect-square border-2 border-dashed border-canvas-border rounded-lg flex items-center justify-center cursor-pointer hover:border-canvas-accent transition-colors"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  {isUploading ? (
+                    <Loader2 className="w-6 h-6 text-canvas-text-muted animate-spin" />
+                  ) : (
+                    <Plus className="w-6 h-6 text-canvas-text-muted" />
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div 
+                className="border-2 border-dashed border-canvas-border rounded-lg p-8 text-center cursor-pointer hover:border-canvas-accent transition-colors"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                {isUploading ? (
+                  <>
+                    <Loader2 className="w-8 h-8 mx-auto text-canvas-text-muted mb-2 animate-spin" />
+                    <p className="text-canvas-text-muted font-mono text-sm">
+                      Uploading...
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <LayoutGrid className="w-8 h-8 mx-auto text-canvas-text-muted mb-2" />
+                    <p className="text-canvas-text-muted font-mono text-sm">
+                      Click or paste to add images
                     </p>
                   </>
                 )}
