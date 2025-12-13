@@ -294,10 +294,10 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
           </div>
         </div>
 
-        {/* Desktop Layout (>= 1024px): Two-column grid */}
-        <div className="hidden lg:grid lg:grid-cols-[60%_40%] lg:gap-8 max-w-[1200px] mx-auto">
+        {/* Desktop Layout (>= 1024px): Side-by-side grid */}
+        <div className="hidden lg:grid grid-cols-[1fr_400px] gap-8 max-w-[1200px] mx-auto">
           {/* Left Column - Text Content */}
-          <div className="max-w-[680px]">
+          <div className="text-column">
             {/* Page Title */}
             <div className="mb-8">
               <input
@@ -335,8 +335,8 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
             </div>
           </div>
 
-          {/* Right Column - Art/Image Content */}
-          <div className="max-w-[460px] self-start sticky top-24">
+          {/* Right Column - Art/Image Content (sticky) */}
+          <div className="art-column sticky top-24 self-start">
             <div className="space-y-4">
               {artBlocks.length > 0 ? (
                 artBlocks.map((block) => (
