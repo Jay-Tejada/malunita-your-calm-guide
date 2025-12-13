@@ -2,10 +2,8 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { CanvasBlock } from "./CanvasBlock";
-import { ReferenceCard } from "./ReferenceCard";
 import { HoverAddButton } from "./HoverAddButton";
-import { Input } from "@/components/ui/input";
-import { Plus, Upload, X, Maximize2, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus, Upload, X, Maximize2, Trash2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,

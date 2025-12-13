@@ -29,7 +29,7 @@ export function HoverAddButton({ onAddBlock }: HoverAddButtonProps) {
           <Button
             variant="ghost"
             size="icon"
-            className="h-6 w-6 rounded-full opacity-0 group-hover:opacity-100 data-[state=open]:opacity-100 transition-opacity bg-muted/50 hover:bg-muted text-muted-foreground hover:text-foreground"
+            className="h-6 w-6 rounded-full opacity-0 group-hover:opacity-100 focus:opacity-100 data-[state=open]:opacity-100 transition-opacity duration-150 motion-reduce:transition-none bg-muted/50 hover:bg-muted focus:ring-2 focus:ring-ring/50 text-muted-foreground hover:text-foreground"
           >
             <Plus className="h-3 w-3" />
           </Button>
