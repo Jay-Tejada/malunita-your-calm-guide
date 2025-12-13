@@ -532,9 +532,9 @@ export function CanvasBlock({ block, pageId, onCreateBelow }: CanvasBlockProps) 
   };
 
   return (
-    <div className="group relative flex items-start gap-1 py-1 -ml-12 pl-12">
+    <div className="group relative flex items-start gap-1 py-1 -ml-12 pl-12 rounded-md transition-shadow duration-150 focus-within:ring-2 focus-within:ring-white/10 motion-reduce:transition-none">
       {/* Block Controls */}
-      <div className="absolute left-0 top-1 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+      <div className="absolute left-0 top-1 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-150 motion-reduce:transition-none">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
