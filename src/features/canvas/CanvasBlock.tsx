@@ -446,13 +446,16 @@ export function CanvasBlock({ block, pageId, onCreateBelow, onNavigate, blockRef
               }}
             />
             {images.length > 0 ? (
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              <div className="grid grid-cols-2 gap-3">
                 {images.map((url: string, index: number) => (
-                  <div key={index} className="relative group/image aspect-square">
+                  <div 
+                    key={index} 
+                    className="relative group/image aspect-square bg-black/20 rounded-lg overflow-hidden hover:ring-2 hover:ring-white/20 transition"
+                  >
                     <img
                       src={url}
                       alt={`Gallery image ${index + 1}`}
-                      className="w-full h-full object-cover rounded-lg"
+                      className="w-full h-full object-contain p-2"
                     />
                     <button
                       onClick={() => handleRemoveFromGallery(index)}
@@ -463,7 +466,7 @@ export function CanvasBlock({ block, pageId, onCreateBelow, onNavigate, blockRef
                   </div>
                 ))}
                 <div 
-                  className="aspect-square border-2 border-dashed border-canvas-border rounded-lg flex items-center justify-center cursor-pointer hover:border-canvas-accent transition-colors"
+                  className="aspect-square bg-black/20 rounded-lg flex items-center justify-center cursor-pointer hover:ring-2 hover:ring-white/20 transition"
                   onClick={() => fileInputRef.current?.click()}
                 >
                   {isUploading ? (
