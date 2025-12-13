@@ -29,6 +29,7 @@ import {
 import { cn } from "@/lib/utils";
 import debounce from "@/lib/debounce";
 import { toast } from "sonner";
+import { SlashCommandMenu } from "./SlashCommandMenu";
 
 interface Block {
   id: string;
@@ -59,6 +60,8 @@ export function CanvasBlock({ block, pageId, onCreateBelow }: CanvasBlockProps) 
   const queryClient = useQueryClient();
   const [content, setContent] = useState(block.content);
   const [isUploading, setIsUploading] = useState(false);
+  const [showSlashMenu, setShowSlashMenu] = useState(false);
+  const [slashMenuPosition, setSlashMenuPosition] = useState({ top: 0, left: 0 });
   const textRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageBlockRef = useRef<HTMLDivElement>(null);
@@ -140,6 +143,34 @@ export function CanvasBlock({ block, pageId, onCreateBelow }: CanvasBlockProps) 
     const newContent = { ...content, text };
     setContent(newContent);
     debouncedSave(newContent);
+  };
+
+  // Handle input for slash command detection
+  const handleTextInput = (e: React.FormEvent<HTMLDivElement>) => {
+    const text = e.currentTarget.textContent || "";
+    
+    // Check for "/" at start of empty block
+    if (text === "/" && block.block_type === "text") {
+      const rect = e.currentTarget.getBoundingClientRect();
+      setSlashMenuPosition({
+        top: rect.bottom + 4,
+        left: rect.left,
+      });
+      setShowSlashMenu(true);
+    } else if (showSlashMenu && !text.startsWith("/")) {
+      setShowSlashMenu(false);
+    }
+  };
+
+  // Handle slash command selection
+  const handleSlashSelect = (type: string, level?: number) => {
+    setShowSlashMenu(false);
+    // Clear the "/" from content
+    if (textRef.current) {
+      textRef.current.textContent = "";
+    }
+    setContent({ text: "" });
+    changeType.mutate({ type, level });
   };
 
   const handleCheckToggle = () => {
@@ -462,18 +493,35 @@ export function CanvasBlock({ block, pageId, onCreateBelow }: CanvasBlockProps) 
 
       default: // text
         return (
-          <div
-            ref={textRef}
-            contentEditable
-            suppressContentEditableWarning
-            onBlur={(e) => handleTextChange(e.currentTarget.textContent || "")}
-            data-placeholder="Type something..."
-            className={cn(
-              "outline-none text-canvas-text leading-relaxed",
-              "empty:before:content-[attr(data-placeholder)] empty:before:text-canvas-text-muted/50"
+          <>
+            <div
+              ref={textRef}
+              contentEditable
+              suppressContentEditableWarning
+              onInput={handleTextInput}
+              onBlur={(e) => {
+                handleTextChange(e.currentTarget.textContent || "");
+                // Delay hiding menu to allow click
+                setTimeout(() => {
+                  if (!showSlashMenu) return;
+                  setShowSlashMenu(false);
+                }, 200);
+              }}
+              data-placeholder="Type '/' for commands..."
+              className={cn(
+                "outline-none text-canvas-text leading-relaxed",
+                "empty:before:content-[attr(data-placeholder)] empty:before:text-canvas-text-muted/50"
+              )}
+              dangerouslySetInnerHTML={{ __html: content?.text || "" }}
+            />
+            {showSlashMenu && (
+              <SlashCommandMenu
+                position={slashMenuPosition}
+                onSelect={handleSlashSelect}
+                onClose={() => setShowSlashMenu(false)}
+              />
             )}
-            dangerouslySetInnerHTML={{ __html: content?.text || "" }}
-          />
+          </>
         );
     }
   };
