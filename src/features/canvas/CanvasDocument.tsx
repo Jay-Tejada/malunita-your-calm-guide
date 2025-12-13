@@ -405,6 +405,18 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
 
   return (
     <div ref={containerRef} className="h-full overflow-y-auto relative">
+      {/* DEBUG: Mode indicator banners */}
+      {layoutMode === "split" && (
+        <div className="fixed top-0 left-0 bg-green-500 text-black p-4 z-50">
+          SPLIT MODE ACTIVE
+        </div>
+      )}
+      {layoutMode === "grid" && (
+        <div className="fixed top-0 left-0 bg-yellow-500 text-black p-4 z-50">
+          GRID MODE ACTIVE
+        </div>
+      )}
+
       {/* Layout Toggle - Fixed top-right, hidden on mobile */}
       <div className="hidden md:block fixed top-20 right-6 z-50">
         <LayoutToggle value={layoutMode} onChange={handleLayoutChange} />
