@@ -190,6 +190,15 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
             </div>
           )}
 
+          {/* Divider between art and remaining text */}
+          {artBlocks.length > 0 && [...introTextBlocks.slice(1), ...remainingTextBlocks].length > 0 && (
+            <div className="flex items-center gap-4 my-8">
+              <div className="flex-1 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+              <span className="text-xs text-muted-foreground/50 font-mono">···</span>
+              <div className="flex-1 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+            </div>
+          )}
+
           {/* Remaining Text Blocks (all except first intro) */}
           <div className="space-y-1">
             {[...introTextBlocks.slice(1), ...remainingTextBlocks].map((block) => (
