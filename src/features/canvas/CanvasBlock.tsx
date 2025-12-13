@@ -58,6 +58,7 @@ export function CanvasBlock({ block, pageId, onCreateBelow }: CanvasBlockProps) 
   const [isUploading, setIsUploading] = useState(false);
   const textRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const imageBlockRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setContent(block.content);
@@ -264,8 +265,10 @@ export function CanvasBlock({ block, pageId, onCreateBelow }: CanvasBlockProps) 
       case "image":
         return (
           <div 
-            className="relative group" 
+            ref={imageBlockRef}
+            className="relative group outline-none" 
             onPaste={handlePaste}
+            onMouseEnter={() => imageBlockRef.current?.focus()}
             tabIndex={0}
           >
             <input
