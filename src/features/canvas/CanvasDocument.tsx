@@ -633,7 +633,7 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
           {layoutMode === "split" && (
             <div className="grid grid-cols-[1.5fr_1fr] gap-8 max-w-7xl mx-auto px-6">
               {/* LEFT COLUMN - Title + text content ONLY */}
-              <div className="space-y-6">
+              <div className="space-y-6 bg-red-500/30">
                 {/* Title Area */}
                 <div className="border-b border-white/5 pb-6 mb-4">
                   <input
@@ -706,7 +706,7 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
               {/* RIGHT COLUMN - Images ONLY (sticky) */}
               <div
                 className={cn(
-                  "sticky top-24 self-start space-y-3 max-h-[calc(100vh-120px)] overflow-y-auto art-scrollbar max-w-[400px] rounded-lg transition-all duration-200 ease-out motion-reduce:transition-none",
+                  "sticky top-24 self-start space-y-3 max-h-[calc(100vh-120px)] overflow-y-auto art-scrollbar max-w-[400px] rounded-lg transition-all duration-200 ease-out motion-reduce:transition-none bg-blue-500/30",
                   isDraggingOver && "ring-2 ring-primary/50 bg-primary/5"
                 )}
                 onDragOver={handleDragOver}
