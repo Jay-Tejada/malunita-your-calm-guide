@@ -62,8 +62,12 @@ export function CanvasTopBar({
 
       {/* Right: Orb icon + Toggle */}
       <div className="flex items-center gap-2">
-        {/* Decorative orb */}
-        <div className="w-6 h-6 rounded-full bg-gradient-to-br from-canvas-accent/60 to-canvas-accent opacity-80" />
+        {/* Home orb button */}
+        <button
+          onClick={() => navigate("/")}
+          className="w-6 h-6 rounded-full bg-gradient-to-br from-canvas-accent/60 to-canvas-accent opacity-80 hover:opacity-100 transition-opacity cursor-pointer"
+          title="Go home"
+        />
 
         <Button
           variant="ghost"
