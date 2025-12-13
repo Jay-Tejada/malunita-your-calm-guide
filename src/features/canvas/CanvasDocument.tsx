@@ -288,7 +288,8 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
                       <div 
                         key={block.id} 
                         className={cn(
-                          "relative group cursor-pointer rounded-xl overflow-hidden transition-all duration-200 ease-out",
+                          "relative group cursor-pointer transition-all duration-200 ease-out",
+                          "p-2 rounded-xl border border-white/10 bg-black/[0.03] dark:bg-white/[0.03]",
                           isExpanded 
                             ? "shadow-lg" 
                             : "hover:scale-[1.02] hover:shadow-md",
@@ -305,9 +306,11 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
                           caption={isExpanded ? block.content?.caption : undefined}
                           className={cn(
                             "transition-all duration-200 ease-out",
+                            "[&_img]:w-full [&_img]:object-contain [&_img]:rounded-lg",
                             isExpanded 
-                              ? "[&_img]:max-w-full [&_img]:max-h-[400px] [&_img]:object-contain [&_img]:rounded-xl"
-                              : "[&_img]:w-full [&_img]:h-[80px] [&_img]:object-cover [&_img]:rounded-xl"
+                              ? "[&_img]:max-h-[450px]"
+                              : "[&_img]:max-h-[120px]",
+                            "flex items-center justify-center"
                           )}
                         >
                           <CanvasBlock
@@ -322,7 +325,7 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
                           <Button 
                             variant="secondary" 
                             size="icon" 
-                            className="absolute top-2 right-2 h-7 w-7 bg-background/80 backdrop-blur-sm hover:bg-background/90 transition-all duration-200"
+                            className="absolute top-3 right-3 h-7 w-7 bg-background/80 backdrop-blur-sm hover:bg-background/90 transition-all duration-200"
                             onClick={(e) => {
                               e.stopPropagation();
                               setExpandedImageId(null);
@@ -334,7 +337,7 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
                         
                         {/* Pin icon on hover (thumbnails only) */}
                         {!isExpanded && (
-                          <div className="absolute top-1 left-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                          <div className="absolute top-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                             <Button 
                               variant="ghost" 
                               size="icon" 
