@@ -3,6 +3,8 @@
 import { colors, typography } from "@/ui/tokens";
 import { SidebarSection } from "./SidebarSection";
 import { SidebarItem } from "./SidebarItem";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -12,6 +14,24 @@ interface SidebarProps {
 }
 
 export function Sidebar({ isOpen, onClose, onNavigate, activePath }: SidebarProps) {
+  const { data: projects = [] } = useQuery({
+    queryKey: ["canvas-projects"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return [];
+      
+      const { data, error } = await supabase
+        .from("canvas_projects")
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("is_archived", false)
+        .order("updated_at", { ascending: false });
+      
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
   if (!isOpen) return null;
 
   return (
@@ -111,17 +131,30 @@ export function Sidebar({ isOpen, onClose, onNavigate, activePath }: SidebarProp
             <SidebarItem label="Weekly Insights" path="/insights/summary" active={activePath === "/insights/summary"} onNavigate={onNavigate} />
           </SidebarSection>
 
-          <SidebarSection title="Projects" action={{ label: "+", onClick: () => onNavigate("/projects/new") }}>
-            <p
-              style={{
-                fontFamily: typography.fontFamily,
-                fontSize: typography.bodyS.size,
-                color: colors.text.muted,
-                padding: "8px 12px",
-              }}
-            >
-              Nothing here yet
-            </p>
+          <SidebarSection title="Projects" action={{ label: "+", onClick: () => onNavigate("/projects") }}>
+            {projects.length === 0 ? (
+              <p
+                style={{
+                  fontFamily: typography.fontFamily,
+                  fontSize: typography.bodyS.size,
+                  color: colors.text.muted,
+                  padding: "8px 12px",
+                }}
+              >
+                Nothing here yet
+              </p>
+            ) : (
+              projects.map((project) => (
+                <SidebarItem
+                  key={project.id}
+                  icon={project.icon || "📁"}
+                  label={project.name}
+                  path={`/canvas/${project.id}`}
+                  active={activePath?.startsWith(`/canvas/${project.id}`)}
+                  onNavigate={onNavigate}
+                />
+              ))
+            )}
           </SidebarSection>
         </nav>
 
