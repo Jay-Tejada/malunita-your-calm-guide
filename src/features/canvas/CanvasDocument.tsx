@@ -5,10 +5,11 @@ import { CanvasBlock } from "./CanvasBlock";
 import { ReferenceCard } from "./ReferenceCard";
 import { HoverAddButton } from "./HoverAddButton";
 import { Input } from "@/components/ui/input";
-import { Plus, Pin, Upload, X } from "lucide-react";
+import { Plus, Upload, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import debounce from "@/lib/debounce";
+import { toast } from "sonner";
 interface Block {
   id: string;
   block_type: string;
@@ -33,7 +34,9 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
   const queryClient = useQueryClient();
   const [pageTitle, setPageTitle] = useState(page?.title || "");
   const [expandedImageId, setExpandedImageId] = useState<string | null>(null);
+  const [isDraggingOver, setIsDraggingOver] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setPageTitle(page?.title || "");
@@ -94,6 +97,90 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
       queryClient.invalidateQueries({ queryKey: ["canvas-blocks", page?.id] });
     },
   });
+
+  // Upload image and create block
+  const uploadImage = async (file: File) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user || !page?.id) {
+      toast.error("Not authenticated");
+      return;
+    }
+
+    const fileExt = file.name.split(".").pop();
+    const filePath = `${user.id}/${page.id}/${crypto.randomUUID()}.${fileExt}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from("canvas-images")
+      .upload(filePath, file);
+
+    if (uploadError) {
+      toast.error("Failed to upload image");
+      return;
+    }
+
+    const { data: { publicUrl } } = supabase.storage
+      .from("canvas-images")
+      .getPublicUrl(filePath);
+
+    const maxOrder = Math.max(...blocks.map((b) => b.sort_order || 0), -1);
+    const { error } = await supabase
+      .from("page_blocks")
+      .insert({
+        page_id: page.id,
+        user_id: user.id,
+        block_type: "image",
+        content: { url: publicUrl },
+        sort_order: maxOrder + 1,
+      });
+
+    if (error) {
+      toast.error("Failed to create image block");
+      return;
+    }
+
+    queryClient.invalidateQueries({ queryKey: ["canvas-blocks", page?.id] });
+    toast.success("Image uploaded");
+  };
+
+  // Handle file input change
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      Array.from(files).forEach(uploadImage);
+    }
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  // Handle drag and drop
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDraggingOver(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDraggingOver(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDraggingOver(false);
+
+    const files = e.dataTransfer.files;
+    if (files && files.length > 0) {
+      const imageFiles = Array.from(files).filter(f => f.type.startsWith("image/"));
+      if (imageFiles.length === 0) {
+        toast.error("Please drop image files only");
+        return;
+      }
+      imageFiles.forEach(uploadImage);
+    }
+  };
 
   // Track active section based on scroll
   useEffect(() => {
@@ -280,14 +367,31 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
           </div>
 
           {/* RIGHT Column - Art/Image Blocks Only (sticky) */}
-          <div className="sticky top-24 self-start space-y-2 max-h-[calc(100vh-120px)] overflow-y-auto art-scrollbar max-w-[400px]">
+          <div 
+            className={cn(
+              "sticky top-24 self-start space-y-2 max-h-[calc(100vh-120px)] overflow-y-auto art-scrollbar max-w-[400px] rounded-lg transition-all duration-200",
+              isDraggingOver && "ring-2 ring-primary/50 bg-primary/5"
+            )}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+          >
+            {/* Hidden file input */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              multiple
+              className="hidden"
+              onChange={handleFileSelect}
+            />
+
             {artBlocks.length > 0 ? (
               <>
                 {/* Expandable image carousel - raw images, no wrappers */}
                 <div className="space-y-3">
                   {artBlocks.map((block) => {
                     const isExpanded = expandedImageId === block.id;
-                    const hasExpanded = expandedImageId !== null;
                     const imageUrl = block.content?.url;
                     
                     // If no image uploaded yet, show the upload block
@@ -332,22 +436,24 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
                   })}
                 </div>
                 
-                {/* Add reference button */}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="w-full text-muted-foreground hover:text-foreground font-mono text-xs border border-dashed border-border/50 hover:border-border mt-2"
-                  onClick={() => createBlock.mutate("image")}
+                {/* Add reference button - dashed border, rounded-lg */}
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="w-full py-3 mt-2 rounded-lg border border-dashed border-muted-foreground/30 text-muted-foreground hover:border-muted-foreground/60 hover:bg-muted/30 hover:text-foreground transition-all duration-200 flex items-center justify-center gap-2"
                 >
-                  <Plus className="w-3 h-3 mr-1" />
-                  Add reference
-                </Button>
+                  <Plus className="w-4 h-4" />
+                </button>
               </>
             ) : (
-              /* Empty state placeholder */
+              /* Empty state placeholder with drop zone */
               <div 
-                className="rounded-[14px] border-2 border-dashed border-border/40 bg-muted/20 p-12 text-center cursor-pointer hover:border-border/60 hover:bg-muted/30 transition-colors"
-                onClick={() => createBlock.mutate("image")}
+                className={cn(
+                  "rounded-lg border-2 border-dashed border-muted-foreground/30 bg-muted/10 p-12 text-center cursor-pointer transition-all duration-200",
+                  isDraggingOver 
+                    ? "border-primary/60 bg-primary/10" 
+                    : "hover:border-muted-foreground/50 hover:bg-muted/20"
+                )}
+                onClick={() => fileInputRef.current?.click()}
               >
                 <Upload className="w-8 h-8 mx-auto mb-3 text-muted-foreground/50" />
                 <p className="text-muted-foreground/70 font-mono text-sm">
