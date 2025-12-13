@@ -12,6 +12,8 @@ import {
   Image,
   Quote,
   Minus,
+  Upload,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -24,6 +26,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import debounce from "@/lib/debounce";
+import { toast } from "sonner";
 
 interface Block {
   id: string;
@@ -44,6 +47,7 @@ const blockTypes = [
   { type: "header", label: "Heading 1", icon: Heading1, level: 1 },
   { type: "header", label: "Heading 2", icon: Heading2, level: 2 },
   { type: "checklist", label: "Checklist", icon: CheckSquare },
+  { type: "image", label: "Image", icon: Image },
   { type: "callout", label: "Callout", icon: Quote },
   { type: "divider", label: "Divider", icon: Minus },
 ];
@@ -51,7 +55,9 @@ const blockTypes = [
 export function CanvasBlock({ block, pageId, onCreateBelow }: CanvasBlockProps) {
   const queryClient = useQueryClient();
   const [content, setContent] = useState(block.content);
+  const [isUploading, setIsUploading] = useState(false);
   const textRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setContent(block.content);
@@ -134,6 +140,49 @@ export function CanvasBlock({ block, pageId, onCreateBelow }: CanvasBlockProps) 
     updateBlock.mutate(newContent);
   };
 
+  // Image upload handler
+  const handleImageUpload = async (file: File) => {
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please upload an image file");
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error("Not authenticated");
+        return;
+      }
+
+      const ext = file.name.split(".").pop() || "jpg";
+      const filename = `${user.id}/${Date.now()}-${crypto.randomUUID()}.${ext}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("canvas-images")
+        .upload(filename, file, {
+          contentType: file.type,
+          upsert: false,
+        });
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from("canvas-images")
+        .getPublicUrl(filename);
+
+      const newContent = { url: publicUrl, caption: "" };
+      setContent(newContent);
+      updateBlock.mutate(newContent);
+      toast.success("Image uploaded!");
+    } catch (error) {
+      console.error("Upload failed:", error);
+      toast.error("Failed to upload image");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   // Render based on block type
   const renderBlockContent = () => {
     switch (block.block_type) {
@@ -196,12 +245,23 @@ export function CanvasBlock({ block, pageId, onCreateBelow }: CanvasBlockProps) 
       case "image":
         return (
           <div className="relative group">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) handleImageUpload(file);
+              }}
+            />
             {content?.url ? (
               <>
                 <img
                   src={content.url}
                   alt={content.caption || ""}
-                  className="w-full rounded-lg"
+                  className="w-full rounded-lg cursor-pointer"
+                  onClick={() => fileInputRef.current?.click()}
                 />
                 {content.caption && (
                   <p className="text-center text-sm text-canvas-text-muted mt-2 font-mono">
@@ -210,11 +270,25 @@ export function CanvasBlock({ block, pageId, onCreateBelow }: CanvasBlockProps) 
                 )}
               </>
             ) : (
-              <div className="border-2 border-dashed border-canvas-border rounded-lg p-8 text-center">
-                <Image className="w-8 h-8 mx-auto text-canvas-text-muted mb-2" />
-                <p className="text-canvas-text-muted font-mono text-sm">
-                  Click to add image
-                </p>
+              <div 
+                className="border-2 border-dashed border-canvas-border rounded-lg p-8 text-center cursor-pointer hover:border-canvas-accent transition-colors"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                {isUploading ? (
+                  <>
+                    <Loader2 className="w-8 h-8 mx-auto text-canvas-text-muted mb-2 animate-spin" />
+                    <p className="text-canvas-text-muted font-mono text-sm">
+                      Uploading...
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <Upload className="w-8 h-8 mx-auto text-canvas-text-muted mb-2" />
+                    <p className="text-canvas-text-muted font-mono text-sm">
+                      Click to upload image
+                    </p>
+                  </>
+                )}
               </div>
             )}
           </div>
