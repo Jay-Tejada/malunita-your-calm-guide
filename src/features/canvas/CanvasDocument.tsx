@@ -295,7 +295,7 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
         </div>
 
         {/* Desktop Layout (>= 1024px): Side-by-side grid */}
-        <div className="hidden lg:grid grid-cols-[1fr_400px] gap-8 max-w-6xl mx-auto px-6">
+        <div className="hidden lg:grid grid-cols-[1fr_400px] gap-8 max-w-6xl mx-auto px-6 border-4 border-red-500">
           {/* Left Column - Text Content */}
           <div className="text-column">
             {/* Page Title */}
