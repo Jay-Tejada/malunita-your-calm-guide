@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { CanvasBlock } from "./CanvasBlock";
 import { ReferenceCard } from "./ReferenceCard";
 import { Input } from "@/components/ui/input";
-import { Plus } from "lucide-react";
+import { Plus, Pin, Upload, Maximize2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import debounce from "@/lib/debounce";
@@ -277,22 +277,100 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
           {/* RIGHT Column - Art/Image Blocks Only (sticky) */}
           <div className="sticky top-24 self-start space-y-4 max-h-[calc(100vh-120px)] overflow-y-auto art-scrollbar max-w-[400px]">
             {artBlocks.length > 0 ? (
-              artBlocks.map((block) => (
-                <ReferenceCard 
-                  key={block.id}
-                  caption={block.content?.caption}
-                  className="[&_img]:max-w-full [&_img]:max-h-[450px] [&_img]:object-contain [&_img]:rounded-xl"
+              <>
+                {/* Thumbnail grid for multiple images */}
+                {artBlocks.length > 3 ? (
+                  <div className="grid grid-cols-2 gap-2">
+                    {artBlocks.map((block, index) => (
+                      <div 
+                        key={block.id} 
+                        className="relative group cursor-pointer"
+                      >
+                        <ReferenceCard 
+                          caption={block.content?.caption}
+                          className="[&_img]:max-w-full [&_img]:max-h-[120px] [&_img]:object-cover [&_img]:rounded-lg"
+                        >
+                          <CanvasBlock
+                            block={block}
+                            pageId={page.id}
+                            onCreateBelow={() => createBlock.mutate("image")}
+                          />
+                        </ReferenceCard>
+                        {/* Expand icon overlay */}
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Button 
+                            variant="secondary" 
+                            size="icon" 
+                            className="h-6 w-6 bg-background/80 backdrop-blur-sm"
+                          >
+                            <Maximize2 className="h-3 w-3" />
+                          </Button>
+                        </div>
+                        {/* Pin icon */}
+                        <div className="absolute top-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                          >
+                            <Pin className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  /* Full-size display for 1-3 images */
+                  artBlocks.map((block) => (
+                    <div key={block.id} className="relative group">
+                      <ReferenceCard 
+                        caption={block.content?.caption}
+                        className="[&_img]:max-w-full [&_img]:max-h-[450px] [&_img]:object-contain [&_img]:rounded-xl"
+                      >
+                        <CanvasBlock
+                          block={block}
+                          pageId={page.id}
+                          onCreateBelow={() => createBlock.mutate("image")}
+                        />
+                      </ReferenceCard>
+                      {/* Pin icon for full-size */}
+                      <div className="absolute top-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-7 w-7 text-muted-foreground hover:text-foreground bg-background/60 backdrop-blur-sm"
+                        >
+                          <Pin className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))
+                )}
+                
+                {/* Add reference button */}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="w-full text-muted-foreground hover:text-foreground font-mono text-xs border border-dashed border-border/50 hover:border-border"
+                  onClick={() => createBlock.mutate("image")}
                 >
-                  <CanvasBlock
-                    block={block}
-                    pageId={page.id}
-                    onCreateBelow={() => createBlock.mutate("image")}
-                  />
-                </ReferenceCard>
-              ))
+                  <Plus className="w-3 h-3 mr-1" />
+                  Add reference
+                </Button>
+              </>
             ) : (
-              <div className="rounded-[14px] border border-dashed border-border/50 bg-muted/30 p-8 text-center text-muted-foreground font-mono text-sm">
-                Add image or gallery blocks to see them here
+              /* Empty state placeholder */
+              <div 
+                className="rounded-[14px] border-2 border-dashed border-border/40 bg-muted/20 p-12 text-center cursor-pointer hover:border-border/60 hover:bg-muted/30 transition-colors"
+                onClick={() => createBlock.mutate("image")}
+              >
+                <Upload className="w-8 h-8 mx-auto mb-3 text-muted-foreground/50" />
+                <p className="text-muted-foreground/70 font-mono text-sm">
+                  Drop inspiration here
+                </p>
+                <p className="text-muted-foreground/50 font-mono text-xs mt-1">
+                  or click to add
+                </p>
               </div>
             )}
           </div>
