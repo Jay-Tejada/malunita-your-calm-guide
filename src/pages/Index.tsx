@@ -369,16 +369,10 @@ const Index = () => {
                 isProcessing={isOrbProcessing}
               />
               
-              {/* Status text below orb */}
-              {(isOrbRecording || isOrbProcessing) ? (
-                <p className="mt-4 text-xs text-muted-foreground/40 animate-fade-in">
-                  {isOrbRecording ? 'listening...' : 'transcribing...'}
-                </p>
-              ) : (
-                <p className="mt-6 text-sm text-muted-foreground/50 text-center font-light">
-                  {getOneLiner()}
-                </p>
-              )}
+              {/* Status text below orb - fixed height to prevent layout shift */}
+              <p className="mt-6 h-5 text-sm text-muted-foreground/50 text-center font-light">
+                {isOrbRecording ? 'listening...' : isOrbProcessing ? 'transcribing...' : getOneLiner()}
+              </p>
             </div>
             
             {/* Start my day button - only show if fiesta card is not visible */}
@@ -433,16 +427,10 @@ const Index = () => {
                 isProcessing={isOrbProcessing}
               />
               
-              {/* Status text or one-liner below orb */}
-              {(isOrbRecording || isOrbProcessing) ? (
-                <p className="mt-4 text-xs text-muted-foreground/40 animate-fade-in">
-                  {isOrbRecording ? 'listening...' : 'transcribing...'}
-                </p>
-              ) : (
-                <p className="mt-6 text-sm text-muted-foreground/50 text-center font-light">
-                  {getOneLiner()}
-                </p>
-              )}
+              {/* Status text below orb - fixed height to prevent layout shift */}
+              <p className="mt-6 h-5 text-sm text-muted-foreground/50 text-center font-light">
+                {isOrbRecording ? 'listening...' : isOrbProcessing ? 'transcribing...' : getOneLiner()}
+              </p>
             </div>
             
             {/* Start my day button - only show if fiesta card is not visible */}
