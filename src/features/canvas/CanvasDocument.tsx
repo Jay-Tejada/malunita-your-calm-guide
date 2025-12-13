@@ -54,6 +54,15 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
   const [mobileFullscreenImage, setMobileFullscreenImage] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const titleInputRef = useRef<HTMLInputElement>(null);
+
+  // Auto-focus title on new/empty pages
+  useEffect(() => {
+    if (page && pageTitle === "Untitled" && blocks.length === 0) {
+      titleInputRef.current?.focus();
+      titleInputRef.current?.select();
+    }
+  }, [page?.id]);
 
   // Delete block mutation
   const deleteBlock = useMutation({
@@ -270,6 +279,7 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
           {/* Title Area */}
           <div className="px-4 mb-6">
             <input
+              ref={titleInputRef}
               type="text"
               value={pageTitle}
               onChange={(e) => handleTitleChange(e.target.value)}
@@ -280,37 +290,55 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
 
           {/* Description / Text Blocks */}
           <div className="px-4 space-y-4 mb-6">
-            {textBlocks.map((block) => (
-              <div key={block.id} className="text-base">
-                <CanvasBlock
-                  block={block}
-                  pageId={page.id}
-                  onCreateBelow={() => createBlock.mutate("text")}
-                />
-              </div>
-            ))}
+            {textBlocks.length === 0 ? (
+              <button
+                onClick={() => createBlock.mutate("text")}
+                className="w-full py-8 text-center text-muted-foreground/50 hover:text-muted-foreground transition-colors duration-150"
+              >
+                Start writing...
+              </button>
+            ) : (
+              textBlocks.map((block) => (
+                <div key={block.id} className="text-base">
+                  <CanvasBlock
+                    block={block}
+                    pageId={page.id}
+                    onCreateBelow={() => createBlock.mutate("text")}
+                  />
+                </div>
+              ))
+            )}
           </div>
 
           {/* Art Blocks - Full width cards */}
           <div className="px-4 space-y-2">
-            {artBlocks.map((block) => {
-              const imageUrl = block.content?.url;
-              if (!imageUrl) return null;
-              
-              return (
-                <div 
-                  key={block.id}
-                  className="w-full rounded-lg overflow-hidden bg-muted/20"
-                  onClick={() => setMobileFullscreenImage(imageUrl)}
-                >
-                  <img
-                    src={imageUrl}
-                    alt=""
-                    className="w-full max-h-[200px] object-contain cursor-pointer transition-transform duration-200 ease-out active:scale-[0.98] motion-reduce:transition-none"
-                  />
-                </div>
-              );
-            })}
+            {artBlocks.length === 0 ? (
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="w-full py-6 rounded-lg border border-dashed border-muted-foreground/20 text-muted-foreground/40 hover:border-muted-foreground/40 hover:text-muted-foreground/60 transition-colors duration-150 text-sm"
+              >
+                Add reference images
+              </button>
+            ) : (
+              artBlocks.map((block) => {
+                const imageUrl = block.content?.url;
+                if (!imageUrl) return null;
+                
+                return (
+                  <div 
+                    key={block.id}
+                    className="w-full rounded-lg overflow-hidden bg-muted/20"
+                    onClick={() => setMobileFullscreenImage(imageUrl)}
+                  >
+                    <img
+                      src={imageUrl}
+                      alt=""
+                      className="w-full max-h-[200px] object-contain cursor-pointer transition-transform duration-200 ease-out active:scale-[0.98] motion-reduce:transition-none"
+                    />
+                  </div>
+                );
+              })
+            )}
           </div>
 
           {/* Sticky Add Block Button */}
@@ -359,21 +387,37 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
               className="w-full text-4xl font-medium text-canvas-text bg-transparent border-none outline-none placeholder:text-canvas-text-muted/50 mb-4"
             />
 
-            {/* Intro Text (first 2 blocks) */}
+            {/* Intro Text (first 2 blocks) or empty state */}
             <div className="space-y-4 mb-8">
-              {introTextBlocks.map((block) => (
-                <div key={block.id} className="text-base leading-relaxed">
-                  <CanvasBlock
-                    block={block}
-                    pageId={page.id}
-                    onCreateBelow={() => createBlock.mutate("text")}
-                  />
-                </div>
-              ))}
+              {introTextBlocks.length === 0 ? (
+                <button
+                  onClick={() => createBlock.mutate("text")}
+                  className="w-full py-8 text-center text-muted-foreground/40 hover:text-muted-foreground/60 transition-colors duration-150"
+                >
+                  Start writing...
+                </button>
+              ) : (
+                introTextBlocks.map((block) => (
+                  <div key={block.id} className="text-base leading-relaxed">
+                    <CanvasBlock
+                      block={block}
+                      pageId={page.id}
+                      onCreateBelow={() => createBlock.mutate("text")}
+                    />
+                  </div>
+                ))
+              )}
             </div>
 
-            {/* Images in 2-column grid */}
-            {artBlocks.length > 0 && (
+            {/* Images in 2-column grid or empty state */}
+            {artBlocks.length === 0 ? (
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="w-full py-8 mb-8 rounded-lg border border-dashed border-muted-foreground/20 text-muted-foreground/40 hover:border-muted-foreground/40 hover:text-muted-foreground/60 transition-colors duration-150 text-sm"
+              >
+                Add reference images
+              </button>
+            ) : (
               <div className="grid grid-cols-2 gap-2 mb-8">
                 {artBlocks.map((block) => {
                   const imageUrl = block.content?.url;
@@ -453,6 +497,7 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
             {/* Title Area with separator */}
             <div className="border-b border-white/5 pb-6 mb-8">
               <input
+                ref={titleInputRef}
                 type="text"
                 value={pageTitle}
                 onChange={(e) => handleTitleChange(e.target.value)}
@@ -462,23 +507,29 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
             </div>
 
             {/* Text Blocks with hover add buttons */}
-            {textBlocks.map((block, index) => (
-              <div key={block.id}>
-                {index === 0 && (
-                  <HoverAddButton onAddBlock={(type) => createBlock.mutate(type)} />
-                )}
-                <CanvasBlock
-                  block={block}
-                  pageId={page.id}
-                  onCreateBelow={() => createBlock.mutate("text")}
-                />
-                <HoverAddButton onAddBlock={(type) => createBlock.mutate(type)} />
+            {textBlocks.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-16">
+                <button
+                  onClick={() => createBlock.mutate("text")}
+                  className="text-muted-foreground/40 hover:text-muted-foreground/60 transition-colors duration-150 text-lg"
+                >
+                  Start writing...
+                </button>
               </div>
-            ))}
-
-            {/* Initial add button when no blocks */}
-            {textBlocks.length === 0 && (
-              <HoverAddButton onAddBlock={(type) => createBlock.mutate(type)} />
+            ) : (
+              textBlocks.map((block, index) => (
+                <div key={block.id}>
+                  {index === 0 && (
+                    <HoverAddButton onAddBlock={(type) => createBlock.mutate(type)} />
+                  )}
+                  <CanvasBlock
+                    block={block}
+                    pageId={page.id}
+                    onCreateBelow={() => createBlock.mutate("text")}
+                  />
+                  <HoverAddButton onAddBlock={(type) => createBlock.mutate(type)} />
+                </div>
+              ))
             )}
           </div>
 
