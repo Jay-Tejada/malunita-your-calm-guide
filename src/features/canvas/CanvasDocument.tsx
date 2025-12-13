@@ -5,7 +5,11 @@ import { CanvasBlock } from "./CanvasBlock";
 import { ReferenceCard } from "./ReferenceCard";
 import { HoverAddButton } from "./HoverAddButton";
 import { Input } from "@/components/ui/input";
-import { Plus, Upload, X, Maximize2, Trash2 } from "lucide-react";
+import { Plus, Upload, X, Maximize2, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import debounce from "@/lib/debounce";
@@ -47,6 +51,7 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
   const [expandedImageId, setExpandedImageId] = useState<string | null>(null);
   const [isDraggingOver, setIsDraggingOver] = useState(false);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [mobileFullscreenImage, setMobileFullscreenImage] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -260,104 +265,90 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
     <div ref={containerRef} className="h-full overflow-y-auto">
       <div className="py-12 md:py-16">
         
-        {/* 1. MOBILE Layout (< 640px) */}
-        <div className="sm:hidden space-y-6 px-8">
-          {/* Title Area with separator */}
-          <div className="border-b border-white/5 pb-6 mb-8">
+        {/* 1. MOBILE Layout (< 768px) */}
+        <div className="md:hidden pb-20">
+          {/* Title Area */}
+          <div className="px-4 mb-6">
             <input
               type="text"
               value={pageTitle}
               onChange={(e) => handleTitleChange(e.target.value)}
               placeholder="Untitled"
-              className="w-full text-4xl font-medium text-canvas-text bg-transparent border-none outline-none placeholder:text-canvas-text-muted/50 mb-4"
+              className="w-full text-3xl font-medium text-canvas-text bg-transparent border-none outline-none placeholder:text-canvas-text-muted/50"
             />
           </div>
 
-          {/* All Text Blocks */}
-          {textBlocks.map((block) => (
-            <CanvasBlock
-              key={block.id}
-              block={block}
-              pageId={page.id}
-              onCreateBelow={() => createBlock.mutate("text")}
-            />
-          ))}
+          {/* Description / Text Blocks */}
+          <div className="px-4 space-y-4 mb-6">
+            {textBlocks.map((block) => (
+              <div key={block.id} className="text-base">
+                <CanvasBlock
+                  block={block}
+                  pageId={page.id}
+                  onCreateBelow={() => createBlock.mutate("text")}
+                />
+              </div>
+            ))}
+          </div>
 
-          {/* Art Blocks */}
-          {artBlocks.map((block) => (
-            <ReferenceCard 
-              key={block.id}
-              caption={block.content?.caption}
+          {/* Art Blocks - Full width cards */}
+          <div className="px-4 space-y-2">
+            {artBlocks.map((block) => {
+              const imageUrl = block.content?.url;
+              if (!imageUrl) return null;
+              
+              return (
+                <div 
+                  key={block.id}
+                  className="w-full rounded-lg overflow-hidden bg-muted/20"
+                  onClick={() => setMobileFullscreenImage(imageUrl)}
+                >
+                  <img
+                    src={imageUrl}
+                    alt=""
+                    className="w-full max-h-[200px] object-contain cursor-pointer"
+                  />
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Sticky Add Block Button */}
+          <div className="fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-canvas-bg via-canvas-bg to-transparent md:hidden">
+            <Button
+              variant="outline"
+              className="w-full py-6 rounded-xl border-dashed border-muted-foreground/30 text-muted-foreground hover:text-foreground hover:border-muted-foreground/50 hover:bg-muted/20"
+              onClick={() => createBlock.mutate("text")}
             >
-              <CanvasBlock
-                block={block}
-                pageId={page.id}
-                onCreateBelow={() => createBlock.mutate("image")}
-              />
-            </ReferenceCard>
-          ))}
-
-          {/* Add Block Button */}
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-canvas-text-muted hover:text-canvas-text font-mono text-sm opacity-50 hover:opacity-100 transition-opacity"
-            onClick={() => createBlock.mutate("text")}
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Add block
-          </Button>
-        </div>
-
-        {/* 2. TABLET Layout (640px - 767px) */}
-        <div className="hidden sm:block md:hidden space-y-6 px-12">
-          {/* Title Area with separator */}
-          <div className="border-b border-white/5 pb-6 mb-8">
-            <input
-              type="text"
-              value={pageTitle}
-              onChange={(e) => handleTitleChange(e.target.value)}
-              placeholder="Untitled"
-              className="w-full text-5xl font-medium text-canvas-text bg-transparent border-none outline-none placeholder:text-canvas-text-muted/50 mb-4"
-            />
+              <Plus className="w-5 h-5 mr-2" />
+              Add block
+            </Button>
           </div>
 
-          {/* All Text Blocks with hover add buttons */}
-          {textBlocks.map((block, index) => (
-            <div key={block.id}>
-              {index === 0 && (
-                <HoverAddButton onAddBlock={(type) => createBlock.mutate(type)} />
+          {/* Mobile Fullscreen Image Modal */}
+          <Dialog open={!!mobileFullscreenImage} onOpenChange={() => setMobileFullscreenImage(null)}>
+            <DialogContent className="max-w-full h-full p-0 bg-black/95 border-none">
+              <button
+                onClick={() => setMobileFullscreenImage(null)}
+                className="absolute top-4 right-4 z-50 p-2 rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors"
+              >
+                <X className="w-6 h-6" />
+              </button>
+              {mobileFullscreenImage && (
+                <div className="flex items-center justify-center w-full h-full p-4">
+                  <img
+                    src={mobileFullscreenImage}
+                    alt=""
+                    className="max-w-full max-h-full object-contain"
+                  />
+                </div>
               )}
-              <CanvasBlock
-                block={block}
-                pageId={page.id}
-                onCreateBelow={() => createBlock.mutate("text")}
-              />
-              <HoverAddButton onAddBlock={(type) => createBlock.mutate(type)} />
-            </div>
-          ))}
-
-          {/* Art Blocks */}
-          {artBlocks.map((block) => (
-            <ReferenceCard 
-              key={block.id}
-              caption={block.content?.caption}
-            >
-              <CanvasBlock
-                block={block}
-                pageId={page.id}
-                onCreateBelow={() => createBlock.mutate("image")}
-              />
-            </ReferenceCard>
-          ))}
-
-          {/* Initial add button when no blocks */}
-          {textBlocks.length === 0 && (
-            <HoverAddButton onAddBlock={(type) => createBlock.mutate(type)} />
-          )}
+            </DialogContent>
+          </Dialog>
         </div>
 
-        {/* 3. DESKTOP Layout (>= 768px) */}
+        {/* DESKTOP Layout (>= 768px) */}
+
         <div className="hidden md:grid grid-cols-[1.5fr_1fr] gap-10 max-w-7xl mx-auto px-16">
           {/* LEFT Column - Title, Description, Text Blocks */}
           <div className="space-y-6">
