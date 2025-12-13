@@ -4,7 +4,23 @@ import { supabase } from "@/integrations/supabase/client";
 import { CanvasBlock } from "./CanvasBlock";
 import { HoverAddButton } from "./HoverAddButton";
 import { LayoutToggle } from "./LayoutToggle";
+import { SortableBlock } from "./SortableBlock";
 import { Plus, Upload, X, Maximize2, Trash2 } from "lucide-react";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
 import {
   Dialog,
   DialogContent,
@@ -69,6 +85,53 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
   const handleLayoutChange = (mode: LayoutMode) => {
     setLayoutMode(mode);
     localStorage.setItem("canvas-layout-mode", mode);
+  };
+
+  // DnD sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  // Reorder blocks mutation
+  const reorderBlocks = useMutation({
+    mutationFn: async (updates: { id: string; sort_order: number }[]) => {
+      const promises = updates.map(({ id, sort_order }) =>
+        supabase
+          .from("page_blocks")
+          .update({ sort_order })
+          .eq("id", id)
+      );
+      await Promise.all(promises);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["canvas-blocks", page?.id] });
+    },
+  });
+
+  // Handle drag end
+  const handleDragEnd = (event: DragEndEvent, blockList: Block[]) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = blockList.findIndex((b) => b.id === active.id);
+    const newIndex = blockList.findIndex((b) => b.id === over.id);
+    
+    if (oldIndex === -1 || newIndex === -1) return;
+
+    const reordered = arrayMove(blockList, oldIndex, newIndex);
+    const updates = reordered.map((block, index) => ({
+      id: block.id,
+      sort_order: index,
+    }));
+    
+    reorderBlocks.mutate(updates);
   };
 
   // Separate blocks into text content and image/art content (moved up for navigation)
@@ -576,20 +639,33 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
                   </button>
                 </div>
               ) : (
-                textBlocks.map((block, index) => (
-                  <div key={block.id} data-block-id={block.id}>
-                    {index === 0 && (
-                      <HoverAddButton onAddBlock={(type) => createBlock.mutate(type)} />
-                    )}
-                    <CanvasBlock
-                      block={block}
-                      pageId={page.id}
-                      onCreateBelow={() => createBlock.mutate("text")}
-                      onNavigate={(direction) => handleBlockNavigate(index, direction)}
-                    />
-                    <HoverAddButton onAddBlock={(type) => createBlock.mutate(type)} />
-                  </div>
-                ))
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={(e) => handleDragEnd(e, textBlocks)}
+                >
+                  <SortableContext
+                    items={textBlocks.map(b => b.id)}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    {textBlocks.map((block, index) => (
+                      <SortableBlock key={block.id} id={block.id}>
+                        <div data-block-id={block.id}>
+                          {index === 0 && (
+                            <HoverAddButton onAddBlock={(type) => createBlock.mutate(type)} />
+                          )}
+                          <CanvasBlock
+                            block={block}
+                            pageId={page.id}
+                            onCreateBelow={() => createBlock.mutate("text")}
+                            onNavigate={(direction) => handleBlockNavigate(index, direction)}
+                          />
+                          <HoverAddButton onAddBlock={(type) => createBlock.mutate(type)} />
+                        </div>
+                      </SortableBlock>
+                    ))}
+                  </SortableContext>
+                </DndContext>
               )}
             </div>
 
@@ -757,90 +833,103 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
                   </button>
                 </div>
               ) : (
-                blocks.map((block, index) => {
-                  // For image blocks in inline mode, render in 2-col grid container
-                  if (["image", "gallery"].includes(block.block_type)) {
-                    const imageUrl = block.content?.url;
-                    if (!imageUrl) {
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={(e) => handleDragEnd(e, blocks)}
+                >
+                  <SortableContext
+                    items={blocks.map(b => b.id)}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    {blocks.map((block, index) => {
+                      // For image blocks in inline mode
+                      if (["image", "gallery"].includes(block.block_type)) {
+                        const imageUrl = block.content?.url;
+                        if (!imageUrl) {
+                          return (
+                            <SortableBlock key={block.id} id={block.id}>
+                              <HoverAddButton onAddBlock={(type) => createBlock.mutate(type)} />
+                              <CanvasBlock
+                                block={block}
+                                pageId={page.id}
+                                onCreateBelow={() => createBlock.mutate("text")}
+                              />
+                            </SortableBlock>
+                          );
+                        }
+                        
+                        return (
+                          <SortableBlock key={block.id} id={block.id}>
+                            <HoverAddButton onAddBlock={(type) => createBlock.mutate(type)} />
+                            <div className="relative group aspect-square bg-black/20 rounded-lg overflow-hidden hover:ring-2 hover:ring-white/20 transition max-w-md">
+                              <img
+                                src={imageUrl}
+                                alt=""
+                                className="w-full h-full object-contain p-2"
+                              />
+                              <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-150 flex items-center gap-1 bg-black/50 backdrop-blur-sm rounded-md p-1">
+                                <AlertDialog open={deleteConfirmId === block.id} onOpenChange={(open) => setDeleteConfirmId(open ? block.id : null)}>
+                                  <AlertDialogTrigger asChild>
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setDeleteConfirmId(block.id);
+                                      }}
+                                      className="p-1 text-white hover:opacity-80 transition-opacity duration-150"
+                                      title="Delete"
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                    </button>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                      <AlertDialogTitle>Delete image?</AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                        This will permanently remove this reference image.
+                                      </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                      <AlertDialogAction
+                                        onClick={() => {
+                                          deleteBlock.mutate(block.id);
+                                          setDeleteConfirmId(null);
+                                        }}
+                                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                      >
+                                        Delete
+                                      </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                  </AlertDialogContent>
+                                </AlertDialog>
+                              </div>
+                            </div>
+                          </SortableBlock>
+                        );
+                      }
+                      
+                      // Text blocks
+                      const textBlockIndex = textBlocks.findIndex(tb => tb.id === block.id);
                       return (
-                        <div key={block.id}>
-                          <HoverAddButton onAddBlock={(type) => createBlock.mutate(type)} />
-                          <CanvasBlock
-                            block={block}
-                            pageId={page.id}
-                            onCreateBelow={() => createBlock.mutate("text")}
-                          />
-                        </div>
-                      );
-                    }
-                    
-                    return (
-                      <div key={block.id}>
-                        <HoverAddButton onAddBlock={(type) => createBlock.mutate(type)} />
-                        <div className="relative group aspect-square bg-black/20 rounded-lg overflow-hidden hover:ring-2 hover:ring-white/20 transition max-w-md">
-                          <img
-                            src={imageUrl}
-                            alt=""
-                            className="w-full h-full object-contain p-2"
-                          />
-                          <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-150 flex items-center gap-1 bg-black/50 backdrop-blur-sm rounded-md p-1">
-                            <AlertDialog open={deleteConfirmId === block.id} onOpenChange={(open) => setDeleteConfirmId(open ? block.id : null)}>
-                              <AlertDialogTrigger asChild>
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setDeleteConfirmId(block.id);
-                                  }}
-                                  className="p-1 text-white hover:opacity-80 transition-opacity duration-150"
-                                  title="Delete"
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>Delete image?</AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    This will permanently remove this reference image.
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                  <AlertDialogAction
-                                    onClick={() => {
-                                      deleteBlock.mutate(block.id);
-                                      setDeleteConfirmId(null);
-                                    }}
-                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                  >
-                                    Delete
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
+                        <SortableBlock key={block.id} id={block.id}>
+                          <div data-block-id={block.id}>
+                            {index === 0 && (
+                              <HoverAddButton onAddBlock={(type) => createBlock.mutate(type)} />
+                            )}
+                            <CanvasBlock
+                              block={block}
+                              pageId={page.id}
+                              onCreateBelow={() => createBlock.mutate("text")}
+                              onNavigate={textBlockIndex >= 0 ? (direction) => handleBlockNavigate(textBlockIndex, direction) : undefined}
+                            />
+                            <HoverAddButton onAddBlock={(type) => createBlock.mutate(type)} />
                           </div>
-                        </div>
-                      </div>
-                    );
-                  }
-                  
-                  // Text blocks
-                  const textBlockIndex = textBlocks.findIndex(tb => tb.id === block.id);
-                  return (
-                    <div key={block.id} data-block-id={block.id}>
-                      {index === 0 && (
-                        <HoverAddButton onAddBlock={(type) => createBlock.mutate(type)} />
-                      )}
-                      <CanvasBlock
-                        block={block}
-                        pageId={page.id}
-                        onCreateBelow={() => createBlock.mutate("text")}
-                        onNavigate={textBlockIndex >= 0 ? (direction) => handleBlockNavigate(textBlockIndex, direction) : undefined}
-                      />
-                      <HoverAddButton onAddBlock={(type) => createBlock.mutate(type)} />
-                    </div>
-                  );
-                })
+                        </SortableBlock>
+                      );
+                    })}
+                  </SortableContext>
+                </DndContext>
               )}
             </div>
 
