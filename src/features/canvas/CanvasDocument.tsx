@@ -295,7 +295,7 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
         </div>
 
         {/* Desktop Layout (>= 1024px): Side-by-side grid */}
-        <div className="hidden lg:grid grid-cols-[1fr_400px] gap-8 max-w-[1200px] mx-auto">
+        <div className="hidden lg:grid grid-cols-[1fr_400px] gap-8 max-w-6xl mx-auto px-6">
           {/* Left Column - Text Content */}
           <div className="text-column">
             {/* Page Title */}
@@ -335,14 +335,15 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
             </div>
           </div>
 
-          {/* Right Column - Art/Image Content (sticky) */}
-          <div className="art-column sticky top-24 self-start">
+          {/* Right Column - Art/Image Content (sticky with scroll) */}
+          <div className="art-column sticky top-24 self-start max-h-[calc(100vh-120px)] overflow-y-auto">
             <div className="space-y-4">
               {artBlocks.length > 0 ? (
                 artBlocks.map((block) => (
                   <ReferenceCard 
                     key={block.id}
                     caption={block.content?.caption}
+                    className="[&_img]:max-w-full [&_img]:max-h-[500px] [&_img]:object-contain [&_img]:rounded-xl"
                   >
                     <CanvasBlock
                       block={block}
