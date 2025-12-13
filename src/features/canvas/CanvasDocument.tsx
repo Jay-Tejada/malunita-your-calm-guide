@@ -395,7 +395,12 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
   const remainingTextBlocks = textBlocks.slice(2);
 
   return (
-    <div ref={containerRef} className="h-full overflow-y-auto">
+    <div ref={containerRef} className="h-full overflow-y-auto relative">
+      {/* Layout Toggle - Fixed top-right, hidden on mobile */}
+      <div className="hidden md:block fixed top-20 right-6 z-50">
+        <LayoutToggle value={layoutMode} onChange={handleLayoutChange} />
+      </div>
+      
       <div className="py-12 md:py-16">
         
         {/* 1. MOBILE Layout (< 768px) */}
@@ -614,10 +619,6 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
 
         {/* 3. DESKTOP Layout (>= 1024px) */}
         <div className="hidden lg:block max-w-7xl mx-auto px-16">
-          {/* Layout Toggle - Top Right */}
-          <div className="flex justify-end mb-4">
-            <LayoutToggle value={layoutMode} onChange={handleLayoutChange} />
-          </div>
 
           {/* SPLIT MODE - Two column editorial layout */}
           <div className={cn(
