@@ -8,6 +8,7 @@ import {
   Type,
   Heading1,
   Heading2,
+  Heading3,
   CheckSquare,
   Image,
   Quote,
@@ -49,6 +50,7 @@ const blockTypes = [
   { type: "text", label: "Text", icon: Type },
   { type: "header", label: "Heading 1", icon: Heading1, level: 1 },
   { type: "header", label: "Heading 2", icon: Heading2, level: 2 },
+  { type: "header", label: "Heading 3", icon: Heading3, level: 3 },
   { type: "checklist", label: "Checklist", icon: CheckSquare },
   { type: "image", label: "Image", icon: Image },
   { type: "gallery", label: "Gallery", icon: LayoutGrid },
@@ -303,18 +305,21 @@ export function CanvasBlock({ block, pageId, onCreateBelow }: CanvasBlockProps) 
     switch (block.block_type) {
       case "header":
         const level = content?.level || 1;
-        const HeadingTag = level === 1 ? "h1" : "h2";
+        const HeadingTag = level === 1 ? "h1" : level === 2 ? "h2" : "h3";
+        const headingPlaceholder = `Heading ${level}`;
         return (
           <HeadingTag
             id={`block-${block.id}`}
             contentEditable
             suppressContentEditableWarning
             onBlur={(e) => handleTextChange(e.currentTarget.textContent || "")}
+            data-placeholder={headingPlaceholder}
             className={cn(
-              "outline-none font-mono",
-              level === 1
-                ? "text-2xl font-semibold text-canvas-text"
-                : "text-xl font-medium text-canvas-text"
+              "outline-none text-canvas-text cursor-text",
+              "empty:before:content-[attr(data-placeholder)] empty:before:text-canvas-text-muted/50",
+              level === 1 && "text-3xl font-semibold mt-8 mb-4",
+              level === 2 && "text-2xl font-medium mt-6 mb-3",
+              level === 3 && "text-xl font-medium mt-4 mb-2"
             )}
             dangerouslySetInnerHTML={{ __html: content?.text || "" }}
           />
