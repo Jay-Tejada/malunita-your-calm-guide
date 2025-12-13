@@ -44,6 +44,8 @@ interface CanvasBlockProps {
   block: Block;
   pageId: string;
   onCreateBelow: () => void;
+  onNavigate?: (direction: 'up' | 'down') => void;
+  blockRef?: React.RefObject<HTMLDivElement>;
 }
 
 const blockTypes = [
@@ -58,7 +60,7 @@ const blockTypes = [
   { type: "divider", label: "Divider", icon: Minus },
 ];
 
-export function CanvasBlock({ block, pageId, onCreateBelow }: CanvasBlockProps) {
+export function CanvasBlock({ block, pageId, onCreateBelow, onNavigate, blockRef }: CanvasBlockProps) {
   const queryClient = useQueryClient();
   const [content, setContent] = useState(block.content);
   const [isUploading, setIsUploading] = useState(false);
@@ -511,6 +513,33 @@ export function CanvasBlock({ block, pageId, onCreateBelow }: CanvasBlockProps) 
                   if (!showSlashMenu) return;
                   setShowSlashMenu(false);
                 }, 200);
+              }}
+              onKeyDown={(e) => {
+                // Enter at end of block creates new block below
+                if (e.key === 'Enter' && !e.shiftKey && !showSlashMenu) {
+                  const selection = window.getSelection();
+                  const isAtEnd = selection?.anchorOffset === (e.currentTarget.textContent?.length || 0);
+                  if (isAtEnd || !e.currentTarget.textContent) {
+                    e.preventDefault();
+                    onCreateBelow();
+                  }
+                }
+                // Arrow navigation between blocks
+                if (e.key === 'ArrowUp' && onNavigate) {
+                  const selection = window.getSelection();
+                  if (selection?.anchorOffset === 0) {
+                    e.preventDefault();
+                    onNavigate('up');
+                  }
+                }
+                if (e.key === 'ArrowDown' && onNavigate) {
+                  const selection = window.getSelection();
+                  const isAtEnd = selection?.anchorOffset === (e.currentTarget.textContent?.length || 0);
+                  if (isAtEnd) {
+                    e.preventDefault();
+                    onNavigate('down');
+                  }
+                }
               }}
               data-placeholder="Type '/' for commands..."
               className={cn(

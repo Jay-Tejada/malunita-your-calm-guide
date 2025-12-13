@@ -53,6 +53,43 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
   const containerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const titleInputRef = useRef<HTMLInputElement>(null);
+  const blockRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+
+  // Separate blocks into text content and image/art content (moved up for navigation)
+  const textBlocks = blocks.filter(
+    (b) => !["image", "gallery"].includes(b.block_type)
+  );
+  const artBlocks = blocks.filter((b) =>
+    ["image", "gallery"].includes(b.block_type)
+  );
+
+  // Focus a specific block by id
+  const focusBlock = useCallback((blockId: string) => {
+    setTimeout(() => {
+      const blockEl = document.querySelector(`[data-block-id="${blockId}"] [contenteditable]`) as HTMLElement;
+      if (blockEl) {
+        blockEl.focus();
+        // Move cursor to end
+        const range = document.createRange();
+        const sel = window.getSelection();
+        range.selectNodeContents(blockEl);
+        range.collapse(false);
+        sel?.removeAllRanges();
+        sel?.addRange(range);
+      }
+    }, 50);
+  }, []);
+
+  // Handle navigation between blocks
+  const handleBlockNavigate = useCallback((currentIndex: number, direction: 'up' | 'down') => {
+    const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+    if (targetIndex >= 0 && targetIndex < textBlocks.length) {
+      focusBlock(textBlocks[targetIndex].id);
+    } else if (direction === 'up' && currentIndex === 0) {
+      // Focus title when navigating up from first block
+      titleInputRef.current?.focus();
+    }
+  }, [textBlocks, focusBlock]);
 
   // Auto-focus title on new/empty pages
   useEffect(() => {
@@ -255,14 +292,6 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
       </div>
     );
   }
-
-  // Separate blocks into text content and image/art content
-  const textBlocks = blocks.filter(
-    (b) => !["image", "gallery"].includes(b.block_type)
-  );
-  const artBlocks = blocks.filter((b) =>
-    ["image", "gallery"].includes(b.block_type)
-  );
 
   // For tablet: split text blocks into "intro" (first 2) and "remaining"
   const introTextBlocks = textBlocks.slice(0, 2);
@@ -499,6 +528,13 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
                 type="text"
                 value={pageTitle}
                 onChange={(e) => handleTitleChange(e.target.value)}
+                onKeyDown={(e) => {
+                  // Arrow down or Enter from title focuses first block
+                  if ((e.key === 'ArrowDown' || e.key === 'Enter') && textBlocks.length > 0) {
+                    e.preventDefault();
+                    focusBlock(textBlocks[0].id);
+                  }
+                }}
                 placeholder="Untitled"
                 className="w-full text-5xl font-medium text-canvas-text bg-transparent border-none outline-none placeholder:text-canvas-text-muted/50 break-words mb-4"
               />
@@ -516,7 +552,7 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
               </div>
             ) : (
               textBlocks.map((block, index) => (
-                <div key={block.id}>
+                <div key={block.id} data-block-id={block.id}>
                   {index === 0 && (
                     <HoverAddButton onAddBlock={(type) => createBlock.mutate(type)} />
                   )}
@@ -524,6 +560,7 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
                     block={block}
                     pageId={page.id}
                     onCreateBelow={() => createBlock.mutate("text")}
+                    onNavigate={(direction) => handleBlockNavigate(index, direction)}
                   />
                   <HoverAddButton onAddBlock={(type) => createBlock.mutate(type)} />
                 </div>
