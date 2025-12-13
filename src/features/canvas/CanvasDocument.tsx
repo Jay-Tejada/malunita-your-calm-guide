@@ -690,83 +690,57 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
 
               {artBlocks.length > 0 ? (
                 <>
-                  <div className="space-y-3">
-                    {artBlocks.map((block) => {
-                      const isExpanded = expandedImageId === block.id;
-                      const imageUrl = block.content?.url;
-                      
-                      if (!imageUrl) {
-                        return (
-                          <div key={block.id} className="relative">
-                            <CanvasBlock
-                              block={block}
-                              pageId={page.id}
-                              onCreateBelow={() => createBlock.mutate("image")}
-                            />
-                          </div>
-                        );
-                      }
-                      
-                      return (
-                        <div key={block.id} className="relative group">
-                          <img
-                            src={imageUrl}
-                            alt=""
-                            onClick={() => setExpandedImageId(isExpanded ? null : block.id)}
-                            className={cn(
-                              "w-full object-contain rounded-lg cursor-pointer transition-all duration-200 ease-out motion-reduce:transition-none",
-                              isExpanded ? "max-h-[400px]" : "max-h-[100px]"
-                            )}
-                          />
-                          <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-150 motion-reduce:transition-none flex items-center gap-1 bg-black/50 backdrop-blur-sm rounded-md p-1">
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setExpandedImageId(isExpanded ? null : block.id);
-                              }}
-                              className="p-1 text-white hover:opacity-80 transition-opacity duration-150 motion-reduce:transition-none"
-                              title={isExpanded ? "Collapse" : "Expand"}
-                            >
-                              <Maximize2 className="w-4 h-4" />
-                            </button>
-                            <AlertDialog open={deleteConfirmId === block.id} onOpenChange={(open) => setDeleteConfirmId(open ? block.id : null)}>
-                              <AlertDialogTrigger asChild>
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setDeleteConfirmId(block.id);
+                  <div className="grid grid-cols-2 gap-3">
+                    {artBlocks.map((block) => (
+                      <div 
+                        key={block.id}
+                        className="aspect-square bg-white/5 rounded-xl overflow-hidden flex items-center justify-center p-3 cursor-pointer hover:bg-white/10 transition-colors group relative"
+                        onClick={() => setExpandedImageId(expandedImageId === block.id ? null : block.id)}
+                      >
+                        <img
+                          src={block.content?.url || block.content}
+                          alt=""
+                          className="max-w-full max-h-full object-contain"
+                        />
+                        {/* Delete button on hover */}
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+                          <AlertDialog open={deleteConfirmId === block.id} onOpenChange={(open) => setDeleteConfirmId(open ? block.id : null)}>
+                            <AlertDialogTrigger asChild>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setDeleteConfirmId(block.id);
+                                }}
+                                className="p-1.5 bg-black/50 backdrop-blur-sm rounded-md text-white hover:bg-black/70 transition-colors"
+                                title="Delete"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Delete image?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  This will permanently remove this reference image.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => {
+                                    deleteBlock.mutate(block.id);
+                                    setDeleteConfirmId(null);
                                   }}
-                                  className="p-1 text-white hover:opacity-80 transition-opacity duration-150 motion-reduce:transition-none"
-                                  title="Delete"
+                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                                 >
-                                  <Trash2 className="w-4 h-4" />
-                                </button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>Delete image?</AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    This will permanently remove this reference image.
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                  <AlertDialogAction
-                                    onClick={() => {
-                                      deleteBlock.mutate(block.id);
-                                      setDeleteConfirmId(null);
-                                    }}
-                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                  >
-                                    Delete
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          </div>
+                                  Delete
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
                         </div>
-                      );
-                    })}
+                      </div>
+                    ))}
                   </div>
                   
                   <button
