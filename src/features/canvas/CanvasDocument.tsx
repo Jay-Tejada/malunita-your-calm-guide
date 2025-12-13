@@ -137,11 +137,140 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
     ["image", "gallery"].includes(b.block_type)
   );
 
+  // For tablet: split text blocks into "intro" (first 2) and "remaining"
+  const introTextBlocks = textBlocks.slice(0, 2);
+  const remainingTextBlocks = textBlocks.slice(2);
+
   return (
     <div ref={containerRef} className="h-full overflow-y-auto">
       <div className="px-6 py-12 md:py-16">
-        {/* Two-column grid for desktop */}
-        <div className="lg:grid lg:grid-cols-[60%_40%] lg:gap-8 max-w-[1200px] mx-auto">
+        
+        {/* Mobile Layout (< 768px): Title, all text, then art */}
+        <div className="md:hidden max-w-[680px] mx-auto">
+          {/* Page Title */}
+          <div className="mb-8">
+            <input
+              type="text"
+              value={pageTitle}
+              onChange={(e) => handleTitleChange(e.target.value)}
+              placeholder="Untitled"
+              className="w-full text-4xl font-mono font-medium text-canvas-text bg-transparent border-none outline-none placeholder:text-canvas-text-muted/50"
+            />
+          </div>
+
+          {/* All Text Blocks */}
+          <div className="space-y-1">
+            {textBlocks.map((block) => (
+              <CanvasBlock
+                key={block.id}
+                block={block}
+                pageId={page.id}
+                onCreateBelow={() => createBlock.mutate("text")}
+              />
+            ))}
+          </div>
+
+          {/* Add Block Button */}
+          <div className="mt-4 group">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-canvas-text-muted hover:text-canvas-text font-mono text-sm opacity-50 hover:opacity-100 transition-opacity"
+              onClick={() => createBlock.mutate("text")}
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Add block
+            </Button>
+          </div>
+
+          {/* Art blocks at bottom */}
+          <div className="mt-8 space-y-4">
+            {artBlocks.map((block) => (
+              <ReferenceCard 
+                key={block.id}
+                caption={block.content?.caption}
+              >
+                <CanvasBlock
+                  block={block}
+                  pageId={page.id}
+                  onCreateBelow={() => createBlock.mutate("image")}
+                />
+              </ReferenceCard>
+            ))}
+          </div>
+        </div>
+
+        {/* Tablet Layout (768px – 1023px): Stacked with art in middle */}
+        <div className="hidden md:block lg:hidden max-w-[680px] mx-auto">
+          {/* Page Title */}
+          <div className="mb-8">
+            <input
+              type="text"
+              value={pageTitle}
+              onChange={(e) => handleTitleChange(e.target.value)}
+              placeholder="Untitled"
+              className="w-full text-5xl font-mono font-medium text-canvas-text bg-transparent border-none outline-none placeholder:text-canvas-text-muted/50"
+            />
+          </div>
+
+          {/* Intro Text Blocks (first 2) */}
+          <div className="space-y-1">
+            {introTextBlocks.map((block) => (
+              <CanvasBlock
+                key={block.id}
+                block={block}
+                pageId={page.id}
+                onCreateBelow={() => createBlock.mutate("text")}
+              />
+            ))}
+          </div>
+
+          {/* Art blocks centered */}
+          {artBlocks.length > 0 && (
+            <div className="my-8 max-w-[640px] mx-auto space-y-4">
+              {artBlocks.map((block) => (
+                <ReferenceCard 
+                  key={block.id}
+                  caption={block.content?.caption}
+                >
+                  <CanvasBlock
+                    block={block}
+                    pageId={page.id}
+                    onCreateBelow={() => createBlock.mutate("image")}
+                  />
+                </ReferenceCard>
+              ))}
+            </div>
+          )}
+
+          {/* Remaining Text Blocks */}
+          <div className="space-y-1">
+            {remainingTextBlocks.map((block) => (
+              <CanvasBlock
+                key={block.id}
+                block={block}
+                pageId={page.id}
+                onCreateBelow={() => createBlock.mutate("text")}
+              />
+            ))}
+          </div>
+
+          {/* Add Block Button */}
+          <div className="mt-4 group">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-canvas-text-muted hover:text-canvas-text font-mono text-sm opacity-50 hover:opacity-100 transition-opacity"
+              onClick={() => createBlock.mutate("text")}
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Add block
+            </Button>
+          </div>
+        </div>
+
+        {/* Desktop Layout (>= 1024px): Two-column grid */}
+        <div className="hidden lg:grid lg:grid-cols-[60%_40%] lg:gap-8 max-w-[1200px] mx-auto">
           {/* Left Column - Text Content */}
           <div className="max-w-[680px]">
             {/* Page Title */}
@@ -151,7 +280,7 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
                 value={pageTitle}
                 onChange={(e) => handleTitleChange(e.target.value)}
                 placeholder="Untitled"
-                className="w-full text-4xl md:text-5xl font-mono font-medium text-canvas-text bg-transparent border-none outline-none placeholder:text-canvas-text-muted/50"
+                className="w-full text-5xl font-mono font-medium text-canvas-text bg-transparent border-none outline-none placeholder:text-canvas-text-muted/50"
               />
             </div>
 
@@ -181,8 +310,8 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
             </div>
           </div>
 
-          {/* Right Column - Art/Image Content (Desktop only) */}
-          <div className="hidden lg:block max-w-[460px] self-start sticky top-24">
+          {/* Right Column - Art/Image Content */}
+          <div className="max-w-[460px] self-start sticky top-24">
             <div className="space-y-4">
               {artBlocks.length > 0 ? (
                 artBlocks.map((block) => (
@@ -204,22 +333,6 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
               )}
             </div>
           </div>
-        </div>
-
-        {/* Mobile: Show art blocks inline after text */}
-        <div className="lg:hidden mt-8 space-y-4">
-          {artBlocks.map((block) => (
-            <ReferenceCard 
-              key={block.id}
-              caption={block.content?.caption}
-            >
-              <CanvasBlock
-                block={block}
-                pageId={page.id}
-                onCreateBelow={() => createBlock.mutate("image")}
-              />
-            </ReferenceCard>
-          ))}
         </div>
 
         {/* Bottom Padding */}
