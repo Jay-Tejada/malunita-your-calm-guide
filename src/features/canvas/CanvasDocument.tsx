@@ -725,17 +725,67 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
                 </div>
               </div>
 
-              {/* RIGHT - Images */}
-              <div style={{ flex: '1', position: 'sticky', top: '96px', alignSelf: 'flex-start' }}>
-                <div className="space-y-3">
-                  {artBlocks.map((block) => (
-                    <img 
-                      key={block.id}
-                      src={block.content?.url || block.content}
-                      alt=""
-                      className="w-full rounded-lg"
-                    />
-                  ))}
+              {/* RIGHT - Images (compact vertical carousel) */}
+              <div 
+                style={{ flex: '1', position: 'sticky', top: '96px', alignSelf: 'flex-start' }}
+                className="max-h-[calc(100vh-120px)] overflow-y-auto scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent"
+              >
+                <div className="space-y-2 pr-2">
+                  {artBlocks.map((block) => {
+                    const isExpanded = expandedImageId === block.id;
+                    const imageUrl = block.content?.url || block.content;
+                    
+                    return (
+                      <div 
+                        key={block.id}
+                        className="relative"
+                      >
+                        <div
+                          onClick={() => setExpandedImageId(isExpanded ? null : block.id)}
+                          className={cn(
+                            "w-full rounded-lg overflow-hidden cursor-pointer transition-all duration-200 ease-out",
+                            isExpanded 
+                              ? "ring-2 ring-primary/50" 
+                              : "hover:ring-2 hover:ring-white/20"
+                          )}
+                        >
+                          <img 
+                            src={imageUrl}
+                            alt=""
+                            className={cn(
+                              "w-full object-contain transition-all duration-200 ease-out",
+                              isExpanded ? "max-h-[350px]" : "max-h-[80px]"
+                            )}
+                          />
+                        </div>
+                        
+                        {/* X button to collapse */}
+                        {isExpanded && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setExpandedImageId(null);
+                            }}
+                            className="absolute top-2 right-2 p-1 rounded-full bg-black/60 text-white hover:bg-black/80 transition-colors"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
+                  
+                  {artBlocks.length === 0 && (
+                    <div 
+                      className="rounded-lg border-2 border-dashed border-muted-foreground/30 bg-muted/10 p-6 text-center cursor-pointer hover:border-muted-foreground/50 hover:bg-muted/20 transition-all duration-200"
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      <Upload className="w-6 h-6 mx-auto mb-2 text-muted-foreground/50" />
+                      <p className="text-muted-foreground/70 font-mono text-xs">
+                        Add images
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
