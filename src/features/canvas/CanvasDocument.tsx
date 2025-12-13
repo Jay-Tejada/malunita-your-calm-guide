@@ -5,6 +5,7 @@ import { CanvasBlock } from "./CanvasBlock";
 import { HoverAddButton } from "./HoverAddButton";
 import { LayoutToggle } from "./LayoutToggle";
 import { SortableBlock } from "./SortableBlock";
+import { SortableImageBlock } from "./SortableImageBlock";
 import { Plus, Upload, X, Maximize2, Trash2 } from "lucide-react";
 import {
   DndContext,
@@ -20,6 +21,7 @@ import {
   SortableContext,
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
+  rectSortingStrategy,
 } from "@dnd-kit/sortable";
 import {
   Dialog,
@@ -688,58 +690,70 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
 
               {artBlocks.length > 0 ? (
                 <>
-                  <div className="grid grid-cols-2 gap-3">
-                    {artBlocks.map((block) => (
-                      <div 
-                        key={block.id}
-                        className="aspect-square bg-white/5 rounded-xl overflow-hidden flex items-center justify-center p-3 cursor-pointer hover:bg-white/10 transition-colors group relative"
-                        onClick={() => setExpandedImageId(expandedImageId === block.id ? null : block.id)}
-                      >
-                        <img
-                          src={block.content?.url || block.content}
-                          alt=""
-                          className="max-w-full max-h-full object-contain"
-                        />
-                        {/* Delete button on hover */}
-                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
-                          <AlertDialog open={deleteConfirmId === block.id} onOpenChange={(open) => setDeleteConfirmId(open ? block.id : null)}>
-                            <AlertDialogTrigger asChild>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setDeleteConfirmId(block.id);
-                                }}
-                                className="p-1.5 bg-black/50 backdrop-blur-sm rounded-md text-white hover:bg-black/70 transition-colors"
-                                title="Delete"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Delete image?</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  This will permanently remove this reference image.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction
-                                  onClick={() => {
-                                    deleteBlock.mutate(block.id);
-                                    setDeleteConfirmId(null);
-                                  }}
-                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                >
-                                  Delete
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        </div>
+                  <DndContext
+                    sensors={sensors}
+                    collisionDetection={closestCenter}
+                    onDragEnd={(e) => handleDragEnd(e, artBlocks)}
+                  >
+                    <SortableContext
+                      items={artBlocks.map(b => b.id)}
+                      strategy={rectSortingStrategy}
+                    >
+                      <div className="grid grid-cols-2 gap-3">
+                        {artBlocks.map((block) => (
+                          <SortableImageBlock key={block.id} id={block.id}>
+                            <div 
+                              className="aspect-square bg-white/5 rounded-xl overflow-hidden flex items-center justify-center p-3 cursor-pointer hover:bg-white/10 transition-colors group relative"
+                              onClick={() => setExpandedImageId(expandedImageId === block.id ? null : block.id)}
+                            >
+                              <img
+                                src={block.content?.url || block.content}
+                                alt=""
+                                className="max-w-full max-h-full object-contain"
+                              />
+                              {/* Delete button on hover */}
+                              <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+                                <AlertDialog open={deleteConfirmId === block.id} onOpenChange={(open) => setDeleteConfirmId(open ? block.id : null)}>
+                                  <AlertDialogTrigger asChild>
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setDeleteConfirmId(block.id);
+                                      }}
+                                      className="p-1.5 bg-black/50 backdrop-blur-sm rounded-md text-white hover:bg-black/70 transition-colors"
+                                      title="Delete"
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                    </button>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                      <AlertDialogTitle>Delete image?</AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                        This will permanently remove this reference image.
+                                      </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                      <AlertDialogAction
+                                        onClick={() => {
+                                          deleteBlock.mutate(block.id);
+                                          setDeleteConfirmId(null);
+                                        }}
+                                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                      >
+                                        Delete
+                                      </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                  </AlertDialogContent>
+                                </AlertDialog>
+                              </div>
+                            </div>
+                          </SortableImageBlock>
+                        ))}
                       </div>
-                    ))}
-                  </div>
+                    </SortableContext>
+                  </DndContext>
                   
                   <button
                     onClick={() => fileInputRef.current?.click()}
