@@ -128,43 +128,89 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
     );
   }
 
+  // Separate blocks into text content and image/art content
+  const textBlocks = blocks.filter(
+    (b) => !["image", "gallery"].includes(b.block_type)
+  );
+  const artBlocks = blocks.filter((b) =>
+    ["image", "gallery"].includes(b.block_type)
+  );
+
   return (
     <div ref={containerRef} className="h-full overflow-y-auto">
-      <div className="max-w-[720px] mx-auto px-6 py-12 md:py-16">
-        {/* Page Title */}
-        <div className="mb-8">
-          <input
-            type="text"
-            value={pageTitle}
-            onChange={(e) => handleTitleChange(e.target.value)}
-            placeholder="Untitled"
-            className="w-full text-4xl md:text-5xl font-mono font-medium text-canvas-text bg-transparent border-none outline-none placeholder:text-canvas-text-muted/50"
-          />
+      <div className="px-6 py-12 md:py-16">
+        {/* Two-column grid for desktop */}
+        <div className="lg:grid lg:grid-cols-[60%_40%] lg:gap-8 max-w-[1200px] mx-auto">
+          {/* Left Column - Text Content */}
+          <div className="max-w-[680px]">
+            {/* Page Title */}
+            <div className="mb-8">
+              <input
+                type="text"
+                value={pageTitle}
+                onChange={(e) => handleTitleChange(e.target.value)}
+                placeholder="Untitled"
+                className="w-full text-4xl md:text-5xl font-mono font-medium text-canvas-text bg-transparent border-none outline-none placeholder:text-canvas-text-muted/50"
+              />
+            </div>
+
+            {/* Text Blocks */}
+            <div className="space-y-1">
+              {textBlocks.map((block) => (
+                <CanvasBlock
+                  key={block.id}
+                  block={block}
+                  pageId={page.id}
+                  onCreateBelow={() => createBlock.mutate("text")}
+                />
+              ))}
+            </div>
+
+            {/* Add Block Button */}
+            <div className="mt-4 group">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-canvas-text-muted hover:text-canvas-text font-mono text-sm opacity-50 hover:opacity-100 transition-opacity"
+                onClick={() => createBlock.mutate("text")}
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Add block
+              </Button>
+            </div>
+          </div>
+
+          {/* Right Column - Art/Image Content (Desktop only) */}
+          <div className="hidden lg:block max-w-[460px] mt-20">
+            <div className="space-y-4 sticky top-8">
+              {artBlocks.length > 0 ? (
+                artBlocks.map((block) => (
+                  <CanvasBlock
+                    key={block.id}
+                    block={block}
+                    pageId={page.id}
+                    onCreateBelow={() => createBlock.mutate("image")}
+                  />
+                ))
+              ) : (
+                <div className="border border-dashed border-canvas-border rounded-lg p-8 text-center text-canvas-text-muted font-mono text-sm">
+                  Add image or gallery blocks to see them here
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
-        {/* Blocks */}
-        <div className="space-y-1">
-          {blocks.map((block, index) => (
+        {/* Mobile: Show art blocks inline after text */}
+        <div className="lg:hidden mt-8 space-y-4">
+          {artBlocks.map((block) => (
             <CanvasBlock
               key={block.id}
               block={block}
               pageId={page.id}
-              onCreateBelow={() => createBlock.mutate("text")}
+              onCreateBelow={() => createBlock.mutate("image")}
             />
           ))}
-        </div>
-
-        {/* Add Block Button */}
-        <div className="mt-4 group">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-canvas-text-muted hover:text-canvas-text font-mono text-sm opacity-50 hover:opacity-100 transition-opacity"
-            onClick={() => createBlock.mutate("text")}
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Add block
-          </Button>
         </div>
 
         {/* Bottom Padding */}
