@@ -524,7 +524,7 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
                 Add reference images
               </button>
             ) : (
-              <div className="grid grid-cols-2 gap-2 mb-8">
+              <div className="grid grid-cols-2 gap-3 mb-8">
                 {artBlocks.map((block) => {
                   const imageUrl = block.content?.url;
                   if (!imageUrl) return null;
@@ -532,16 +532,14 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
                   return (
                     <div 
                       key={block.id}
-                      className="relative group rounded-lg overflow-hidden bg-muted/20 cursor-pointer"
+                      className="aspect-square bg-white/5 rounded-xl overflow-hidden flex items-center justify-center p-3 cursor-pointer hover:bg-white/10 transition-colors relative group"
                       onClick={() => setMobileFullscreenImage(imageUrl)}
                     >
                       <img
                         src={imageUrl}
                         alt=""
-                        className="w-full h-40 object-cover transition-all duration-200 ease-out motion-reduce:transition-none"
+                        className="max-w-full max-h-full object-contain"
                       />
-                      {/* Hover overlay */}
-                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-150 motion-reduce:transition-none" />
                     </div>
                   );
                 })}
@@ -836,11 +834,11 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
                         return (
                           <SortableBlock key={block.id} id={block.id}>
                             <HoverAddButton onAddBlock={(type) => createBlock.mutate(type)} />
-                            <div className="relative group aspect-square bg-black/20 rounded-lg overflow-hidden hover:ring-2 hover:ring-white/20 transition max-w-md">
+                            <div className="aspect-square bg-white/5 rounded-xl overflow-hidden flex items-center justify-center p-3 cursor-pointer hover:bg-white/10 transition-colors relative group max-w-md">
                               <img
                                 src={imageUrl}
                                 alt=""
-                                className="w-full h-full object-contain p-2"
+                                className="max-w-full max-h-full object-contain"
                               />
                               <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-150 flex items-center gap-1 bg-black/50 backdrop-blur-sm rounded-md p-1">
                                 <AlertDialog open={deleteConfirmId === block.id} onOpenChange={(open) => setDeleteConfirmId(open ? block.id : null)}>
