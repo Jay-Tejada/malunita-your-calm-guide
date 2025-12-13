@@ -643,7 +643,16 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
 
           {/* SPLIT MODE - Two column editorial layout */}
           {layoutMode === "split" && (
-            <div className="grid grid-cols-[1.5fr_1fr] gap-8 max-w-7xl mx-auto px-6">
+            <div 
+              style={{ 
+                display: 'grid', 
+                gridTemplateColumns: '1.5fr 1fr', 
+                gap: '32px',
+                maxWidth: '1280px',
+                margin: '0 auto',
+                padding: '0 24px'
+              }}
+            >
               {/* DEBUG: Block counts */}
               <div className="col-span-2 text-yellow-400 text-sm mb-4">
                 Text blocks: {textBlocks.length} | Art blocks: {artBlocks.length}
