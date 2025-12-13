@@ -632,101 +632,110 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
           {/* SPLIT MODE - Two column editorial layout */}
           {layoutMode === "split" && (
             <div className="grid grid-cols-[1.5fr_1fr] gap-8 max-w-7xl mx-auto px-6">
-            {/* LEFT Column - Title, Description, Text Blocks */}
-            <div className="space-y-6">
-              {/* Title Area with separator */}
-              <div className="border-b border-white/5 pb-6 mb-8">
-                <input
-                  ref={titleInputRef}
-                  type="text"
-                  value={pageTitle}
-                  onChange={(e) => handleTitleChange(e.target.value)}
-                  onKeyDown={(e) => {
-                    if ((e.key === 'ArrowDown' || e.key === 'Enter') && textBlocks.length > 0) {
-                      e.preventDefault();
-                      focusBlock(textBlocks[0].id);
-                    }
-                  }}
-                  placeholder="Untitled"
-                  className="w-full text-5xl font-medium text-canvas-text bg-transparent border-none outline-none placeholder:text-canvas-text-muted/50 break-words mb-4"
-                />
+              {/* LEFT COLUMN - Title + text content ONLY */}
+              <div className="space-y-6">
+                {/* Title Area */}
+                <div className="border-b border-white/5 pb-6 mb-4">
+                  <input
+                    ref={titleInputRef}
+                    type="text"
+                    value={pageTitle}
+                    onChange={(e) => handleTitleChange(e.target.value)}
+                    onKeyDown={(e) => {
+                      if ((e.key === 'ArrowDown' || e.key === 'Enter') && textBlocks.length > 0) {
+                        e.preventDefault();
+                        focusBlock(textBlocks[0].id);
+                      }
+                    }}
+                    placeholder="Untitled"
+                    className="w-full text-5xl font-medium text-canvas-text bg-transparent border-none outline-none placeholder:text-canvas-text-muted/50 break-words mb-2"
+                  />
+                </div>
+
+                {/* Description / text blocks ONLY (no images) */}
+                {textBlocks.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-16">
+                    <button
+                      onClick={() => createBlock.mutate("text")}
+                      className="text-muted-foreground/40 hover:text-muted-foreground/60 transition-colors duration-150 text-lg"
+                    >
+                      Start writing...
+                    </button>
+                  </div>
+                ) : (
+                  <DndContext
+                    sensors={sensors}
+                    collisionDetection={closestCenter}
+                    onDragEnd={(e) => handleDragEnd(e, textBlocks)}
+                  >
+                    <SortableContext
+                      items={textBlocks.map((b) => b.id)}
+                      strategy={verticalListSortingStrategy}
+                    >
+                      {textBlocks.map((block, index) => (
+                        <SortableBlock key={block.id} id={block.id}>
+                          <div data-block-id={block.id}>
+                            {index === 0 && (
+                              <HoverAddButton onAddBlock={(type) => createBlock.mutate(type)} />
+                            )}
+                            <CanvasBlock
+                              block={block}
+                              pageId={page.id}
+                              onCreateBelow={() => createBlock.mutate("text")}
+                              onNavigate={(direction) => handleBlockNavigate(index, direction)}
+                            />
+                            <HoverAddButton onAddBlock={(type) => createBlock.mutate(type)} />
+                          </div>
+                        </SortableBlock>
+                      ))}
+                    </SortableContext>
+                  </DndContext>
+                )}
+
+                {/* Add text block button */}
+                <Button
+                  variant="outline"
+                  className="mt-4 py-3 rounded-lg border-dashed border-muted-foreground/30 text-muted-foreground hover:text-foreground hover:border-muted-foreground/50 hover:bg-muted/20"
+                  onClick={() => createBlock.mutate("text")}
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add block
+                </Button>
               </div>
 
-              {/* Text Blocks with hover add buttons */}
-              {textBlocks.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-16">
-                  <button
-                    onClick={() => createBlock.mutate("text")}
-                    className="text-muted-foreground/40 hover:text-muted-foreground/60 transition-colors duration-150 text-lg"
-                  >
-                    Start writing...
-                  </button>
-                </div>
-              ) : (
-                <DndContext
-                  sensors={sensors}
-                  collisionDetection={closestCenter}
-                  onDragEnd={(e) => handleDragEnd(e, textBlocks)}
-                >
-                  <SortableContext
-                    items={textBlocks.map(b => b.id)}
-                    strategy={verticalListSortingStrategy}
-                  >
-                    {textBlocks.map((block, index) => (
-                      <SortableBlock key={block.id} id={block.id}>
-                        <div data-block-id={block.id}>
-                          {index === 0 && (
-                            <HoverAddButton onAddBlock={(type) => createBlock.mutate(type)} />
-                          )}
-                          <CanvasBlock
-                            block={block}
-                            pageId={page.id}
-                            onCreateBelow={() => createBlock.mutate("text")}
-                            onNavigate={(direction) => handleBlockNavigate(index, direction)}
-                          />
-                          <HoverAddButton onAddBlock={(type) => createBlock.mutate(type)} />
-                        </div>
-                      </SortableBlock>
-                    ))}
-                  </SortableContext>
-                </DndContext>
-              )}
-            </div>
+              {/* RIGHT COLUMN - Images ONLY (sticky) */}
+              <div
+                className={cn(
+                  "sticky top-24 self-start space-y-3 max-h-[calc(100vh-120px)] overflow-y-auto art-scrollbar max-w-[400px] rounded-lg transition-all duration-200 ease-out motion-reduce:transition-none",
+                  isDraggingOver && "ring-2 ring-primary/50 bg-primary/5"
+                )}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+              >
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  className="hidden"
+                  onChange={handleFileSelect}
+                />
 
-            {/* RIGHT Column - Art/Image Blocks Only (sticky) */}
-            <div 
-              className={cn(
-                "sticky top-24 self-start space-y-2 max-h-[calc(100vh-120px)] overflow-y-auto art-scrollbar max-w-[400px] rounded-lg transition-all duration-200 ease-out motion-reduce:transition-none",
-                isDraggingOver && "ring-2 ring-primary/50 bg-primary/5"
-              )}
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onDrop={handleDrop}
-            >
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                multiple
-                className="hidden"
-                onChange={handleFileSelect}
-              />
-
-              {artBlocks.length > 0 ? (
-                <>
+                {artBlocks.length > 0 ? (
                   <DndContext
                     sensors={sensors}
                     collisionDetection={closestCenter}
                     onDragEnd={(e) => handleDragEnd(e, artBlocks)}
                   >
                     <SortableContext
-                      items={artBlocks.map(b => b.id)}
+                      items={artBlocks.map((b) => b.id)}
                       strategy={rectSortingStrategy}
                     >
-                      <div className="grid grid-cols-2 gap-3">
+                      <div className="flex flex-col gap-3">
                         {artBlocks.map((block) => (
                           <SortableImageBlock key={block.id} id={block.id}>
-                            <div 
+                            <div
                               className="aspect-square bg-white/5 rounded-xl overflow-hidden flex items-center justify-center p-3 cursor-pointer hover:bg-white/10 transition-colors group relative"
                               onClick={() => setExpandedImageId(expandedImageId === block.id ? null : block.id)}
                             >
@@ -778,34 +787,26 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
                       </div>
                     </SortableContext>
                   </DndContext>
-                  
-                  <button
+                ) : (
+                  <div
+                    className={cn(
+                      "rounded-lg border-2 border-dashed border-muted-foreground/30 bg-muted/10 p-8 text-center cursor-pointer transition-all duration-200",
+                      isDraggingOver
+                        ? "border-primary/60 bg-primary/10"
+                        : "hover:border-muted-foreground/50 hover:bg-muted/20"
+                    )}
                     onClick={() => fileInputRef.current?.click()}
-                    className="w-full py-3 mt-2 rounded-lg border border-dashed border-muted-foreground/30 text-muted-foreground hover:border-muted-foreground/60 hover:bg-muted/30 hover:text-foreground transition-all duration-200 flex items-center justify-center gap-2"
                   >
-                    <Plus className="w-4 h-4" />
-                  </button>
-                </>
-              ) : (
-                <div 
-                  className={cn(
-                    "rounded-lg border-2 border-dashed border-muted-foreground/30 bg-muted/10 p-12 text-center cursor-pointer transition-all duration-200",
-                    isDraggingOver 
-                      ? "border-primary/60 bg-primary/10" 
-                      : "hover:border-muted-foreground/50 hover:bg-muted/20"
-                  )}
-                  onClick={() => fileInputRef.current?.click()}
-                >
-                  <Upload className="w-8 h-8 mx-auto mb-3 text-muted-foreground/50" />
-                  <p className="text-muted-foreground/70 font-mono text-sm">
-                    Drop inspiration here
-                  </p>
-                  <p className="text-muted-foreground/50 font-mono text-xs mt-1">
-                    or click to add
-                  </p>
-                </div>
-              )}
-            </div>
+                    <Upload className="w-8 h-8 mx-auto mb-3 text-muted-foreground/50" />
+                    <p className="text-muted-foreground/70 font-mono text-sm">
+                      Drop inspiration here
+                    </p>
+                    <p className="text-muted-foreground/50 font-mono text-xs mt-1">
+                      or click to add
+                    </p>
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
