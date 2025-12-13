@@ -145,14 +145,157 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
     <div ref={containerRef} className="h-full overflow-y-auto">
       <div className="px-6 py-12 md:py-16">
         
-        {/* TEMPORARILY COMMENTED OUT - Mobile Layout */}
-        {/* <div className="md:hidden max-w-full mx-auto">...</div> */}
+        {/* Mobile Layout (<= 767px): Title, intro, art, remaining text */}
+        <div className="md:hidden max-w-full mx-auto">
+          {/* Page Title */}
+          <div className="mb-6">
+            <input
+              type="text"
+              value={pageTitle}
+              onChange={(e) => handleTitleChange(e.target.value)}
+              placeholder="Untitled"
+              className="w-full text-3xl font-mono font-medium text-canvas-text bg-transparent border-none outline-none placeholder:text-canvas-text-muted/50"
+            />
+          </div>
 
-        {/* TEMPORARILY COMMENTED OUT - Tablet Layout */}
-        {/* <div className="hidden md:block lg:hidden max-w-[680px] mx-auto">...</div> */}
+          {/* Intro Text Block (first block only) */}
+          {introTextBlocks.length > 0 && (
+            <div className="space-y-1 mb-8">
+              {introTextBlocks.slice(0, 1).map((block) => (
+                <CanvasBlock
+                  key={block.id}
+                  block={block}
+                  pageId={page.id}
+                  onCreateBelow={() => createBlock.mutate("text")}
+                />
+              ))}
+            </div>
+          )}
 
-        {/* Desktop Layout - TESTING (always visible, red border) */}
-        <div className="grid grid-cols-[1fr_400px] gap-8 max-w-6xl mx-auto px-6 border-4 border-red-500">
+          {/* Art blocks - full width with generous margins */}
+          {artBlocks.length > 0 && (
+            <div className="my-10 space-y-6">
+              {artBlocks.map((block) => (
+                <ReferenceCard 
+                  key={block.id}
+                  caption={block.content?.caption}
+                >
+                  <CanvasBlock
+                    block={block}
+                    pageId={page.id}
+                    onCreateBelow={() => createBlock.mutate("image")}
+                  />
+                </ReferenceCard>
+              ))}
+            </div>
+          )}
+
+          {/* Divider between art and remaining text */}
+          {artBlocks.length > 0 && [...introTextBlocks.slice(1), ...remainingTextBlocks].length > 0 && (
+            <div className="flex items-center gap-4 my-8">
+              <div className="flex-1 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+              <span className="text-xs text-muted-foreground/50 font-mono">···</span>
+              <div className="flex-1 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+            </div>
+          )}
+
+          {/* Remaining Text Blocks (all except first intro) */}
+          <div className="space-y-1">
+            {[...introTextBlocks.slice(1), ...remainingTextBlocks].map((block) => (
+              <CanvasBlock
+                key={block.id}
+                block={block}
+                pageId={page.id}
+                onCreateBelow={() => createBlock.mutate("text")}
+              />
+            ))}
+          </div>
+
+          {/* Add Block Button */}
+          <div className="mt-4 group">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-canvas-text-muted hover:text-canvas-text font-mono text-sm opacity-50 hover:opacity-100 transition-opacity"
+              onClick={() => createBlock.mutate("text")}
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Add block
+            </Button>
+          </div>
+        </div>
+
+        {/* Tablet Layout (768px – 1023px): Stacked with art in middle */}
+        <div className="hidden md:block lg:hidden max-w-[680px] mx-auto">
+          {/* Page Title */}
+          <div className="mb-8">
+            <input
+              type="text"
+              value={pageTitle}
+              onChange={(e) => handleTitleChange(e.target.value)}
+              placeholder="Untitled"
+              className="w-full text-5xl font-mono font-medium text-canvas-text bg-transparent border-none outline-none placeholder:text-canvas-text-muted/50"
+            />
+          </div>
+
+          {/* Intro Text Blocks (first 2) */}
+          <div className="space-y-1">
+            {introTextBlocks.map((block) => (
+              <CanvasBlock
+                key={block.id}
+                block={block}
+                pageId={page.id}
+                onCreateBelow={() => createBlock.mutate("text")}
+              />
+            ))}
+          </div>
+
+          {/* Art blocks centered */}
+          {artBlocks.length > 0 && (
+            <div className="my-8 max-w-[640px] mx-auto space-y-4">
+              {artBlocks.map((block) => (
+                <ReferenceCard 
+                  key={block.id}
+                  caption={block.content?.caption}
+                >
+                  <CanvasBlock
+                    block={block}
+                    pageId={page.id}
+                    onCreateBelow={() => createBlock.mutate("image")}
+                  />
+                </ReferenceCard>
+              ))}
+            </div>
+          )}
+
+          {/* Remaining Text Blocks */}
+          <div className="space-y-1">
+            {remainingTextBlocks.map((block) => (
+              <CanvasBlock
+                key={block.id}
+                block={block}
+                pageId={page.id}
+                onCreateBelow={() => createBlock.mutate("text")}
+              />
+            ))}
+          </div>
+
+          {/* Add Block Button */}
+          <div className="mt-4 group">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-canvas-text-muted hover:text-canvas-text font-mono text-sm opacity-50 hover:opacity-100 transition-opacity"
+              onClick={() => createBlock.mutate("text")}
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Add block
+            </Button>
+          </div>
+        </div>
+
+        {/* Desktop Layout (>= 1024px): Side-by-side grid */}
+        <div className="hidden lg:grid grid-cols-[1fr_420px] gap-10 max-w-7xl mx-auto px-6">
           {/* Left Column - Text Content */}
           <div className="text-column">
             {/* Page Title */}
@@ -193,28 +336,26 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
           </div>
 
           {/* Right Column - Art/Image Content (sticky with scroll) */}
-          <div className="art-column sticky top-24 self-start max-h-[calc(100vh-120px)] overflow-y-auto art-scrollbar">
-            <div className="space-y-4">
-              {artBlocks.length > 0 ? (
-                artBlocks.map((block) => (
-                  <ReferenceCard 
-                    key={block.id}
-                    caption={block.content?.caption}
-                    className="[&_img]:max-w-full [&_img]:max-h-[500px] [&_img]:object-contain [&_img]:rounded-xl"
-                  >
-                    <CanvasBlock
-                      block={block}
-                      pageId={page.id}
-                      onCreateBelow={() => createBlock.mutate("image")}
-                    />
-                  </ReferenceCard>
-                ))
-              ) : (
-                <div className="rounded-[14px] border border-dashed border-border/50 bg-muted/30 p-8 text-center text-muted-foreground font-mono text-sm">
-                  Add image or gallery blocks to see them here
-                </div>
-              )}
-            </div>
+          <div className="sticky top-24 self-start space-y-4 max-h-[calc(100vh-120px)] overflow-y-auto art-scrollbar">
+            {artBlocks.length > 0 ? (
+              artBlocks.map((block) => (
+                <ReferenceCard 
+                  key={block.id}
+                  caption={block.content?.caption}
+                  className="[&_img]:max-w-full [&_img]:max-h-[450px] [&_img]:object-contain [&_img]:rounded-xl"
+                >
+                  <CanvasBlock
+                    block={block}
+                    pageId={page.id}
+                    onCreateBelow={() => createBlock.mutate("image")}
+                  />
+                </ReferenceCard>
+              ))
+            ) : (
+              <div className="rounded-[14px] border border-dashed border-border/50 bg-muted/30 p-8 text-center text-muted-foreground font-mono text-sm">
+                Add image or gallery blocks to see them here
+              </div>
+            )}
           </div>
         </div>
 
