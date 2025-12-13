@@ -183,6 +183,25 @@ export function CanvasBlock({ block, pageId, onCreateBelow }: CanvasBlockProps) 
     }
   };
 
+  // Handle paste event for images
+  const handlePaste = useCallback((e: React.ClipboardEvent) => {
+    if (block.block_type !== "image") return;
+    
+    const items = e.clipboardData?.items;
+    if (!items) return;
+
+    for (const item of Array.from(items)) {
+      if (item.type.startsWith("image/")) {
+        e.preventDefault();
+        const file = item.getAsFile();
+        if (file) {
+          handleImageUpload(file);
+        }
+        break;
+      }
+    }
+  }, [block.block_type]);
+
   // Render based on block type
   const renderBlockContent = () => {
     switch (block.block_type) {
@@ -244,7 +263,11 @@ export function CanvasBlock({ block, pageId, onCreateBelow }: CanvasBlockProps) 
 
       case "image":
         return (
-          <div className="relative group">
+          <div 
+            className="relative group" 
+            onPaste={handlePaste}
+            tabIndex={0}
+          >
             <input
               ref={fileInputRef}
               type="file"
@@ -271,7 +294,7 @@ export function CanvasBlock({ block, pageId, onCreateBelow }: CanvasBlockProps) 
               </>
             ) : (
               <div 
-                className="border-2 border-dashed border-canvas-border rounded-lg p-8 text-center cursor-pointer hover:border-canvas-accent transition-colors"
+                className="border-2 border-dashed border-canvas-border rounded-lg p-8 text-center cursor-pointer hover:border-canvas-accent transition-colors focus:border-canvas-accent focus:outline-none"
                 onClick={() => fileInputRef.current?.click()}
               >
                 {isUploading ? (
@@ -285,7 +308,7 @@ export function CanvasBlock({ block, pageId, onCreateBelow }: CanvasBlockProps) 
                   <>
                     <Upload className="w-8 h-8 mx-auto text-canvas-text-muted mb-2" />
                     <p className="text-canvas-text-muted font-mono text-sm">
-                      Click to upload image
+                      Click or paste (Ctrl+V) to add image
                     </p>
                   </>
                 )}
