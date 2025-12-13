@@ -1,35 +1,59 @@
+import { LayoutGrid, Columns2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface LayoutToggleProps {
-  value: "inline" | "split";
-  onChange: (value: "inline" | "split") => void;
+  value: "grid" | "split";
+  onChange: (value: "grid" | "split") => void;
 }
 
 export function LayoutToggle({ value, onChange }: LayoutToggleProps) {
   return (
-    <div className="flex items-center bg-canvas-sidebar/50 rounded-full p-0.5 border border-canvas-border/50">
-      <button
-        onClick={() => onChange("inline")}
-        className={cn(
-          "px-3 py-1 text-xs font-medium rounded-full transition-all duration-200 motion-reduce:transition-none",
-          value === "inline"
-            ? "bg-canvas-accent/20 text-canvas-text"
-            : "text-canvas-text-muted hover:text-canvas-text"
-        )}
-      >
-        Inline
-      </button>
-      <button
-        onClick={() => onChange("split")}
-        className={cn(
-          "px-3 py-1 text-xs font-medium rounded-full transition-all duration-200 motion-reduce:transition-none",
-          value === "split"
-            ? "bg-canvas-accent/20 text-canvas-text"
-            : "text-canvas-text-muted hover:text-canvas-text"
-        )}
-      >
-        Split
-      </button>
-    </div>
+    <TooltipProvider delayDuration={300}>
+      <div className="flex items-center bg-canvas-sidebar/50 rounded-lg p-0.5 border border-canvas-border/50">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              onClick={() => onChange("grid")}
+              className={cn(
+                "p-1.5 rounded-md transition-all duration-200 motion-reduce:transition-none",
+                value === "grid"
+                  ? "bg-white/10 text-canvas-text"
+                  : "text-canvas-text-muted hover:text-canvas-text"
+              )}
+            >
+              <LayoutGrid className="w-4 h-4" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom" className="text-xs">
+            Grid view
+          </TooltipContent>
+        </Tooltip>
+        
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              onClick={() => onChange("split")}
+              className={cn(
+                "p-1.5 rounded-md transition-all duration-200 motion-reduce:transition-none",
+                value === "split"
+                  ? "bg-white/10 text-canvas-text"
+                  : "text-canvas-text-muted hover:text-canvas-text"
+              )}
+            >
+              <Columns2 className="w-4 h-4" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom" className="text-xs">
+            Split view
+          </TooltipContent>
+        </Tooltip>
+      </div>
+    </TooltipProvider>
   );
 }

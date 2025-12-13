@@ -43,7 +43,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
-type LayoutMode = "inline" | "split";
+type LayoutMode = "grid" | "split";
 
 interface Block {
   id: string;
@@ -784,10 +784,10 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
             </div>
           </div>
 
-          {/* INLINE MODE - Single column, mixed content */}
+          {/* GRID MODE - Single column, images in 2-col grid below text */}
           <div className={cn(
             "transition-all duration-300 ease-out motion-reduce:transition-none max-w-3xl mx-auto",
-            layoutMode === "inline" ? "block" : "hidden"
+            layoutMode === "grid" ? "block" : "hidden"
           )}>
             {/* Title Area */}
             <div className="border-b border-white/5 pb-6 mb-8">
