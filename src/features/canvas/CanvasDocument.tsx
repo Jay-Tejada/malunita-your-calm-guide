@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { CanvasBlock } from "./CanvasBlock";
 import { HoverAddButton } from "./HoverAddButton";
+import { LayoutToggle } from "./LayoutToggle";
 import { Plus, Upload, X, Maximize2, Trash2 } from "lucide-react";
 import {
   Dialog,
@@ -23,6 +24,9 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+
+type LayoutMode = "inline" | "split";
+
 interface Block {
   id: string;
   block_type: string;
@@ -50,10 +54,22 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
   const [isDraggingOver, setIsDraggingOver] = useState(false);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [mobileFullscreenImage, setMobileFullscreenImage] = useState<string | null>(null);
+  const [layoutMode, setLayoutMode] = useState<LayoutMode>(() => {
+    if (typeof window !== "undefined") {
+      return (localStorage.getItem("canvas-layout-mode") as LayoutMode) || "split";
+    }
+    return "split";
+  });
   const containerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const titleInputRef = useRef<HTMLInputElement>(null);
   const blockRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+
+  // Persist layout mode preference
+  const handleLayoutChange = (mode: LayoutMode) => {
+    setLayoutMode(mode);
+    localStorage.setItem("canvas-layout-mode", mode);
+  };
 
   // Separate blocks into text content and image/art content (moved up for navigation)
   const textBlocks = blocks.filter(
@@ -518,21 +534,210 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
         </div>
 
         {/* 3. DESKTOP Layout (>= 1024px) */}
-        <div className="hidden lg:grid grid-cols-[1.5fr_1fr] gap-10 max-w-7xl mx-auto px-16">
-          {/* LEFT Column - Title, Description, Text Blocks */}
-          <div className="space-y-6">
-            {/* Title Area with separator */}
+        <div className="hidden lg:block max-w-7xl mx-auto px-16">
+          {/* Layout Toggle - Top Right */}
+          <div className="flex justify-end mb-4">
+            <LayoutToggle value={layoutMode} onChange={handleLayoutChange} />
+          </div>
+
+          {/* SPLIT MODE - Two column editorial layout */}
+          <div className={cn(
+            "transition-all duration-300 ease-out motion-reduce:transition-none",
+            layoutMode === "split" ? "grid grid-cols-[1.5fr_1fr] gap-10" : "hidden"
+          )}>
+            {/* LEFT Column - Title, Description, Text Blocks */}
+            <div className="space-y-6">
+              {/* Title Area with separator */}
+              <div className="border-b border-white/5 pb-6 mb-8">
+                <input
+                  ref={titleInputRef}
+                  type="text"
+                  value={pageTitle}
+                  onChange={(e) => handleTitleChange(e.target.value)}
+                  onKeyDown={(e) => {
+                    if ((e.key === 'ArrowDown' || e.key === 'Enter') && textBlocks.length > 0) {
+                      e.preventDefault();
+                      focusBlock(textBlocks[0].id);
+                    }
+                  }}
+                  placeholder="Untitled"
+                  className="w-full text-5xl font-medium text-canvas-text bg-transparent border-none outline-none placeholder:text-canvas-text-muted/50 break-words mb-4"
+                />
+              </div>
+
+              {/* Text Blocks with hover add buttons */}
+              {textBlocks.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-16">
+                  <button
+                    onClick={() => createBlock.mutate("text")}
+                    className="text-muted-foreground/40 hover:text-muted-foreground/60 transition-colors duration-150 text-lg"
+                  >
+                    Start writing...
+                  </button>
+                </div>
+              ) : (
+                textBlocks.map((block, index) => (
+                  <div key={block.id} data-block-id={block.id}>
+                    {index === 0 && (
+                      <HoverAddButton onAddBlock={(type) => createBlock.mutate(type)} />
+                    )}
+                    <CanvasBlock
+                      block={block}
+                      pageId={page.id}
+                      onCreateBelow={() => createBlock.mutate("text")}
+                      onNavigate={(direction) => handleBlockNavigate(index, direction)}
+                    />
+                    <HoverAddButton onAddBlock={(type) => createBlock.mutate(type)} />
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* RIGHT Column - Art/Image Blocks Only (sticky) */}
+            <div 
+              className={cn(
+                "sticky top-24 self-start space-y-2 max-h-[calc(100vh-120px)] overflow-y-auto art-scrollbar max-w-[400px] rounded-lg transition-all duration-200 ease-out motion-reduce:transition-none",
+                isDraggingOver && "ring-2 ring-primary/50 bg-primary/5"
+              )}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+            >
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                className="hidden"
+                onChange={handleFileSelect}
+              />
+
+              {artBlocks.length > 0 ? (
+                <>
+                  <div className="space-y-3">
+                    {artBlocks.map((block) => {
+                      const isExpanded = expandedImageId === block.id;
+                      const imageUrl = block.content?.url;
+                      
+                      if (!imageUrl) {
+                        return (
+                          <div key={block.id} className="relative">
+                            <CanvasBlock
+                              block={block}
+                              pageId={page.id}
+                              onCreateBelow={() => createBlock.mutate("image")}
+                            />
+                          </div>
+                        );
+                      }
+                      
+                      return (
+                        <div key={block.id} className="relative group">
+                          <img
+                            src={imageUrl}
+                            alt=""
+                            onClick={() => setExpandedImageId(isExpanded ? null : block.id)}
+                            className={cn(
+                              "w-full object-contain rounded-lg cursor-pointer transition-all duration-200 ease-out motion-reduce:transition-none",
+                              isExpanded ? "max-h-[400px]" : "max-h-[100px]"
+                            )}
+                          />
+                          <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-150 motion-reduce:transition-none flex items-center gap-1 bg-black/50 backdrop-blur-sm rounded-md p-1">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setExpandedImageId(isExpanded ? null : block.id);
+                              }}
+                              className="p-1 text-white hover:opacity-80 transition-opacity duration-150 motion-reduce:transition-none"
+                              title={isExpanded ? "Collapse" : "Expand"}
+                            >
+                              <Maximize2 className="w-4 h-4" />
+                            </button>
+                            <AlertDialog open={deleteConfirmId === block.id} onOpenChange={(open) => setDeleteConfirmId(open ? block.id : null)}>
+                              <AlertDialogTrigger asChild>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setDeleteConfirmId(block.id);
+                                  }}
+                                  className="p-1 text-white hover:opacity-80 transition-opacity duration-150 motion-reduce:transition-none"
+                                  title="Delete"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Delete image?</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    This will permanently remove this reference image.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => {
+                                      deleteBlock.mutate(block.id);
+                                      setDeleteConfirmId(null);
+                                    }}
+                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                  >
+                                    Delete
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    className="w-full py-3 mt-2 rounded-lg border border-dashed border-muted-foreground/30 text-muted-foreground hover:border-muted-foreground/60 hover:bg-muted/30 hover:text-foreground transition-all duration-200 flex items-center justify-center gap-2"
+                  >
+                    <Plus className="w-4 h-4" />
+                  </button>
+                </>
+              ) : (
+                <div 
+                  className={cn(
+                    "rounded-lg border-2 border-dashed border-muted-foreground/30 bg-muted/10 p-12 text-center cursor-pointer transition-all duration-200",
+                    isDraggingOver 
+                      ? "border-primary/60 bg-primary/10" 
+                      : "hover:border-muted-foreground/50 hover:bg-muted/20"
+                  )}
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <Upload className="w-8 h-8 mx-auto mb-3 text-muted-foreground/50" />
+                  <p className="text-muted-foreground/70 font-mono text-sm">
+                    Drop inspiration here
+                  </p>
+                  <p className="text-muted-foreground/50 font-mono text-xs mt-1">
+                    or click to add
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* INLINE MODE - Single column, mixed content */}
+          <div className={cn(
+            "transition-all duration-300 ease-out motion-reduce:transition-none max-w-3xl mx-auto",
+            layoutMode === "inline" ? "block" : "hidden"
+          )}>
+            {/* Title Area */}
             <div className="border-b border-white/5 pb-6 mb-8">
               <input
-                ref={titleInputRef}
                 type="text"
                 value={pageTitle}
                 onChange={(e) => handleTitleChange(e.target.value)}
                 onKeyDown={(e) => {
-                  // Arrow down or Enter from title focuses first block
-                  if ((e.key === 'ArrowDown' || e.key === 'Enter') && textBlocks.length > 0) {
+                  if ((e.key === 'ArrowDown' || e.key === 'Enter') && blocks.length > 0) {
                     e.preventDefault();
-                    focusBlock(textBlocks[0].id);
+                    const firstTextBlock = textBlocks[0];
+                    if (firstTextBlock) focusBlock(firstTextBlock.id);
                   }
                 }}
                 placeholder="Untitled"
@@ -540,166 +745,113 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
               />
             </div>
 
-            {/* Text Blocks with hover add buttons */}
-            {textBlocks.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-16">
-                <button
-                  onClick={() => createBlock.mutate("text")}
-                  className="text-muted-foreground/40 hover:text-muted-foreground/60 transition-colors duration-150 text-lg"
-                >
-                  Start writing...
-                </button>
-              </div>
-            ) : (
-              textBlocks.map((block, index) => (
-                <div key={block.id} data-block-id={block.id}>
-                  {index === 0 && (
-                    <HoverAddButton onAddBlock={(type) => createBlock.mutate(type)} />
-                  )}
-                  <CanvasBlock
-                    block={block}
-                    pageId={page.id}
-                    onCreateBelow={() => createBlock.mutate("text")}
-                    onNavigate={(direction) => handleBlockNavigate(index, direction)}
-                  />
-                  <HoverAddButton onAddBlock={(type) => createBlock.mutate(type)} />
+            {/* All blocks in order */}
+            <div className="space-y-6">
+              {blocks.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-16">
+                  <button
+                    onClick={() => createBlock.mutate("text")}
+                    className="text-muted-foreground/40 hover:text-muted-foreground/60 transition-colors duration-150 text-lg"
+                  >
+                    Start writing...
+                  </button>
                 </div>
-              ))
-            )}
-          </div>
-
-          {/* RIGHT Column - Art/Image Blocks Only (sticky) */}
-          <div 
-            className={cn(
-              "sticky top-24 self-start space-y-2 max-h-[calc(100vh-120px)] overflow-y-auto art-scrollbar max-w-[400px] rounded-lg transition-all duration-200 ease-out motion-reduce:transition-none",
-              isDraggingOver && "ring-2 ring-primary/50 bg-primary/5"
-            )}
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onDrop={handleDrop}
-          >
-            {/* Hidden file input */}
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              multiple
-              className="hidden"
-              onChange={handleFileSelect}
-            />
-
-            {artBlocks.length > 0 ? (
-              <>
-                {/* Expandable image carousel - raw images, no wrappers */}
-                <div className="space-y-3">
-                  {artBlocks.map((block) => {
-                    const isExpanded = expandedImageId === block.id;
+              ) : (
+                blocks.map((block, index) => {
+                  // For image blocks in inline mode, render in 2-col grid container
+                  if (["image", "gallery"].includes(block.block_type)) {
                     const imageUrl = block.content?.url;
-                    
-                    // If no image uploaded yet, show the upload block
                     if (!imageUrl) {
                       return (
-                        <div key={block.id} className="relative">
+                        <div key={block.id}>
+                          <HoverAddButton onAddBlock={(type) => createBlock.mutate(type)} />
                           <CanvasBlock
                             block={block}
                             pageId={page.id}
-                            onCreateBelow={() => createBlock.mutate("image")}
+                            onCreateBelow={() => createBlock.mutate("text")}
                           />
                         </div>
                       );
                     }
                     
                     return (
-                      <div key={block.id} className="relative group">
-                        <img
-                          src={imageUrl}
-                          alt=""
-                          onClick={() => setExpandedImageId(isExpanded ? null : block.id)}
-                          className={cn(
-                            "w-full object-contain rounded-lg cursor-pointer transition-all duration-200 ease-out motion-reduce:transition-none",
-                            isExpanded ? "max-h-[400px]" : "max-h-[100px]"
-                          )}
-                        />
-                        {/* Hover action bar */}
-                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-150 motion-reduce:transition-none flex items-center gap-1 bg-black/50 backdrop-blur-sm rounded-md p-1">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setExpandedImageId(isExpanded ? null : block.id);
-                            }}
-                            className="p-1 text-white hover:opacity-80 transition-opacity duration-150 motion-reduce:transition-none"
-                            title={isExpanded ? "Collapse" : "Expand"}
-                          >
-                            <Maximize2 className="w-4 h-4" />
-                          </button>
-                          <AlertDialog open={deleteConfirmId === block.id} onOpenChange={(open) => setDeleteConfirmId(open ? block.id : null)}>
-                            <AlertDialogTrigger asChild>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setDeleteConfirmId(block.id);
-                                }}
-                                className="p-1 text-white hover:opacity-80 transition-opacity duration-150 motion-reduce:transition-none"
-                                title="Delete"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Delete image?</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  This will permanently remove this reference image.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction
-                                  onClick={() => {
-                                    deleteBlock.mutate(block.id);
-                                    setDeleteConfirmId(null);
+                      <div key={block.id}>
+                        <HoverAddButton onAddBlock={(type) => createBlock.mutate(type)} />
+                        <div className="relative group aspect-square bg-black/20 rounded-lg overflow-hidden hover:ring-2 hover:ring-white/20 transition max-w-md">
+                          <img
+                            src={imageUrl}
+                            alt=""
+                            className="w-full h-full object-contain p-2"
+                          />
+                          <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-150 flex items-center gap-1 bg-black/50 backdrop-blur-sm rounded-md p-1">
+                            <AlertDialog open={deleteConfirmId === block.id} onOpenChange={(open) => setDeleteConfirmId(open ? block.id : null)}>
+                              <AlertDialogTrigger asChild>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setDeleteConfirmId(block.id);
                                   }}
-                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                  className="p-1 text-white hover:opacity-80 transition-opacity duration-150"
+                                  title="Delete"
                                 >
-                                  Delete
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Delete image?</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    This will permanently remove this reference image.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => {
+                                      deleteBlock.mutate(block.id);
+                                      setDeleteConfirmId(null);
+                                    }}
+                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                  >
+                                    Delete
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </div>
                         </div>
                       </div>
                     );
-                  })}
-                </div>
-                
-                {/* Add reference button - dashed border, rounded-lg */}
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  className="w-full py-3 mt-2 rounded-lg border border-dashed border-muted-foreground/30 text-muted-foreground hover:border-muted-foreground/60 hover:bg-muted/30 hover:text-foreground transition-all duration-200 flex items-center justify-center gap-2"
-                >
-                  <Plus className="w-4 h-4" />
-                </button>
-              </>
-            ) : (
-              /* Empty state placeholder with drop zone */
-              <div 
-                className={cn(
-                  "rounded-lg border-2 border-dashed border-muted-foreground/30 bg-muted/10 p-12 text-center cursor-pointer transition-all duration-200",
-                  isDraggingOver 
-                    ? "border-primary/60 bg-primary/10" 
-                    : "hover:border-muted-foreground/50 hover:bg-muted/20"
-                )}
-                onClick={() => fileInputRef.current?.click()}
-              >
-                <Upload className="w-8 h-8 mx-auto mb-3 text-muted-foreground/50" />
-                <p className="text-muted-foreground/70 font-mono text-sm">
-                  Drop inspiration here
-                </p>
-                <p className="text-muted-foreground/50 font-mono text-xs mt-1">
-                  or click to add
-                </p>
-              </div>
-            )}
+                  }
+                  
+                  // Text blocks
+                  const textBlockIndex = textBlocks.findIndex(tb => tb.id === block.id);
+                  return (
+                    <div key={block.id} data-block-id={block.id}>
+                      {index === 0 && (
+                        <HoverAddButton onAddBlock={(type) => createBlock.mutate(type)} />
+                      )}
+                      <CanvasBlock
+                        block={block}
+                        pageId={page.id}
+                        onCreateBelow={() => createBlock.mutate("text")}
+                        onNavigate={textBlockIndex >= 0 ? (direction) => handleBlockNavigate(textBlockIndex, direction) : undefined}
+                      />
+                      <HoverAddButton onAddBlock={(type) => createBlock.mutate(type)} />
+                    </div>
+                  );
+                })
+              )}
+            </div>
+
+            {/* Hidden file input for inline mode */}
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              className="hidden"
+              onChange={handleFileSelect}
+            />
           </div>
         </div>
 
