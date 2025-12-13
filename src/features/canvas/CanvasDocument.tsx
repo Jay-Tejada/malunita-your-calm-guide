@@ -299,57 +299,12 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
                     }
                     
                     return (
-                      <div 
-                        key={block.id} 
-                        className={cn(
-                          "relative group cursor-pointer transition-opacity duration-200 ease-out",
-                          hasExpanded && !isExpanded && "opacity-[0.85]",
-                          !hasExpanded && "opacity-90 hover:opacity-100"
-                        )}
-                        onClick={() => {
-                          if (!isExpanded) {
-                            setExpandedImageId(block.id);
-                          }
-                        }}
-                      >
-                        <img
-                          src={imageUrl}
-                          alt={block.content?.caption || "Reference image"}
-                          className={cn(
-                            "w-full object-contain rounded-lg transition-all duration-200 ease-out",
-                            isExpanded ? "max-h-[450px]" : "max-h-[100px]"
-                          )}
-                        />
-                        
-                        {/* X button for expanded image */}
-                        {isExpanded && (
-                          <Button 
-                            variant="secondary" 
-                            size="icon" 
-                            className="absolute top-2 right-2 h-6 w-6 bg-background/70 backdrop-blur-sm hover:bg-background/90 transition-all duration-200"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setExpandedImageId(null);
-                            }}
-                          >
-                            <X className="h-3 w-3" />
-                          </Button>
-                        )}
-                        
-                        {/* Pin icon on hover (thumbnails only) */}
-                        {!isExpanded && (
-                          <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                            <Button 
-                              variant="ghost" 
-                              size="icon" 
-                              className="h-5 w-5 text-muted-foreground/70 hover:text-foreground"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              <Pin className="h-3 w-3" />
-                            </Button>
-                          </div>
-                        )}
-                      </div>
+                      <img
+                        key={block.id}
+                        src={imageUrl}
+                        alt=""
+                        className="w-full max-h-[100px] object-contain rounded-lg cursor-pointer hover:opacity-80 transition-opacity"
+                      />
                     );
                   })}
                 </div>
