@@ -145,22 +145,54 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
     <div ref={containerRef} className="h-full overflow-y-auto">
       <div className="px-6 py-12 md:py-16">
         
-        {/* Mobile Layout (< 768px): Title, all text, then art */}
-        <div className="md:hidden max-w-[680px] mx-auto">
+        {/* Mobile Layout (<= 767px): Title, intro, art, remaining text */}
+        <div className="md:hidden max-w-full mx-auto">
           {/* Page Title */}
-          <div className="mb-8">
+          <div className="mb-6">
             <input
               type="text"
               value={pageTitle}
               onChange={(e) => handleTitleChange(e.target.value)}
               placeholder="Untitled"
-              className="w-full text-4xl font-mono font-medium text-canvas-text bg-transparent border-none outline-none placeholder:text-canvas-text-muted/50"
+              className="w-full text-3xl font-mono font-medium text-canvas-text bg-transparent border-none outline-none placeholder:text-canvas-text-muted/50"
             />
           </div>
 
-          {/* All Text Blocks */}
+          {/* Intro Text Block (first block only) */}
+          {introTextBlocks.length > 0 && (
+            <div className="space-y-1 mb-8">
+              {introTextBlocks.slice(0, 1).map((block) => (
+                <CanvasBlock
+                  key={block.id}
+                  block={block}
+                  pageId={page.id}
+                  onCreateBelow={() => createBlock.mutate("text")}
+                />
+              ))}
+            </div>
+          )}
+
+          {/* Art blocks - full width with generous margins */}
+          {artBlocks.length > 0 && (
+            <div className="my-10 space-y-6">
+              {artBlocks.map((block) => (
+                <ReferenceCard 
+                  key={block.id}
+                  caption={block.content?.caption}
+                >
+                  <CanvasBlock
+                    block={block}
+                    pageId={page.id}
+                    onCreateBelow={() => createBlock.mutate("image")}
+                  />
+                </ReferenceCard>
+              ))}
+            </div>
+          )}
+
+          {/* Remaining Text Blocks (all except first intro) */}
           <div className="space-y-1">
-            {textBlocks.map((block) => (
+            {[...introTextBlocks.slice(1), ...remainingTextBlocks].map((block) => (
               <CanvasBlock
                 key={block.id}
                 block={block}
@@ -181,22 +213,6 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
               <Plus className="w-4 h-4 mr-2" />
               Add block
             </Button>
-          </div>
-
-          {/* Art blocks at bottom */}
-          <div className="mt-8 space-y-4">
-            {artBlocks.map((block) => (
-              <ReferenceCard 
-                key={block.id}
-                caption={block.content?.caption}
-              >
-                <CanvasBlock
-                  block={block}
-                  pageId={page.id}
-                  onCreateBelow={() => createBlock.mutate("image")}
-                />
-              </ReferenceCard>
-            ))}
           </div>
         </div>
 
