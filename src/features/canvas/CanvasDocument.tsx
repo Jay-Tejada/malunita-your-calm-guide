@@ -88,9 +88,15 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
 
   // Persist layout mode preference
   const handleLayoutChange = (mode: LayoutMode) => {
+    console.log('Switching to:', mode);
     setLayoutMode(mode);
     localStorage.setItem("canvas-layout-mode", mode);
   };
+
+  // Debug: Log layout mode changes
+  useEffect(() => {
+    console.log('Layout mode:', layoutMode);
+  }, [layoutMode]);
 
   // Keyboard shortcuts for layout switching (Ctrl+1 = Grid, Ctrl+2 = Split)
   useEffect(() => {
@@ -624,10 +630,8 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
         <div className="hidden lg:block max-w-7xl mx-auto px-16">
 
           {/* SPLIT MODE - Two column editorial layout */}
-          <div className={cn(
-            "transition-all duration-300 ease-out motion-reduce:transition-none",
-            layoutMode === "split" ? "grid grid-cols-[1.5fr_1fr] gap-10" : "hidden"
-          )}>
+          {layoutMode === "split" && (
+            <div className="grid grid-cols-[1.5fr_1fr] gap-10 transition-all duration-300 ease-out motion-reduce:transition-none">
             {/* LEFT Column - Title, Description, Text Blocks */}
             <div className="space-y-6">
               {/* Title Area with separator */}
@@ -802,13 +806,12 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
                 </div>
               )}
             </div>
-          </div>
+            </div>
+          )}
 
           {/* GRID MODE - Single column, images in 2-col grid below text */}
-          <div className={cn(
-            "transition-all duration-300 ease-out motion-reduce:transition-none max-w-3xl mx-auto",
-            layoutMode === "grid" ? "block" : "hidden"
-          )}>
+          {layoutMode === "grid" && (
+            <div className="space-y-6 max-w-3xl mx-auto transition-all duration-300 ease-out motion-reduce:transition-none">
             {/* Title Area */}
             <div className="border-b border-white/5 pb-6 mb-8">
               <input
@@ -948,6 +951,7 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
               onChange={handleFileSelect}
             />
           </div>
+          )}
         </div>
 
         {/* Bottom Padding */}
