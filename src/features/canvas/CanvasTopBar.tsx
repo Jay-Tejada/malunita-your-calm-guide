@@ -40,8 +40,9 @@ export function CanvasTopBar({
 
         <nav className="flex items-center text-sm font-mono">
           <button
-            onClick={() => navigate("/")}
+            onClick={onToggleLeftSidebar}
             className="text-canvas-text-muted hover:text-canvas-text transition-colors"
+            title="Toggle sidebar"
           >
             Malunita
           </button>
