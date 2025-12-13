@@ -1,16 +1,18 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { CanvasOutlineSidebar } from "@/features/canvas/CanvasOutlineSidebar";
 import { CanvasDocument } from "@/features/canvas/CanvasDocument";
 import { CanvasTableOfContents } from "@/features/canvas/CanvasTableOfContents";
 import { CanvasTopBar } from "@/features/canvas/CanvasTopBar";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 export default function ProjectCanvas() {
   const { projectId, pageId } = useParams();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [leftSidebarOpen, setLeftSidebarOpen] = useState(true);
   const [rightSidebarOpen, setRightSidebarOpen] = useState(true);
   const [activeSection, setActiveSection] = useState<string | null>(null);
@@ -66,6 +68,35 @@ export default function ProjectCanvas() {
     enabled: !!currentPage?.id,
   });
 
+  // Create page mutation for keyboard shortcut
+  const createPage = useMutation({
+    mutationFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      const maxOrder = Math.max(...pages.map((p) => p.sort_order || 0), -1);
+
+      const { data, error } = await supabase
+        .from("project_pages")
+        .insert({
+          project_id: projectId,
+          user_id: user.id,
+          parent_page_id: null,
+          title: "Untitled",
+          sort_order: maxOrder + 1,
+        })
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (page) => {
+      queryClient.invalidateQueries({ queryKey: ["canvas-pages", projectId] });
+      navigate(`/canvas/${projectId}/${page.id}`);
+      toast.success("New page created");
+    },
+  });
+
   // Navigate to first page if none selected
   useEffect(() => {
     if (projectId && pages.length > 0 && !pageId) {
@@ -89,7 +120,7 @@ export default function ProjectCanvas() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // Keyboard shortcut: H to go home
+  // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Don't trigger if typing in an input or textarea
@@ -98,14 +129,29 @@ export default function ProjectCanvas() {
         return;
       }
       
-      if (e.key.toLowerCase() === "h" && !e.metaKey && !e.ctrlKey && !e.altKey) {
+      const key = e.key.toLowerCase();
+      
+      // H - Go home
+      if (key === "h" && !e.metaKey && !e.ctrlKey && !e.altKey) {
         navigate("/");
+      }
+      
+      // S - Toggle left sidebar
+      if (key === "s" && !e.metaKey && !e.ctrlKey && !e.altKey) {
+        e.preventDefault();
+        setLeftSidebarOpen(prev => !prev);
+      }
+      
+      // N - New page
+      if (key === "n" && !e.metaKey && !e.ctrlKey && !e.altKey) {
+        e.preventDefault();
+        createPage.mutate();
       }
     };
     
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [navigate]);
+  }, [navigate, createPage]);
 
   // Update document title
   useEffect(() => {
