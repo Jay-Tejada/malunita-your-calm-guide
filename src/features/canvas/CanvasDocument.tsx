@@ -240,7 +240,7 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
         </div>
 
         {/* 3. DESKTOP Layout (>= 768px) - TEMP TESTING */}
-        <div className="hidden md:grid grid-cols-[1fr_420px] gap-10 max-w-7xl mx-auto px-6">
+        <div className="hidden md:grid grid-cols-[1.5fr_1fr] gap-10 max-w-7xl mx-auto px-6">
           {/* LEFT Column - Title, Description, Text Blocks */}
           <div className="space-y-6">
             {/* Page Title */}
@@ -249,7 +249,7 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
               value={pageTitle}
               onChange={(e) => handleTitleChange(e.target.value)}
               placeholder="Untitled"
-              className="w-full text-5xl font-mono font-medium text-canvas-text bg-transparent border-none outline-none placeholder:text-canvas-text-muted/50"
+              className="w-full text-5xl font-mono font-medium text-canvas-text bg-transparent border-none outline-none placeholder:text-canvas-text-muted/50 break-words"
             />
 
             {/* Text Blocks Only */}
@@ -275,7 +275,7 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
           </div>
 
           {/* RIGHT Column - Art/Image Blocks Only (sticky) */}
-          <div className="sticky top-24 self-start space-y-4 max-h-[calc(100vh-120px)] overflow-y-auto art-scrollbar">
+          <div className="sticky top-24 self-start space-y-4 max-h-[calc(100vh-120px)] overflow-y-auto art-scrollbar max-w-[400px]">
             {artBlocks.length > 0 ? (
               artBlocks.map((block) => (
                 <ReferenceCard 
