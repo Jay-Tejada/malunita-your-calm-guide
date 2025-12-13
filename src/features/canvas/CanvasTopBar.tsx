@@ -65,10 +65,11 @@ export function CanvasTopBar({
         {/* Home orb button */}
         <button
           onClick={() => navigate("/")}
-          className="w-6 h-6 min-w-6 min-h-6 rounded-full bg-gradient-to-br from-canvas-accent/60 to-canvas-accent opacity-80 hover:opacity-100 transition-opacity cursor-pointer"
-          style={{ aspectRatio: '1/1' }}
+          className="p-0 border-0 bg-transparent cursor-pointer hover:scale-110 transition-transform"
           title="Go home"
-        />
+        >
+          <div className="w-6 h-6 rounded-full bg-gradient-to-br from-canvas-accent/60 to-canvas-accent opacity-80 hover:opacity-100 transition-opacity" />
+        </button>
 
         <Button
           variant="ghost"
