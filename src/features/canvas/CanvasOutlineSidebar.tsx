@@ -20,7 +20,6 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import {
   ChevronRight,
-  ChevronDown,
   Plus,
   MoreHorizontal,
   Trash2,
@@ -112,46 +111,36 @@ function SortablePageItem({
     <div ref={setNodeRef} style={style}>
       <div
         className={cn(
-          "group flex items-center gap-1 px-2 py-1.5 rounded-md cursor-pointer transition-colors relative",
+          "group flex items-center gap-2 py-1.5 rounded-md cursor-pointer transition-all duration-150",
           isActive
-            ? "bg-canvas-active text-canvas-text"
-            : "text-canvas-text-muted hover:bg-canvas-bg hover:text-canvas-text",
-          isDragging && "shadow-md bg-canvas-sidebar"
+            ? "bg-white/5 text-canvas-text"
+            : "text-canvas-text-muted hover:bg-white/[0.03] hover:text-canvas-text",
+          isDragging && "shadow-lg bg-canvas-sidebar"
         )}
-        style={{ paddingLeft: `${level * 8 + 6}px` }}
+        style={{ paddingLeft: `${level * 16 + 8}px`, paddingRight: '8px' }}
         onClick={() => !isEditing && onPageSelect(page.id)}
       >
-        {/* Drag Handle - absolute positioned */}
-        <button
-          {...attributes}
-          {...listeners}
-          className="absolute left-0 top-1/2 -translate-y-1/2 w-5 h-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <GripVertical className="w-3 h-3" />
-        </button>
-
-        {/* Expand/Collapse */}
+        {/* Disclosure Arrow */}
         <button
           onClick={(e) => {
             e.stopPropagation();
             if (hasChildren) onToggleExpand(page.id);
           }}
           className={cn(
-            "w-4 h-4 flex items-center justify-center",
-            !hasChildren && "invisible"
+            "w-4 h-4 flex items-center justify-center shrink-0 transition-transform duration-200",
+            hasChildren ? "opacity-60 hover:opacity-100" : "opacity-0"
           )}
         >
-          {hasChildren &&
-            (isExpanded ? (
-              <ChevronDown className="w-3 h-3" />
-            ) : (
-              <ChevronRight className="w-3 h-3" />
-            ))}
+          <ChevronRight 
+            className={cn(
+              "w-3 h-3 transition-transform duration-200",
+              isExpanded && "rotate-90"
+            )} 
+          />
         </button>
 
         {/* Icon */}
-        <span className="text-sm">{page.icon || "📄"}</span>
+        <span className="text-sm shrink-0">{page.icon || "📄"}</span>
 
         {/* Title */}
         {isEditing ? (
@@ -163,42 +152,54 @@ function SortablePageItem({
               if (e.key === "Enter") onSaveTitle(page.id);
               if (e.key === "Escape") onCancelEdit();
             }}
-            className="h-6 text-sm px-1 py-0 bg-canvas-bg border-canvas-border"
+            className="h-6 text-sm px-1.5 py-0 bg-background/50 border-border/50 flex-1"
             autoFocus
             onClick={(e) => e.stopPropagation()}
           />
         ) : (
-          <span className="flex-1 text-sm font-mono truncate">{page.title}</span>
+          <span className="flex-1 text-sm truncate">{page.title}</span>
         )}
 
-        {/* Actions */}
-        <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+        {/* Hover Actions */}
+        <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+          {/* Drag Handle */}
+          <button
+            {...attributes}
+            {...listeners}
+            className="w-5 h-5 flex items-center justify-center text-muted-foreground/50 hover:text-muted-foreground cursor-grab active:cursor-grabbing"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <GripVertical className="w-3 h-3" />
+          </button>
+
+          {/* Add Child */}
           {level < 2 && (
             <Button
               variant="ghost"
               size="icon"
-              className="h-5 w-5"
+              className="h-5 w-5 text-muted-foreground/50 hover:text-muted-foreground"
               onClick={(e) => {
                 e.stopPropagation();
-                onToggleExpand(page.id);
                 onCreateChild(page.id);
               }}
             >
               <Plus className="w-3 h-3" />
             </Button>
           )}
+
+          {/* More Menu */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-5 w-5"
+                className="h-5 w-5 text-muted-foreground/50 hover:text-muted-foreground"
                 onClick={(e) => e.stopPropagation()}
               >
                 <MoreHorizontal className="w-3 h-3" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-40">
+            <DropdownMenuContent align="end" className="w-40 bg-popover border-border">
               <DropdownMenuItem
                 onClick={(e) => {
                   e.stopPropagation();
@@ -213,7 +214,7 @@ function SortablePageItem({
                   e.stopPropagation();
                   onDelete(page.id);
                 }}
-                className="text-destructive"
+                className="text-destructive focus:text-destructive"
               >
                 <Trash2 className="w-3 h-3 mr-2" />
                 Delete
@@ -223,10 +224,18 @@ function SortablePageItem({
         </div>
       </div>
 
-      {/* Children */}
-      {hasChildren && isExpanded && (
-        <div>{children.map((child) => renderPage(child, level + 1))}</div>
-      )}
+      {/* Children with smooth collapse animation */}
+      <div
+        className={cn(
+          "overflow-hidden transition-all duration-200 ease-out",
+          isExpanded ? "opacity-100" : "opacity-0 max-h-0"
+        )}
+        style={{ 
+          maxHeight: isExpanded ? `${children.length * 40}px` : 0 
+        }}
+      >
+        {children.map((child) => renderPage(child, level + 1))}
+      </div>
     </div>
   );
 }
@@ -435,16 +444,16 @@ export function CanvasOutlineSidebar({
   const rootPages = buildTree(null, 0);
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full flex flex-col bg-background/50">
       {/* Header */}
-      <div className="px-3 py-3 border-b border-canvas-border">
-        <h2 className="font-mono text-xs text-canvas-text-muted uppercase tracking-wider">
+      <div className="px-4 py-4 border-b border-white/5">
+        <h2 className="text-xs text-muted-foreground uppercase tracking-widest font-medium">
           Pages
         </h2>
       </div>
 
       {/* Page Tree */}
-      <div className="flex-1 overflow-y-auto py-2 px-1">
+      <div className="flex-1 overflow-y-auto py-3 px-2">
         <DndContext
           sensors={sensors}
           collisionDetection={closestCenter}
@@ -460,15 +469,15 @@ export function CanvasOutlineSidebar({
       </div>
 
       {/* Add Page Button */}
-      <div className="p-2 border-t border-canvas-border">
+      <div className="p-3 border-t border-white/5">
         <Button
           variant="ghost"
           size="sm"
-          className="w-full justify-start text-canvas-text-muted hover:text-canvas-text font-mono text-sm"
+          className="w-full justify-start text-muted-foreground hover:text-foreground hover:bg-white/5 text-sm"
           onClick={() => createPage.mutate(null)}
         >
           <Plus className="w-4 h-4 mr-2" />
-          Add Page
+          New Page
         </Button>
       </div>
     </div>
