@@ -299,12 +299,30 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
                     }
                     
                     return (
-                      <img
-                        key={block.id}
-                        src={imageUrl}
-                        alt=""
-                        className="w-full max-h-[100px] object-contain rounded-lg cursor-pointer hover:opacity-80 transition-opacity"
-                      />
+                      <div key={block.id} className="relative">
+                        <img
+                          src={imageUrl}
+                          alt=""
+                          onClick={() => setExpandedImageId(isExpanded ? null : block.id)}
+                          className={cn(
+                            "w-full object-contain rounded-lg cursor-pointer hover:opacity-80 transition-all duration-200",
+                            isExpanded ? "max-h-[400px]" : "max-h-[100px]"
+                          )}
+                        />
+                        {isExpanded && (
+                          <Button
+                            variant="secondary"
+                            size="icon"
+                            className="absolute top-2 right-2 h-6 w-6 bg-background/80 backdrop-blur-sm hover:bg-background"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setExpandedImageId(null);
+                            }}
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
+                        )}
+                      </div>
                     );
                   })}
                 </div>
