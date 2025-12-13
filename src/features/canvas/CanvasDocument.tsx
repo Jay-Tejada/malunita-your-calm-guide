@@ -5,11 +5,22 @@ import { CanvasBlock } from "./CanvasBlock";
 import { ReferenceCard } from "./ReferenceCard";
 import { HoverAddButton } from "./HoverAddButton";
 import { Input } from "@/components/ui/input";
-import { Plus, Upload, X } from "lucide-react";
+import { Plus, Upload, X, Maximize2, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import debounce from "@/lib/debounce";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 interface Block {
   id: string;
   block_type: string;
@@ -35,8 +46,24 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
   const [pageTitle, setPageTitle] = useState(page?.title || "");
   const [expandedImageId, setExpandedImageId] = useState<string | null>(null);
   const [isDraggingOver, setIsDraggingOver] = useState(false);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Delete block mutation
+  const deleteBlock = useMutation({
+    mutationFn: async (blockId: string) => {
+      const { error } = await supabase
+        .from("page_blocks")
+        .delete()
+        .eq("id", blockId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["canvas-blocks", page?.id] });
+      toast.success("Image removed");
+    },
+  });
 
   useEffect(() => {
     setPageTitle(page?.title || "");
@@ -408,29 +435,63 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
                     }
                     
                     return (
-                      <div key={block.id} className="relative">
+                      <div key={block.id} className="relative group">
                         <img
                           src={imageUrl}
                           alt=""
                           onClick={() => setExpandedImageId(isExpanded ? null : block.id)}
                           className={cn(
-                            "w-full object-contain rounded-lg cursor-pointer hover:opacity-80 transition-all duration-200",
+                            "w-full object-contain rounded-lg cursor-pointer transition-all duration-200",
                             isExpanded ? "max-h-[400px]" : "max-h-[100px]"
                           )}
                         />
-                        {isExpanded && (
-                          <Button
-                            variant="secondary"
-                            size="icon"
-                            className="absolute top-2 right-2 h-6 w-6 bg-background/80 backdrop-blur-sm hover:bg-background"
+                        {/* Hover action bar */}
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center gap-1 bg-black/50 backdrop-blur-sm rounded-md p-1">
+                          <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              setExpandedImageId(null);
+                              setExpandedImageId(isExpanded ? null : block.id);
                             }}
+                            className="p-1 text-white hover:opacity-80 transition-opacity"
+                            title={isExpanded ? "Collapse" : "Expand"}
                           >
-                            <X className="h-3 w-3" />
-                          </Button>
-                        )}
+                            <Maximize2 className="w-4 h-4" />
+                          </button>
+                          <AlertDialog open={deleteConfirmId === block.id} onOpenChange={(open) => setDeleteConfirmId(open ? block.id : null)}>
+                            <AlertDialogTrigger asChild>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setDeleteConfirmId(block.id);
+                                }}
+                                className="p-1 text-white hover:opacity-80 transition-opacity"
+                                title="Delete"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Delete image?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  This will permanently remove this reference image.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => {
+                                    deleteBlock.mutate(block.id);
+                                    setDeleteConfirmId(null);
+                                  }}
+                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                >
+                                  Delete
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
                       </div>
                     );
                   })}
