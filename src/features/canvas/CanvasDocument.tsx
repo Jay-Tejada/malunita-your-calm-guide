@@ -279,7 +279,7 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
             {artBlocks.length > 0 ? (
               <>
                 {/* Expandable image carousel */}
-                <div className="flex flex-col gap-2">
+                <div className="flex flex-col gap-3">
                   {artBlocks.map((block) => {
                     const isExpanded = expandedImageId === block.id;
                     const hasExpanded = expandedImageId !== null;
@@ -289,12 +289,8 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
                         key={block.id} 
                         className={cn(
                           "relative group cursor-pointer transition-all duration-200 ease-out",
-                          "p-2 rounded-xl border border-white/10 bg-black/[0.03] dark:bg-white/[0.03]",
-                          isExpanded 
-                            ? "shadow-lg" 
-                            : "hover:scale-[1.02] hover:shadow-md",
                           hasExpanded && !isExpanded && "opacity-[0.85]",
-                          !hasExpanded && "opacity-100"
+                          !hasExpanded && "opacity-90 hover:opacity-100"
                         )}
                         onClick={() => {
                           if (!isExpanded) {
@@ -309,8 +305,7 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
                             "[&_img]:w-full [&_img]:object-contain [&_img]:rounded-lg",
                             isExpanded 
                               ? "[&_img]:max-h-[450px]"
-                              : "[&_img]:max-h-[120px]",
-                            "flex items-center justify-center"
+                              : "[&_img]:max-h-[120px]"
                           )}
                         >
                           <CanvasBlock
@@ -325,23 +320,23 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
                           <Button 
                             variant="secondary" 
                             size="icon" 
-                            className="absolute top-3 right-3 h-7 w-7 bg-background/80 backdrop-blur-sm hover:bg-background/90 transition-all duration-200"
+                            className="absolute top-2 right-2 h-6 w-6 bg-background/70 backdrop-blur-sm hover:bg-background/90 transition-all duration-200"
                             onClick={(e) => {
                               e.stopPropagation();
                               setExpandedImageId(null);
                             }}
                           >
-                            <X className="h-4 w-4" />
+                            <X className="h-3 w-3" />
                           </Button>
                         )}
                         
                         {/* Pin icon on hover (thumbnails only) */}
                         {!isExpanded && (
-                          <div className="absolute top-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                          <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                             <Button 
                               variant="ghost" 
                               size="icon" 
-                              className="h-6 w-6 text-muted-foreground hover:text-foreground bg-background/60 backdrop-blur-sm"
+                              className="h-5 w-5 text-muted-foreground/70 hover:text-foreground"
                               onClick={(e) => e.stopPropagation()}
                             >
                               <Pin className="h-3 w-3" />
