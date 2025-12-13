@@ -525,21 +525,20 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
           </Dialog>
         </div>
 
-        {/* 2. TABLET Layout (768px - 1023px) */}
-        <div className="hidden md:block lg:hidden px-8">
-          <div className="max-w-[720px] mx-auto">
-            {/* Title */}
-            <input
-              type="text"
-              value={pageTitle}
-              onChange={(e) => handleTitleChange(e.target.value)}
-              placeholder="Untitled"
-              className="w-full text-4xl font-medium text-canvas-text bg-transparent border-none outline-none placeholder:text-canvas-text-muted/50 mb-4"
-            />
-
-            {/* Intro Text (first 2 blocks) or empty state */}
-            <div className="space-y-4 mb-8">
-              {introTextBlocks.length === 0 ? (
+        {/* 2. TABLET Layout (768px - 1023px) - SPLIT MODE */}
+        {layoutMode === "split" && (
+          <div className="hidden md:flex lg:hidden gap-6 px-6 max-w-[900px] mx-auto">
+            {/* LEFT - Title + text blocks */}
+            <div className="flex-1 space-y-4">
+              <input
+                type="text"
+                value={pageTitle}
+                onChange={(e) => handleTitleChange(e.target.value)}
+                placeholder="Untitled"
+                className="w-full text-4xl font-medium text-canvas-text bg-transparent border-none outline-none placeholder:text-canvas-text-muted/50 mb-4"
+              />
+              
+              {textBlocks.length === 0 ? (
                 <button
                   onClick={() => createBlock.mutate("text")}
                   className="w-full py-8 text-center text-muted-foreground/40 hover:text-muted-foreground/60 transition-colors duration-150"
@@ -547,7 +546,7 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
                   Start writing...
                 </button>
               ) : (
-                introTextBlocks.map((block) => (
+                textBlocks.map((block) => (
                   <div key={block.id} className="text-base leading-relaxed">
                     <CanvasBlock
                       block={block}
@@ -557,26 +556,34 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
                   </div>
                 ))
               )}
-            </div>
-
-            {/* Images in 2-column grid or empty state */}
-            {artBlocks.length === 0 ? (
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                className="w-full py-8 mb-8 rounded-lg border border-dashed border-muted-foreground/20 text-muted-foreground/40 hover:border-muted-foreground/40 hover:text-muted-foreground/60 transition-colors duration-150 text-sm"
+              
+              <Button
+                variant="outline"
+                className="w-full py-4 rounded-lg border-dashed border-muted-foreground/30 text-muted-foreground hover:text-foreground hover:border-muted-foreground/50 hover:bg-muted/20"
+                onClick={() => createBlock.mutate("text")}
               >
-                Add reference images
-              </button>
-            ) : (
-              <div className="grid grid-cols-2 gap-3 mb-8">
-                {artBlocks.map((block) => {
+                <Plus className="w-4 h-4 mr-2" />
+                Add block
+              </Button>
+            </div>
+            
+            {/* RIGHT - Images (sticky) */}
+            <div className="w-[280px] sticky top-20 self-start space-y-3">
+              {artBlocks.length === 0 ? (
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="w-full py-8 rounded-lg border border-dashed border-muted-foreground/20 text-muted-foreground/40 hover:border-muted-foreground/40 hover:text-muted-foreground/60 transition-colors duration-150 text-sm"
+                >
+                  Add images
+                </button>
+              ) : (
+                artBlocks.map((block) => {
                   const imageUrl = block.content?.url;
                   if (!imageUrl) return null;
-                  
                   return (
                     <div 
                       key={block.id}
-                      className="aspect-square bg-white/5 rounded-xl overflow-hidden flex items-center justify-center p-3 cursor-pointer hover:bg-white/10 transition-colors relative group"
+                      className="aspect-square bg-white/5 rounded-xl overflow-hidden flex items-center justify-center p-2 cursor-pointer hover:bg-white/10 transition-colors"
                       onClick={() => setMobileFullscreenImage(imageUrl)}
                     >
                       <img
@@ -586,57 +593,126 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
                       />
                     </div>
                   );
-                })}
-              </div>
-            )}
-
-            {/* Remaining Text Blocks */}
-            {remainingTextBlocks.length > 0 && (
-              <div className="space-y-4 mb-8">
-                {remainingTextBlocks.map((block) => (
-                  <div key={block.id} className="text-base leading-relaxed">
-                    <CanvasBlock
-                      block={block}
-                      pageId={page.id}
-                      onCreateBelow={() => createBlock.mutate("text")}
-                    />
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* Add Block Button */}
-            <Button
-              variant="outline"
-              className="w-full py-4 rounded-lg border-dashed border-muted-foreground/30 text-muted-foreground hover:text-foreground hover:border-muted-foreground/50 hover:bg-muted/20"
-              onClick={() => createBlock.mutate("text")}
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Add block
-            </Button>
+                })
+              )}
+            </div>
           </div>
+        )}
 
-          {/* Tablet Fullscreen Image Modal */}
-          <Dialog open={!!mobileFullscreenImage} onOpenChange={() => setMobileFullscreenImage(null)}>
-            <DialogContent className="max-w-[90vw] max-h-[90vh] p-4 bg-black/95 border-none animate-fade-in motion-reduce:animate-none">
-              <button
-                onClick={() => setMobileFullscreenImage(null)}
-                className="absolute top-4 right-4 z-50 p-2 rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors"
-              >
-                <X className="w-6 h-6" />
-              </button>
-              {mobileFullscreenImage && (
-                <div className="flex items-center justify-center w-full h-full">
-                  <img
-                    src={mobileFullscreenImage}
-                    alt=""
-                    className="max-w-full max-h-[80vh] object-contain"
-                  />
+        {/* 2. TABLET Layout (768px - 1023px) - GRID MODE */}
+        {layoutMode === "grid" && (
+          <div className="hidden md:block lg:hidden px-8">
+            <div className="max-w-[720px] mx-auto space-y-6">
+              {/* Title */}
+              <input
+                type="text"
+                value={pageTitle}
+                onChange={(e) => handleTitleChange(e.target.value)}
+                placeholder="Untitled"
+                className="w-full text-4xl font-medium text-canvas-text bg-transparent border-none outline-none placeholder:text-canvas-text-muted/50 mb-4"
+              />
+
+              {/* Intro Text (first 2 blocks) or empty state */}
+              <div className="space-y-4 mb-8">
+                {introTextBlocks.length === 0 ? (
+                  <button
+                    onClick={() => createBlock.mutate("text")}
+                    className="w-full py-8 text-center text-muted-foreground/40 hover:text-muted-foreground/60 transition-colors duration-150"
+                  >
+                    Start writing...
+                  </button>
+                ) : (
+                  introTextBlocks.map((block) => (
+                    <div key={block.id} className="text-base leading-relaxed">
+                      <CanvasBlock
+                        block={block}
+                        pageId={page.id}
+                        onCreateBelow={() => createBlock.mutate("text")}
+                      />
+                    </div>
+                  ))
+                )}
+              </div>
+
+              {/* Images in 2-column grid or empty state */}
+              {artBlocks.length === 0 ? (
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="w-full py-8 mb-8 rounded-lg border border-dashed border-muted-foreground/20 text-muted-foreground/40 hover:border-muted-foreground/40 hover:text-muted-foreground/60 transition-colors duration-150 text-sm"
+                >
+                  Add reference images
+                </button>
+              ) : (
+                <div className="grid grid-cols-2 gap-3 mb-8">
+                  {artBlocks.map((block) => {
+                    const imageUrl = block.content?.url;
+                    if (!imageUrl) return null;
+                    
+                    return (
+                      <div 
+                        key={block.id}
+                        className="aspect-square bg-white/5 rounded-xl overflow-hidden flex items-center justify-center p-3 cursor-pointer hover:bg-white/10 transition-colors relative group"
+                        onClick={() => setMobileFullscreenImage(imageUrl)}
+                      >
+                        <img
+                          src={imageUrl}
+                          alt=""
+                          className="max-w-full max-h-full object-contain"
+                        />
+                      </div>
+                    );
+                  })}
                 </div>
               )}
-            </DialogContent>
-          </Dialog>
-        </div>
+
+              {/* Remaining Text Blocks */}
+              {remainingTextBlocks.length > 0 && (
+                <div className="space-y-4 mb-8">
+                  {remainingTextBlocks.map((block) => (
+                    <div key={block.id} className="text-base leading-relaxed">
+                      <CanvasBlock
+                        block={block}
+                        pageId={page.id}
+                        onCreateBelow={() => createBlock.mutate("text")}
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Add Block Button */}
+              <Button
+                variant="outline"
+                className="w-full py-4 rounded-lg border-dashed border-muted-foreground/30 text-muted-foreground hover:text-foreground hover:border-muted-foreground/50 hover:bg-muted/20"
+                onClick={() => createBlock.mutate("text")}
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Add block
+              </Button>
+            </div>
+
+            {/* Tablet Fullscreen Image Modal */}
+            <Dialog open={!!mobileFullscreenImage} onOpenChange={() => setMobileFullscreenImage(null)}>
+              <DialogContent className="max-w-[90vw] max-h-[90vh] p-4 bg-black/95 border-none animate-fade-in motion-reduce:animate-none">
+                <button
+                  onClick={() => setMobileFullscreenImage(null)}
+                  className="absolute top-4 right-4 z-50 p-2 rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+                {mobileFullscreenImage && (
+                  <div className="flex items-center justify-center w-full h-full">
+                    <img
+                      src={mobileFullscreenImage}
+                      alt=""
+                      className="max-w-full max-h-[80vh] object-contain"
+                    />
+                  </div>
+                )}
+              </DialogContent>
+            </Dialog>
+          </div>
+        )}
 
         {/* 3. DESKTOP Layout (>= 1024px) */}
         <div className="hidden lg:block max-w-7xl mx-auto px-16">
