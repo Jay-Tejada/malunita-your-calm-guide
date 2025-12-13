@@ -70,6 +70,7 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
   const [pageTitle, setPageTitle] = useState(page?.title || "");
   const [expandedImageId, setExpandedImageId] = useState<string | null>(null);
   const [isDraggingOver, setIsDraggingOver] = useState(false);
+  const [isRightColumnDragOver, setIsRightColumnDragOver] = useState(false);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [mobileFullscreenImage, setMobileFullscreenImage] = useState<string | null>(null);
   const [layoutMode, setLayoutMode] = useState<LayoutMode>(() => {
@@ -725,10 +726,37 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
                 </div>
               </div>
 
-              {/* RIGHT - Images (compact vertical carousel) */}
+              {/* RIGHT - Images (compact vertical carousel with drag-drop) */}
               <div 
                 style={{ flex: '1', position: 'sticky', top: '96px', alignSelf: 'flex-start' }}
-                className="max-h-[calc(100vh-120px)] overflow-y-auto scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent"
+                className={cn(
+                  "max-h-[calc(100vh-120px)] overflow-y-auto scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent rounded-lg transition-all duration-200",
+                  isRightColumnDragOver && "ring-2 ring-primary/50 bg-primary/5"
+                )}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setIsRightColumnDragOver(true);
+                }}
+                onDragLeave={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setIsRightColumnDragOver(false);
+                }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setIsRightColumnDragOver(false);
+                  const files = e.dataTransfer.files;
+                  if (files && files.length > 0) {
+                    const imageFiles = Array.from(files).filter(f => f.type.startsWith("image/"));
+                    if (imageFiles.length === 0) {
+                      toast.error("Please drop image files only");
+                      return;
+                    }
+                    imageFiles.forEach(uploadImage);
+                  }
+                }}
               >
                 <div className="space-y-2 pr-2">
                   {artBlocks.map((block) => {
@@ -775,17 +803,27 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
                     );
                   })}
                   
-                  {artBlocks.length === 0 && (
-                    <div 
-                      className="rounded-lg border-2 border-dashed border-muted-foreground/30 bg-muted/10 p-6 text-center cursor-pointer hover:border-muted-foreground/50 hover:bg-muted/20 transition-all duration-200"
-                      onClick={() => fileInputRef.current?.click()}
-                    >
-                      <Upload className="w-6 h-6 mx-auto mb-2 text-muted-foreground/50" />
+                  {/* Drop zone / Add button */}
+                  <div 
+                    className={cn(
+                      "rounded-lg border-2 border-dashed bg-muted/10 p-4 text-center cursor-pointer transition-all duration-200",
+                      isRightColumnDragOver 
+                        ? "border-primary/50 bg-primary/10" 
+                        : "border-muted-foreground/30 hover:border-muted-foreground/50 hover:bg-muted/20",
+                      artBlocks.length > 0 ? "py-3" : "py-6"
+                    )}
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <Upload className={cn(
+                      "mx-auto text-muted-foreground/50",
+                      artBlocks.length > 0 ? "w-4 h-4" : "w-6 h-6 mb-2"
+                    )} />
+                    {artBlocks.length === 0 && (
                       <p className="text-muted-foreground/70 font-mono text-xs">
-                        Add images
+                        Drop images or click to add
                       </p>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
