@@ -25,6 +25,7 @@ import {
   Trash2,
   Edit2,
   GripVertical,
+  Copy,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,7 +34,15 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuSeparator,
+  ContextMenuTrigger,
+} from "@/components/ui/context-menu";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -69,6 +78,7 @@ interface SortablePageItemProps {
   onCancelEdit: () => void;
   onEditingTitleChange: (title: string) => void;
   onCreateChild: (parentId: string) => void;
+  onDuplicate: (id: string) => void;
   onDelete: (id: string) => void;
   renderPage: (page: Page, level: number) => React.ReactNode;
 }
@@ -89,6 +99,7 @@ function SortablePageItem({
   onCancelEdit,
   onEditingTitleChange,
   onCreateChild,
+  onDuplicate,
   onDelete,
   renderPage,
 }: SortablePageItemProps) {
@@ -107,122 +118,169 @@ function SortablePageItem({
     opacity: isDragging ? 0.5 : 1,
   };
 
+  const handleDoubleClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onStartEdit(page.id, page.title);
+  };
+
   return (
     <div ref={setNodeRef} style={style}>
-      <div
-        className={cn(
-          "group flex items-center gap-2 py-1.5 rounded-md cursor-pointer transition-all duration-150",
-          isActive
-            ? "bg-white/5 text-canvas-text"
-            : "text-canvas-text-muted hover:bg-white/[0.03] hover:text-canvas-text",
-          isDragging && "shadow-lg bg-canvas-sidebar"
-        )}
-        style={{ paddingLeft: `${level * 16 + 8}px`, paddingRight: '8px' }}
-        onClick={() => !isEditing && onPageSelect(page.id)}
-      >
-        {/* Disclosure Arrow */}
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            if (hasChildren) onToggleExpand(page.id);
-          }}
-          className={cn(
-            "w-4 h-4 flex items-center justify-center shrink-0 transition-transform duration-200",
-            hasChildren ? "opacity-60 hover:opacity-100" : "opacity-0"
-          )}
-        >
-          <ChevronRight 
+      <ContextMenu>
+        <ContextMenuTrigger asChild>
+          <div
             className={cn(
-              "w-3 h-3 transition-transform duration-200",
-              isExpanded && "rotate-90"
-            )} 
-          />
-        </button>
-
-        {/* Icon */}
-        <span className="text-sm shrink-0">{page.icon || "📄"}</span>
-
-        {/* Title */}
-        {isEditing ? (
-          <Input
-            value={editingTitle}
-            onChange={(e) => onEditingTitleChange(e.target.value)}
-            onBlur={() => onSaveTitle(page.id)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") onSaveTitle(page.id);
-              if (e.key === "Escape") onCancelEdit();
-            }}
-            className="h-6 text-sm px-1.5 py-0 bg-background/50 border-border/50 flex-1"
-            autoFocus
-            onClick={(e) => e.stopPropagation()}
-          />
-        ) : (
-          <span className="flex-1 text-sm truncate">{page.title}</span>
-        )}
-
-        {/* Hover Actions */}
-        <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-          {/* Drag Handle */}
-          <button
-            {...attributes}
-            {...listeners}
-            className="w-5 h-5 flex items-center justify-center text-muted-foreground/50 hover:text-muted-foreground cursor-grab active:cursor-grabbing"
-            onClick={(e) => e.stopPropagation()}
+              "group flex items-center gap-2 py-1.5 rounded-md cursor-pointer transition-all duration-150",
+              isActive
+                ? "bg-white/5 text-canvas-text"
+                : "text-canvas-text-muted hover:bg-white/[0.03] hover:text-canvas-text",
+              isDragging && "shadow-lg bg-canvas-sidebar"
+            )}
+            style={{ paddingLeft: `${level * 16 + 8}px`, paddingRight: '8px' }}
+            onClick={() => !isEditing && onPageSelect(page.id)}
+            onDoubleClick={handleDoubleClick}
           >
-            <GripVertical className="w-3 h-3" />
-          </button>
+            {/* Drag Handle */}
+            <button
+              {...attributes}
+              {...listeners}
+              className="w-4 h-4 flex items-center justify-center opacity-0 group-hover:opacity-60 hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing shrink-0"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <GripVertical className="w-3 h-3" />
+            </button>
 
-          {/* Add Child */}
-          {level < 2 && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-5 w-5 text-muted-foreground/50 hover:text-muted-foreground"
+            {/* Disclosure Arrow */}
+            <button
               onClick={(e) => {
                 e.stopPropagation();
-                onCreateChild(page.id);
+                if (hasChildren) onToggleExpand(page.id);
               }}
+              className={cn(
+                "w-4 h-4 flex items-center justify-center shrink-0 transition-transform duration-200",
+                hasChildren ? "opacity-60 hover:opacity-100" : "opacity-0"
+              )}
             >
-              <Plus className="w-3 h-3" />
-            </Button>
-          )}
+              <ChevronRight 
+                className={cn(
+                  "w-3 h-3 transition-transform duration-200",
+                  isExpanded && "rotate-90"
+                )} 
+              />
+            </button>
 
-          {/* More Menu */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-5 w-5 text-muted-foreground/50 hover:text-muted-foreground"
+            {/* Icon */}
+            <span className="text-sm shrink-0">{page.icon || "📄"}</span>
+
+            {/* Title */}
+            {isEditing ? (
+              <Input
+                value={editingTitle}
+                onChange={(e) => onEditingTitleChange(e.target.value)}
+                onBlur={() => onSaveTitle(page.id)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") onSaveTitle(page.id);
+                  if (e.key === "Escape") onCancelEdit();
+                }}
+                className="h-6 text-sm px-1.5 py-0 bg-background/50 border-border/50 flex-1"
+                autoFocus
                 onClick={(e) => e.stopPropagation()}
-              >
-                <MoreHorizontal className="w-3 h-3" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-40 bg-popover border-border">
-              <DropdownMenuItem
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onStartEdit(page.id, page.title);
-                }}
-              >
-                <Edit2 className="w-3 h-3 mr-2" />
-                Rename
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onDelete(page.id);
-                }}
-                className="text-destructive focus:text-destructive"
-              >
-                <Trash2 className="w-3 h-3 mr-2" />
-                Delete
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </div>
+              />
+            ) : (
+              <span className="flex-1 text-sm truncate">{page.title}</span>
+            )}
+
+            {/* Hover Actions */}
+            <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+              {/* Add Child */}
+              {level < 2 && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-5 w-5 text-muted-foreground/50 hover:text-muted-foreground"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onCreateChild(page.id);
+                  }}
+                  title="Add subpage"
+                >
+                  <Plus className="w-3 h-3" />
+                </Button>
+              )}
+
+              {/* More Menu */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-5 w-5 text-muted-foreground/50 hover:text-muted-foreground"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <MoreHorizontal className="w-3 h-3" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-40 bg-popover border-border">
+                  <DropdownMenuItem
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onStartEdit(page.id, page.title);
+                    }}
+                  >
+                    <Edit2 className="w-3 h-3 mr-2" />
+                    Rename
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDuplicate(page.id);
+                    }}
+                  >
+                    <Copy className="w-3 h-3 mr-2" />
+                    Duplicate
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDelete(page.id);
+                    }}
+                    className="text-destructive focus:text-destructive"
+                  >
+                    <Trash2 className="w-3 h-3 mr-2" />
+                    Delete
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
+        </ContextMenuTrigger>
+        
+        {/* Right-click Context Menu */}
+        <ContextMenuContent className="w-40 bg-popover border-border">
+          <ContextMenuItem onClick={() => onStartEdit(page.id, page.title)}>
+            <Edit2 className="w-3 h-3 mr-2" />
+            Rename
+          </ContextMenuItem>
+          <ContextMenuItem onClick={() => onDuplicate(page.id)}>
+            <Copy className="w-3 h-3 mr-2" />
+            Duplicate
+          </ContextMenuItem>
+          {level < 2 && (
+            <ContextMenuItem onClick={() => onCreateChild(page.id)}>
+              <Plus className="w-3 h-3 mr-2" />
+              Add Subpage
+            </ContextMenuItem>
+          )}
+          <ContextMenuSeparator />
+          <ContextMenuItem 
+            onClick={() => onDelete(page.id)}
+            className="text-destructive focus:text-destructive"
+          >
+            <Trash2 className="w-3 h-3 mr-2" />
+            Delete
+          </ContextMenuItem>
+        </ContextMenuContent>
+      </ContextMenu>
 
       {/* Children with smooth collapse animation */}
       <div
@@ -350,6 +408,40 @@ export function CanvasOutlineSidebar({
     },
   });
 
+  // Duplicate page mutation
+  const duplicatePage = useMutation({
+    mutationFn: async (id: string) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      const pageToDuplicate = pages.find((p) => p.id === id);
+      if (!pageToDuplicate) throw new Error("Page not found");
+
+      const siblingPages = pages.filter((p) => p.parent_page_id === pageToDuplicate.parent_page_id);
+      const maxOrder = Math.max(...siblingPages.map((p) => p.sort_order || 0), -1);
+
+      const { data, error } = await supabase
+        .from("project_pages")
+        .insert({
+          project_id: projectId,
+          user_id: user.id,
+          parent_page_id: pageToDuplicate.parent_page_id,
+          title: `${pageToDuplicate.title} (copy)`,
+          icon: pageToDuplicate.icon,
+          sort_order: maxOrder + 1,
+        })
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (page) => {
+      queryClient.invalidateQueries({ queryKey: ["canvas-pages", projectId] });
+      onPageSelect(page.id);
+      toast.success("Page duplicated");
+    },
+  });
+
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
 
@@ -435,6 +527,7 @@ export function CanvasOutlineSidebar({
           toggleExpand(parentId);
           createPage.mutate(parentId);
         }}
+        onDuplicate={(id) => duplicatePage.mutate(id)}
         onDelete={(id) => deletePage.mutate(id)}
         renderPage={renderPage}
       />
