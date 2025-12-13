@@ -641,197 +641,43 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
         {/* 3. DESKTOP Layout (>= 1024px) */}
         <div className="hidden lg:block max-w-7xl mx-auto px-16">
 
-          {/* SPLIT MODE - Two column editorial layout */}
+          {/* SPLIT MODE - Two column layout using flexbox */}
           {layoutMode === "split" && (
-            <div 
-              style={{ 
-                display: 'grid', 
-                gridTemplateColumns: '1.5fr 1fr', 
-                gap: '32px',
-                maxWidth: '1280px',
-                margin: '0 auto',
-                padding: '0 24px'
-              }}
-            >
-              {/* DEBUG: Block counts */}
-              <div className="col-span-2 text-yellow-400 text-sm mb-4">
-                Text blocks: {textBlocks.length} | Art blocks: {artBlocks.length}
-              </div>
+            <div style={{ display: 'flex', gap: '40px', maxWidth: '1200px', margin: '0 auto', padding: '0 24px' }}>
               
-              {/* LEFT COLUMN - Title + text content ONLY */}
-              <div className="space-y-6 bg-red-500/30">
-                {/* Title Area */}
-                <div className="border-b border-white/5 pb-6 mb-4">
-                  <input
-                    ref={titleInputRef}
-                    type="text"
-                    value={pageTitle}
-                    onChange={(e) => handleTitleChange(e.target.value)}
-                    onKeyDown={(e) => {
-                      if ((e.key === 'ArrowDown' || e.key === 'Enter') && textBlocks.length > 0) {
-                        e.preventDefault();
-                        focusBlock(textBlocks[0].id);
-                      }
-                    }}
-                    placeholder="Untitled"
-                    className="w-full text-5xl font-medium text-canvas-text bg-transparent border-none outline-none placeholder:text-canvas-text-muted/50 break-words mb-2"
-                  />
+              {/* LEFT - Text */}
+              <div style={{ flex: '1.5', minWidth: 0 }}>
+                <input
+                  value={pageTitle}
+                  onChange={(e) => handleTitleChange(e.target.value)}
+                  placeholder="Untitled"
+                  className="w-full text-5xl font-medium text-canvas-text bg-transparent border-none outline-none placeholder:text-canvas-text-muted/50 mb-4"
+                />
+                <p className="text-muted-foreground mb-6">Text content goes here</p>
+                <div className="space-y-4">
+                  {textBlocks.map((block) => (
+                    <CanvasBlock 
+                      key={block.id} 
+                      block={block} 
+                      pageId={page.id}
+                      onCreateBelow={() => createBlock.mutate("text")}
+                    />
+                  ))}
                 </div>
-
-                {/* Description / text blocks ONLY (no images) */}
-                {textBlocks.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-16">
-                    <button
-                      onClick={() => createBlock.mutate("text")}
-                      className="text-muted-foreground/40 hover:text-muted-foreground/60 transition-colors duration-150 text-lg"
-                    >
-                      Start writing...
-                    </button>
-                  </div>
-                ) : (
-                  <DndContext
-                    sensors={sensors}
-                    collisionDetection={closestCenter}
-                    onDragEnd={(e) => handleDragEnd(e, textBlocks)}
-                  >
-                    <SortableContext
-                      items={textBlocks.map((b) => b.id)}
-                      strategy={verticalListSortingStrategy}
-                    >
-                      {textBlocks.map((block, index) => (
-                        <SortableBlock key={block.id} id={block.id}>
-                          <div data-block-id={block.id}>
-                            {index === 0 && (
-                              <HoverAddButton onAddBlock={(type) => createBlock.mutate(type)} />
-                            )}
-                            <CanvasBlock
-                              block={block}
-                              pageId={page.id}
-                              onCreateBelow={() => createBlock.mutate("text")}
-                              onNavigate={(direction) => handleBlockNavigate(index, direction)}
-                            />
-                            <HoverAddButton onAddBlock={(type) => createBlock.mutate(type)} />
-                          </div>
-                        </SortableBlock>
-                      ))}
-                    </SortableContext>
-                  </DndContext>
-                )}
-
-                {/* Add text block button */}
-                <Button
-                  variant="outline"
-                  className="mt-4 py-3 rounded-lg border-dashed border-muted-foreground/30 text-muted-foreground hover:text-foreground hover:border-muted-foreground/50 hover:bg-muted/20"
-                  onClick={() => createBlock.mutate("text")}
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add block
-                </Button>
               </div>
 
-              {/* RIGHT COLUMN - Images ONLY (sticky) */}
-              <div
-                className={cn(
-                  "sticky top-24 self-start space-y-3 max-h-[calc(100vh-120px)] overflow-y-auto art-scrollbar max-w-[400px] rounded-lg transition-all duration-200 ease-out motion-reduce:transition-none bg-blue-500/30",
-                  isDraggingOver && "ring-2 ring-primary/50 bg-primary/5"
-                )}
-                onDragOver={handleDragOver}
-                onDragLeave={handleDragLeave}
-                onDrop={handleDrop}
-              >
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  className="hidden"
-                  onChange={handleFileSelect}
-                />
-
-                {artBlocks.length > 0 ? (
-                  <DndContext
-                    sensors={sensors}
-                    collisionDetection={closestCenter}
-                    onDragEnd={(e) => handleDragEnd(e, artBlocks)}
-                  >
-                    <SortableContext
-                      items={artBlocks.map((b) => b.id)}
-                      strategy={rectSortingStrategy}
-                    >
-                      <div className="flex flex-col gap-3">
-                        {artBlocks.map((block) => (
-                          <SortableImageBlock key={block.id} id={block.id}>
-                            <div
-                              className="aspect-square bg-white/5 rounded-xl overflow-hidden flex items-center justify-center p-3 cursor-pointer hover:bg-white/10 transition-colors group relative"
-                              onClick={() => setExpandedImageId(expandedImageId === block.id ? null : block.id)}
-                            >
-                              <img
-                                src={block.content?.url || block.content}
-                                alt=""
-                                className="max-w-full max-h-full object-contain"
-                              />
-                              {/* Delete button on hover */}
-                              <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
-                                <AlertDialog open={deleteConfirmId === block.id} onOpenChange={(open) => setDeleteConfirmId(open ? block.id : null)}>
-                                  <AlertDialogTrigger asChild>
-                                    <button
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        setDeleteConfirmId(block.id);
-                                      }}
-                                      className="p-1.5 bg-black/50 backdrop-blur-sm rounded-md text-white hover:bg-black/70 transition-colors"
-                                      title="Delete"
-                                    >
-                                      <Trash2 className="w-3.5 h-3.5" />
-                                    </button>
-                                  </AlertDialogTrigger>
-                                  <AlertDialogContent>
-                                    <AlertDialogHeader>
-                                      <AlertDialogTitle>Delete image?</AlertDialogTitle>
-                                      <AlertDialogDescription>
-                                        This will permanently remove this reference image.
-                                      </AlertDialogDescription>
-                                    </AlertDialogHeader>
-                                    <AlertDialogFooter>
-                                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                      <AlertDialogAction
-                                        onClick={() => {
-                                          deleteBlock.mutate(block.id);
-                                          setDeleteConfirmId(null);
-                                        }}
-                                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                      >
-                                        Delete
-                                      </AlertDialogAction>
-                                    </AlertDialogFooter>
-                                  </AlertDialogContent>
-                                </AlertDialog>
-                              </div>
-                            </div>
-                          </SortableImageBlock>
-                        ))}
-                      </div>
-                    </SortableContext>
-                  </DndContext>
-                ) : (
-                  <div
-                    className={cn(
-                      "rounded-lg border-2 border-dashed border-muted-foreground/30 bg-muted/10 p-8 text-center cursor-pointer transition-all duration-200",
-                      isDraggingOver
-                        ? "border-primary/60 bg-primary/10"
-                        : "hover:border-muted-foreground/50 hover:bg-muted/20"
-                    )}
-                    onClick={() => fileInputRef.current?.click()}
-                  >
-                    <Upload className="w-8 h-8 mx-auto mb-3 text-muted-foreground/50" />
-                    <p className="text-muted-foreground/70 font-mono text-sm">
-                      Drop inspiration here
-                    </p>
-                    <p className="text-muted-foreground/50 font-mono text-xs mt-1">
-                      or click to add
-                    </p>
-                  </div>
-                )}
+              {/* RIGHT - Images */}
+              <div style={{ flex: '1', position: 'sticky', top: '96px', alignSelf: 'flex-start' }}>
+                <div className="space-y-3">
+                  {artBlocks.map((block) => (
+                    <img 
+                      key={block.id}
+                      src={block.content?.url || block.content}
+                      alt=""
+                      className="w-full rounded-lg"
+                    />
+                  ))}
+                </div>
               </div>
             </div>
           )}
