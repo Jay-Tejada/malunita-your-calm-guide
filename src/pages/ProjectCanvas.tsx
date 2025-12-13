@@ -89,6 +89,24 @@ export default function ProjectCanvas() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  // Keyboard shortcut: H to go home
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't trigger if typing in an input or textarea
+      const target = e.target as HTMLElement;
+      if (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable) {
+        return;
+      }
+      
+      if (e.key.toLowerCase() === "h" && !e.metaKey && !e.ctrlKey && !e.altKey) {
+        navigate("/");
+      }
+    };
+    
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [navigate]);
+
   // Update document title
   useEffect(() => {
     document.title = `${project?.name || "Project Canvas"} - Malunita`;
