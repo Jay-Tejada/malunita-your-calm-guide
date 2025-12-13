@@ -360,19 +360,25 @@ const Index = () => {
 
           {/* CENTER - Everything vertically & horizontally centered */}
           <div className="flex-1 flex flex-col items-center justify-center px-4">
-            {/* Orb - opens capture sheet on mobile */}
+            {/* Orb - direct voice capture on mobile (same as desktop) */}
             <div className="flex flex-col items-center">
               <Orb
                 size={140}
-                onClick={() => setCaptureOpen(true)}
-                isRecording={false}
-                isProcessing={false}
+                onClick={handleVoiceCapture}
+                isRecording={isOrbRecording}
+                isProcessing={isOrbProcessing}
               />
               
               {/* Status text below orb */}
-              <p className="mt-6 text-sm text-muted-foreground/50 text-center font-light">
-                {getOneLiner()}
-              </p>
+              {(isOrbRecording || isOrbProcessing) ? (
+                <p className="mt-4 text-xs text-muted-foreground/40 animate-fade-in">
+                  {isOrbRecording ? 'listening...' : 'transcribing...'}
+                </p>
+              ) : (
+                <p className="mt-6 text-sm text-muted-foreground/50 text-center font-light">
+                  {getOneLiner()}
+                </p>
+              )}
             </div>
             
             {/* Start my day button - only show if fiesta card is not visible */}

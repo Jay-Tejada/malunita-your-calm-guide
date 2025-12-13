@@ -567,24 +567,12 @@ All colors MUST be HSL.
 
   /* Main class applied during RECORDING mode */
   .orb-recording {
-    animation:
-      orbPlanetRotate 16s linear infinite,
-      orbGlowDynamic 3s ease-in-out infinite;
-    
-    /* Needed to allow 3D rotation to show highlight movement */
-    transform-style: preserve-3d;
-    backface-visibility: hidden;
-
-    /* Slight lift so it feels "alive" */
-    transform: translateZ(0);
+    animation: orbGlowDynamic 2s ease-in-out infinite;
   }
 
   /* With scale breathing enabled */
   .orb-recording.breath {
-    animation:
-      orbPlanetRotate 16s linear infinite,
-      orbGlowDynamic 3s ease-in-out infinite,
-      orbScaleBreath 4s ease-in-out infinite;
+    animation: orbGlowDynamic 2s ease-in-out infinite, orbScaleBreath 4s ease-in-out infinite;
   }
 
   /* Loading state */
