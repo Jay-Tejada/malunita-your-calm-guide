@@ -278,17 +278,31 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
           <div className="sticky top-24 self-start space-y-2 max-h-[calc(100vh-120px)] overflow-y-auto art-scrollbar max-w-[400px]">
             {artBlocks.length > 0 ? (
               <>
-                {/* Expandable image carousel */}
-                <div className="flex flex-col gap-3">
+                {/* Expandable image carousel - raw images, no wrappers */}
+                <div className="space-y-3">
                   {artBlocks.map((block) => {
                     const isExpanded = expandedImageId === block.id;
                     const hasExpanded = expandedImageId !== null;
+                    const imageUrl = block.content?.url;
+                    
+                    // If no image uploaded yet, show the upload block
+                    if (!imageUrl) {
+                      return (
+                        <div key={block.id} className="relative">
+                          <CanvasBlock
+                            block={block}
+                            pageId={page.id}
+                            onCreateBelow={() => createBlock.mutate("image")}
+                          />
+                        </div>
+                      );
+                    }
                     
                     return (
                       <div 
                         key={block.id} 
                         className={cn(
-                          "relative group cursor-pointer transition-all duration-200 ease-out",
+                          "relative group cursor-pointer transition-opacity duration-200 ease-out",
                           hasExpanded && !isExpanded && "opacity-[0.85]",
                           !hasExpanded && "opacity-90 hover:opacity-100"
                         )}
@@ -298,22 +312,14 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
                           }
                         }}
                       >
-                        <ReferenceCard 
-                          caption={isExpanded ? block.content?.caption : undefined}
+                        <img
+                          src={imageUrl}
+                          alt={block.content?.caption || "Reference image"}
                           className={cn(
-                            "transition-all duration-200 ease-out",
-                            "[&_img]:w-full [&_img]:object-contain [&_img]:rounded-lg",
-                            isExpanded 
-                              ? "[&_img]:max-h-[450px]"
-                              : "[&_img]:max-h-[120px]"
+                            "w-full object-contain rounded-lg transition-all duration-200 ease-out",
+                            isExpanded ? "max-h-[450px]" : "max-h-[100px]"
                           )}
-                        >
-                          <CanvasBlock
-                            block={block}
-                            pageId={page.id}
-                            onCreateBelow={() => createBlock.mutate("image")}
-                          />
-                        </ReferenceCard>
+                        />
                         
                         {/* X button for expanded image */}
                         {isExpanded && (
