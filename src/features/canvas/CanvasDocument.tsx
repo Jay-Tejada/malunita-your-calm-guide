@@ -336,7 +336,7 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
           </div>
 
           {/* Right Column - Art/Image Content (sticky with scroll) */}
-          <div className="art-column sticky top-24 self-start max-h-[calc(100vh-120px)] overflow-y-auto">
+          <div className="art-column sticky top-24 self-start max-h-[calc(100vh-120px)] overflow-y-auto art-scrollbar">
             <div className="space-y-4">
               {artBlocks.length > 0 ? (
                 artBlocks.map((block) => (
