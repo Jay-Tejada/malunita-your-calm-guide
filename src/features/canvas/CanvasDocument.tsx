@@ -181,8 +181,8 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
           </div>
 
           {/* Right Column - Art/Image Content (Desktop only) */}
-          <div className="hidden lg:block max-w-[460px] mt-20">
-            <div className="space-y-4 sticky top-8">
+          <div className="hidden lg:block max-w-[460px] self-start sticky top-24">
+            <div className="space-y-4">
               {artBlocks.length > 0 ? (
                 artBlocks.map((block) => (
                   <CanvasBlock
