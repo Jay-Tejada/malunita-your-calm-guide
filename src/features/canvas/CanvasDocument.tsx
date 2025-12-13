@@ -88,15 +88,9 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
 
   // Persist layout mode preference
   const handleLayoutChange = (mode: LayoutMode) => {
-    console.log('Switching to:', mode);
     setLayoutMode(mode);
     localStorage.setItem("canvas-layout-mode", mode);
   };
-
-  // Debug: Log layout mode changes
-  useEffect(() => {
-    console.log('Layout mode:', layoutMode);
-  }, [layoutMode]);
 
   // Keyboard shortcuts for layout switching (Ctrl+1 = Grid, Ctrl+2 = Split)
   useEffect(() => {
@@ -405,17 +399,6 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
 
   return (
     <div ref={containerRef} className="h-full overflow-y-auto relative">
-      {/* DEBUG: Mode indicator banners */}
-      {layoutMode === "split" && (
-        <div className="fixed top-0 left-0 bg-green-500 text-black p-4 z-50">
-          SPLIT MODE ACTIVE
-        </div>
-      )}
-      {layoutMode === "grid" && (
-        <div className="fixed top-0 left-0 bg-yellow-500 text-black p-4 z-50">
-          GRID MODE ACTIVE
-        </div>
-      )}
 
       {/* Layout Toggle - Fixed top-right, hidden on mobile */}
       <div className="hidden md:block fixed top-20 right-6 z-50">
@@ -719,7 +702,7 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
 
           {/* SPLIT MODE - Two column layout using flexbox */}
           {layoutMode === "split" && (
-            <div style={{ border: '5px solid blue', display: 'flex', gap: '40px', maxWidth: '1200px', margin: '0 auto', padding: '0 24px' }}>
+            <div style={{ display: 'flex', gap: '40px', maxWidth: '1200px', margin: '0 auto', padding: '0 24px' }}>
               
               {/* LEFT - Text */}
               <div style={{ flex: '1.5', minWidth: 0 }}>
@@ -760,7 +743,7 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
 
           {/* GRID MODE - Single column, images in 2-col grid below text */}
           {layoutMode === "grid" && (
-            <div style={{ border: '5px solid red' }} className="space-y-6 max-w-3xl mx-auto transition-all duration-300 ease-out motion-reduce:transition-none">
+            <div className="space-y-6 max-w-3xl mx-auto transition-all duration-300 ease-out motion-reduce:transition-none">
             {/* Title Area */}
             <div className="border-b border-white/5 pb-6 mb-8">
               <input
