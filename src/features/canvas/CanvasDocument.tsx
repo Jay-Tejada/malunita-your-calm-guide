@@ -306,7 +306,7 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
                   <img
                     src={imageUrl}
                     alt=""
-                    className="w-full max-h-[200px] object-contain cursor-pointer"
+                    className="w-full max-h-[200px] object-contain cursor-pointer transition-transform duration-200 ease-out active:scale-[0.98] motion-reduce:transition-none"
                   />
                 </div>
               );
@@ -327,7 +327,7 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
 
           {/* Mobile Fullscreen Image Modal */}
           <Dialog open={!!mobileFullscreenImage} onOpenChange={() => setMobileFullscreenImage(null)}>
-            <DialogContent className="max-w-full h-full p-0 bg-black/95 border-none">
+            <DialogContent className="max-w-full h-full p-0 bg-black/95 border-none animate-fade-in motion-reduce:animate-none">
               <button
                 onClick={() => setMobileFullscreenImage(null)}
                 className="absolute top-4 right-4 z-50 p-2 rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors"
@@ -388,10 +388,10 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
                       <img
                         src={imageUrl}
                         alt=""
-                        className="w-full h-40 object-cover"
+                        className="w-full h-40 object-cover transition-all duration-200 ease-out motion-reduce:transition-none"
                       />
                       {/* Hover overlay */}
-                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-200" />
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-150 motion-reduce:transition-none" />
                     </div>
                   );
                 })}
@@ -426,7 +426,7 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
 
           {/* Tablet Fullscreen Image Modal */}
           <Dialog open={!!mobileFullscreenImage} onOpenChange={() => setMobileFullscreenImage(null)}>
-            <DialogContent className="max-w-[90vw] max-h-[90vh] p-4 bg-black/95 border-none">
+            <DialogContent className="max-w-[90vw] max-h-[90vh] p-4 bg-black/95 border-none animate-fade-in motion-reduce:animate-none">
               <button
                 onClick={() => setMobileFullscreenImage(null)}
                 className="absolute top-4 right-4 z-50 p-2 rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors"
@@ -485,7 +485,7 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
           {/* RIGHT Column - Art/Image Blocks Only (sticky) */}
           <div 
             className={cn(
-              "sticky top-24 self-start space-y-2 max-h-[calc(100vh-120px)] overflow-y-auto art-scrollbar max-w-[400px] rounded-lg transition-all duration-200",
+              "sticky top-24 self-start space-y-2 max-h-[calc(100vh-120px)] overflow-y-auto art-scrollbar max-w-[400px] rounded-lg transition-all duration-200 ease-out motion-reduce:transition-none",
               isDraggingOver && "ring-2 ring-primary/50 bg-primary/5"
             )}
             onDragOver={handleDragOver}
@@ -530,18 +530,18 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
                           alt=""
                           onClick={() => setExpandedImageId(isExpanded ? null : block.id)}
                           className={cn(
-                            "w-full object-contain rounded-lg cursor-pointer transition-all duration-200",
+                            "w-full object-contain rounded-lg cursor-pointer transition-all duration-200 ease-out motion-reduce:transition-none",
                             isExpanded ? "max-h-[400px]" : "max-h-[100px]"
                           )}
                         />
                         {/* Hover action bar */}
-                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center gap-1 bg-black/50 backdrop-blur-sm rounded-md p-1">
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-150 motion-reduce:transition-none flex items-center gap-1 bg-black/50 backdrop-blur-sm rounded-md p-1">
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
                               setExpandedImageId(isExpanded ? null : block.id);
                             }}
-                            className="p-1 text-white hover:opacity-80 transition-opacity"
+                            className="p-1 text-white hover:opacity-80 transition-opacity duration-150 motion-reduce:transition-none"
                             title={isExpanded ? "Collapse" : "Expand"}
                           >
                             <Maximize2 className="w-4 h-4" />
@@ -553,7 +553,7 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
                                   e.stopPropagation();
                                   setDeleteConfirmId(block.id);
                                 }}
-                                className="p-1 text-white hover:opacity-80 transition-opacity"
+                                className="p-1 text-white hover:opacity-80 transition-opacity duration-150 motion-reduce:transition-none"
                                 title="Delete"
                               >
                                 <Trash2 className="w-4 h-4" />

@@ -129,7 +129,7 @@ function SortablePageItem({
         <ContextMenuTrigger asChild>
           <div
             className={cn(
-              "group flex items-center gap-2 py-1.5 rounded-md cursor-pointer transition-all duration-150",
+              "group flex items-center gap-2 py-1.5 rounded-md cursor-pointer transition-all duration-150 motion-reduce:transition-none",
               isActive
                 ? "bg-white/5 text-canvas-text"
                 : "text-canvas-text-muted hover:bg-white/[0.03] hover:text-canvas-text",
@@ -143,7 +143,7 @@ function SortablePageItem({
             <button
               {...attributes}
               {...listeners}
-              className="w-4 h-4 flex items-center justify-center opacity-0 group-hover:opacity-60 hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing shrink-0"
+              className="w-4 h-4 flex items-center justify-center opacity-0 group-hover:opacity-60 hover:opacity-100 transition-opacity duration-150 motion-reduce:transition-none cursor-grab active:cursor-grabbing shrink-0"
               onClick={(e) => e.stopPropagation()}
             >
               <GripVertical className="w-3 h-3" />
@@ -156,13 +156,13 @@ function SortablePageItem({
                 if (hasChildren) onToggleExpand(page.id);
               }}
               className={cn(
-                "w-4 h-4 flex items-center justify-center shrink-0 transition-transform duration-200",
+                "w-4 h-4 flex items-center justify-center shrink-0 transition-transform duration-200 motion-reduce:transition-none",
                 hasChildren ? "opacity-60 hover:opacity-100" : "opacity-0"
               )}
             >
               <ChevronRight 
                 className={cn(
-                  "w-3 h-3 transition-transform duration-200",
+                  "w-3 h-3 transition-transform duration-200 motion-reduce:transition-none",
                   isExpanded && "rotate-90"
                 )} 
               />
@@ -190,7 +190,7 @@ function SortablePageItem({
             )}
 
             {/* Hover Actions */}
-            <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+            <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-150 motion-reduce:transition-none shrink-0">
               {/* Add Child */}
               {level < 2 && (
                 <Button
@@ -285,7 +285,7 @@ function SortablePageItem({
       {/* Children with smooth collapse animation */}
       <div
         className={cn(
-          "overflow-hidden transition-all duration-200 ease-out",
+          "overflow-hidden transition-all duration-200 ease-out motion-reduce:transition-none",
           isExpanded ? "opacity-100" : "opacity-0 max-h-0"
         )}
         style={{ 
