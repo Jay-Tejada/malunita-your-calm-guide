@@ -145,8 +145,8 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
     <div ref={containerRef} className="h-full overflow-y-auto">
       <div className="py-12 md:py-16">
         
-        {/* 1. MOBILE Layout (< 768px) */}
-        <div className="md:hidden space-y-6 px-4">
+        {/* 1. MOBILE Layout (< 640px) - TEMP TESTING */}
+        <div className="sm:hidden space-y-6 px-4">
           {/* Page Title */}
           <input
             type="text"
@@ -192,8 +192,8 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
           </Button>
         </div>
 
-        {/* 2. TABLET Layout (768px - 1023px) */}
-        <div className="hidden md:block lg:hidden space-y-6 px-6">
+        {/* 2. TABLET Layout (640px - 767px) - TEMP TESTING */}
+        <div className="hidden sm:block md:hidden space-y-6 px-6">
           {/* Page Title */}
           <input
             type="text"
@@ -239,8 +239,8 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
           </Button>
         </div>
 
-        {/* 3. DESKTOP Layout (>= 1024px) */}
-        <div className="hidden lg:grid grid-cols-[1fr_420px] gap-10 max-w-7xl mx-auto px-6">
+        {/* 3. DESKTOP Layout (>= 768px) - TEMP TESTING */}
+        <div className="hidden md:grid grid-cols-[1fr_420px] gap-10 max-w-7xl mx-auto px-6">
           {/* LEFT Column - Title, Description, Text Blocks */}
           <div className="space-y-6">
             {/* Page Title */}
