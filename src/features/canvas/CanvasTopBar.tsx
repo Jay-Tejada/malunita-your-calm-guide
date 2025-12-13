@@ -1,4 +1,5 @@
-import { ChevronRight, PanelLeft, PanelRight, Sparkles } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { ChevronRight, PanelLeft, PanelRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -19,6 +20,8 @@ export function CanvasTopBar({
   leftSidebarOpen,
   rightSidebarOpen,
 }: CanvasTopBarProps) {
+  const navigate = useNavigate();
+
   return (
     <header className="h-12 border-b border-canvas-border bg-canvas-sidebar flex items-center justify-between px-3 flex-shrink-0">
       {/* Left: Toggle + Breadcrumb */}
@@ -36,7 +39,12 @@ export function CanvasTopBar({
         </Button>
 
         <nav className="flex items-center text-sm font-mono">
-          <span className="text-canvas-text-muted">Malunita</span>
+          <button
+            onClick={() => navigate("/")}
+            className="text-canvas-text-muted hover:text-canvas-text transition-colors"
+          >
+            Malunita
+          </button>
           <ChevronRight className="w-3 h-3 mx-1.5 text-canvas-text-muted" />
           <span className="text-canvas-text font-medium truncate max-w-[150px] sm:max-w-[200px]">
             {projectName}
