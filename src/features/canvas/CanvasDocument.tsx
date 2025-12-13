@@ -89,6 +89,22 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
     localStorage.setItem("canvas-layout-mode", mode);
   };
 
+  // Keyboard shortcuts for layout switching (Ctrl+1 = Grid, Ctrl+2 = Split)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "1") {
+        e.preventDefault();
+        handleLayoutChange("grid");
+      } else if ((e.ctrlKey || e.metaKey) && e.key === "2") {
+        e.preventDefault();
+        handleLayoutChange("split");
+      }
+    };
+    
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
   // DnD sensors
   const sensors = useSensors(
     useSensor(PointerSensor, {
