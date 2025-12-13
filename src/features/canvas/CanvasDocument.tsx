@@ -347,9 +347,107 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
           </Dialog>
         </div>
 
-        {/* DESKTOP Layout (>= 768px) */}
+        {/* 2. TABLET Layout (768px - 1023px) */}
+        <div className="hidden md:block lg:hidden px-8">
+          <div className="max-w-[720px] mx-auto">
+            {/* Title */}
+            <input
+              type="text"
+              value={pageTitle}
+              onChange={(e) => handleTitleChange(e.target.value)}
+              placeholder="Untitled"
+              className="w-full text-4xl font-medium text-canvas-text bg-transparent border-none outline-none placeholder:text-canvas-text-muted/50 mb-4"
+            />
 
-        <div className="hidden md:grid grid-cols-[1.5fr_1fr] gap-10 max-w-7xl mx-auto px-16">
+            {/* Intro Text (first 2 blocks) */}
+            <div className="space-y-4 mb-8">
+              {introTextBlocks.map((block) => (
+                <div key={block.id} className="text-base leading-relaxed">
+                  <CanvasBlock
+                    block={block}
+                    pageId={page.id}
+                    onCreateBelow={() => createBlock.mutate("text")}
+                  />
+                </div>
+              ))}
+            </div>
+
+            {/* Images in 2-column grid */}
+            {artBlocks.length > 0 && (
+              <div className="grid grid-cols-2 gap-2 mb-8">
+                {artBlocks.map((block) => {
+                  const imageUrl = block.content?.url;
+                  if (!imageUrl) return null;
+                  
+                  return (
+                    <div 
+                      key={block.id}
+                      className="relative group rounded-lg overflow-hidden bg-muted/20 cursor-pointer"
+                      onClick={() => setMobileFullscreenImage(imageUrl)}
+                    >
+                      <img
+                        src={imageUrl}
+                        alt=""
+                        className="w-full h-40 object-cover"
+                      />
+                      {/* Hover overlay */}
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-200" />
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Remaining Text Blocks */}
+            {remainingTextBlocks.length > 0 && (
+              <div className="space-y-4 mb-8">
+                {remainingTextBlocks.map((block) => (
+                  <div key={block.id} className="text-base leading-relaxed">
+                    <CanvasBlock
+                      block={block}
+                      pageId={page.id}
+                      onCreateBelow={() => createBlock.mutate("text")}
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Add Block Button */}
+            <Button
+              variant="outline"
+              className="w-full py-4 rounded-lg border-dashed border-muted-foreground/30 text-muted-foreground hover:text-foreground hover:border-muted-foreground/50 hover:bg-muted/20"
+              onClick={() => createBlock.mutate("text")}
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Add block
+            </Button>
+          </div>
+
+          {/* Tablet Fullscreen Image Modal */}
+          <Dialog open={!!mobileFullscreenImage} onOpenChange={() => setMobileFullscreenImage(null)}>
+            <DialogContent className="max-w-[90vw] max-h-[90vh] p-4 bg-black/95 border-none">
+              <button
+                onClick={() => setMobileFullscreenImage(null)}
+                className="absolute top-4 right-4 z-50 p-2 rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors"
+              >
+                <X className="w-6 h-6" />
+              </button>
+              {mobileFullscreenImage && (
+                <div className="flex items-center justify-center w-full h-full">
+                  <img
+                    src={mobileFullscreenImage}
+                    alt=""
+                    className="max-w-full max-h-[80vh] object-contain"
+                  />
+                </div>
+              )}
+            </DialogContent>
+          </Dialog>
+        </div>
+
+        {/* 3. DESKTOP Layout (>= 1024px) */}
+        <div className="hidden lg:grid grid-cols-[1.5fr_1fr] gap-10 max-w-7xl mx-auto px-16">
           {/* LEFT Column - Title, Description, Text Blocks */}
           <div className="space-y-6">
             {/* Title Area with separator */}
