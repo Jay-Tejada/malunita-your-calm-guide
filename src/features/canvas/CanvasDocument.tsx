@@ -4,11 +4,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { CanvasBlock } from "./CanvasBlock";
 import { ReferenceCard } from "./ReferenceCard";
 import { Input } from "@/components/ui/input";
-import { Plus, Pin, Upload, Maximize2 } from "lucide-react";
+import { Plus, Pin, Upload, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import debounce from "@/lib/debounce";
-
 interface Block {
   id: string;
   block_type: string;
@@ -32,6 +31,7 @@ interface CanvasDocumentProps {
 export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocumentProps) {
   const queryClient = useQueryClient();
   const [pageTitle, setPageTitle] = useState(page?.title || "");
+  const [expandedImageId, setExpandedImageId] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -275,20 +275,40 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
           </div>
 
           {/* RIGHT Column - Art/Image Blocks Only (sticky) */}
-          <div className="sticky top-24 self-start space-y-4 max-h-[calc(100vh-120px)] overflow-y-auto art-scrollbar max-w-[400px]">
+          <div className="sticky top-24 self-start space-y-2 max-h-[calc(100vh-120px)] overflow-y-auto art-scrollbar max-w-[400px]">
             {artBlocks.length > 0 ? (
               <>
-                {/* Thumbnail grid for multiple images */}
-                {artBlocks.length > 3 ? (
-                  <div className="grid grid-cols-2 gap-2">
-                    {artBlocks.map((block, index) => (
+                {/* Expandable image carousel */}
+                <div className="flex flex-col gap-2">
+                  {artBlocks.map((block) => {
+                    const isExpanded = expandedImageId === block.id;
+                    const hasExpanded = expandedImageId !== null;
+                    
+                    return (
                       <div 
                         key={block.id} 
-                        className="relative group cursor-pointer"
+                        className={cn(
+                          "relative group cursor-pointer rounded-xl overflow-hidden transition-all duration-200 ease-out",
+                          isExpanded 
+                            ? "shadow-lg" 
+                            : "hover:scale-[1.02] hover:shadow-md",
+                          hasExpanded && !isExpanded && "opacity-[0.85]",
+                          !hasExpanded && "opacity-100"
+                        )}
+                        onClick={() => {
+                          if (!isExpanded) {
+                            setExpandedImageId(block.id);
+                          }
+                        }}
                       >
                         <ReferenceCard 
-                          caption={block.content?.caption}
-                          className="[&_img]:max-w-full [&_img]:max-h-[120px] [&_img]:object-cover [&_img]:rounded-lg"
+                          caption={isExpanded ? block.content?.caption : undefined}
+                          className={cn(
+                            "transition-all duration-200 ease-out",
+                            isExpanded 
+                              ? "[&_img]:max-w-full [&_img]:max-h-[400px] [&_img]:object-contain [&_img]:rounded-xl"
+                              : "[&_img]:w-full [&_img]:h-[80px] [&_img]:object-cover [&_img]:rounded-xl"
+                          )}
                         >
                           <CanvasBlock
                             block={block}
@@ -296,62 +316,45 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
                             onCreateBelow={() => createBlock.mutate("image")}
                           />
                         </ReferenceCard>
-                        {/* Expand icon overlay */}
-                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        
+                        {/* X button for expanded image */}
+                        {isExpanded && (
                           <Button 
                             variant="secondary" 
                             size="icon" 
-                            className="h-6 w-6 bg-background/80 backdrop-blur-sm"
+                            className="absolute top-2 right-2 h-7 w-7 bg-background/80 backdrop-blur-sm hover:bg-background/90 transition-all duration-200"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setExpandedImageId(null);
+                            }}
                           >
-                            <Maximize2 className="h-3 w-3" />
+                            <X className="h-4 w-4" />
                           </Button>
-                        </div>
-                        {/* Pin icon */}
-                        <div className="absolute top-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="h-6 w-6 text-muted-foreground hover:text-foreground"
-                          >
-                            <Pin className="h-3 w-3" />
-                          </Button>
-                        </div>
+                        )}
+                        
+                        {/* Pin icon on hover (thumbnails only) */}
+                        {!isExpanded && (
+                          <div className="absolute top-1 left-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="h-6 w-6 text-muted-foreground hover:text-foreground bg-background/60 backdrop-blur-sm"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <Pin className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        )}
                       </div>
-                    ))}
-                  </div>
-                ) : (
-                  /* Full-size display for 1-3 images */
-                  artBlocks.map((block) => (
-                    <div key={block.id} className="relative group">
-                      <ReferenceCard 
-                        caption={block.content?.caption}
-                        className="[&_img]:max-w-full [&_img]:max-h-[450px] [&_img]:object-contain [&_img]:rounded-xl"
-                      >
-                        <CanvasBlock
-                          block={block}
-                          pageId={page.id}
-                          onCreateBelow={() => createBlock.mutate("image")}
-                        />
-                      </ReferenceCard>
-                      {/* Pin icon for full-size */}
-                      <div className="absolute top-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          className="h-7 w-7 text-muted-foreground hover:text-foreground bg-background/60 backdrop-blur-sm"
-                        >
-                          <Pin className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))
-                )}
+                    );
+                  })}
+                </div>
                 
                 {/* Add reference button */}
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="w-full text-muted-foreground hover:text-foreground font-mono text-xs border border-dashed border-border/50 hover:border-border"
+                  className="w-full text-muted-foreground hover:text-foreground font-mono text-xs border border-dashed border-border/50 hover:border-border mt-2"
                   onClick={() => createBlock.mutate("image")}
                 >
                   <Plus className="w-3 h-3 mr-1" />
