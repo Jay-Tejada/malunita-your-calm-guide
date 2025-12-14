@@ -28,6 +28,7 @@ import { StartMyDayModal } from "@/components/rituals/StartMyDayModal";
 import { TinyTaskFiestaCard } from "@/components/home/TinyTaskFiestaCard";
 import TinyTaskParty from "@/components/TinyTaskParty";
 import { CaptureSheet } from "@/components/capture/CaptureSheet";
+import { Haptics, ImpactStyle } from "@capacitor/haptics";
 
 const Index = () => {
   // Initialize daily reset monitoring
@@ -230,7 +231,14 @@ const Index = () => {
     setTaskCreatedTrigger(prev => prev + 1);
   };
 
-  const handleVoiceCapture = () => {
+  const handleVoiceCapture = async () => {
+    // Trigger haptic feedback on mobile
+    try {
+      await Haptics.impact({ style: ImpactStyle.Medium });
+    } catch {
+      // Haptics not available (web browser)
+    }
+    
     if (isFocused) {
       // If focused, stop recording and exit focus
       stopOrbRecording();
