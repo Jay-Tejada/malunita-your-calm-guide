@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import './orb/orbAnimations.css';
 
 type TimeOfDay = 'morning' | 'midday' | 'evening' | 'night';
 type OrbMood = 'neutral' | 'thinking' | 'celebrating' | 'supportive';
@@ -98,8 +99,9 @@ const Orb = ({
   const getStateClass = () => {
     const classes: string[] = [];
     if (isFocused) classes.push('orb-focused');
-    if (isRecording) classes.push('orb-recording');
-    if (isProcessing) classes.push('orb-loading');
+    else if (isRecording) classes.push('orb-recording');
+    else if (isProcessing) classes.push('orb-loading');
+    else classes.push('orb-idle'); // Add idle class for subtle pulse animation
     return classes.join(' ');
   };
 
