@@ -83,6 +83,31 @@ const Index = () => {
   // Focus state overlay
   const [isFocused, setIsFocused] = useState(false);
   
+  // Swipe handlers to cancel recording
+  const mobileSwipeHandlers = useSwipeable({
+    onSwipedDown: () => {
+      if (isOrbRecording) {
+        haptics.lightTap();
+        stopOrbRecording(true);
+        setIsFocused(false);
+      }
+    },
+    trackMouse: false,
+    preventScrollOnSwipe: true,
+  });
+
+  const desktopSwipeHandlers = useSwipeable({
+    onSwipedDown: () => {
+      if (isOrbRecording) {
+        // No haptics on desktop
+        stopOrbRecording(true);
+        setIsFocused(false);
+      }
+    },
+    trackMouse: true,
+    preventScrollOnSwipe: true,
+  });
+  
   // Profile and tasks for modal
   const { profile } = useProfile();
   const { tasks, createTasks, updateTask } = useTasks();
@@ -311,30 +336,6 @@ const Index = () => {
     }
   }, [isOrbProcessing, isOrbRecording]);
 
-  // Swipe handlers to cancel recording
-  const mobileSwipeHandlers = useSwipeable({
-    onSwipedDown: () => {
-      if (isOrbRecording) {
-        haptics.lightTap();
-        stopOrbRecording(true);
-        setIsFocused(false);
-      }
-    },
-    trackMouse: false,
-    preventScrollOnSwipe: true,
-  });
-
-  const desktopSwipeHandlers = useSwipeable({
-    onSwipedDown: () => {
-      if (isOrbRecording) {
-        // No haptics on desktop
-        stopOrbRecording(true);
-        setIsFocused(false);
-      }
-    },
-    trackMouse: true,
-    preventScrollOnSwipe: true,
-  });
 
   const processOrbRecording = async (audioBlob: Blob) => {
     try {
