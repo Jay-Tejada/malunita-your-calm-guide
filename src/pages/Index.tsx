@@ -311,14 +311,30 @@ const Index = () => {
     }
   }, [isOrbProcessing, isOrbRecording]);
 
-  // Swipe down handler to cancel recording
-  const handleOrbSwipeDown = () => {
-    if (isOrbRecording) {
-      haptics.lightTap();
-      stopOrbRecording(true);
-      setIsFocused(false);
-    }
-  };
+  // Swipe handlers to cancel recording
+  const mobileSwipeHandlers = useSwipeable({
+    onSwipedDown: () => {
+      if (isOrbRecording) {
+        haptics.lightTap();
+        stopOrbRecording(true);
+        setIsFocused(false);
+      }
+    },
+    trackMouse: false,
+    preventScrollOnSwipe: true,
+  });
+
+  const desktopSwipeHandlers = useSwipeable({
+    onSwipedDown: () => {
+      if (isOrbRecording) {
+        // No haptics on desktop
+        stopOrbRecording(true);
+        setIsFocused(false);
+      }
+    },
+    trackMouse: true,
+    preventScrollOnSwipe: true,
+  });
 
   const processOrbRecording = async (audioBlob: Blob) => {
     try {
@@ -427,11 +443,7 @@ const Index = () => {
             {/* Orb with swipe gesture */}
             <div 
               className="relative z-50 flex flex-col items-center"
-              {...useSwipeable({
-                onSwipedDown: handleOrbSwipeDown,
-                trackMouse: false,
-                preventScrollOnSwipe: true,
-              })}
+              {...mobileSwipeHandlers}
             >
               <Orb
                 size={140}
@@ -512,11 +524,7 @@ const Index = () => {
             {/* Orb with swipe gesture */}
             <div 
               className="relative z-50 flex flex-col items-center"
-              {...useSwipeable({
-                onSwipedDown: handleOrbSwipeDown,
-                trackMouse: true,
-                preventScrollOnSwipe: true,
-              })}
+              {...desktopSwipeHandlers}
             >
               <Orb
                 size={180}
