@@ -593,24 +593,24 @@ All colors MUST be HSL.
   }
 
   /* Focused orb animations */
-  @keyframes orbSlowRotate {
+  @keyframes slowRotate {
     from { transform: rotate(0deg) scale(1.25); }
     to { transform: rotate(360deg) scale(1.25); }
   }
 
-  @keyframes orbBreathe {
+  @keyframes breathe {
     0%, 100% { box-shadow: 0 0 50px rgba(255,245,230,0.3); }
     50% { box-shadow: 0 0 70px rgba(255,245,230,0.5); }
   }
 
-  .orb-focused {
-    animation: orbSlowRotate 10s linear infinite, orbBreathe 4s ease-in-out infinite;
+  .orb.orb-focused {
+    animation: slowRotate 10s linear infinite, breathe 4s ease-in-out infinite !important;
   }
 
   /* Respect reduced motion preferences */
   @media (prefers-reduced-motion: reduce) {
-    .orb-focused {
-      animation: none;
+    .orb.orb-focused {
+      animation: none !important;
       transform: scale(1.25);
     }
     .orb-recording {
