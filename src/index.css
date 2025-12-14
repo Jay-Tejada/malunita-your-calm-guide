@@ -736,6 +736,11 @@ All colors MUST be HSL.
       orb-focus-breathe 4s ease-in-out infinite;
   }
 
+  /* Exit transition - smooth shrink back */
+  .orb:not(.orb-focused) {
+    transition: transform 200ms ease-out, filter 200ms ease-out, box-shadow 200ms ease-out;
+  }
+
   /* Respect reduced motion preference */
   @media (prefers-reduced-motion: reduce) {
     .orb-focused {
