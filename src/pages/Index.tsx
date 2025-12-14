@@ -78,6 +78,9 @@ const Index = () => {
   // Tiny Task Party modal state
   const [showTinyTaskParty, setShowTinyTaskParty] = useState(false);
   
+  // Focus state overlay
+  const [isFocused, setIsFocused] = useState(false);
+  
   // Profile and tasks for modal
   const { profile } = useProfile();
   const { tasks, createTasks, updateTask } = useTasks();
@@ -358,13 +361,30 @@ const Index = () => {
             </div>
           )}
 
+          {/* Focus state overlay */}
+          <AnimatePresence>
+            {isFocused && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.3, ease: "easeOut" }}
+                className="fixed inset-0 z-40 backdrop-blur-[12px] bg-black/40"
+                onClick={() => setIsFocused(false)}
+              />
+            )}
+          </AnimatePresence>
+
           {/* CENTER - Everything vertically & horizontally centered */}
           <div className="flex-1 flex flex-col items-center justify-center px-4">
             {/* Orb - direct voice capture on mobile (same as desktop) */}
-            <div className="flex flex-col items-center">
+            <div className="relative z-50 flex flex-col items-center">
               <Orb
                 size={140}
-                onClick={handleVoiceCapture}
+                onClick={() => {
+                  setIsFocused(true);
+                  handleVoiceCapture();
+                }}
                 isRecording={isOrbRecording}
                 isProcessing={isOrbProcessing}
               />
@@ -416,13 +436,30 @@ const Index = () => {
           onDreamModeClick={handleDreamModeClick}
           activeCategory={activeCategory}
         >
+          {/* Focus state overlay */}
+          <AnimatePresence>
+            {isFocused && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.3, ease: "easeOut" }}
+                className="fixed inset-0 z-40 backdrop-blur-[12px] bg-black/40"
+                onClick={() => setIsFocused(false)}
+              />
+            )}
+          </AnimatePresence>
+
           {/* Minimal centered content */}
           <div className="min-h-[85vh] flex flex-col items-center justify-center">
             {/* Orb */}
-            <div className="flex flex-col items-center">
+            <div className="relative z-50 flex flex-col items-center">
               <Orb
                 size={180}
-                onClick={handleVoiceCapture}
+                onClick={() => {
+                  setIsFocused(true);
+                  handleVoiceCapture();
+                }}
                 isRecording={isOrbRecording}
                 isProcessing={isOrbProcessing}
               />
