@@ -96,9 +96,11 @@ const Orb = ({
   };
 
   const getStateClass = () => {
-    if (isRecording) return 'orb-recording';
-    if (isProcessing) return 'orb-loading';
-    return '';
+    const classes: string[] = [];
+    if (isFocused) classes.push('orb-focused');
+    if (isRecording) classes.push('orb-recording');
+    if (isProcessing) classes.push('orb-loading');
+    return classes.join(' ');
   };
 
   const orbStyle: React.CSSProperties & { '--orbGlowColor'?: string } = {
@@ -107,8 +109,8 @@ const Orb = ({
     borderRadius: '50%',
     position: 'relative',
     cursor: onClick ? 'pointer' : 'default',
-    transition: 'all 0.3s ease-out',
-    transform: isPressed ? 'scale(0.97)' : isFocused ? 'scale(1.25)' : 'scale(1)',
+    transition: isFocused ? 'none' : 'all 0.3s ease-out',
+    transform: isPressed ? 'scale(0.97)' : undefined, // Let CSS handle focused transform
     '--orbGlowColor': colors.glow,
     background: `
       radial-gradient(
