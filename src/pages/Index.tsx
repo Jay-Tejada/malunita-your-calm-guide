@@ -17,7 +17,6 @@ import { CaptureHistoryModal } from "@/components/CaptureHistoryModal";
 import { useQuickCapture } from "@/contexts/QuickCaptureContext";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { useNavigate } from "react-router-dom";
-import { useSwipeable } from "react-swipeable";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { OfflineIndicator } from "@/components/OfflineIndicator";
 import { useOfflineStatus } from "@/hooks/useOfflineStatus";
@@ -82,31 +81,6 @@ const Index = () => {
   
   // Focus state overlay
   const [isFocused, setIsFocused] = useState(false);
-  
-  // Swipe handlers to cancel recording
-  const mobileSwipeHandlers = useSwipeable({
-    onSwipedDown: () => {
-      if (isOrbRecording) {
-        haptics.lightTap();
-        stopOrbRecording(true);
-        setIsFocused(false);
-      }
-    },
-    trackMouse: false,
-    preventScrollOnSwipe: true,
-  });
-
-  const desktopSwipeHandlers = useSwipeable({
-    onSwipedDown: () => {
-      if (isOrbRecording) {
-        // No haptics on desktop
-        stopOrbRecording(true);
-        setIsFocused(false);
-      }
-    },
-    trackMouse: true,
-    preventScrollOnSwipe: true,
-  });
   
   // Profile and tasks for modal
   const { profile } = useProfile();
@@ -441,11 +415,8 @@ const Index = () => {
 
           {/* CENTER - Everything vertically & horizontally centered */}
           <div className="flex-1 flex flex-col items-center justify-center px-4">
-            {/* Orb with swipe gesture */}
-            <div 
-              className="relative z-50 flex flex-col items-center"
-              {...mobileSwipeHandlers}
-            >
+            {/* Orb container */}
+            <div className="relative z-50 flex flex-col items-center">
               <Orb
                 size={140}
                 onClick={() => {
@@ -522,11 +493,8 @@ const Index = () => {
 
           {/* Minimal centered content */}
           <div className="min-h-[85vh] flex flex-col items-center justify-center">
-            {/* Orb with swipe gesture */}
-            <div 
-              className="relative z-50 flex flex-col items-center"
-              {...desktopSwipeHandlers}
-            >
+            {/* Orb container */}
+            <div className="relative z-50 flex flex-col items-center">
               <Orb
                 size={180}
                 onClick={() => {
