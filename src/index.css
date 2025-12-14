@@ -724,8 +724,16 @@ All colors MUST be HSL.
     to { transform: rotate(360deg) scale(1.25); }
   }
 
+  /* Breathing glow for focused orb */
+  @keyframes orb-focus-breathe {
+    0%, 100% { box-shadow: 0 0 50px rgba(255, 245, 230, 0.3); }
+    50% { box-shadow: 0 0 70px rgba(255, 245, 230, 0.5); }
+  }
+
   .orb-focused {
-    animation: orb-focus-rotate 10s linear infinite;
+    animation: 
+      orb-focus-rotate 10s linear infinite,
+      orb-focus-breathe 4s ease-in-out infinite;
   }
 
   /* Respect reduced motion preference */
@@ -733,6 +741,7 @@ All colors MUST be HSL.
     .orb-focused {
       animation: none;
       transform: scale(1.25);
+      box-shadow: 0 0 60px rgba(255, 245, 230, 0.4);
     }
   }
 
