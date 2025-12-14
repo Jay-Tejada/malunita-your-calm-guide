@@ -17,6 +17,7 @@ import { CaptureHistoryModal } from "@/components/CaptureHistoryModal";
 import { useQuickCapture } from "@/contexts/QuickCaptureContext";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { useNavigate } from "react-router-dom";
+import { useSwipeable } from "react-swipeable";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { OfflineIndicator } from "@/components/OfflineIndicator";
 import { useOfflineStatus } from "@/hooks/useOfflineStatus";
@@ -212,19 +213,19 @@ const Index = () => {
   };
 
   const handleFocusModeClick = () => {
-    // Future: Focus mode feature
+    console.log("Focus mode clicked");
   };
 
   const handleWorldMapClick = () => {
-    // Future: World map feature
+    console.log("World map clicked");
   };
 
   const handleShareMalunitaClick = () => {
-    // Future: Share feature
+    console.log("Share Malunita clicked");
   };
 
   const handleDreamModeClick = () => {
-    // Future: Dream mode feature
+    console.log("Dream mode clicked");
   };
 
   const handleTaskCreated = () => {
@@ -310,6 +311,14 @@ const Index = () => {
     }
   }, [isOrbProcessing, isOrbRecording]);
 
+  // Swipe down handler to cancel recording
+  const handleOrbSwipeDown = () => {
+    if (isOrbRecording) {
+      haptics.lightTap();
+      stopOrbRecording(true);
+      setIsFocused(false);
+    }
+  };
 
   const processOrbRecording = async (audioBlob: Blob) => {
     try {
@@ -377,8 +386,9 @@ const Index = () => {
         taskCount={todayTaskCount}
         inboxCount={inboxCount}
         onNext={(intention) => {
+          console.log("User's intention:", intention);
           setShowStartMyDay(false);
-          setShowTinyTaskFiesta(true);
+          setShowTinyTaskFiesta(true); // Show fiesta card after completing flow
         }}
       />
       
@@ -394,7 +404,7 @@ const Index = () => {
             </div>
           )}
 
-          {/* Focus state overlay - stronger blur on mobile */}
+          {/* Focus state overlay */}
           <AnimatePresence>
             {isFocused && (
               <motion.div
@@ -402,7 +412,7 @@ const Index = () => {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.35, ease: "easeOut" }}
-                className="fixed inset-0 z-40 backdrop-blur-[16px] bg-black/50"
+                className="fixed inset-0 z-40 backdrop-blur-[12px] bg-black/40"
                 onClick={() => {
                   setIsFocused(false);
                   haptics.lightTap().then(() => {
@@ -415,8 +425,15 @@ const Index = () => {
 
           {/* CENTER - Everything vertically & horizontally centered */}
           <div className="flex-1 flex flex-col items-center justify-center px-4">
-            {/* Orb container */}
-            <div className="relative z-50 flex flex-col items-center">
+            {/* Orb with swipe gesture */}
+            <div 
+              className="relative z-50 flex flex-col items-center"
+              {...useSwipeable({
+                onSwipedDown: handleOrbSwipeDown,
+                trackMouse: false,
+                preventScrollOnSwipe: true,
+              })}
+            >
               <Orb
                 size={140}
                 onClick={() => {
@@ -477,7 +494,7 @@ const Index = () => {
           onDreamModeClick={handleDreamModeClick}
           activeCategory={activeCategory}
         >
-          {/* Focus state overlay - lighter blur on desktop, no haptics */}
+          {/* Focus state overlay */}
           <AnimatePresence>
             {isFocused && (
               <motion.div
@@ -485,22 +502,34 @@ const Index = () => {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.35, ease: "easeOut" }}
-                className="fixed inset-0 z-40 backdrop-blur-[10px] bg-black/35"
-                onClick={() => setIsFocused(false)}
+                className="fixed inset-0 z-40 backdrop-blur-[12px] bg-black/40"
+                onClick={() => {
+                  setIsFocused(false);
+                  haptics.lightTap().then(() => {
+                    setTimeout(() => haptics.lightTap(), 80);
+                  });
+                }}
               />
             )}
           </AnimatePresence>
 
           {/* Minimal centered content */}
           <div className="min-h-[85vh] flex flex-col items-center justify-center">
-            {/* Orb container */}
-            <div className="relative z-50 flex flex-col items-center">
+            {/* Orb with swipe gesture */}
+            <div 
+              className="relative z-50 flex flex-col items-center"
+              {...useSwipeable({
+                onSwipedDown: handleOrbSwipeDown,
+                trackMouse: true,
+                preventScrollOnSwipe: true,
+              })}
+            >
               <Orb
                 size={180}
                 onClick={() => {
                   if (!isFocused && !isOrbProcessing) {
                     setIsFocused(true);
-                    // No haptics on desktop
+                    haptics.lightTap();
                   }
                 }}
                 isRecording={isOrbRecording}
