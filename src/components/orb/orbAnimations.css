@@ -4,24 +4,6 @@
   50% { transform: scale(1.03); opacity: 1; }
 }
 
-/* Slow subtle pulse glow for idle state */
-@keyframes orbIdlePulse {
-  0%, 100% { 
-    box-shadow: 
-      inset -10% -10% 20% rgba(0, 0, 0, 0.08),
-      inset 5% 5% 15% rgba(255, 255, 255, 0.5),
-      0 10% 25% rgba(0, 0, 0, 0.1),
-      0 0 40px var(--orbGlowColor, rgba(250, 246, 241, 0.3));
-  }
-  50% { 
-    box-shadow: 
-      inset -10% -10% 20% rgba(0, 0, 0, 0.08),
-      inset 5% 5% 15% rgba(255, 255, 255, 0.5),
-      0 10% 25% rgba(0, 0, 0, 0.1),
-      0 0 60px var(--orbGlowColor, rgba(250, 246, 241, 0.5));
-  }
-}
-
 /* Thinking - AI processing */
 @keyframes orbThink {
   0%, 100% { filter: brightness(1); }
@@ -61,7 +43,7 @@
 }
 
 /* Base animation classes */
-.orb-idle { animation: orbBreathe 4s ease-in-out infinite, orbIdlePulse 6s ease-in-out infinite; }
+.orb-idle { animation: orbBreathe 4s ease-in-out infinite; }
 .orb-thinking { animation: orbThink 1.5s ease-in-out infinite; }
 .orb-celebrating { animation: orbCelebrate 1.5s ease-out forwards; }
 .orb-focused { animation: orbFocus 3s ease-in-out infinite; }
