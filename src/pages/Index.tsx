@@ -17,6 +17,7 @@ import { CaptureHistoryModal } from "@/components/CaptureHistoryModal";
 import { useQuickCapture } from "@/contexts/QuickCaptureContext";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { useNavigate } from "react-router-dom";
+import { useSwipeable } from "react-swipeable";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { OfflineIndicator } from "@/components/OfflineIndicator";
 import { useOfflineStatus } from "@/hooks/useOfflineStatus";
@@ -231,12 +232,12 @@ const Index = () => {
     setTaskCreatedTrigger(prev => prev + 1);
   };
 
+  // Track if recording was cancelled (swipe down)
+  const recordingCancelledRef = useRef(false);
+
   const handleVoiceCapture = () => {
-    if (isOrbRecording) {
-      stopOrbRecording();
-    } else if (!isOrbProcessing) {
-      startOrbRecording();
-    }
+    // Recording is now controlled by focus state, not direct toggle
+    // This is kept for backwards compatibility but focus state drives it
   };
 
   const startOrbRecording = async () => {
@@ -255,7 +256,15 @@ const Index = () => {
       mediaRecorder.onstop = async () => {
         const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
         stream.getTracks().forEach(track => track.stop());
-        await processOrbRecording(audioBlob);
+        
+        // Only process if not cancelled
+        if (!recordingCancelledRef.current) {
+          await processOrbRecording(audioBlob);
+        } else {
+          // Reset cancelled flag and processing state
+          recordingCancelledRef.current = false;
+          setIsOrbProcessing(false);
+        }
       };
 
       mediaRecorder.start();
@@ -267,15 +276,48 @@ const Index = () => {
         description: "Please allow microphone access to use voice capture.",
         variant: "destructive"
       });
+      setIsFocused(false);
     }
   };
 
-  const stopOrbRecording = () => {
+  const stopOrbRecording = (cancel = false) => {
+    if (cancel) {
+      recordingCancelledRef.current = true;
+    }
     if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
       mediaRecorderRef.current.stop();
     }
     setIsOrbRecording(false);
-    setIsOrbProcessing(true);
+    if (!cancel) {
+      setIsOrbProcessing(true);
+    }
+  };
+
+  // Connect focus state to recording
+  useEffect(() => {
+    if (isFocused && !isOrbRecording && !isOrbProcessing) {
+      startOrbRecording();
+    } else if (!isFocused && isOrbRecording) {
+      stopOrbRecording();
+    }
+  }, [isFocused]);
+
+  // Close focus when processing completes
+  useEffect(() => {
+    if (!isOrbProcessing && !isOrbRecording && isFocused) {
+      // Small delay to let the user see the result
+      const timer = setTimeout(() => setIsFocused(false), 300);
+      return () => clearTimeout(timer);
+    }
+  }, [isOrbProcessing, isOrbRecording]);
+
+  // Swipe down handler to cancel recording
+  const handleOrbSwipeDown = () => {
+    if (isOrbRecording) {
+      haptics.lightTap();
+      stopOrbRecording(true);
+      setIsFocused(false);
+    }
   };
 
   const processOrbRecording = async (audioBlob: Blob) => {
@@ -383,14 +425,22 @@ const Index = () => {
 
           {/* CENTER - Everything vertically & horizontally centered */}
           <div className="flex-1 flex flex-col items-center justify-center px-4">
-            {/* Orb - direct voice capture on mobile (same as desktop) */}
-            <div className="relative z-50 flex flex-col items-center">
+            {/* Orb with swipe gesture */}
+            <div 
+              className="relative z-50 flex flex-col items-center"
+              {...useSwipeable({
+                onSwipedDown: handleOrbSwipeDown,
+                trackMouse: false,
+                preventScrollOnSwipe: true,
+              })}
+            >
               <Orb
                 size={140}
                 onClick={() => {
-                  setIsFocused(true);
-                  haptics.lightTap();
-                  handleVoiceCapture();
+                  if (!isFocused && !isOrbProcessing) {
+                    setIsFocused(true);
+                    haptics.lightTap();
+                  }
                 }}
                 isRecording={isOrbRecording}
                 isProcessing={isOrbProcessing}
@@ -399,7 +449,7 @@ const Index = () => {
               
               {/* Status text below orb - fixed height to prevent layout shift */}
               <p className="mt-6 h-5 text-sm text-muted-foreground/50 text-center font-light">
-                {isOrbRecording ? 'listening...' : isOrbProcessing ? 'transcribing...' : getOneLiner()}
+                {getOneLiner()}
               </p>
             </div>
             
@@ -465,13 +515,22 @@ const Index = () => {
 
           {/* Minimal centered content */}
           <div className="min-h-[85vh] flex flex-col items-center justify-center">
-            {/* Orb */}
-            <div className="relative z-50 flex flex-col items-center">
+            {/* Orb with swipe gesture */}
+            <div 
+              className="relative z-50 flex flex-col items-center"
+              {...useSwipeable({
+                onSwipedDown: handleOrbSwipeDown,
+                trackMouse: true,
+                preventScrollOnSwipe: true,
+              })}
+            >
               <Orb
                 size={180}
                 onClick={() => {
-                  setIsFocused(true);
-                  handleVoiceCapture();
+                  if (!isFocused && !isOrbProcessing) {
+                    setIsFocused(true);
+                    haptics.lightTap();
+                  }
                 }}
                 isRecording={isOrbRecording}
                 isProcessing={isOrbProcessing}
@@ -480,7 +539,7 @@ const Index = () => {
               
               {/* Status text below orb - fixed height to prevent layout shift */}
               <p className="mt-6 h-5 text-sm text-muted-foreground/50 text-center font-light">
-                {isOrbRecording ? 'listening...' : isOrbProcessing ? 'transcribing...' : getOneLiner()}
+                {getOneLiner()}
               </p>
             </div>
             
