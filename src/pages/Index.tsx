@@ -83,6 +83,26 @@ const Index = () => {
   // Focus state overlay
   const [isFocused, setIsFocused] = useState(false);
   
+  // Ref for tracking if recording was cancelled (used by swipe handler)
+  const recordingCancelledRef = useRef(false);
+  
+  // Swipe handlers - must be at top level, not in JSX
+  const swipeHandlers = useSwipeable({
+    onSwipedDown: () => {
+      if (isOrbRecording) {
+        haptics.lightTap();
+        recordingCancelledRef.current = true;
+        if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
+          mediaRecorderRef.current.stop();
+        }
+        setIsOrbRecording(false);
+        setIsFocused(false);
+      }
+    },
+    trackMouse: true,
+    preventScrollOnSwipe: true,
+  });
+  
   // Profile and tasks for modal
   const { profile } = useProfile();
   const { tasks, createTasks, updateTask } = useTasks();
@@ -232,8 +252,6 @@ const Index = () => {
     setTaskCreatedTrigger(prev => prev + 1);
   };
 
-  // Track if recording was cancelled (swipe down)
-  const recordingCancelledRef = useRef(false);
 
   const handleVoiceCapture = () => {
     // Recording is now controlled by focus state, not direct toggle
@@ -311,14 +329,6 @@ const Index = () => {
     }
   }, [isOrbProcessing, isOrbRecording]);
 
-  // Swipe down handler to cancel recording
-  const handleOrbSwipeDown = () => {
-    if (isOrbRecording) {
-      haptics.lightTap();
-      stopOrbRecording(true);
-      setIsFocused(false);
-    }
-  };
 
   const processOrbRecording = async (audioBlob: Blob) => {
     try {
@@ -428,11 +438,7 @@ const Index = () => {
             {/* Orb with swipe gesture */}
             <div 
               className="relative z-50 flex flex-col items-center"
-              {...useSwipeable({
-                onSwipedDown: handleOrbSwipeDown,
-                trackMouse: false,
-                preventScrollOnSwipe: true,
-              })}
+              {...swipeHandlers}
             >
               <Orb
                 size={140}
@@ -518,11 +524,7 @@ const Index = () => {
             {/* Orb with swipe gesture */}
             <div 
               className="relative z-50 flex flex-col items-center"
-              {...useSwipeable({
-                onSwipedDown: handleOrbSwipeDown,
-                trackMouse: true,
-                preventScrollOnSwipe: true,
-              })}
+              {...swipeHandlers}
             >
               <Orb
                 size={180}
