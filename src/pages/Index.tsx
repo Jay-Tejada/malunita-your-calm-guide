@@ -213,19 +213,19 @@ const Index = () => {
   };
 
   const handleFocusModeClick = () => {
-    console.log("Focus mode clicked");
+    // Future: Focus mode feature
   };
 
   const handleWorldMapClick = () => {
-    console.log("World map clicked");
+    // Future: World map feature
   };
 
   const handleShareMalunitaClick = () => {
-    console.log("Share Malunita clicked");
+    // Future: Share feature
   };
 
   const handleDreamModeClick = () => {
-    console.log("Dream mode clicked");
+    // Future: Dream mode feature
   };
 
   const handleTaskCreated = () => {
@@ -386,9 +386,8 @@ const Index = () => {
         taskCount={todayTaskCount}
         inboxCount={inboxCount}
         onNext={(intention) => {
-          console.log("User's intention:", intention);
           setShowStartMyDay(false);
-          setShowTinyTaskFiesta(true); // Show fiesta card after completing flow
+          setShowTinyTaskFiesta(true);
         }}
       />
       
@@ -404,7 +403,7 @@ const Index = () => {
             </div>
           )}
 
-          {/* Focus state overlay */}
+          {/* Focus state overlay - stronger blur on mobile */}
           <AnimatePresence>
             {isFocused && (
               <motion.div
@@ -412,7 +411,7 @@ const Index = () => {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.35, ease: "easeOut" }}
-                className="fixed inset-0 z-40 backdrop-blur-[12px] bg-black/40"
+                className="fixed inset-0 z-40 backdrop-blur-[16px] bg-black/50"
                 onClick={() => {
                   setIsFocused(false);
                   haptics.lightTap().then(() => {
@@ -494,7 +493,7 @@ const Index = () => {
           onDreamModeClick={handleDreamModeClick}
           activeCategory={activeCategory}
         >
-          {/* Focus state overlay */}
+          {/* Focus state overlay - lighter blur on desktop, no haptics */}
           <AnimatePresence>
             {isFocused && (
               <motion.div
@@ -502,13 +501,8 @@ const Index = () => {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.35, ease: "easeOut" }}
-                className="fixed inset-0 z-40 backdrop-blur-[12px] bg-black/40"
-                onClick={() => {
-                  setIsFocused(false);
-                  haptics.lightTap().then(() => {
-                    setTimeout(() => haptics.lightTap(), 80);
-                  });
-                }}
+                className="fixed inset-0 z-40 backdrop-blur-[10px] bg-black/35"
+                onClick={() => setIsFocused(false)}
               />
             )}
           </AnimatePresence>
@@ -529,7 +523,7 @@ const Index = () => {
                 onClick={() => {
                   if (!isFocused && !isOrbProcessing) {
                     setIsFocused(true);
-                    haptics.lightTap();
+                    // No haptics on desktop
                   }
                 }}
                 isRecording={isOrbRecording}

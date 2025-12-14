@@ -157,7 +157,7 @@ const Orb = ({
       style={orbStyle}
       role={onClick ? 'button' : undefined}
       tabIndex={onClick ? 0 : undefined}
-      aria-label={isRecording ? "Recording..." : isProcessing ? "Processing..." : "Malunita orb - tap to capture"}
+      aria-label="Capture thought"
     >
       {/* Inner highlight for 3D effect */}
       <div
