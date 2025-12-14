@@ -28,7 +28,6 @@ import { StartMyDayModal } from "@/components/rituals/StartMyDayModal";
 import { TinyTaskFiestaCard } from "@/components/home/TinyTaskFiestaCard";
 import TinyTaskParty from "@/components/TinyTaskParty";
 import { CaptureSheet } from "@/components/capture/CaptureSheet";
-import { haptics } from "@/hooks/useHaptics";
 
 const Index = () => {
   // Initialize daily reset monitoring
@@ -78,12 +77,6 @@ const Index = () => {
   
   // Tiny Task Party modal state
   const [showTinyTaskParty, setShowTinyTaskParty] = useState(false);
-  
-  // Focus state overlay
-  const [isFocused, setIsFocused] = useState(false);
-  
-  // Ref for tracking if recording was cancelled
-  const recordingCancelledRef = useRef(false);
   
   // Profile and tasks for modal
   const { profile } = useProfile();
@@ -234,10 +227,12 @@ const Index = () => {
     setTaskCreatedTrigger(prev => prev + 1);
   };
 
-
   const handleVoiceCapture = () => {
-    // Recording is now controlled by focus state, not direct toggle
-    // This is kept for backwards compatibility but focus state drives it
+    if (isOrbRecording) {
+      stopOrbRecording();
+    } else if (!isOrbProcessing) {
+      startOrbRecording();
+    }
   };
 
   const startOrbRecording = async () => {
@@ -256,15 +251,7 @@ const Index = () => {
       mediaRecorder.onstop = async () => {
         const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
         stream.getTracks().forEach(track => track.stop());
-        
-        // Only process if not cancelled
-        if (!recordingCancelledRef.current) {
-          await processOrbRecording(audioBlob);
-        } else {
-          // Reset cancelled flag and processing state
-          recordingCancelledRef.current = false;
-          setIsOrbProcessing(false);
-        }
+        await processOrbRecording(audioBlob);
       };
 
       mediaRecorder.start();
@@ -276,41 +263,16 @@ const Index = () => {
         description: "Please allow microphone access to use voice capture.",
         variant: "destructive"
       });
-      setIsFocused(false);
     }
   };
 
-  const stopOrbRecording = (cancel = false) => {
-    if (cancel) {
-      recordingCancelledRef.current = true;
-    }
+  const stopOrbRecording = () => {
     if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
       mediaRecorderRef.current.stop();
     }
     setIsOrbRecording(false);
-    if (!cancel) {
-      setIsOrbProcessing(true);
-    }
+    setIsOrbProcessing(true);
   };
-
-  // Connect focus state to recording
-  useEffect(() => {
-    if (isFocused && !isOrbRecording && !isOrbProcessing) {
-      startOrbRecording();
-    } else if (!isFocused && isOrbRecording) {
-      stopOrbRecording();
-    }
-  }, [isFocused]);
-
-  // Close focus when processing completes
-  useEffect(() => {
-    if (!isOrbProcessing && !isOrbRecording && isFocused) {
-      // Small delay to let the user see the result
-      const timer = setTimeout(() => setIsFocused(false), 300);
-      return () => clearTimeout(timer);
-    }
-  }, [isOrbProcessing, isOrbRecording]);
-
 
   const processOrbRecording = async (audioBlob: Blob) => {
     try {
@@ -396,45 +358,20 @@ const Index = () => {
             </div>
           )}
 
-          {/* Focus state overlay */}
-          <AnimatePresence>
-            {isFocused && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.35, ease: "easeOut" }}
-                className="fixed inset-0 z-40 backdrop-blur-[12px] bg-black/40"
-                onClick={() => {
-                  setIsFocused(false);
-                  haptics.lightTap().then(() => {
-                    setTimeout(() => haptics.lightTap(), 80);
-                  });
-                }}
-              />
-            )}
-          </AnimatePresence>
-
           {/* CENTER - Everything vertically & horizontally centered */}
           <div className="flex-1 flex flex-col items-center justify-center px-4">
-            {/* Orb */}
-            <div className="relative z-50 flex flex-col items-center">
+            {/* Orb - direct voice capture on mobile (same as desktop) */}
+            <div className="flex flex-col items-center">
               <Orb
                 size={140}
-                onClick={() => {
-                  if (!isFocused && !isOrbProcessing) {
-                    setIsFocused(true);
-                    haptics.lightTap();
-                  }
-                }}
+                onClick={handleVoiceCapture}
                 isRecording={isOrbRecording}
                 isProcessing={isOrbProcessing}
-                isFocused={isFocused}
               />
               
               {/* Status text below orb - fixed height to prevent layout shift */}
               <p className="mt-6 h-5 text-sm text-muted-foreground/50 text-center font-light">
-                {getOneLiner()}
+                {isOrbRecording ? 'listening...' : isOrbProcessing ? 'transcribing...' : getOneLiner()}
               </p>
             </div>
             
@@ -479,45 +416,20 @@ const Index = () => {
           onDreamModeClick={handleDreamModeClick}
           activeCategory={activeCategory}
         >
-          {/* Focus state overlay */}
-          <AnimatePresence>
-            {isFocused && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.35, ease: "easeOut" }}
-                className="fixed inset-0 z-40 backdrop-blur-[12px] bg-black/40"
-                onClick={() => {
-                  setIsFocused(false);
-                  haptics.lightTap().then(() => {
-                    setTimeout(() => haptics.lightTap(), 80);
-                  });
-                }}
-              />
-            )}
-          </AnimatePresence>
-
           {/* Minimal centered content */}
           <div className="min-h-[85vh] flex flex-col items-center justify-center">
             {/* Orb */}
-            <div className="relative z-50 flex flex-col items-center">
+            <div className="flex flex-col items-center">
               <Orb
                 size={180}
-                onClick={() => {
-                  if (!isFocused && !isOrbProcessing) {
-                    setIsFocused(true);
-                    haptics.lightTap();
-                  }
-                }}
+                onClick={handleVoiceCapture}
                 isRecording={isOrbRecording}
                 isProcessing={isOrbProcessing}
-                isFocused={isFocused}
               />
               
               {/* Status text below orb - fixed height to prevent layout shift */}
               <p className="mt-6 h-5 text-sm text-muted-foreground/50 text-center font-light">
-                {getOneLiner()}
+                {isOrbRecording ? 'listening...' : isOrbProcessing ? 'transcribing...' : getOneLiner()}
               </p>
             </div>
             
