@@ -565,14 +565,26 @@ All colors MUST be HSL.
     100% { transform: scale(1); }
   }
 
-  /* Main class applied during RECORDING mode */
+  /* Main class applied during RECORDING mode - with subtle pulse */
   .orb-recording {
-    animation: orbGlowDynamic 2s ease-in-out infinite;
+    animation: orbGlowDynamic 2s ease-in-out infinite, orbPulse 1.5s ease-in-out infinite;
+  }
+
+  /* Subtle pulse animation for focus/recording state */
+  @keyframes orbPulse {
+    0%, 100% { 
+      transform: scale(1);
+      opacity: 1;
+    }
+    50% { 
+      transform: scale(1.03);
+      opacity: 0.92;
+    }
   }
 
   /* With scale breathing enabled */
   .orb-recording.breath {
-    animation: orbGlowDynamic 2s ease-in-out infinite, orbScaleBreath 4s ease-in-out infinite;
+    animation: orbGlowDynamic 2s ease-in-out infinite, orbPulse 1.5s ease-in-out infinite;
   }
 
   /* Loading state */
