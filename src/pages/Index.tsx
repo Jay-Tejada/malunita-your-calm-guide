@@ -387,6 +387,7 @@ const Index = () => {
                 }}
                 isRecording={isOrbRecording}
                 isProcessing={isOrbProcessing}
+                isFocused={isFocused}
               />
               
               {/* Status text below orb - fixed height to prevent layout shift */}
@@ -462,6 +463,7 @@ const Index = () => {
                 }}
                 isRecording={isOrbRecording}
                 isProcessing={isOrbProcessing}
+                isFocused={isFocused}
               />
               
               {/* Status text below orb - fixed height to prevent layout shift */}

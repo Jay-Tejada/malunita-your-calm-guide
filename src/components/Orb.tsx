@@ -10,6 +10,7 @@ interface OrbProps {
   forceTime?: TimeOfDay;
   isRecording?: boolean;
   isProcessing?: boolean;
+  isFocused?: boolean;
   mood?: OrbMood;
 }
 
@@ -20,6 +21,7 @@ const Orb = ({
   forceTime,
   isRecording = false, 
   isProcessing = false,
+  isFocused = false,
   mood = 'neutral'
 }: OrbProps) => {
   const [timeOfDay, setTimeOfDay] = useState<TimeOfDay>('midday');
@@ -99,14 +101,37 @@ const Orb = ({
     return '';
   };
 
+  // Calculate transform based on state
+  const getTransform = () => {
+    if (isPressed) return 'scale(0.97)';
+    if (isFocused) return 'scale(1.25)';
+    return 'scale(1)';
+  };
+
+  // Calculate box shadow based on state
+  const getBoxShadow = () => {
+    const baseInnerShadow = `inset -${size * 0.1}px -${size * 0.1}px ${size * 0.2}px rgba(0, 0, 0, 0.08)`;
+    const baseHighlight = `inset ${size * 0.05}px ${size * 0.05}px ${size * 0.15}px rgba(255, 255, 255, 0.5)`;
+    const baseDrop = `0 ${size * 0.1}px ${size * 0.25}px rgba(0, 0, 0, 0.1)`;
+    const baseGlow = `0 0 ${size * 0.4}px ${colors.glow}`;
+    
+    if (isFocused) {
+      const focusGlow = `0 0 60px rgba(255, 245, 230, 0.4)`;
+      return `${baseInnerShadow}, ${baseHighlight}, ${baseDrop}, ${baseGlow}, ${focusGlow}`;
+    }
+    
+    return `${baseInnerShadow}, ${baseHighlight}, ${baseDrop}, ${baseGlow}`;
+  };
+
   const orbStyle: React.CSSProperties & { '--orbGlowColor'?: string } = {
     width: size,
     height: size,
     borderRadius: '50%',
     position: 'relative',
     cursor: onClick ? 'pointer' : 'default',
-    transition: 'all 0.2s ease-out',
-    transform: isPressed ? 'scale(0.97)' : 'scale(1)',
+    transition: 'all 250ms ease-out',
+    transform: getTransform(),
+    filter: isFocused ? 'brightness(1.1)' : 'brightness(1)',
     '--orbGlowColor': colors.glow,
     background: `
       radial-gradient(
@@ -116,12 +141,7 @@ const Orb = ({
         ${colors.shadow} 100%
       )
     `,
-    boxShadow: `
-      inset -${size * 0.1}px -${size * 0.1}px ${size * 0.2}px rgba(0, 0, 0, 0.08),
-      inset ${size * 0.05}px ${size * 0.05}px ${size * 0.15}px rgba(255, 255, 255, 0.5),
-      0 ${size * 0.1}px ${size * 0.25}px rgba(0, 0, 0, 0.1),
-      0 0 ${size * 0.4}px ${colors.glow}
-    `,
+    boxShadow: getBoxShadow(),
   };
 
   return (
