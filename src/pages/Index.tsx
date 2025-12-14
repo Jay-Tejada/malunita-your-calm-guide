@@ -72,6 +72,9 @@ const Index = () => {
   // Start my day modal state
   const [showStartMyDay, setShowStartMyDay] = useState(false);
   
+  // Orb focus state
+  const [isFocused, setIsFocused] = useState(false);
+  
   // Tiny Task Fiesta card state - only shows after completing Start My Day flow
   const [showTinyTaskFiesta, setShowTinyTaskFiesta] = useState(false);
   
@@ -228,9 +231,13 @@ const Index = () => {
   };
 
   const handleVoiceCapture = () => {
-    if (isOrbRecording) {
+    if (isFocused) {
+      // If focused, stop recording and exit focus
       stopOrbRecording();
+      setIsFocused(false);
     } else if (!isOrbProcessing) {
+      // If not focused, enter focus and start recording
+      setIsFocused(true);
       startOrbRecording();
     }
   };
@@ -348,6 +355,20 @@ const Index = () => {
       
       <OfflineIndicator />
       
+      {/* Focus backdrop overlay */}
+      <div 
+        className={`fixed inset-0 transition-all duration-300 ${isFocused ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+        style={{ 
+          backdropFilter: 'blur(12px)', 
+          background: 'rgba(0,0,0,0.4)',
+          zIndex: 40 
+        }}
+        onClick={() => {
+          setIsFocused(false);
+          stopOrbRecording();
+        }}
+      />
+      
       {isMobile ? (
         /* MOBILE LAYOUT - Minimal & Centered */
         <div className="mobile-home min-h-screen bg-background flex flex-col">
@@ -361,7 +382,7 @@ const Index = () => {
           {/* CENTER - Everything vertically & horizontally centered */}
           <div className="flex-1 flex flex-col items-center justify-center px-4">
             {/* Orb - direct voice capture on mobile (same as desktop) */}
-            <div className="flex flex-col items-center">
+            <div className="flex flex-col items-center relative" style={{ zIndex: 50 }}>
               <Orb
                 size={140}
                 onClick={handleVoiceCapture}
@@ -419,7 +440,7 @@ const Index = () => {
           {/* Minimal centered content */}
           <div className="min-h-[85vh] flex flex-col items-center justify-center">
             {/* Orb */}
-            <div className="flex flex-col items-center">
+            <div className="flex flex-col items-center relative" style={{ zIndex: 50 }}>
               <Orb
                 size={180}
                 onClick={handleVoiceCapture}
