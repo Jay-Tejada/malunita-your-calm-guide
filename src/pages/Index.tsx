@@ -395,6 +395,13 @@ const Index = () => {
               <p className="mt-6 h-5 text-sm text-muted-foreground/50 text-center font-light">
                 {isOrbRecording ? 'listening...' : isOrbProcessing ? 'transcribing...' : getOneLiner()}
               </p>
+              
+              {/* Cancel hint when focused */}
+              {isFocused && (
+                <p className="mt-2 text-xs text-white/40 text-center animate-fade-in">
+                  tap to stop
+                </p>
+              )}
             </div>
             
             {/* Start my day button - only show if fiesta card is not visible */}
@@ -454,6 +461,13 @@ const Index = () => {
               <p className="mt-6 h-5 text-sm text-muted-foreground/50 text-center font-light">
                 {isOrbRecording ? 'listening...' : isOrbProcessing ? 'transcribing...' : getOneLiner()}
               </p>
+              
+              {/* Cancel hint when focused */}
+              {isFocused && (
+                <p className="mt-2 text-xs text-white/40 text-center animate-fade-in">
+                  tap to stop
+                </p>
+              )}
             </div>
             
             {/* Start my day button - only show if fiesta card is not visible */}
