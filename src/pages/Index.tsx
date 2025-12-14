@@ -28,6 +28,7 @@ import { StartMyDayModal } from "@/components/rituals/StartMyDayModal";
 import { TinyTaskFiestaCard } from "@/components/home/TinyTaskFiestaCard";
 import TinyTaskParty from "@/components/TinyTaskParty";
 import { CaptureSheet } from "@/components/capture/CaptureSheet";
+import { haptics } from "@/hooks/useHaptics";
 
 const Index = () => {
   // Initialize daily reset monitoring
@@ -368,9 +369,14 @@ const Index = () => {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                transition={{ duration: 0.3, ease: "easeOut" }}
+                transition={{ duration: 0.35, ease: "easeOut" }}
                 className="fixed inset-0 z-40 backdrop-blur-[12px] bg-black/40"
-                onClick={() => setIsFocused(false)}
+                onClick={() => {
+                  setIsFocused(false);
+                  haptics.lightTap().then(() => {
+                    setTimeout(() => haptics.lightTap(), 80);
+                  });
+                }}
               />
             )}
           </AnimatePresence>
@@ -383,6 +389,7 @@ const Index = () => {
                 size={140}
                 onClick={() => {
                   setIsFocused(true);
+                  haptics.lightTap();
                   handleVoiceCapture();
                 }}
                 isRecording={isOrbRecording}
@@ -444,9 +451,14 @@ const Index = () => {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                transition={{ duration: 0.3, ease: "easeOut" }}
+                transition={{ duration: 0.35, ease: "easeOut" }}
                 className="fixed inset-0 z-40 backdrop-blur-[12px] bg-black/40"
-                onClick={() => setIsFocused(false)}
+                onClick={() => {
+                  setIsFocused(false);
+                  haptics.lightTap().then(() => {
+                    setTimeout(() => haptics.lightTap(), 80);
+                  });
+                }}
               />
             )}
           </AnimatePresence>
