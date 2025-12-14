@@ -388,6 +388,7 @@ const Index = () => {
                 onClick={handleVoiceCapture}
                 isRecording={isOrbRecording}
                 isProcessing={isOrbProcessing}
+                isFocused={isFocused}
               />
               
               {/* Status text below orb - fixed height to prevent layout shift */}
@@ -446,6 +447,7 @@ const Index = () => {
                 onClick={handleVoiceCapture}
                 isRecording={isOrbRecording}
                 isProcessing={isOrbProcessing}
+                isFocused={isFocused}
               />
               
               {/* Status text below orb - fixed height to prevent layout shift */}

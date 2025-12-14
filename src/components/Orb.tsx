@@ -10,6 +10,7 @@ interface OrbProps {
   forceTime?: TimeOfDay;
   isRecording?: boolean;
   isProcessing?: boolean;
+  isFocused?: boolean;
   mood?: OrbMood;
 }
 
@@ -20,6 +21,7 @@ const Orb = ({
   forceTime,
   isRecording = false, 
   isProcessing = false,
+  isFocused = false,
   mood = 'neutral'
 }: OrbProps) => {
   const [timeOfDay, setTimeOfDay] = useState<TimeOfDay>('midday');
@@ -105,8 +107,8 @@ const Orb = ({
     borderRadius: '50%',
     position: 'relative',
     cursor: onClick ? 'pointer' : 'default',
-    transition: 'all 0.2s ease-out',
-    transform: isPressed ? 'scale(0.97)' : 'scale(1)',
+    transition: 'all 0.3s ease-out',
+    transform: isPressed ? 'scale(0.97)' : isFocused ? 'scale(1.25)' : 'scale(1)',
     '--orbGlowColor': colors.glow,
     background: `
       radial-gradient(
@@ -116,12 +118,19 @@ const Orb = ({
         ${colors.shadow} 100%
       )
     `,
-    boxShadow: `
-      inset -${size * 0.1}px -${size * 0.1}px ${size * 0.2}px rgba(0, 0, 0, 0.08),
-      inset ${size * 0.05}px ${size * 0.05}px ${size * 0.15}px rgba(255, 255, 255, 0.5),
-      0 ${size * 0.1}px ${size * 0.25}px rgba(0, 0, 0, 0.1),
-      0 0 ${size * 0.4}px ${colors.glow}
-    `,
+    boxShadow: isFocused 
+      ? `
+        inset -${size * 0.1}px -${size * 0.1}px ${size * 0.2}px rgba(0, 0, 0, 0.08),
+        inset ${size * 0.05}px ${size * 0.05}px ${size * 0.15}px rgba(255, 255, 255, 0.5),
+        0 ${size * 0.1}px ${size * 0.25}px rgba(0, 0, 0, 0.1),
+        0 0 60px rgba(255,245,230,0.4)
+      `
+      : `
+        inset -${size * 0.1}px -${size * 0.1}px ${size * 0.2}px rgba(0, 0, 0, 0.08),
+        inset ${size * 0.05}px ${size * 0.05}px ${size * 0.15}px rgba(255, 255, 255, 0.5),
+        0 ${size * 0.1}px ${size * 0.25}px rgba(0, 0, 0, 0.1),
+        0 0 ${size * 0.4}px ${colors.glow}
+      `,
   };
 
   return (
