@@ -96,15 +96,16 @@ const Orb = ({
   };
 
   const getStateClass = () => {
+    if (isFocused) return 'orb-focused';
     if (isRecording) return 'orb-recording';
     if (isProcessing) return 'orb-loading';
     return '';
   };
 
-  // Calculate transform based on state
+  // Calculate transform based on state (only when not using CSS animation)
   const getTransform = () => {
+    if (isFocused) return undefined; // Let CSS animation handle transform
     if (isPressed) return 'scale(0.97)';
-    if (isFocused) return 'scale(1.25)';
     return 'scale(1)';
   };
 

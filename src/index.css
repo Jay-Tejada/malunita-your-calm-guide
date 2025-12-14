@@ -718,7 +718,24 @@ All colors MUST be HSL.
     }
   }
 
-  /* Mini orb breathing animation - slower, subtler */
+  /* Slow rotation for focused orb */
+  @keyframes orb-focus-rotate {
+    from { transform: rotate(0deg) scale(1.25); }
+    to { transform: rotate(360deg) scale(1.25); }
+  }
+
+  .orb-focused {
+    animation: orb-focus-rotate 10s linear infinite;
+  }
+
+  /* Respect reduced motion preference */
+  @media (prefers-reduced-motion: reduce) {
+    .orb-focused {
+      animation: none;
+      transform: scale(1.25);
+    }
+  }
+
   @keyframes orb-breathe {
     0%, 100% {
       transform: scale(1);
