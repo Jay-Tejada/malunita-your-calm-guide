@@ -110,6 +110,20 @@ const Work = () => {
     updateTask({ id: taskId, updates: { completed: true } });
   };
 
+  const handleUpdateTask = (taskId: string, title: string) => {
+    updateTask({ id: taskId, updates: { title } });
+  };
+
+  const handleAddSubtask = async (parentId: string, title: string) => {
+    const parentTask = tasks?.find(t => t.id === parentId);
+    await createTasks([{
+      title,
+      category: 'work',
+      project_id: parentTask?.project_id || null,
+      parent_task_id: parentId
+    }]);
+  };
+
   const handleReorderTasks = async (taskIds: string[]) => {
     // Update display_order for each task
     await Promise.all(
@@ -179,9 +193,12 @@ const Work = () => {
                   key={project.id}
                   project={project}
                   tasks={tasksByProject[project.id] || []}
+                  allTasks={tasks || []}
                   onToggleCollapse={() => toggleCollapsed(project.id)}
                   onToggleTask={handleToggleTask}
                   onAddTask={(text, projectId) => handleCapture(text, projectId)}
+                  onUpdateTask={handleUpdateTask}
+                  onAddSubtask={handleAddSubtask}
                   onEditProject={setEditingProject}
                   onDeleteProject={deleteProject}
                   onReorderTasks={handleReorderTasks}

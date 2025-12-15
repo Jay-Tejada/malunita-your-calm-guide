@@ -1,14 +1,37 @@
+import { useState, useRef, useEffect } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical } from 'lucide-react';
-import { Task } from '@/hooks/useTasks';
+import { GripVertical, ChevronRight, ChevronDown, Plus } from 'lucide-react';
+import { Task, useTasks } from '@/hooks/useTasks';
 
 interface SortableTaskItemProps {
   task: Task;
+  allTasks: Task[];
   onToggleTask: (taskId: string) => void;
+  onUpdateTask: (taskId: string, title: string) => void;
+  onAddSubtask: (parentId: string, title: string) => void;
+  depth?: number;
 }
 
-export const SortableTaskItem = ({ task, onToggleTask }: SortableTaskItemProps) => {
+export const SortableTaskItem = ({ 
+  task, 
+  allTasks,
+  onToggleTask, 
+  onUpdateTask,
+  onAddSubtask,
+  depth = 0 
+}: SortableTaskItemProps) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editValue, setEditValue] = useState(task.title);
+  const [isExpanded, setIsExpanded] = useState(true);
+  const [showSubtaskInput, setShowSubtaskInput] = useState(false);
+  const [subtaskValue, setSubtaskValue] = useState('');
+  const editInputRef = useRef<HTMLInputElement>(null);
+  const subtaskInputRef = useRef<HTMLInputElement>(null);
+
+  const subtasks = allTasks.filter(t => t.parent_task_id === task.id && !t.completed);
+  const hasSubtasks = subtasks.length > 0;
+
   const {
     attributes,
     listeners,
@@ -23,32 +46,158 @@ export const SortableTaskItem = ({ task, onToggleTask }: SortableTaskItemProps) 
     transition: transition || 'transform 200ms cubic-bezier(0.25, 1, 0.5, 1)',
   };
 
+  useEffect(() => {
+    if (isEditing && editInputRef.current) {
+      editInputRef.current.focus();
+      editInputRef.current.select();
+    }
+  }, [isEditing]);
+
+  useEffect(() => {
+    if (showSubtaskInput && subtaskInputRef.current) {
+      subtaskInputRef.current.focus();
+    }
+  }, [showSubtaskInput]);
+
+  const handleTitleClick = () => {
+    setIsEditing(true);
+    setEditValue(task.title);
+  };
+
+  const handleEditSave = () => {
+    if (editValue.trim() && editValue.trim() !== task.title) {
+      onUpdateTask(task.id, editValue.trim());
+    }
+    setIsEditing(false);
+  };
+
+  const handleEditKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleEditSave();
+    } else if (e.key === 'Escape') {
+      setEditValue(task.title);
+      setIsEditing(false);
+    }
+  };
+
+  const handleAddSubtask = () => {
+    if (subtaskValue.trim()) {
+      onAddSubtask(task.id, subtaskValue.trim());
+      setSubtaskValue('');
+      setShowSubtaskInput(false);
+    }
+  };
+
+  const handleSubtaskKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleAddSubtask();
+    } else if (e.key === 'Escape') {
+      setSubtaskValue('');
+      setShowSubtaskInput(false);
+    }
+  };
+
   return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      className={`flex items-start gap-2 py-2 group relative ${
-        isDragging 
-          ? 'opacity-50 bg-primary/5 rounded-md shadow-sm z-10' 
-          : 'hover:bg-foreground/[0.02]'
-      }`}
-    >
-      {/* Drop indicator line */}
-      {!isDragging && (
-        <div className="absolute -top-px left-0 right-0 h-0.5 bg-primary/50 opacity-0 transition-opacity pointer-events-none" />
-      )}
-      <button
-        {...attributes}
-        {...listeners}
-        className="p-0.5 -ml-1 cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 text-foreground/30 hover:text-foreground/50 transition-opacity touch-none"
+    <div className={depth > 0 ? 'ml-6 border-l border-foreground/5 pl-2' : ''}>
+      <div
+        ref={setNodeRef}
+        style={style}
+        className={`flex items-start gap-2 py-1.5 group relative ${
+          isDragging 
+            ? 'opacity-50 bg-primary/5 rounded-md shadow-sm z-10' 
+            : 'hover:bg-foreground/[0.02]'
+        }`}
       >
-        <GripVertical className="w-3.5 h-3.5" />
-      </button>
-      <button
-        onClick={() => onToggleTask(task.id)}
-        className="w-4 h-4 rounded-full border border-foreground/20 hover:border-foreground/40 flex-shrink-0 mt-0.5"
-      />
-      <span className="font-mono text-sm text-foreground/70">{task.title}</span>
+        {/* Expand/collapse for subtasks */}
+        <button
+          onClick={() => setIsExpanded(!isExpanded)}
+          className={`p-0.5 -ml-1 text-foreground/30 hover:text-foreground/50 transition-opacity ${
+            hasSubtasks ? 'opacity-100' : 'opacity-0 pointer-events-none'
+          }`}
+        >
+          {isExpanded ? (
+            <ChevronDown className="w-3.5 h-3.5" />
+          ) : (
+            <ChevronRight className="w-3.5 h-3.5" />
+          )}
+        </button>
+
+        {/* Drag handle */}
+        <button
+          {...attributes}
+          {...listeners}
+          className="p-0.5 cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 text-foreground/30 hover:text-foreground/50 transition-opacity touch-none"
+        >
+          <GripVertical className="w-3.5 h-3.5" />
+        </button>
+
+        {/* Checkbox */}
+        <button
+          onClick={() => onToggleTask(task.id)}
+          className="w-4 h-4 rounded-full border border-foreground/20 hover:border-foreground/40 flex-shrink-0 mt-0.5"
+        />
+
+        {/* Title - editable */}
+        {isEditing ? (
+          <input
+            ref={editInputRef}
+            value={editValue}
+            onChange={(e) => setEditValue(e.target.value)}
+            onBlur={handleEditSave}
+            onKeyDown={handleEditKeyDown}
+            className="flex-1 bg-transparent text-sm text-foreground focus:outline-none border-b border-primary/50"
+          />
+        ) : (
+          <span 
+            onClick={handleTitleClick}
+            className="flex-1 text-sm text-foreground/70 cursor-text hover:text-foreground transition-colors"
+          >
+            {task.title}
+          </span>
+        )}
+
+        {/* Add subtask button */}
+        <button
+          onClick={() => setShowSubtaskInput(true)}
+          className="p-1 opacity-0 group-hover:opacity-100 text-foreground/30 hover:text-foreground/50 transition-opacity"
+        >
+          <Plus className="w-3.5 h-3.5" />
+        </button>
+      </div>
+
+      {/* Subtask input */}
+      {showSubtaskInput && (
+        <div className="ml-6 pl-2 py-1">
+          <input
+            ref={subtaskInputRef}
+            value={subtaskValue}
+            onChange={(e) => setSubtaskValue(e.target.value)}
+            onBlur={() => {
+              if (!subtaskValue.trim()) setShowSubtaskInput(false);
+            }}
+            onKeyDown={handleSubtaskKeyDown}
+            placeholder="Add subtask..."
+            className="w-full bg-transparent text-sm text-muted-foreground placeholder:text-muted-foreground/40 focus:outline-none"
+          />
+        </div>
+      )}
+
+      {/* Render subtasks */}
+      {isExpanded && hasSubtasks && (
+        <div>
+          {subtasks.map(subtask => (
+            <SortableTaskItem
+              key={subtask.id}
+              task={subtask}
+              allTasks={allTasks}
+              onToggleTask={onToggleTask}
+              onUpdateTask={onUpdateTask}
+              onAddSubtask={onAddSubtask}
+              depth={depth + 1}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 };
