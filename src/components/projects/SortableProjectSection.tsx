@@ -8,9 +8,12 @@ import { ProjectSection } from './ProjectSection';
 interface SortableProjectSectionProps {
   project: Project;
   tasks: Task[];
+  allTasks: Task[];
   onToggleCollapse: () => void;
   onToggleTask: (taskId: string) => void;
   onAddTask: (text: string, projectId: string) => void;
+  onUpdateTask: (taskId: string, title: string) => void;
+  onAddSubtask: (parentId: string, title: string) => void;
   onEditProject: (project: Project) => void;
   onDeleteProject: (projectId: string) => void;
   onReorderTasks?: (taskIds: string[]) => void;
@@ -19,9 +22,12 @@ interface SortableProjectSectionProps {
 export const SortableProjectSection = ({
   project,
   tasks,
+  allTasks,
   onToggleCollapse,
   onToggleTask,
   onAddTask,
+  onUpdateTask,
+  onAddSubtask,
   onEditProject,
   onDeleteProject,
   onReorderTasks
@@ -66,9 +72,12 @@ export const SortableProjectSection = ({
       <ProjectSection
         project={project}
         tasks={tasks}
+        allTasks={allTasks}
         onToggleCollapse={onToggleCollapse}
         onToggleTask={onToggleTask}
         onAddTask={onAddTask}
+        onUpdateTask={onUpdateTask}
+        onAddSubtask={onAddSubtask}
         onEditProject={onEditProject}
         onDeleteProject={onDeleteProject}
         onReorderTasks={onReorderTasks}

@@ -24,9 +24,12 @@ import { SortableTaskItem } from './SortableTaskItem';
 interface ProjectSectionProps {
   project: Project;
   tasks: Task[];
+  allTasks: Task[];
   onToggleCollapse: () => void;
   onToggleTask: (taskId: string) => void;
   onAddTask: (text: string, projectId: string) => void;
+  onUpdateTask: (taskId: string, title: string) => void;
+  onAddSubtask: (parentId: string, title: string) => void;
   onEditProject: (project: Project) => void;
   onDeleteProject: (projectId: string) => void;
   onReorderTasks?: (taskIds: string[]) => void;
@@ -35,9 +38,12 @@ interface ProjectSectionProps {
 export const ProjectSection = ({
   project,
   tasks,
+  allTasks,
   onToggleCollapse,
   onToggleTask,
   onAddTask,
+  onUpdateTask,
+  onAddSubtask,
   onEditProject,
   onDeleteProject,
   onReorderTasks
@@ -133,11 +139,14 @@ export const ProjectSection = ({
                 items={incompleteTasks.map(t => t.id)}
                 strategy={verticalListSortingStrategy}
               >
-                {incompleteTasks.map(task => (
+                {incompleteTasks.filter(t => !t.parent_task_id).map(task => (
                   <SortableTaskItem
                     key={task.id}
                     task={task}
+                    allTasks={allTasks}
                     onToggleTask={onToggleTask}
+                    onUpdateTask={onUpdateTask}
+                    onAddSubtask={onAddSubtask}
                   />
                 ))}
               </SortableContext>

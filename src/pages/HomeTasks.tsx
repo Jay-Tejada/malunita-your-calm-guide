@@ -9,7 +9,7 @@ import { NewProjectModal } from '@/components/projects/NewProjectModal';
 
 const HomeTasks = () => {
   const navigate = useNavigate();
-  const { tasks, updateTask } = useTasks();
+  const { tasks, updateTask, createTasks } = useTasks();
   const { projects, createProject, updateProject, deleteProject, toggleCollapsed } = useProjects('home');
   const [input, setInput] = useState('');
   const [showCompleted, setShowCompleted] = useState(false);
@@ -71,6 +71,20 @@ const HomeTasks = () => {
     updateTask({ id: taskId, updates: { completed: true } });
   };
 
+  const handleUpdateTask = (taskId: string, title: string) => {
+    updateTask({ id: taskId, updates: { title } });
+  };
+
+  const handleAddSubtask = async (parentId: string, title: string) => {
+    const parentTask = tasks?.find(t => t.id === parentId);
+    await createTasks([{
+      title,
+      category: 'home',
+      project_id: parentTask?.project_id || null,
+      parent_task_id: parentId
+    }]);
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -106,9 +120,12 @@ const HomeTasks = () => {
             key={project.id}
             project={project}
             tasks={tasksByProject[project.id] || []}
+            allTasks={tasks || []}
             onToggleCollapse={() => toggleCollapsed(project.id)}
             onToggleTask={handleToggleTask}
             onAddTask={(text, projectId) => handleCapture(text, projectId)}
+            onUpdateTask={handleUpdateTask}
+            onAddSubtask={handleAddSubtask}
             onEditProject={setEditingProject}
             onDeleteProject={deleteProject}
           />
