@@ -90,55 +90,57 @@ export const ProjectSection = ({
   const activeTask = activeTaskId ? incompleteTasks.find(t => t.id === activeTaskId) : null;
 
   return (
-    <div className="border-b border-foreground/5">
-      {/* Project header */}
-      <div className="flex items-center gap-2 px-4 py-3 hover:bg-foreground/[0.02] group">
+    <div className="mb-2">
+      {/* Project header - container style */}
+      <div className="bg-muted/30 rounded-lg py-3 px-4 flex items-center justify-between group">
         <button
           onClick={onToggleCollapse}
-          className="flex items-center gap-3 flex-1 text-left"
+          className="flex items-center gap-2 flex-1 text-left"
         >
           {isCollapsed ? (
-            <ChevronRight className="w-4 h-4 text-foreground/30" />
+            <ChevronRight className="w-4 h-4 text-muted-foreground" />
           ) : (
-            <ChevronDown className="w-4 h-4 text-foreground/30" />
+            <ChevronDown className="w-4 h-4 text-muted-foreground" />
           )}
-          <span className="font-mono text-sm text-foreground/70">
-            {project.icon && <span className="mr-2">{project.icon}</span>}
+          {project.icon && <span className="text-base">{project.icon}</span>}
+          <span className="font-medium text-sm text-foreground/80">
             {project.name}
           </span>
         </button>
         
-        <span className="text-xs text-foreground/30 mr-2">
-          {incompleteTasks.length}
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-muted-foreground">
+            {incompleteTasks.length} active
+          </span>
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button className="p-1 opacity-0 group-hover:opacity-100 text-foreground/30 hover:text-foreground/50 transition-opacity">
-              <MoreHorizontal className="w-4 h-4" />
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-40">
-            <DropdownMenuItem onClick={() => onEditProject(project)}>
-              <Pencil className="w-4 h-4 mr-2" />
-              Edit
-            </DropdownMenuItem>
-            <DropdownMenuItem 
-              onClick={() => onDeleteProject(project.id)}
-              className="text-destructive focus:text-destructive"
-            >
-              <Trash2 className="w-4 h-4 mr-2" />
-              Delete
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="p-1 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-foreground transition-opacity">
+                <MoreHorizontal className="w-4 h-4" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-40">
+              <DropdownMenuItem onClick={() => onEditProject(project)}>
+                <Pencil className="w-4 h-4 mr-2" />
+                Edit
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                onClick={() => onDeleteProject(project.id)}
+                className="text-destructive focus:text-destructive"
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
       
       {/* Project tasks */}
       {!isCollapsed && (
-        <div className="pl-11 pr-4 pb-3">
+        <div className="pl-8 pr-4 pb-3 pt-2">
           {incompleteTasks.length === 0 ? (
-            <p className="text-xs text-foreground/30 py-2">No tasks</p>
+            <p className="text-xs text-muted-foreground py-2">No tasks</p>
           ) : (
             <DndContext
               sensors={sensors}
@@ -174,7 +176,7 @@ export const ProjectSection = ({
             onChange={(e) => setInputValue(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Add task..."
-            className="w-full bg-transparent font-mono text-xs text-foreground/50 placeholder:text-foreground/20 focus:outline-none py-2 mt-1"
+            className="w-full bg-transparent font-mono text-xs text-muted-foreground placeholder:text-muted-foreground/50 focus:outline-none py-2 mt-1"
           />
         </div>
       )}
