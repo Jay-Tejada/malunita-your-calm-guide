@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { ChevronDown, ChevronRight, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
+import { ChevronDown, ChevronRight, Folder, Plus } from 'lucide-react';
 import { Project } from '@/hooks/useProjects';
 import { Task } from '@/hooks/useTasks';
 import {
@@ -20,12 +20,6 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { SortableTaskItem } from './SortableTaskItem';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 
 interface ProjectSectionProps {
   project: Project;
@@ -50,6 +44,7 @@ export const ProjectSection = ({
 }: ProjectSectionProps) => {
   const [inputValue, setInputValue] = useState('');
   const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const incompleteTasks = tasks.filter(t => !t.completed);
   const isCollapsed = project.is_collapsed;
 
@@ -88,52 +83,38 @@ export const ProjectSection = ({
   };
 
   const activeTask = activeTaskId ? incompleteTasks.find(t => t.id === activeTaskId) : null;
+  const handlePlusClick = () => {
+    inputRef.current?.focus();
+  };
 
   return (
-    <div className="mb-2">
-      {/* Project header - container style */}
-      <div className="bg-muted/30 rounded-lg py-3 px-4 flex items-center justify-between group">
+    <div className="mb-2 px-4">
+      {/* Project header - minimal */}
+      <div className="flex items-center gap-2 py-2">
         <button
           onClick={onToggleCollapse}
           className="flex items-center gap-2 flex-1 text-left"
         >
           {isCollapsed ? (
-            <ChevronRight className="w-4 h-4 text-muted-foreground" />
+            <ChevronRight size={16} className="text-muted-foreground" />
           ) : (
-            <ChevronDown className="w-4 h-4 text-muted-foreground" />
+            <ChevronDown size={16} className="text-muted-foreground" />
           )}
-          {project.icon && <span className="text-base">{project.icon}</span>}
+          <Folder size={16} className="text-muted-foreground" />
           <span className="font-medium text-sm text-foreground/80">
             {project.name}
           </span>
         </button>
         
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground">
-            {incompleteTasks.length} active
-          </span>
-
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button className="p-1 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-foreground transition-opacity">
-                <MoreHorizontal className="w-4 h-4" />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-40">
-              <DropdownMenuItem onClick={() => onEditProject(project)}>
-                <Pencil className="w-4 h-4 mr-2" />
-                Edit
-              </DropdownMenuItem>
-              <DropdownMenuItem 
-                onClick={() => onDeleteProject(project.id)}
-                className="text-destructive focus:text-destructive"
-              >
-                <Trash2 className="w-4 h-4 mr-2" />
-                Delete
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
+        <button 
+          onClick={handlePlusClick}
+          className="p-1 hover:bg-foreground/10 rounded text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <Plus size={14} />
+        </button>
+        <span className="text-sm text-muted-foreground">
+          {incompleteTasks.length} active
+        </span>
       </div>
       
       {/* Project tasks */}
@@ -172,6 +153,7 @@ export const ProjectSection = ({
           
           {/* Add task to project */}
           <input
+            ref={inputRef}
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             onKeyDown={handleKeyDown}
