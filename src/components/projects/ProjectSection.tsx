@@ -138,7 +138,7 @@ export const ProjectSection = ({
       
       {/* Project tasks */}
       {!isCollapsed && (
-        <div className="pl-4 mt-2 space-y-1 pb-3">
+        <div className="pl-4 ml-4 mt-2 border-l border-foreground/5 space-y-1 pb-3">
           {incompleteTasks.length === 0 ? (
             <p className="text-xs text-muted-foreground py-2">No tasks</p>
           ) : (
