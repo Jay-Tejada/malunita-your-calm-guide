@@ -14,6 +14,7 @@ interface SortableProjectSectionProps {
   onAddTask: (text: string, projectId: string) => void;
   onUpdateTask: (taskId: string, title: string) => void;
   onAddSubtask: (parentId: string, title: string) => void;
+  onDeleteTask: (taskId: string) => void;
   onEditProject: (project: Project) => void;
   onDeleteProject: (projectId: string) => void;
   onReorderTasks?: (taskIds: string[]) => void;
@@ -28,6 +29,7 @@ export const SortableProjectSection = ({
   onAddTask,
   onUpdateTask,
   onAddSubtask,
+  onDeleteTask,
   onEditProject,
   onDeleteProject,
   onReorderTasks
@@ -78,6 +80,7 @@ export const SortableProjectSection = ({
         onAddTask={onAddTask}
         onUpdateTask={onUpdateTask}
         onAddSubtask={onAddSubtask}
+        onDeleteTask={onDeleteTask}
         onEditProject={onEditProject}
         onDeleteProject={onDeleteProject}
         onReorderTasks={onReorderTasks}
