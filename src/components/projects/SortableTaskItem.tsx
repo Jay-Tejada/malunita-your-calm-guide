@@ -3,6 +3,16 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { GripVertical, ChevronRight, ChevronDown, Plus, Trash2 } from 'lucide-react';
 import { Task, useTasks } from '@/hooks/useTasks';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 interface SortableTaskItemProps {
   task: Task;
@@ -28,6 +38,7 @@ export const SortableTaskItem = ({
   const [isExpanded, setIsExpanded] = useState(true);
   const [showSubtaskInput, setShowSubtaskInput] = useState(false);
   const [subtaskValue, setSubtaskValue] = useState('');
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const editInputRef = useRef<HTMLInputElement>(null);
   const subtaskInputRef = useRef<HTMLInputElement>(null);
 
@@ -168,12 +179,33 @@ export const SortableTaskItem = ({
 
         {/* Delete button */}
         <button
-          onClick={() => onDeleteTask(task.id)}
+          onClick={() => setShowDeleteConfirm(true)}
           className="p-1 opacity-0 group-hover:opacity-100 text-foreground/30 hover:text-destructive transition-opacity"
         >
           <Trash2 className="w-3.5 h-3.5" />
         </button>
       </div>
+
+      {/* Delete confirmation dialog */}
+      <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete task?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete "{task.title}"{hasSubtasks ? ' and all its subtasks' : ''}. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => onDeleteTask(task.id)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Subtask input - aligned with subtasks */}
       {showSubtaskInput && (
