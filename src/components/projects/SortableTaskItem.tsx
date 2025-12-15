@@ -165,20 +165,24 @@ export const SortableTaskItem = ({
         </button>
       </div>
 
-      {/* Subtask input */}
+      {/* Subtask input - aligned with subtasks */}
       {showSubtaskInput && (
-        <div className="ml-6 pl-2 py-1">
-          <input
-            ref={subtaskInputRef}
-            value={subtaskValue}
-            onChange={(e) => setSubtaskValue(e.target.value)}
-            onBlur={() => {
-              if (!subtaskValue.trim()) setShowSubtaskInput(false);
-            }}
-            onKeyDown={handleSubtaskKeyDown}
-            placeholder="Add subtask..."
-            className="w-full bg-transparent text-sm text-muted-foreground placeholder:text-muted-foreground/40 focus:outline-none"
-          />
+        <div className="ml-6 border-l border-foreground/5 pl-2 py-1.5">
+          <div className="flex items-center gap-2">
+            {/* Spacer to align with task title (chevron + drag + checkbox space) */}
+            <div className="w-[52px] flex-shrink-0" />
+            <input
+              ref={subtaskInputRef}
+              value={subtaskValue}
+              onChange={(e) => setSubtaskValue(e.target.value)}
+              onBlur={() => {
+                if (!subtaskValue.trim()) setShowSubtaskInput(false);
+              }}
+              onKeyDown={handleSubtaskKeyDown}
+              placeholder="Add subtask..."
+              className="flex-1 bg-transparent text-sm text-muted-foreground placeholder:text-muted-foreground/40 focus:outline-none"
+            />
+          </div>
         </div>
       )}
 
