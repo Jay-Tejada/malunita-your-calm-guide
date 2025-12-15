@@ -93,6 +93,7 @@ const Work = () => {
   }, [workTasks, projects]);
 
   const handleCapture = async (text: string, projectId?: string) => {
+    console.log('📝 Creating task with project_id:', projectId);
     await createTasks([{
       title: text,
       category: 'work',
