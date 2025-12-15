@@ -84,7 +84,7 @@ export const SortableTaskItem = ({
     if (subtaskValue.trim()) {
       onAddSubtask(task.id, subtaskValue.trim());
       setSubtaskValue('');
-      setShowSubtaskInput(false);
+      // Keep input open for adding more subtasks
     }
   };
 
