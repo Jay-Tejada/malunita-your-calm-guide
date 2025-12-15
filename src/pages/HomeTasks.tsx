@@ -9,7 +9,7 @@ import { NewProjectModal } from '@/components/projects/NewProjectModal';
 
 const HomeTasks = () => {
   const navigate = useNavigate();
-  const { tasks, updateTask, createTasks } = useTasks();
+  const { tasks, updateTask, createTasks, deleteTask } = useTasks();
   const { projects, createProject, updateProject, deleteProject, toggleCollapsed } = useProjects('home');
   const [input, setInput] = useState('');
   const [showCompleted, setShowCompleted] = useState(false);
@@ -85,6 +85,10 @@ const HomeTasks = () => {
     }]);
   };
 
+  const handleDeleteTask = async (taskId: string) => {
+    await deleteTask(taskId);
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -126,6 +130,7 @@ const HomeTasks = () => {
             onAddTask={(text, projectId) => handleCapture(text, projectId)}
             onUpdateTask={handleUpdateTask}
             onAddSubtask={handleAddSubtask}
+            onDeleteTask={handleDeleteTask}
             onEditProject={setEditingProject}
             onDeleteProject={deleteProject}
           />

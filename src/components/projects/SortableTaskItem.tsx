@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, ChevronRight, ChevronDown, Plus } from 'lucide-react';
+import { GripVertical, ChevronRight, ChevronDown, Plus, Trash2 } from 'lucide-react';
 import { Task, useTasks } from '@/hooks/useTasks';
 
 interface SortableTaskItemProps {
@@ -10,6 +10,7 @@ interface SortableTaskItemProps {
   onToggleTask: (taskId: string) => void;
   onUpdateTask: (taskId: string, title: string) => void;
   onAddSubtask: (parentId: string, title: string) => void;
+  onDeleteTask: (taskId: string) => void;
   depth?: number;
 }
 
@@ -19,6 +20,7 @@ export const SortableTaskItem = ({
   onToggleTask, 
   onUpdateTask,
   onAddSubtask,
+  onDeleteTask,
   depth = 0 
 }: SortableTaskItemProps) => {
   const [isEditing, setIsEditing] = useState(false);
@@ -163,6 +165,14 @@ export const SortableTaskItem = ({
         >
           <Plus className="w-3.5 h-3.5" />
         </button>
+
+        {/* Delete button */}
+        <button
+          onClick={() => onDeleteTask(task.id)}
+          className="p-1 opacity-0 group-hover:opacity-100 text-foreground/30 hover:text-destructive transition-opacity"
+        >
+          <Trash2 className="w-3.5 h-3.5" />
+        </button>
       </div>
 
       {/* Subtask input - aligned with subtasks */}
@@ -197,6 +207,7 @@ export const SortableTaskItem = ({
               onToggleTask={onToggleTask}
               onUpdateTask={onUpdateTask}
               onAddSubtask={onAddSubtask}
+              onDeleteTask={onDeleteTask}
               depth={depth + 1}
             />
           ))}

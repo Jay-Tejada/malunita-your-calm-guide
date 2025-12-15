@@ -27,7 +27,7 @@ import { NewProjectModal } from '@/components/projects/NewProjectModal';
 
 const Work = () => {
   const navigate = useNavigate();
-  const { tasks, updateTask, createTasks } = useTasks();
+  const { tasks, updateTask, createTasks, deleteTask } = useTasks();
   const { projects, createProject, updateProject, deleteProject, toggleCollapsed, reorderProjects } = useProjects('work');
   const [showCompleted, setShowCompleted] = useState(false);
   const [showNewProject, setShowNewProject] = useState(false);
@@ -124,6 +124,10 @@ const Work = () => {
     }]);
   };
 
+  const handleDeleteTask = async (taskId: string) => {
+    await deleteTask(taskId);
+  };
+
   const handleReorderTasks = async (taskIds: string[]) => {
     // Update display_order for each task
     await Promise.all(
@@ -199,6 +203,7 @@ const Work = () => {
                   onAddTask={(text, projectId) => handleCapture(text, projectId)}
                   onUpdateTask={handleUpdateTask}
                   onAddSubtask={handleAddSubtask}
+                  onDeleteTask={handleDeleteTask}
                   onEditProject={setEditingProject}
                   onDeleteProject={deleteProject}
                   onReorderTasks={handleReorderTasks}
