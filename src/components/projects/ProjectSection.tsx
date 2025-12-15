@@ -175,8 +175,8 @@ export const ProjectSection = ({
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Add task..."
-            className="w-full bg-transparent font-mono text-xs text-muted-foreground placeholder:text-muted-foreground/50 focus:outline-none py-2 mt-1"
+            placeholder={`Add task to ${project.name}...`}
+            className="w-full bg-transparent text-sm text-muted-foreground placeholder:text-muted-foreground/40 focus:outline-none py-2 mt-2 border-none"
           />
         </div>
       )}
