@@ -135,15 +135,6 @@ export const SortableTaskItem = ({
           )}
         </button>
 
-        {/* Drag handle */}
-        <button
-          {...attributes}
-          {...listeners}
-          className="p-0.5 cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 text-foreground/30 hover:text-foreground/50 transition-opacity touch-none"
-        >
-          <GripVertical className="w-3.5 h-3.5" />
-        </button>
-
         {/* Checkbox */}
         <button
           onClick={() => onToggleTask(task.id)}
@@ -184,6 +175,15 @@ export const SortableTaskItem = ({
         >
           <Trash2 className="w-3.5 h-3.5" />
         </button>
+
+        {/* Drag handle - right side */}
+        <button
+          {...attributes}
+          {...listeners}
+          className="p-0.5 cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 text-foreground/30 hover:text-foreground/50 transition-opacity touch-none"
+        >
+          <GripVertical className="w-3.5 h-3.5" />
+        </button>
       </div>
 
       {/* Delete confirmation dialog */}
@@ -211,8 +211,8 @@ export const SortableTaskItem = ({
       {showSubtaskInput && (
         <div className="ml-6 border-l border-foreground/5 pl-2 py-1.5">
           <div className="flex items-center gap-2">
-            {/* Spacer to align with task title (chevron + drag + checkbox space) */}
-            <div className="w-[52px] flex-shrink-0" />
+            {/* Spacer to align with task title (chevron + checkbox space) */}
+            <div className="w-[38px] flex-shrink-0" />
             <input
               ref={subtaskInputRef}
               value={subtaskValue}
