@@ -2,19 +2,24 @@ import { useRef, useCallback } from 'react';
 import { toast } from '@/hooks/use-toast';
 import { Task, useTasks } from '@/hooks/useTasks';
 
+interface PendingRestore {
+  task: Task;
+  subtasks: Task[];
+}
+
 export const useDeleteTaskWithUndo = () => {
   const { deleteTask, createTasks } = useTasks();
-  const pendingRestoreRef = useRef<Task | null>(null);
+  const pendingRestoreRef = useRef<PendingRestore | null>(null);
 
   const deleteTaskWithUndo = useCallback(async (task: Task, allTasks: Task[]) => {
     // Find all subtasks that will be deleted
     const subtasks = allTasks.filter(t => t.parent_task_id === task.id);
     const hasSubtasks = subtasks.length > 0;
     
-    // Store task data for potential restore
-    pendingRestoreRef.current = task;
+    // Store task and subtasks data for potential restore
+    pendingRestoreRef.current = { task, subtasks };
     
-    // Delete the task (subtasks are handled by cascading delete or need separate handling)
+    // Delete the task (subtasks are handled by cascading delete)
     await deleteTask(task.id);
     
     // Show toast with undo action
@@ -25,17 +30,33 @@ export const useDeleteTaskWithUndo = () => {
         <button
           onClick={async () => {
             if (pendingRestoreRef.current) {
-              // Recreate the task
-              await createTasks([{
-                title: pendingRestoreRef.current.title,
-                category: pendingRestoreRef.current.category || undefined,
-                project_id: pendingRestoreRef.current.project_id || undefined,
-                parent_task_id: pendingRestoreRef.current.parent_task_id || undefined,
+              const { task: parentTask, subtasks: deletedSubtasks } = pendingRestoreRef.current;
+              
+              // Recreate the parent task first
+              const createdTasks = await createTasks([{
+                title: parentTask.title,
+                category: parentTask.category || undefined,
+                project_id: parentTask.project_id || undefined,
+                parent_task_id: parentTask.parent_task_id || undefined,
               }]);
+              
+              // If there were subtasks, recreate them with the new parent id
+              if (deletedSubtasks.length > 0 && createdTasks && createdTasks.length > 0) {
+                const newParentId = createdTasks[0].id;
+                await createTasks(deletedSubtasks.map(subtask => ({
+                  title: subtask.title,
+                  category: subtask.category || undefined,
+                  project_id: subtask.project_id || undefined,
+                  parent_task_id: newParentId,
+                })));
+              }
+              
               pendingRestoreRef.current = null;
               toast({
                 title: "Task restored",
-                description: "Your task has been restored",
+                description: deletedSubtasks.length > 0 
+                  ? `Task and ${deletedSubtasks.length} subtask${deletedSubtasks.length > 1 ? 's' : ''} restored`
+                  : "Your task has been restored",
               });
             }
           }}
