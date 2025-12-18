@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus, PenLine, Camera, Mic, Sparkles, X } from "lucide-react";
+import { Plus, PenLine, Camera, Mic, Sparkles } from "lucide-react";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { JournalEntryList } from "@/components/journal/JournalEntryList";
 import { EmptyJournalState } from "@/components/journal/EmptyJournalState";
@@ -7,6 +7,14 @@ import { NewEntryDialog } from "@/components/journal/NewEntryDialog";
 import AddMoment from "@/components/journal/AddMoment";
 import VoiceJournalEntry from "@/components/journal/VoiceJournalEntry";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+
 
 type EntryMode = 'writer' | 'moment' | 'voice';
 
@@ -130,8 +138,47 @@ export default function Journal() {
 
   return (
     <div className="min-h-screen bg-background pb-24">
-      <PageHeader title="Journal" />
-      
+      <PageHeader
+        title="Journal"
+        rightAction={
+          <DropdownMenu open={showNewMenu} onOpenChange={setShowNewMenu}>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9 rounded-full text-muted-foreground hover:text-foreground"
+                aria-label="New journal entry"
+              >
+                <Plus className="h-5 w-5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-44">
+              <DropdownMenuItem
+                onClick={() => handleOpenEntry('writer')}
+                className="font-mono text-sm cursor-pointer"
+              >
+                <PenLine className="mr-2 h-4 w-4" />
+                Write Entry
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => handleOpenEntry('moment')}
+                className="font-mono text-sm cursor-pointer"
+              >
+                <Camera className="mr-2 h-4 w-4" />
+                Add Moment
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => handleOpenEntry('voice')}
+                className="font-mono text-sm cursor-pointer"
+              >
+                <Mic className="mr-2 h-4 w-4" />
+                Voice Note
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        }
+      />
+
       {/* Suggestions section */}
       {suggestions.length > 0 && (
         <div className="px-4 py-3 border-b border-foreground/5">
@@ -162,59 +209,6 @@ export default function Journal() {
         <JournalEntryList onEditEntry={handleEditEntry} onHasEntries={setHasEntries} />
         {hasEntries === false && <EmptyJournalState />}
       </div>
-
-      {/* FAB with menu */}
-      <div className="fixed bottom-6 right-6 z-40">
-        {/* Menu options */}
-        {showNewMenu && (
-          <div className="absolute bottom-16 right-0 bg-background border border-foreground/5 rounded-lg shadow-md py-2 min-w-[180px] animate-in fade-in slide-in-from-bottom-2 duration-200">
-            <button
-              onClick={() => handleOpenEntry('writer')}
-              className="w-full px-4 py-2.5 text-left text-sm text-foreground/60 hover:text-foreground/90 hover:bg-foreground/[0.03] flex items-center gap-3 transition-colors"
-            >
-              <PenLine className="w-4 h-4 text-foreground/40" />
-              Write Entry
-            </button>
-            <button
-              onClick={() => handleOpenEntry('moment')}
-              className="w-full px-4 py-2.5 text-left text-sm text-foreground/60 hover:text-foreground/90 hover:bg-foreground/[0.03] flex items-center gap-3 transition-colors"
-            >
-              <Camera className="w-4 h-4 text-foreground/40" />
-              Add Moment
-            </button>
-            <button
-              onClick={() => handleOpenEntry('voice')}
-              className="w-full px-4 py-2.5 text-left text-sm text-foreground/60 hover:text-foreground/90 hover:bg-foreground/[0.03] flex items-center gap-3 transition-colors"
-            >
-              <Mic className="w-4 h-4 text-foreground/40" />
-              Voice Note
-            </button>
-          </div>
-        )}
-
-        <button
-          onClick={() => setShowNewMenu(!showNewMenu)}
-          className={`w-14 h-14 rounded-full flex items-center justify-center transition-all duration-300 ${
-            showNewMenu ? 'scale-110' : 'animate-orb-breathe hover:scale-110'
-          }`}
-          style={{
-            background: 'radial-gradient(circle at 30% 30%, #fffbf0, #fef3e2, #fde9c9, #f5d9a8)',
-            boxShadow: showNewMenu 
-              ? '0 8px 32px rgba(200, 170, 120, 0.3)' 
-              : '0 8px 24px rgba(200, 170, 120, 0.2)'
-          }}
-        >
-          <Plus className={`w-6 h-6 transition-transform duration-200 ${showNewMenu ? 'rotate-45' : ''}`} style={{ color: '#8b7355' }} />
-        </button>
-      </div>
-
-      {/* Click outside to close menu */}
-      {showNewMenu && (
-        <div 
-          className="fixed inset-0 z-30" 
-          onClick={() => setShowNewMenu(false)} 
-        />
-      )}
 
       {/* Entry dialogs */}
       {showNewEntry && entryMode === 'writer' && (
