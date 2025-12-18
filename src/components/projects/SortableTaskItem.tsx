@@ -3,6 +3,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { GripVertical, ChevronRight, ChevronDown, Plus, Trash2 } from 'lucide-react';
 import { Task, useTasks } from '@/hooks/useTasks';
+import { Linkify } from '@/utils/linkify';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -152,12 +153,12 @@ export const SortableTaskItem = ({
             className="flex-1 bg-transparent text-sm text-foreground focus:outline-none border-b border-primary/50"
           />
         ) : (
-          <span 
+          <Linkify 
+            text={task.title}
             onClick={handleTitleClick}
             className="flex-1 text-sm text-foreground/70 cursor-text hover:text-foreground transition-colors"
-          >
-            {task.title}
-          </span>
+            linkClassName="text-primary hover:underline cursor-pointer"
+          />
         )}
 
         {/* Add subtask button */}
