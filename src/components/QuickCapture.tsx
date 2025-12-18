@@ -1,8 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { useThoughts } from '@/hooks/useThoughts';
-import { useQueryClient } from '@tanstack/react-query';
 import { useTasks } from '@/hooks/useTasks';
 import { useSmartHints, useModifierKey } from '@/hooks/useSmartHints';
 import { useSmartDateParsing } from '@/hooks/useSmartDateParsing';
@@ -17,13 +14,10 @@ interface QuickCaptureProps {
 
 export const QuickCapture = ({ isOpen, onClose, variant, onCapture }: QuickCaptureProps) => {
   const [input, setInput] = useState('');
-  const [captureType, setCaptureType] = useState<'task' | 'thought'>('task');
   const [isClosing, setIsClosing] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const focusAchievedRef = useRef(false);
   const { toast } = useToast();
-  const { addThought } = useThoughts();
-  const queryClient = useQueryClient();
   const { createTasks } = useTasks();
   const { currentHint, trackUsage } = useSmartHints();
   const modKey = useModifierKey();
@@ -40,7 +34,7 @@ export const QuickCapture = ({ isOpen, onClose, variant, onCapture }: QuickCaptu
       setIsClosing(false);
       setInput('');
       onClose();
-    }, 200); // Match animation duration
+    }, 200);
   };
   
   // Auto-resize textarea
@@ -48,18 +42,11 @@ export const QuickCapture = ({ isOpen, onClose, variant, onCapture }: QuickCaptu
     const textarea = textareaRef.current;
     if (!textarea) return;
     
-    // Reset height to auto to get the correct scrollHeight
     textarea.style.height = 'auto';
-    
-    // Calculate line height and max height (5 rows)
-    const lineHeight = 24; // approximate line height in px
+    const lineHeight = 24;
     const maxHeight = lineHeight * 5;
-    
-    // Set new height, capped at maxHeight
     const newHeight = Math.min(textarea.scrollHeight, maxHeight);
     textarea.style.height = `${newHeight}px`;
-    
-    // Enable/disable scrolling based on content
     textarea.style.overflowY = textarea.scrollHeight > maxHeight ? 'auto' : 'hidden';
   };
   
@@ -71,16 +58,13 @@ export const QuickCapture = ({ isOpen, onClose, variant, onCapture }: QuickCaptu
     }
   }, [isOpen]);
 
-  // Autofocus with delay to let keyboard event complete
+  // Autofocus with delay
   useEffect(() => {
     if (!isOpen) {
       focusAchievedRef.current = false;
       return;
     }
 
-    // Key insight: The 'Q' keydown event is still active when this runs.
-    // We need to wait for the event loop to clear before focusing.
-    // Using 100ms delay to ensure keyboard event is fully processed.
     const focusTimer = setTimeout(() => {
       const textarea = textareaRef.current;
       if (textarea && !focusAchievedRef.current) {
@@ -89,7 +73,6 @@ export const QuickCapture = ({ isOpen, onClose, variant, onCapture }: QuickCaptu
       }
     }, 100);
 
-    // Backup at 200ms in case first attempt fails
     const backupTimer = setTimeout(() => {
       const textarea = textareaRef.current;
       if (textarea && !focusAchievedRef.current) {
@@ -113,10 +96,7 @@ export const QuickCapture = ({ isOpen, onClose, variant, onCapture }: QuickCaptu
     
     const capturedText = input.trim();
     
-    // Haptic feedback for capture
     haptics.mediumTap();
-    
-    // Clear input immediately for instant feedback
     setInput('');
     
     if (!keepOpen) {
@@ -124,46 +104,34 @@ export const QuickCapture = ({ isOpen, onClose, variant, onCapture }: QuickCaptu
     }
     
     try {
-      if (captureType === 'thought') {
-        // Save as thought
-        addThought({ content: capturedText, source: 'quick-capture' });
+      // Use parsed date info for scheduling
+      const taskTitle = parsedDate.cleanTitle || capturedText;
+      const taskData: any = { 
+        title: taskTitle,
+        category: 'inbox' // Always capture to inbox
+      };
+      
+      // If a date/time was detected, set reminder
+      if (parsedDate.detectedDate) {
+        taskData.reminder_time = parsedDate.detectedDate.toISOString();
+        taskData.has_reminder = true;
+        taskData.is_time_based = parsedDate.hasTime;
         
-        toast({ 
-          description: 'Thought captured',
-          duration: 1500 
+        const timeStr = parsedDate.hasTime 
+          ? parsedDate.detectedDate.toLocaleString([], { 
+              dateStyle: 'short', 
+              timeStyle: 'short' 
+            })
+          : parsedDate.detectedDate.toLocaleDateString();
+        
+        toast({
+          description: `Scheduled for ${timeStr}`,
+          duration: 2000,
         });
-        
-        onCapture?.();
-      } else {
-        // Use parsed date info for scheduling
-        const taskTitle = parsedDate.cleanTitle || capturedText;
-        const taskData: any = { title: taskTitle };
-        
-        // If a date/time was detected, set reminder
-        if (parsedDate.detectedDate) {
-          taskData.reminder_time = parsedDate.detectedDate.toISOString();
-          taskData.has_reminder = true;
-          taskData.is_time_based = parsedDate.hasTime;
-          
-          // Show feedback about detected schedule
-          const timeStr = parsedDate.hasTime 
-            ? parsedDate.detectedDate.toLocaleString([], { 
-                dateStyle: 'short', 
-                timeStyle: 'short' 
-              })
-            : parsedDate.detectedDate.toLocaleDateString();
-          
-          toast({
-            description: `Scheduled for ${timeStr}`,
-            duration: 2000,
-          });
-        }
-        
-        // Save task with scheduling info
-        createTasks([taskData]);
-        
-        onCapture?.();
       }
+      
+      createTasks([taskData]);
+      onCapture?.();
     } catch (error) {
       console.error('QuickCapture: Error capturing:', error);
       toast({
@@ -175,11 +143,7 @@ export const QuickCapture = ({ isOpen, onClose, variant, onCapture }: QuickCaptu
   };
   
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Tab') {
-      e.preventDefault();
-      setCaptureType(prev => prev === 'task' ? 'thought' : 'task');
-      trackUsage('tab-switch');
-    } else if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       e.stopPropagation();
       handleSubmit(false);
@@ -196,35 +160,11 @@ export const QuickCapture = ({ isOpen, onClose, variant, onCapture }: QuickCaptu
 
   if (!isOpen && !isClosing) return null;
 
-  // Mobile: appears above orb area
+  // Mobile variant
   if (variant === 'mobile') {
     return (
       <div className={`fixed inset-x-0 bottom-48 flex justify-center px-6 z-50 ${isClosing ? 'animate-[slide-down_0.2s_ease-out_forwards]' : 'animate-[slide-up_0.25s_ease-out]'}`}>
         <div className="w-full max-w-sm bg-background/90 backdrop-blur-sm rounded-lg border border-foreground/10 p-3">
-          {/* Type toggle */}
-          <div className="flex items-center gap-2 mb-2">
-            <button
-              onClick={() => setCaptureType('task')}
-              className={`text-xs px-2 py-1 rounded font-mono transition-colors ${
-                captureType === 'task' 
-                  ? 'bg-foreground/10 text-foreground/70' 
-                  : 'text-foreground/40 hover:text-foreground/60'
-              }`}
-            >
-              Task
-            </button>
-            <button
-              onClick={() => setCaptureType('thought')}
-              className={`text-xs px-2 py-1 rounded font-mono transition-colors ${
-                captureType === 'thought' 
-                  ? 'bg-foreground/10 text-foreground/70' 
-                  : 'text-foreground/40 hover:text-foreground/60'
-              }`}
-            >
-              Thought
-            </button>
-          </div>
-          
           <textarea
             ref={textareaRef}
             data-task-input
@@ -233,14 +173,14 @@ export const QuickCapture = ({ isOpen, onClose, variant, onCapture }: QuickCaptu
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder={captureType === 'thought' ? "What's on your mind...|" : "Capture a task...|"}
+            placeholder="Capture to inbox...|"
             rows={1}
             className="w-full bg-transparent border-b border-foreground/10 py-2 font-mono text-sm text-foreground/80 placeholder:text-muted-foreground/40 placeholder:animate-[placeholder-pulse_1.2s_ease-in-out_infinite] focus:outline-none focus:border-primary/50 focus:shadow-[0_2px_8px_-2px_hsl(var(--primary)/0.3)] transition-all duration-300 resize-none overflow-hidden"
             style={{ minHeight: '24px' }}
           />
           
-          {/* Detected date indicator - mobile */}
-          {captureType === 'task' && parsedDate.detectedDate && (
+          {/* Detected date indicator */}
+          {parsedDate.detectedDate && (
             <div className="mt-2 flex items-center gap-2 text-xs font-mono text-primary/70 animate-fade-in">
               <span className="px-2 py-0.5 bg-primary/10 rounded">
                 ⏰ {parsedDate.hasTime 
@@ -255,7 +195,7 @@ export const QuickCapture = ({ isOpen, onClose, variant, onCapture }: QuickCaptu
     );
   }
 
-  // Desktop: centered modal
+  // Desktop variant
   return (
     <>
       {/* Backdrop */}
@@ -267,30 +207,6 @@ export const QuickCapture = ({ isOpen, onClose, variant, onCapture }: QuickCaptu
       {/* Modal */}
       <div className={`fixed top-[20vh] left-1/2 w-full max-w-xl px-4 z-50 origin-top ${isClosing ? 'animate-[modal-exit_0.2s_ease-out_forwards]' : 'animate-[modal-enter_0.25s_ease-out_forwards]'}`}>
         <div className="bg-background border border-foreground/10 rounded-xl shadow-lg p-4">
-          {/* Type toggle */}
-          <div className="flex items-center gap-2 mb-3">
-            <button
-              onClick={() => setCaptureType('task')}
-              className={`text-xs px-2 py-1 rounded font-mono transition-colors ${
-                captureType === 'task' 
-                  ? 'bg-foreground/10 text-foreground/70' 
-                  : 'text-foreground/40 hover:text-foreground/60'
-              }`}
-            >
-              Task
-            </button>
-            <button
-              onClick={() => setCaptureType('thought')}
-              className={`text-xs px-2 py-1 rounded font-mono transition-colors ${
-                captureType === 'thought' 
-                  ? 'bg-foreground/10 text-foreground/70' 
-                  : 'text-foreground/40 hover:text-foreground/60'
-              }`}
-            >
-              Thought
-            </button>
-          </div>
-          
           <textarea
             ref={textareaRef}
             data-task-input
@@ -299,18 +215,14 @@ export const QuickCapture = ({ isOpen, onClose, variant, onCapture }: QuickCaptu
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder={
-              captureType === 'thought' 
-                ? "What's on your mind...|"
-                : "Capture a task...|"
-            }
+            placeholder="Capture to inbox...|"
             rows={1}
             className="w-full bg-transparent font-mono text-base text-foreground/80 placeholder:text-muted-foreground/50 placeholder:animate-[placeholder-pulse_1.2s_ease-in-out_infinite] focus:outline-none border-b-2 border-transparent focus:border-primary/40 focus:shadow-[0_4px_12px_-4px_hsl(var(--primary)/0.25)] transition-all duration-300 resize-none overflow-hidden"
             style={{ minHeight: '24px' }}
           />
           
           {/* Detected date indicator */}
-          {captureType === 'task' && parsedDate.detectedDate && (
+          {parsedDate.detectedDate && (
             <div className="mt-2 flex items-center gap-2 text-xs font-mono text-primary/70 animate-fade-in">
               <span className="px-2 py-0.5 bg-primary/10 rounded">
                 ⏰ {parsedDate.hasTime 
