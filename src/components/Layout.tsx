@@ -124,10 +124,17 @@ export const Layout = () => {
     onCloseModals: handleCloseModals,
   });
 
-  // Search keyboard shortcuts (Cmd/Ctrl+K and /)
+  // Keyboard shortcuts (Search: Cmd/Ctrl+K and /, Escape to close)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Don't trigger if user is typing in an input or textarea
+      // Escape closes all modals/drawers
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        handleCloseModals();
+        return;
+      }
+      
+      // Don't trigger other shortcuts if user is typing in an input or textarea
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
       
       // Cmd/Ctrl + K
