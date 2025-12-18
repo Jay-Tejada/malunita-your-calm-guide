@@ -70,10 +70,14 @@ const Work = () => {
     t.category === 'work' && t.completed
   ) || [];
 
+  // Debug: Log projects loaded
+  console.log('📂 Projects loaded:', projects.map(p => ({ id: p.id, name: p.name })));
+
   // Group tasks by project, sorted by display_order
   const tasksByProject = useMemo(() => {
     const grouped: Record<string, Task[]> = { uncategorized: [] };
     
+    // Initialize groups for each project
     projects.forEach(p => {
       grouped[p.id] = [];
     });
@@ -84,12 +88,21 @@ const Work = () => {
     );
     
     sortedTasks.forEach(task => {
-      if (task.project_id && grouped[task.project_id]) {
-        grouped[task.project_id].push(task);
+      const projectExists = task.project_id && grouped[task.project_id] !== undefined;
+      
+      // Debug: Log task grouping decision
+      if (task.project_id) {
+        console.log(`📋 Task "${task.title.substring(0, 30)}..." has project_id: ${task.project_id}, project exists: ${projectExists}`);
+      }
+      
+      if (projectExists) {
+        grouped[task.project_id!].push(task);
       } else {
         grouped.uncategorized.push(task);
       }
     });
+    
+    console.log('📊 Tasks grouped:', Object.entries(grouped).map(([k, v]) => `${k}: ${v.length} tasks`));
     
     return grouped;
   }, [workTasks, projects]);

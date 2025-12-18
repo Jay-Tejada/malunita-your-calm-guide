@@ -33,6 +33,8 @@ export const useProjects = (space?: string) => {
       return;
     }
 
+    console.log('🔍 Fetching projects for space:', space, 'user:', user.id);
+
     let query = supabase
       .from('projects')
       .select('*')
@@ -49,6 +51,7 @@ export const useProjects = (space?: string) => {
     if (error) {
       console.error('Error fetching projects:', error);
     } else {
+      console.log('✅ Projects fetched:', data?.length, 'projects', data?.map((p: Project) => ({ id: p.id, name: p.name })));
       setProjects((data as Project[]) || []);
     }
     setLoading(false);
