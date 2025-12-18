@@ -204,9 +204,7 @@ export default function Journal() {
               : '0 8px 24px rgba(200, 170, 120, 0.2)'
           }}
         >
-          {showNewMenu && (
-            <Plus className="w-5 h-5 text-foreground/30 rotate-45" />
-          )}
+          <Plus className={`w-5 h-5 text-foreground/50 transition-transform duration-200 ${showNewMenu ? 'rotate-45' : ''}`} />
         </button>
       </div>
 
