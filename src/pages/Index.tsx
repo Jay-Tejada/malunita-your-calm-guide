@@ -29,10 +29,14 @@ import { TinyTaskFiestaCard } from "@/components/home/TinyTaskFiestaCard";
 import TinyTaskParty from "@/components/TinyTaskParty";
 import { CaptureSheet } from "@/components/capture/CaptureSheet";
 import { Haptics, ImpactStyle } from "@capacitor/haptics";
+import { useDrawerState } from "@/contexts/DrawerContext";
 
 const Index = () => {
   // Initialize daily reset monitoring
   useDailyReset();
+  
+  // Get drawer state for orb passive mode
+  const { isAnyDrawerOpen } = useDrawerState();
   
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -57,6 +61,7 @@ const Index = () => {
   
   // Initialize prediction system (runs silently in background)
   usePrimaryFocusPrediction();
+
 
   const isMobile = useIsMobile();
   const { isOnline } = useOfflineStatus();
@@ -397,6 +402,7 @@ const Index = () => {
                 isRecording={isOrbRecording}
                 isProcessing={isOrbProcessing}
                 isFocused={isFocused}
+                isPassive={isAnyDrawerOpen}
               />
               
               {/* Status text below orb - fixed height to prevent layout shift */}
@@ -463,6 +469,7 @@ const Index = () => {
                 isRecording={isOrbRecording}
                 isProcessing={isOrbProcessing}
                 isFocused={isFocused}
+                isPassive={isAnyDrawerOpen}
               />
               
               {/* Status text below orb - fixed height to prevent layout shift */}

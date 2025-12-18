@@ -11,6 +11,7 @@ interface OrbProps {
   isRecording?: boolean;
   isProcessing?: boolean;
   isFocused?: boolean;
+  isPassive?: boolean;
   mood?: OrbMood;
 }
 
@@ -22,6 +23,7 @@ const Orb = ({
   isRecording = false, 
   isProcessing = false,
   isFocused = false,
+  isPassive = false,
   mood = 'neutral'
 }: OrbProps) => {
   const [timeOfDay, setTimeOfDay] = useState<TimeOfDay>('midday');
@@ -78,6 +80,9 @@ const Orb = ({
 
   // Keep base colors - no color override for recording/processing states
   const colors = palettes[timeOfDay];
+  
+  // Passive state reduces glow intensity
+  const passiveGlowMultiplier = isPassive ? 0.3 : 1;
 
   const handleClick = () => {
     setRipple(true);
@@ -97,11 +102,15 @@ const Orb = ({
 
   const getStateClass = () => {
     const classes: string[] = [];
-    if (isFocused) classes.push('orb-focused');
-    if (isRecording) classes.push('orb-recording');
-    if (isProcessing) classes.push('orb-loading');
+    if (isFocused && !isPassive) classes.push('orb-focused');
+    if (isRecording && !isPassive) classes.push('orb-recording');
+    if (isProcessing && !isPassive) classes.push('orb-loading');
+    if (isPassive) classes.push('orb-passive');
     return classes.join(' ');
   };
+
+  // Calculate glow size - reduced when passive
+  const glowSize = isPassive ? size * 0.15 : size * 0.4;
 
   const orbStyle: React.CSSProperties & { '--orbGlowColor'?: string } = {
     width: size,
@@ -109,9 +118,11 @@ const Orb = ({
     borderRadius: '50%',
     position: 'relative',
     cursor: onClick ? 'pointer' : 'default',
-    transition: isFocused ? 'none' : 'all 0.3s ease-out',
-    transform: isPressed ? 'scale(0.97)' : undefined, // Let CSS handle focused transform
+    transition: isFocused && !isPassive ? 'none' : 'all 0.3s ease-out',
+    transform: isPressed ? 'scale(0.97)' : undefined,
     '--orbGlowColor': colors.glow,
+    opacity: isPassive ? 0.85 : 1,
+    filter: isPassive ? 'brightness(0.92)' : 'none',
     background: `
       radial-gradient(
         circle at 35% 35%,
@@ -120,7 +131,7 @@ const Orb = ({
         ${colors.shadow} 100%
       )
     `,
-    boxShadow: isFocused 
+    boxShadow: isFocused && !isPassive
       ? `
         inset -${size * 0.1}px -${size * 0.1}px ${size * 0.2}px rgba(0, 0, 0, 0.08),
         inset ${size * 0.05}px ${size * 0.05}px ${size * 0.15}px rgba(255, 255, 255, 0.5),
@@ -129,9 +140,9 @@ const Orb = ({
       `
       : `
         inset -${size * 0.1}px -${size * 0.1}px ${size * 0.2}px rgba(0, 0, 0, 0.08),
-        inset ${size * 0.05}px ${size * 0.05}px ${size * 0.15}px rgba(255, 255, 255, 0.5),
-        0 ${size * 0.1}px ${size * 0.25}px rgba(0, 0, 0, 0.1),
-        0 0 ${size * 0.4}px ${colors.glow}
+        inset ${size * 0.05}px ${size * 0.05}px ${size * 0.15}px rgba(255, 255, 255, ${isPassive ? 0.3 : 0.5}),
+        0 ${size * 0.1}px ${size * 0.25}px rgba(0, 0, 0, ${isPassive ? 0.05 : 0.1}),
+        0 0 ${glowSize}px ${colors.glow}
       `,
   };
 
