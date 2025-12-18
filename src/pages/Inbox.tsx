@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, Star, Briefcase, Home, Moon, Trash2, Pencil } from 'lucide-react';
+import { ChevronLeft, Star, Briefcase, Home, Moon, Trash2, Pencil, ChevronLeft as SwipeIcon } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useSwipeable } from 'react-swipeable';
 import { CaptureInput } from '@/ui/CaptureInput';
 import { colors } from '@/ui/tokens';
 import { AppLayout } from '@/ui/AppLayout';
 import { hapticSwipe } from '@/utils/haptics';
+
+const SWIPE_HINT_KEY = 'malunita_inbox_swipe_hint_seen';
 
 interface SwipeableTaskRowProps {
   task: any;
@@ -180,6 +182,29 @@ const Inbox = () => {
   const [editingTask, setEditingTask] = useState<string | null>(null);
   const [editValue, setEditValue] = useState('');
   const [loading, setLoading] = useState(true);
+  const [showSwipeHint, setShowSwipeHint] = useState(false);
+
+  // Check if swipe hint should be shown
+  useEffect(() => {
+    const hintSeen = localStorage.getItem(SWIPE_HINT_KEY);
+    if (!hintSeen) {
+      setShowSwipeHint(true);
+    }
+  }, []);
+
+  // Dismiss hint after user interacts or after delay
+  const dismissSwipeHint = () => {
+    setShowSwipeHint(false);
+    localStorage.setItem(SWIPE_HINT_KEY, 'true');
+  };
+
+  // Auto-dismiss hint after 5 seconds
+  useEffect(() => {
+    if (showSwipeHint && tasks.length > 0) {
+      const timer = setTimeout(dismissSwipeHint, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [showSwipeHint, tasks.length]);
 
   // Fetch inbox tasks
   useEffect(() => {
@@ -299,22 +324,40 @@ const Inbox = () => {
 
       {/* Task list */}
       <div className="divide-y divide-border">
-        {tasks.map(task => (
-          <SwipeableTaskRow
-            key={task.id}
-            task={task}
-            isExpanded={expandedTask === task.id}
-            isEditing={editingTask === task.id}
-            editValue={editValue}
-            onToggleExpand={() => setExpandedTask(expandedTask === task.id ? null : task.id)}
-            onComplete={() => completeTask(task.id)}
-            onMove={(destination) => moveTask(task.id, destination)}
-            onDelete={() => deleteTask(task.id)}
-            onStartEdit={() => startEditing(task)}
-            onEditChange={setEditValue}
-            onSaveEdit={() => saveEdit(task.id)}
-            onCancelEdit={() => setEditingTask(null)}
-          />
+        {tasks.map((task, index) => (
+          <div key={task.id} className="relative">
+            {/* Swipe hint on first task */}
+            {showSwipeHint && index === 0 && (
+              <div 
+                className="absolute inset-0 z-10 flex items-center justify-end pointer-events-none animate-pulse"
+                onClick={dismissSwipeHint}
+              >
+                <div className="flex items-center gap-1 pr-6 text-primary/60">
+                  <SwipeIcon className="w-4 h-4 animate-[bounce_1s_ease-in-out_infinite]" style={{ animationDirection: 'alternate' }} />
+                  <span className="text-xs font-mono">swipe to defer</span>
+                </div>
+              </div>
+            )}
+            <div onClick={showSwipeHint && index === 0 ? dismissSwipeHint : undefined}>
+              <SwipeableTaskRow
+                task={task}
+                isExpanded={expandedTask === task.id}
+                isEditing={editingTask === task.id}
+                editValue={editValue}
+                onToggleExpand={() => setExpandedTask(expandedTask === task.id ? null : task.id)}
+                onComplete={() => completeTask(task.id)}
+                onMove={(destination) => {
+                  if (showSwipeHint) dismissSwipeHint();
+                  moveTask(task.id, destination);
+                }}
+                onDelete={() => deleteTask(task.id)}
+                onStartEdit={() => startEditing(task)}
+                onEditChange={setEditValue}
+                onSaveEdit={() => saveEdit(task.id)}
+                onCancelEdit={() => setEditingTask(null)}
+              />
+            </div>
+          </div>
         ))}
       </div>
 
