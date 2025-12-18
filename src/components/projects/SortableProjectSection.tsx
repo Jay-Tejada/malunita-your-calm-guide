@@ -62,11 +62,11 @@ export const SortableProjectSection = ({
       {!isDragging && (
         <div className="absolute -top-px left-0 right-0 h-0.5 bg-primary opacity-0 group-hover/project:opacity-0 transition-opacity pointer-events-none data-[over=true]:opacity-100" />
       )}
-      {/* Drag handle for project */}
+      {/* Drag handle for project - right side */}
       <button
         {...attributes}
         {...listeners}
-        className="absolute left-1 top-3.5 p-1 cursor-grab active:cursor-grabbing opacity-0 group-hover/project:opacity-100 text-foreground/30 hover:text-foreground/50 transition-opacity touch-none z-10"
+        className="absolute right-4 top-3.5 p-1 cursor-grab active:cursor-grabbing opacity-0 group-hover/project:opacity-100 text-foreground/30 hover:text-foreground/50 transition-opacity touch-none z-10"
       >
         <GripVertical className="w-4 h-4" />
       </button>
