@@ -66,7 +66,7 @@ export const SortableProjectSection = ({
       <button
         {...attributes}
         {...listeners}
-        className="absolute right-4 top-3.5 p-1 cursor-grab active:cursor-grabbing opacity-0 group-hover/project:opacity-100 text-foreground/30 hover:text-foreground/50 transition-opacity touch-none z-10"
+        className="absolute right-1 top-3.5 p-1 cursor-grab active:cursor-grabbing opacity-0 group-hover/project:opacity-100 text-foreground/30 hover:text-foreground/50 transition-opacity touch-none z-10"
       >
         <GripVertical className="w-4 h-4" />
       </button>
