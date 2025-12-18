@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, Plus } from 'lucide-react';
 import { useTasks, Task } from '@/hooks/useTasks';
 import { useProjects, Project } from '@/hooks/useProjects';
+import { useDeleteTaskWithUndo } from '@/hooks/useDeleteTaskWithUndo';
 import {
   DndContext,
   closestCenter,
@@ -27,8 +28,9 @@ import { NewProjectModal } from '@/components/projects/NewProjectModal';
 
 const Work = () => {
   const navigate = useNavigate();
-  const { tasks, updateTask, createTasks, deleteTask } = useTasks();
+  const { tasks, updateTask, createTasks } = useTasks();
   const { projects, createProject, updateProject, deleteProject, toggleCollapsed, reorderProjects } = useProjects('work');
+  const { deleteTaskWithUndo } = useDeleteTaskWithUndo();
   const [showCompleted, setShowCompleted] = useState(false);
   const [showNewProject, setShowNewProject] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
@@ -125,7 +127,10 @@ const Work = () => {
   };
 
   const handleDeleteTask = async (taskId: string) => {
-    await deleteTask(taskId);
+    const task = tasks?.find(t => t.id === taskId);
+    if (task) {
+      await deleteTaskWithUndo(task, tasks || []);
+    }
   };
 
   const handleReorderTasks = async (taskIds: string[]) => {
