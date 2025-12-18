@@ -158,7 +158,7 @@ export const Layout = () => {
         <div 
           className={`transition-all duration-200 ${
             isAnyDrawerOpen 
-              ? 'blur-[2px] opacity-70 saturate-[0.85]' 
+              ? 'blur-[2px] opacity-70 saturate-[0.85] pointer-events-none' 
               : 'blur-0 opacity-100 saturate-100'
           }`}
           style={{ willChange: isAnyDrawerOpen ? 'filter, opacity' : 'auto' }}
