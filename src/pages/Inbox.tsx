@@ -198,9 +198,10 @@ const Inbox = () => {
     localStorage.setItem(SWIPE_HINT_KEY, 'true');
   };
 
-  // Auto-dismiss hint after 5 seconds
+  // Auto-dismiss hint after 5 seconds, trigger haptic when shown
   useEffect(() => {
     if (showSwipeHint && tasks.length > 0) {
+      hapticSwipe(); // Draw attention with haptic
       const timer = setTimeout(dismissSwipeHint, 5000);
       return () => clearTimeout(timer);
     }
