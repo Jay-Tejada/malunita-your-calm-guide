@@ -228,13 +228,20 @@ const Work = () => {
                 />
               ))}
             </SortableContext>
-            <DragOverlay>
+            <DragOverlay dropAnimation={{
+              duration: 200,
+              easing: 'cubic-bezier(0.18, 0.67, 0.6, 1.22)',
+            }}>
               {activeProject && (
-                <div className="bg-background border border-primary/30 rounded-md shadow-lg px-4 py-3 opacity-90">
-                  <span className="font-mono text-sm text-foreground/70">
-                    {activeProject.icon && <span className="mr-2">{activeProject.icon}</span>}
-                    {activeProject.name}
-                  </span>
+                <div className="bg-background/95 backdrop-blur-sm border border-primary/40 rounded-lg shadow-xl px-4 py-3 scale-105 ring-2 ring-primary/20">
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 rounded bg-primary/20 flex items-center justify-center">
+                      <span className="text-xs">{activeProject.icon || '📁'}</span>
+                    </div>
+                    <span className="font-medium text-sm text-foreground">
+                      {activeProject.name}
+                    </span>
+                  </div>
                 </div>
               )}
             </DragOverlay>
