@@ -1,5 +1,5 @@
-import { useState, useRef, useEffect } from 'react';
-import { ChevronDown, ChevronRight, Folder, Plus } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { ChevronDown, ChevronRight, Folder, Plus, GripVertical } from 'lucide-react';
 import { Project } from '@/hooks/useProjects';
 import { Task } from '@/hooks/useTasks';
 import {
@@ -21,6 +21,11 @@ import {
 } from '@dnd-kit/sortable';
 import { SortableTaskItem } from './SortableTaskItem';
 
+interface DragHandleProps {
+  attributes?: Record<string, any>;
+  listeners?: Record<string, any>;
+}
+
 interface ProjectSectionProps {
   project: Project;
   tasks: Task[];
@@ -34,6 +39,7 @@ interface ProjectSectionProps {
   onEditProject: (project: Project) => void;
   onDeleteProject: (projectId: string) => void;
   onReorderTasks?: (taskIds: string[]) => void;
+  dragHandleProps?: DragHandleProps;
 }
 
 export const ProjectSection = ({
@@ -48,7 +54,8 @@ export const ProjectSection = ({
   onDeleteTask,
   onEditProject,
   onDeleteProject,
-  onReorderTasks
+  onReorderTasks,
+  dragHandleProps
 }: ProjectSectionProps) => {
   const [inputValue, setInputValue] = useState('');
   const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
@@ -96,7 +103,7 @@ export const ProjectSection = ({
   };
 
   return (
-    <div className="mb-2 px-4">
+    <div className="mb-2 px-4 group/project">
       {/* Project header - minimal */}
       <div className="flex items-center gap-2 py-2">
         <button
@@ -123,6 +130,17 @@ export const ProjectSection = ({
         <span className="text-sm text-muted-foreground">
           {incompleteTasks.length} active
         </span>
+        
+        {/* Drag handle */}
+        {dragHandleProps && (
+          <button
+            {...dragHandleProps.attributes}
+            {...dragHandleProps.listeners}
+            className="p-1 cursor-grab active:cursor-grabbing opacity-0 group-hover/project:opacity-100 text-foreground/30 hover:text-foreground/50 transition-opacity touch-none"
+          >
+            <GripVertical className="w-4 h-4" />
+          </button>
+        )}
       </div>
       
       {/* Project tasks */}

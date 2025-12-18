@@ -1,6 +1,5 @@
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical } from 'lucide-react';
 import { Project } from '@/hooks/useProjects';
 import { Task } from '@/hooks/useTasks';
 import { ProjectSection } from './ProjectSection';
@@ -52,25 +51,12 @@ export const SortableProjectSection = ({
     <div
       ref={setNodeRef}
       style={style}
-      className={`relative group/project ${
+      className={`relative ${
         isDragging 
           ? 'opacity-50 bg-primary/5 rounded-md shadow-md z-20' 
           : ''
       }`}
     >
-      {/* Drop indicator line */}
-      {!isDragging && (
-        <div className="absolute -top-px left-0 right-0 h-0.5 bg-primary opacity-0 group-hover/project:opacity-0 transition-opacity pointer-events-none data-[over=true]:opacity-100" />
-      )}
-      {/* Drag handle for project - right side */}
-      <button
-        {...attributes}
-        {...listeners}
-        className="absolute right-1 top-3.5 p-1 cursor-grab active:cursor-grabbing opacity-0 group-hover/project:opacity-100 text-foreground/30 hover:text-foreground/50 transition-opacity touch-none z-10"
-      >
-        <GripVertical className="w-4 h-4" />
-      </button>
-      
       <ProjectSection
         project={project}
         tasks={tasks}
@@ -84,6 +70,7 @@ export const SortableProjectSection = ({
         onEditProject={onEditProject}
         onDeleteProject={onDeleteProject}
         onReorderTasks={onReorderTasks}
+        dragHandleProps={{ attributes, listeners }}
       />
     </div>
   );
