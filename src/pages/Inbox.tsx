@@ -6,7 +6,7 @@ import { useSwipeable } from 'react-swipeable';
 import { CaptureInput } from '@/ui/CaptureInput';
 import { colors } from '@/ui/tokens';
 import { AppLayout } from '@/ui/AppLayout';
-import { hapticSwipe } from '@/utils/haptics';
+import { hapticSwipe, hapticHint } from '@/utils/haptics';
 
 const SWIPE_HINT_KEY = 'malunita_inbox_swipe_hint_seen';
 
@@ -201,7 +201,7 @@ const Inbox = () => {
   // Auto-dismiss hint after 5 seconds, trigger haptic when shown
   useEffect(() => {
     if (showSwipeHint && tasks.length > 0) {
-      hapticSwipe(); // Draw attention with haptic
+      hapticHint(); // Gentle double-tap to draw attention
       const timer = setTimeout(dismissSwipeHint, 5000);
       return () => clearTimeout(timer);
     }

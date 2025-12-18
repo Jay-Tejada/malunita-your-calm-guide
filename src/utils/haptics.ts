@@ -40,3 +40,12 @@ export const hapticSwipe = () => {
     navigator.vibrate(15);
   }
 };
+
+/**
+ * Gentle hint pattern for onboarding/tips - two soft taps
+ */
+export const hapticHint = () => {
+  if (isHapticsSupported) {
+    navigator.vibrate([8, 80, 8]);
+  }
+};
