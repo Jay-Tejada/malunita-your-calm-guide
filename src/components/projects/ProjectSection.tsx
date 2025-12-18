@@ -153,10 +153,16 @@ export const ProjectSection = ({
                   />
                 ))}
               </SortableContext>
-              <DragOverlay>
+              <DragOverlay dropAnimation={{
+                duration: 200,
+                easing: 'cubic-bezier(0.18, 0.67, 0.6, 1.22)',
+              }}>
                 {activeTask && (
-                  <div className="bg-background border border-primary/30 rounded-md shadow-lg px-3 py-2 opacity-90">
-                    <span className="font-mono text-sm text-foreground/70">{activeTask.title}</span>
+                  <div className="bg-background/95 backdrop-blur-sm border border-primary/40 rounded-lg shadow-xl px-3 py-2.5 scale-105 ring-2 ring-primary/20">
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-4 rounded-full border-2 border-primary/50 flex-shrink-0" />
+                      <span className="text-sm text-foreground font-medium">{activeTask.title}</span>
+                    </div>
                   </div>
                 )}
               </DragOverlay>
