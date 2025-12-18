@@ -38,7 +38,6 @@ const coreCategories = [
   { id: "inbox", label: "Inbox", route: "/inbox" },
   { id: "habits", label: "Habits", route: "/habits" },
   { id: "calendar", label: "Calendar", route: "/calendar" },
-  { id: "someday", label: "Someday", route: "/someday" },
 ];
 
 const spaceCategories = [
