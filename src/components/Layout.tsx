@@ -16,6 +16,7 @@ import { useQuickCapture } from "@/contexts/QuickCaptureContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useOrbSync } from "@/hooks/useOrbSync";
 import { UpdateBanner } from "@/components/UpdateBanner";
+import { DrawerProvider } from "@/contexts/DrawerContext";
 
 import { useOrbEvolution } from "@/hooks/useOrbEvolution";
 import { useOrbBackground } from "@/hooks/useOrbBackground";
@@ -149,88 +150,90 @@ export const Layout = () => {
   const isAnyDrawerOpen = leftDrawerOpen || rightDrawerOpen;
 
   return (
-    <div className={activeSession ? 'pt-10' : ''}>
-      <UpdateBanner />
-      
-      {/* Main content wrapper - de-emphasized when drawer is open */}
-      <div 
-        className={`transition-all duration-200 ${
-          isAnyDrawerOpen 
-            ? 'blur-[2px] opacity-70 saturate-[0.85]' 
-            : 'blur-0 opacity-100 saturate-100'
-        }`}
-        style={{ willChange: isAnyDrawerOpen ? 'filter, opacity' : 'auto' }}
-      >
-        {/* Active Session Bar - shows on all pages */}
-        {activeSession && activeSession.started_at && (
-          <ActiveSessionBar
-            session={{
-              id: activeSession.id,
-              title: activeSession.title,
-              started_at: activeSession.started_at,
-              target_duration_minutes: activeSession.target_duration_minutes,
-            }}
-            onTap={handleSessionTap}
-            onEnd={handleEndSession}
-          />
-        )}
+    <DrawerProvider isAnyDrawerOpen={isAnyDrawerOpen}>
+      <div className={activeSession ? 'pt-10' : ''}>
+        <UpdateBanner />
         
-        {/* Top-Left Mini Orb - Notebook Drawer - Only show on home page when authenticated */}
-        {location.pathname === '/' && isAuthenticated === true && (
-          <MiniOrb
-            position="left"
-            label="notebook"
-            onClick={() => setLeftDrawerOpen(!leftDrawerOpen)}
-          />
-        )}
+        {/* Main content wrapper - de-emphasized when drawer is open */}
+        <div 
+          className={`transition-all duration-200 ${
+            isAnyDrawerOpen 
+              ? 'blur-[2px] opacity-70 saturate-[0.85]' 
+              : 'blur-0 opacity-100 saturate-100'
+          }`}
+          style={{ willChange: isAnyDrawerOpen ? 'filter, opacity' : 'auto' }}
+        >
+          {/* Active Session Bar - shows on all pages */}
+          {activeSession && activeSession.started_at && (
+            <ActiveSessionBar
+              session={{
+                id: activeSession.id,
+                title: activeSession.title,
+                started_at: activeSession.started_at,
+                target_duration_minutes: activeSession.target_duration_minutes,
+              }}
+              onTap={handleSessionTap}
+              onEnd={handleEndSession}
+            />
+          )}
+          
+          {/* Top-Left Mini Orb - Notebook Drawer - Only show on home page when authenticated */}
+          {location.pathname === '/' && isAuthenticated === true && (
+            <MiniOrb
+              position="left"
+              label="notebook"
+              onClick={() => setLeftDrawerOpen(!leftDrawerOpen)}
+            />
+          )}
 
-        {/* Top-Right Mini Orb - Companion Drawer / Visibility - HIDDEN until companion feature is ready */}
-        {/* {location.pathname === '/' && (
-          <MiniOrb
-            position="right"
-            label={isCompanionVisible ? "companion" : "summon companion"}
-            onClick={() => {
-              if (isCompanionVisible) {
-                hideCompanion();
-              } else {
-                showCompanion();
-              }
-            }}
-          />
-        )} */}
+          {/* Top-Right Mini Orb - Companion Drawer / Visibility - HIDDEN until companion feature is ready */}
+          {/* {location.pathname === '/' && (
+            <MiniOrb
+              position="right"
+              label={isCompanionVisible ? "companion" : "summon companion"}
+              onClick={() => {
+                if (isCompanionVisible) {
+                  hideCompanion();
+                } else {
+                  showCompanion();
+                }
+              }}
+            />
+          )} */}
 
-        {/* Page Content */}
-        <Outlet />
+          {/* Page Content */}
+          <Outlet />
+        </div>
+
+        {/* Drawers - always sharp and outside the blur wrapper */}
+        <LeftDrawer
+          isOpen={leftDrawerOpen}
+          onClose={() => setLeftDrawerOpen(false)}
+          onNavigate={(path) => navigate(path)}
+          onSearchOpen={() => setShowSearch(true)}
+        />
+
+        <RightDrawer
+          isOpen={rightDrawerOpen}
+          onClose={() => {
+            setRightDrawerOpen(false);
+            hideCompanion();
+          }}
+        />
+
+        {/* Quick Capture Modal */}
+        <QuickCapture
+          isOpen={quickCaptureOpen}
+          onClose={closeQuickCapture}
+          variant="desktop"
+        />
+
+        {/* Search Modal */}
+        <Search 
+          isOpen={showSearch} 
+          onClose={() => setShowSearch(false)} 
+        />
       </div>
-
-      {/* Drawers - always sharp and outside the blur wrapper */}
-      <LeftDrawer
-        isOpen={leftDrawerOpen}
-        onClose={() => setLeftDrawerOpen(false)}
-        onNavigate={(path) => navigate(path)}
-        onSearchOpen={() => setShowSearch(true)}
-      />
-
-      <RightDrawer
-        isOpen={rightDrawerOpen}
-        onClose={() => {
-          setRightDrawerOpen(false);
-          hideCompanion();
-        }}
-      />
-
-      {/* Quick Capture Modal */}
-      <QuickCapture
-        isOpen={quickCaptureOpen}
-        onClose={closeQuickCapture}
-        variant="desktop"
-      />
-
-      {/* Search Modal */}
-      <Search 
-        isOpen={showSearch} 
-        onClose={() => setShowSearch(false)} 
-      />
-    </div>
+    </DrawerProvider>
   );
 };

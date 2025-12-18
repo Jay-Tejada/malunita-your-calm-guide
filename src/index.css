@@ -618,6 +618,12 @@ All colors MUST be HSL.
     }
   }
 
+  /* Passive orb state - when drawer is open */
+  .orb.orb-passive {
+    animation: none !important;
+    transition: all 0.3s ease-out;
+  }
+
   /* Focus Task Highlight */
   .focus-task {
     background: linear-gradient(135deg, hsl(var(--card)) 0%, hsl(30 5% 18%) 100%);
