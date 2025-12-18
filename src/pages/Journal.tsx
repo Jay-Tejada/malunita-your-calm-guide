@@ -204,7 +204,7 @@ export default function Journal() {
               : '0 8px 24px rgba(200, 170, 120, 0.2)'
           }}
         >
-          <Plus className={`w-5 h-5 text-foreground/50 transition-transform duration-200 ${showNewMenu ? 'rotate-45' : ''}`} />
+          <Plus className={`w-6 h-6 transition-transform duration-200 ${showNewMenu ? 'rotate-45' : ''}`} style={{ color: '#8b7355' }} />
         </button>
       </div>
 
