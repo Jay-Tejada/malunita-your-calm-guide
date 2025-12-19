@@ -275,7 +275,45 @@ All colors MUST be HSL.
     font-weight: 500;
   }
 
-  /* Paper texture overlay removed for clean background */
+  /* Paper texture overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 0;
+    background-image: url('/images/texture.png');
+    background-size: 105%; /* Slightly larger to allow for shifting */
+    background-position: center;
+    background-repeat: no-repeat;
+    opacity: 0.06;
+    animation: paper-texture-shift 60s ease-in-out infinite;
+  }
+
+  /* Dark mode texture - inverted for darker appearance */
+  .dark body::before {
+    opacity: 0.03;
+    filter: invert(1);
+  }
+
+  @media (max-width: 768px) {
+    body::before {
+      opacity: 0.08;
+    }
+    
+    .dark body::before {
+      opacity: 0.04;
+    }
+  }
+
+  /* Ensure content stays above texture */
+  #root {
+    position: relative;
+    z-index: 1;
+  }
 
   /* Empty State Styles */
   .empty-state {
