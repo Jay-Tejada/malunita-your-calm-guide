@@ -1,9 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, ChevronRight, ChevronDown, Plus, Trash2 } from 'lucide-react';
+import { GripVertical, ChevronRight, ChevronDown, Plus, Trash2, Link2 } from 'lucide-react';
 import { Task, useTasks } from '@/hooks/useTasks';
-import { Linkify } from '@/utils/linkify';
+import { TaskLinkPreview } from '@/components/tasks/TaskLinkPreview';
+import { supabase } from '@/integrations/supabase/client';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -40,8 +41,11 @@ export const SortableTaskItem = ({
   const [showSubtaskInput, setShowSubtaskInput] = useState(false);
   const [subtaskValue, setSubtaskValue] = useState('');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showLinkInput, setShowLinkInput] = useState(false);
+  const [linkValue, setLinkValue] = useState('');
   const editInputRef = useRef<HTMLInputElement>(null);
   const subtaskInputRef = useRef<HTMLInputElement>(null);
+  const linkInputRef = useRef<HTMLInputElement>(null);
 
   const subtasks = allTasks.filter(t => t.parent_task_id === task.id && !t.completed);
   const hasSubtasks = subtasks.length > 0;
@@ -73,6 +77,12 @@ export const SortableTaskItem = ({
     }
   }, [showSubtaskInput]);
 
+  useEffect(() => {
+    if (showLinkInput && linkInputRef.current) {
+      linkInputRef.current.focus();
+    }
+  }, [showLinkInput]);
+
   const handleTitleClick = () => {
     setIsEditing(true);
     setEditValue(task.title);
@@ -98,7 +108,6 @@ export const SortableTaskItem = ({
     if (subtaskValue.trim()) {
       onAddSubtask(task.id, subtaskValue.trim());
       setSubtaskValue('');
-      // Keep input open for adding more subtasks
     }
   };
 
@@ -108,6 +117,33 @@ export const SortableTaskItem = ({
     } else if (e.key === 'Escape') {
       setSubtaskValue('');
       setShowSubtaskInput(false);
+    }
+  };
+
+  const handleAddLink = async () => {
+    let url = linkValue.trim();
+    if (!url) return;
+    
+    // Add https:// if no protocol
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      url = 'https://' + url;
+    }
+    
+    await supabase.from('tasks').update({ link_url: url }).eq('id', task.id);
+    setLinkValue('');
+    setShowLinkInput(false);
+  };
+
+  const handleRemoveLink = async () => {
+    await supabase.from('tasks').update({ link_url: null }).eq('id', task.id);
+  };
+
+  const handleLinkKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleAddLink();
+    } else if (e.key === 'Escape') {
+      setLinkValue('');
+      setShowLinkInput(false);
     }
   };
 
@@ -142,23 +178,43 @@ export const SortableTaskItem = ({
           className="w-4 h-4 rounded-full border border-foreground/20 hover:border-foreground/40 flex-shrink-0 mt-0.5"
         />
 
-        {/* Title - editable */}
-        {isEditing ? (
-          <input
-            ref={editInputRef}
-            value={editValue}
-            onChange={(e) => setEditValue(e.target.value)}
-            onBlur={handleEditSave}
-            onKeyDown={handleEditKeyDown}
-            className="flex-1 bg-transparent text-sm text-foreground focus:outline-none border-b border-primary/50"
-          />
-        ) : (
-          <Linkify 
-            text={task.title}
-            onClick={handleTitleClick}
-            className="flex-1 text-sm text-foreground/70 cursor-text hover:text-foreground transition-colors"
-            linkClassName="text-primary hover:underline cursor-pointer"
-          />
+        {/* Title and link - content area */}
+        <div className="flex-1 min-w-0">
+          {isEditing ? (
+            <input
+              ref={editInputRef}
+              value={editValue}
+              onChange={(e) => setEditValue(e.target.value)}
+              onBlur={handleEditSave}
+              onKeyDown={handleEditKeyDown}
+              className="w-full bg-transparent text-sm text-foreground focus:outline-none border-b border-primary/50"
+            />
+          ) : (
+            <span
+              onClick={handleTitleClick}
+              className="text-sm text-foreground/70 cursor-text hover:text-foreground transition-colors"
+            >
+              {task.title}
+            </span>
+          )}
+          
+          {/* Link preview */}
+          {task.link_url && (
+            <div className="mt-1">
+              <TaskLinkPreview url={task.link_url} onRemove={handleRemoveLink} />
+            </div>
+          )}
+        </div>
+
+        {/* Add link button */}
+        {!task.link_url && (
+          <button
+            onClick={() => setShowLinkInput(true)}
+            className="p-1 opacity-0 group-hover:opacity-100 text-foreground/30 hover:text-primary transition-opacity"
+            title="Add link"
+          >
+            <Link2 className="w-3.5 h-3.5" />
+          </button>
         )}
 
         {/* Add subtask button */}
@@ -186,6 +242,29 @@ export const SortableTaskItem = ({
           <GripVertical className="w-3.5 h-3.5" />
         </button>
       </div>
+
+      {/* Link input */}
+      {showLinkInput && (
+        <div className="ml-6 py-1.5">
+          <div className="flex items-center gap-2">
+            <div className="w-[38px] flex-shrink-0" />
+            <div className="flex items-center gap-2 flex-1 px-2 py-1 rounded-md bg-primary/5 border border-primary/20">
+              <Link2 className="w-3.5 h-3.5 text-primary/60" />
+              <input
+                ref={linkInputRef}
+                value={linkValue}
+                onChange={(e) => setLinkValue(e.target.value)}
+                onBlur={() => {
+                  if (!linkValue.trim()) setShowLinkInput(false);
+                }}
+                onKeyDown={handleLinkKeyDown}
+                placeholder="Paste URL..."
+                className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none"
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Delete confirmation dialog */}
       <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
