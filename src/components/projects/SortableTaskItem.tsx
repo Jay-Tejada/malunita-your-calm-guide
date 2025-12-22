@@ -138,6 +138,10 @@ export const SortableTaskItem = ({
     await supabase.from('tasks').update({ link_url: null }).eq('id', task.id);
   };
 
+  const handleUpdateLink = async (newUrl: string) => {
+    await supabase.from('tasks').update({ link_url: newUrl }).eq('id', task.id);
+  };
+
   const handleLinkKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       handleAddLink();
@@ -201,7 +205,7 @@ export const SortableTaskItem = ({
           {/* Link preview */}
           {task.link_url && (
             <div className="mt-1">
-              <TaskLinkPreview url={task.link_url} onRemove={handleRemoveLink} />
+              <TaskLinkPreview url={task.link_url} onRemove={handleRemoveLink} onUpdate={handleUpdateLink} />
             </div>
           )}
         </div>
