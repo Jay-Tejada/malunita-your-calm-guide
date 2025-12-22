@@ -41,33 +41,43 @@ const SwipeableTaskRow = ({
 }: SwipeableTaskRowProps) => {
   const [swipeOffset, setSwipeOffset] = useState(0);
   const [isDeferring, setIsDeferring] = useState(false);
+  const [isHorizontalSwipe, setIsHorizontalSwipe] = useState(false);
 
   const handlers = useSwipeable({
     onSwiping: (e) => {
-      if (e.dir === 'Left' && !isEditing) {
+      // Only treat as horizontal swipe if mainly horizontal movement
+      if (!isHorizontalSwipe && Math.abs(e.deltaX) > 10 && Math.abs(e.deltaX) > Math.abs(e.deltaY) * 1.5) {
+        setIsHorizontalSwipe(true);
+      }
+      
+      if (isHorizontalSwipe && e.dir === 'Left' && !isEditing) {
         setSwipeOffset(Math.min(Math.abs(e.deltaX), 100));
       }
     },
     onSwipedLeft: (e) => {
-      if (Math.abs(e.deltaX) > 80 && !isEditing) {
+      if (isHorizontalSwipe && Math.abs(e.deltaX) > 80 && !isEditing) {
         hapticSwipe();
         setIsDeferring(true);
         setTimeout(() => onMove('someday'), 200);
       } else {
         setSwipeOffset(0);
       }
+      setIsHorizontalSwipe(false);
     },
     onSwipedRight: () => {
       setSwipeOffset(0);
+      setIsHorizontalSwipe(false);
     },
     onTouchEndOrOnMouseUp: () => {
       if (swipeOffset < 80) {
         setSwipeOffset(0);
       }
+      setIsHorizontalSwipe(false);
     },
     trackMouse: false,
     trackTouch: true,
-    preventScrollOnSwipe: true,
+    preventScrollOnSwipe: false, // Allow natural scrolling
+    delta: 10, // Minimum distance before recognizing swipe
   });
 
   return (
@@ -86,7 +96,7 @@ const SwipeableTaskRow = ({
       {/* Task content */}
       <div
         {...handlers}
-        className="relative bg-background"
+        className="relative bg-background touch-pan-y"
         style={{ transform: `translateX(-${swipeOffset}px)` }}
       >
         <div 
@@ -324,7 +334,7 @@ const Inbox = () => {
       </div>
 
       {/* Task list */}
-      <div className="divide-y divide-border">
+      <div className="divide-y divide-border scrollable" style={{ WebkitOverflowScrolling: 'touch' }}>
         {tasks.map((task, index) => (
           <div key={task.id} className="relative">
             {/* Swipe hint on first task */}
