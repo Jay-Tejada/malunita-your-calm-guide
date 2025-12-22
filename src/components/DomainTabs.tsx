@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
+import { hapticLight } from "@/utils/haptics";
 
 const domains = [
   { id: "inbox", label: "Inbox", icon: Inbox },
@@ -62,10 +63,15 @@ const CategoryTab = ({
 
   const Icon = domain.icon;
 
+  const handleClick = () => {
+    hapticLight();
+    onClick();
+  };
+
   return (
     <button
       ref={setNodeRef}
-      onClick={onClick}
+      onClick={handleClick}
       className={cn(
         "flex items-center gap-2 px-4 py-2 rounded-full text-sm font-normal transition-all duration-300 whitespace-nowrap",
         isActive

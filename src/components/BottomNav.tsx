@@ -4,6 +4,7 @@ import { Home, Inbox, Mic, Calendar } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { MalunitaVoice } from "./MalunitaVoice";
+import { hapticLight } from "@/utils/haptics";
 
 export const BottomNav = () => {
   const navigate = useNavigate();
@@ -17,6 +18,15 @@ export const BottomNav = () => {
     { icon: Mic, label: "Voice", action: () => setIsVoiceModalOpen(true) },
   ];
 
+  const handleNavClick = (item: typeof navItems[0]) => {
+    hapticLight();
+    if (item.action) {
+      item.action();
+    } else if (item.path) {
+      navigate(item.path);
+    }
+  };
+
   return (
     <>
       <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-background border-t border-border z-50">
@@ -28,7 +38,7 @@ export const BottomNav = () => {
             return (
               <button
                 key={item.label}
-                onClick={() => item.action ? item.action() : navigate(item.path!)}
+                onClick={() => handleNavClick(item)}
                 className={cn(
                   "flex flex-col items-center justify-center gap-1 flex-1 py-2 transition-colors",
                   isActive 
