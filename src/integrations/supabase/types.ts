@@ -1828,6 +1828,7 @@ export type Database = {
           is_time_based: boolean | null
           is_tiny_task: boolean | null
           keywords: string[] | null
+          link_url: string | null
           location_address: string | null
           location_lat: number | null
           location_lng: number | null
@@ -1870,6 +1871,7 @@ export type Database = {
           is_time_based?: boolean | null
           is_tiny_task?: boolean | null
           keywords?: string[] | null
+          link_url?: string | null
           location_address?: string | null
           location_lat?: number | null
           location_lng?: number | null
@@ -1912,6 +1914,7 @@ export type Database = {
           is_time_based?: boolean | null
           is_tiny_task?: boolean | null
           keywords?: string[] | null
+          link_url?: string | null
           location_address?: string | null
           location_lat?: number | null
           location_lng?: number | null
