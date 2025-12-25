@@ -56,8 +56,12 @@ export function AppLayout({
 
       {/* Content */}
       <main
-        className="flex-1 overflow-y-auto"
-        style={{ paddingBottom: showOrbDock ? 100 : 20 }}
+        className="flex-1 overflow-y-auto overscroll-y-contain touch-pan-y"
+        style={{ 
+          paddingBottom: showOrbDock ? 100 : 20,
+          WebkitOverflowScrolling: 'touch',
+          willChange: 'scroll-position',
+        }}
       >
         {children}
       </main>
