@@ -45,11 +45,13 @@ const SwipeableTaskRow = ({
 
   const handlers = useSwipeable({
     onSwiping: (e) => {
-      // Only treat as horizontal swipe if mainly horizontal movement
-      if (!isHorizontalSwipe && Math.abs(e.deltaX) > 10 && Math.abs(e.deltaX) > Math.abs(e.deltaY) * 1.5) {
+      // Only treat as horizontal swipe if clearly horizontal (2:1 ratio minimum)
+      // and we've moved enough to be intentional
+      if (!isHorizontalSwipe && Math.abs(e.deltaX) > 15 && Math.abs(e.deltaX) > Math.abs(e.deltaY) * 2) {
         setIsHorizontalSwipe(true);
       }
       
+      // Only apply swipe offset for confirmed horizontal swipes
       if (isHorizontalSwipe && e.dir === 'Left' && !isEditing) {
         setSwipeOffset(Math.min(Math.abs(e.deltaX), 100));
       }
@@ -76,8 +78,9 @@ const SwipeableTaskRow = ({
     },
     trackMouse: false,
     trackTouch: true,
-    preventScrollOnSwipe: false, // Allow natural scrolling
-    delta: 10, // Minimum distance before recognizing swipe
+    preventScrollOnSwipe: false,
+    delta: 15, // Higher threshold to avoid capturing scroll gestures
+    swipeDuration: 500,
   });
 
   return (
@@ -96,8 +99,11 @@ const SwipeableTaskRow = ({
       {/* Task content */}
       <div
         {...handlers}
-        className="relative bg-background touch-pan-y"
-        style={{ transform: `translateX(-${swipeOffset}px)` }}
+        className="relative bg-background"
+        style={{ 
+          transform: `translateX(-${swipeOffset}px)`,
+          touchAction: isHorizontalSwipe ? 'pan-x' : 'pan-y',
+        }}
       >
         <div 
           className="flex items-start gap-3 px-4 py-3 cursor-pointer hover:bg-muted/50 transition-colors"
@@ -333,8 +339,8 @@ const Inbox = () => {
         />
       </div>
 
-      {/* Task list */}
-      <div className="divide-y divide-border scrollable" style={{ WebkitOverflowScrolling: 'touch' }}>
+      {/* Task list - let AppLayout handle scrolling */}
+      <div className="divide-y divide-border">
         {tasks.map((task, index) => (
           <div key={task.id} className="relative">
             {/* Swipe hint on first task */}
