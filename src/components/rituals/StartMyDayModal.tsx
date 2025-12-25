@@ -48,7 +48,7 @@ export const StartMyDayModal = ({
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm"
       onClick={handleBackdropClick}
     >
-      <div className="relative bg-card/95 backdrop-blur-md rounded-3xl shadow-lg p-8 max-w-md w-full mx-4 font-mono">
+      <div className="relative bg-card rounded-3xl shadow-lg p-8 max-w-md w-full mx-4 font-mono">
         {/* Close button */}
         <button
           onClick={onClose}
@@ -84,7 +84,7 @@ export const StartMyDayModal = ({
           value={oneThingToday}
           onChange={(e) => setOneThingToday(e.target.value)}
           placeholder="What would make today a success?"
-          className="w-full mt-2 p-3 bg-background/50 border border-border rounded-xl text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+          className="w-full mt-2 p-3 bg-background border border-border rounded-xl text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
         />
 
         {/* Next Button */}
