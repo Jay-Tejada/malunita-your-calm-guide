@@ -21,7 +21,7 @@ export function TaskRow({
 }: TaskRowProps) {
   return (
     <motion.div
-      className="flex items-start gap-4 px-5 py-4 cursor-pointer"
+      className={`flex ${metadata ? "items-start" : "items-center"} gap-4 px-5 py-4 cursor-pointer`}
       style={{
         minHeight: 64,
         borderBottom: `1px solid ${colors.border.subtle}`,
@@ -40,7 +40,7 @@ export function TaskRow({
           }
           onToggleComplete?.();
         }}
-        className="flex-shrink-0 mt-1"
+        className={`flex-shrink-0 ${metadata ? "mt-1" : ""}`}
       >
         <div
           className="rounded-full flex items-center justify-center transition-all"
