@@ -1,3 +1,4 @@
+/// <reference path="../types/wakelock.d.ts" />
 // TypeScript declarations for Web Speech API
 interface SpeechRecognitionEvent extends Event {
   readonly resultIndex: number;
@@ -51,6 +52,36 @@ export interface VoiceInputOptions {
 
 let recognition: SpeechRecognition | null = null;
 let silenceTimer: NodeJS.Timeout | null = null;
+let wakeLockSentinel: WakeLockSentinel | null = null;
+
+// Wake lock helper functions
+async function requestWakeLock(): Promise<boolean> {
+  if (!('wakeLock' in navigator)) {
+    console.log('Wake Lock API not supported');
+    return false;
+  }
+  
+  try {
+    wakeLockSentinel = await (navigator as any).wakeLock.request('screen');
+    console.log('Wake lock acquired for voice input');
+    return true;
+  } catch (err) {
+    console.error('Wake lock request failed:', err);
+    return false;
+  }
+}
+
+async function releaseWakeLock(): Promise<void> {
+  if (wakeLockSentinel) {
+    try {
+      await wakeLockSentinel.release();
+      wakeLockSentinel = null;
+      console.log('Wake lock released');
+    } catch (err) {
+      console.error('Wake lock release failed:', err);
+    }
+  }
+}
 
 export const startVoiceInput = async (options: VoiceInputOptions) => {
   const { onTranscript, onListeningChange, silenceTimeout = 10000 } = options;
@@ -66,6 +97,9 @@ export const startVoiceInput = async (options: VoiceInputOptions) => {
   if (recognition) {
     recognition.stop();
   }
+
+  // Request wake lock to prevent screen timeout during recording
+  await requestWakeLock();
 
   recognition = new SpeechRecognition();
   recognition.continuous = true;
@@ -110,9 +144,12 @@ export const startVoiceInput = async (options: VoiceInputOptions) => {
     console.log('Final so far:', finalTranscript);
   };
 
-  recognition.onend = () => {
+  recognition.onend = async () => {
     console.log('Voice recognition ended');
     onListeningChange(false);
+    
+    // Release wake lock when recognition ends
+    await releaseWakeLock();
     
     if (silenceTimer) {
       clearTimeout(silenceTimer);
@@ -128,9 +165,12 @@ export const startVoiceInput = async (options: VoiceInputOptions) => {
     recognition = null;
   };
 
-  recognition.onerror = (event) => {
+  recognition.onerror = async (event) => {
     console.error('Speech recognition error:', event.error);
     onListeningChange(false);
+    
+    // Release wake lock on error
+    await releaseWakeLock();
     
     if (silenceTimer) {
       clearTimeout(silenceTimer);
@@ -143,7 +183,7 @@ export const startVoiceInput = async (options: VoiceInputOptions) => {
   recognition.start();
 };
 
-export const stopVoiceInput = () => {
+export const stopVoiceInput = async () => {
   if (recognition) {
     recognition.stop();
   }
@@ -151,6 +191,7 @@ export const stopVoiceInput = () => {
     clearTimeout(silenceTimer);
     silenceTimer = null;
   }
+  await releaseWakeLock();
 };
 
 export const isVoiceInputSupported = () => {

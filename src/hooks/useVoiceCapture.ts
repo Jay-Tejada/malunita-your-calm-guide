@@ -1,7 +1,8 @@
 // src/hooks/useVoiceCapture.ts
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useWakeLock } from "./useWakeLock";
 
 interface UseVoiceCaptureOptions {
   onTranscript: (text: string) => void;
@@ -13,9 +14,13 @@ export function useVoiceCapture({ onTranscript, onError }: UseVoiceCaptureOption
   const [isProcessing, setIsProcessing] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
+  const { requestWakeLock, releaseWakeLock, wakeLockFailed } = useWakeLock();
 
   const startRecording = useCallback(async () => {
     try {
+      // Request wake lock to prevent screen timeout
+      await requestWakeLock();
+      
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const mediaRecorder = new MediaRecorder(stream, { mimeType: "audio/webm" });
       
@@ -27,6 +32,9 @@ export function useVoiceCapture({ onTranscript, onError }: UseVoiceCaptureOption
       };
 
       mediaRecorder.onstop = async () => {
+        // Release wake lock when recording stops
+        await releaseWakeLock();
+        
         setIsProcessing(true);
         try {
           const audioBlob = new Blob(chunksRef.current, { type: "audio/webm" });
@@ -49,18 +57,20 @@ export function useVoiceCapture({ onTranscript, onError }: UseVoiceCaptureOption
       mediaRecorder.start();
       setIsRecording(true);
     } catch (err) {
+      await releaseWakeLock();
       onError?.(err as Error);
     }
-  }, [onTranscript, onError]);
+  }, [onTranscript, onError, requestWakeLock, releaseWakeLock]);
 
-  const stopRecording = useCallback(() => {
+  const stopRecording = useCallback(async () => {
     if (mediaRecorderRef.current?.state === "recording") {
       mediaRecorderRef.current.stop();
       setIsRecording(false);
     }
-  }, []);
+    await releaseWakeLock();
+  }, [releaseWakeLock]);
 
-  return { isRecording, isProcessing, startRecording, stopRecording };
+  return { isRecording, isProcessing, startRecording, stopRecording, wakeLockFailed };
 }
 
 async function blobToBase64(blob: Blob): Promise<string> {
