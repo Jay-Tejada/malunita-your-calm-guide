@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, Star, Briefcase, Home, Moon, Trash2, Pencil, ChevronLeft as SwipeIcon, CheckSquare, X, Check } from 'lucide-react';
+import { ChevronLeft, Star, Briefcase, Home, Moon, Trash2, Pencil, ChevronLeft as SwipeIcon, CheckSquare, X, Check, ChevronDown } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useSwipeable } from 'react-swipeable';
 import { CaptureInput } from '@/ui/CaptureInput';
 import { colors } from '@/ui/tokens';
 import { AppLayout } from '@/ui/AppLayout';
 import { hapticSwipe, hapticHint, hapticLight, hapticMedium, hapticCompleteInbox } from '@/utils/haptics';
+import { getDualLayerDisplay } from '@/hooks/useDualLayerDisplay';
 import {
   Dialog,
   DialogContent,
@@ -79,22 +80,16 @@ const SwipeableTaskRow = ({
   const [isHorizontalSwipe, setIsHorizontalSwipe] = useState(false);
   const [isTextExpanded, setIsTextExpanded] = useState(false);
   
-  // Dual-layer display logic
-  const hasAiSummary = !!task.ai_summary;
-  const confidence = (task as any).ai_confidence ?? 1.0;
-  const lowConfidence = confidence < 0.6;
-  
-  // Display text: Use ai_summary if available and confidence is good, else raw_content/title
-  const displayText = hasAiSummary && !lowConfidence 
-    ? task.ai_summary 
-    : (task as any).raw_content || task.title;
-  
-  // Raw content for expanded view
-  const rawContent = (task as any).raw_content || task.title;
-  const hasDualLayer = hasAiSummary && rawContent !== task.ai_summary;
-  
-  // Determine if this entry should be collapsible
-  const isLongEntry = displayText.length > COLLAPSE_CHAR_THRESHOLD || (hasDualLayer && rawContent.length > COLLAPSE_CHAR_THRESHOLD);
+  // Use shared dual-layer display logic
+  const {
+    displayText,
+    rawContent,
+    hasDualLayer,
+    isLongEntry,
+    lowConfidence,
+    hasAiSummary,
+    showExpandIndicator,
+  } = getDualLayerDisplay(task);
   
   // Reset text expansion when actions panel closes
   useEffect(() => {
@@ -298,27 +293,58 @@ const SwipeableTaskRow = ({
                 {displayText}
               </p>
               
+              {/* Expand indicator */}
+              {showExpandIndicator && !isTextExpanded && !isCompleting && (
+                <div className="flex items-center gap-1 mt-1.5">
+                  <ChevronDown className="w-3 h-3 text-muted-foreground/40" />
+                  <span className="text-xs text-muted-foreground/40">
+                    {hasDualLayer ? 'Show original' : 'Show more'}
+                  </span>
+                </div>
+              )}
+              
               {/* Expanded view: Show raw content below summary */}
               {isTextExpanded && hasDualLayer && (
-                <div className="mt-3 pt-3 border-t border-border/20">
+                <div 
+                  className="mt-3 pt-3 border-t border-border/20 animate-fade-in"
+                  style={{ animationDuration: '150ms' }}
+                >
                   <p className="text-xs text-muted-foreground/50 mb-1.5 uppercase tracking-wide">Original</p>
                   <p className="text-sm text-foreground/50 leading-relaxed max-h-32 overflow-y-auto whitespace-pre-wrap">
                     {rawContent}
                   </p>
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); setIsTextExpanded(false); }}
+                    className="flex items-center gap-1 mt-2 text-xs text-muted-foreground/40 hover:text-muted-foreground/60 transition-colors"
+                  >
+                    <ChevronDown className="w-3 h-3 rotate-180" />
+                    Collapse
+                  </button>
                 </div>
               )}
               
+              {/* Expanded view for long entries without dual layer */}
+              {isTextExpanded && !hasDualLayer && isLongEntry && (
+                <button 
+                  onClick={(e) => { e.stopPropagation(); setIsTextExpanded(false); }}
+                  className="flex items-center gap-1 mt-2 text-xs text-muted-foreground/40 hover:text-muted-foreground/60 transition-colors"
+                >
+                  <ChevronDown className="w-3 h-3 rotate-180" />
+                  Collapse
+                </button>
+              )}
+              
               {/* Low confidence indicator */}
-              {hasAiSummary && lowConfidence && (
-                <p className="text-xs text-amber-500/60 mt-1">Low confidence summary available</p>
+              {hasAiSummary && lowConfidence && !isTextExpanded && (
+                <p className="text-xs text-amber-500/50 mt-1">Low confidence summary</p>
               )}
               
               {/* Fade gradient for collapsed long entries */}
               {isLongEntry && !isTextExpanded && (
                 <div 
-                  className="absolute bottom-0 left-0 right-0 h-6 pointer-events-none"
+                  className="absolute bottom-6 left-0 right-0 h-6 pointer-events-none"
                   style={{
-                    background: 'linear-gradient(to bottom, transparent, hsl(240 6% 6%))',
+                    background: 'linear-gradient(to bottom, transparent, hsl(var(--background)))',
                   }}
                 />
               )}

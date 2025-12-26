@@ -36,15 +36,21 @@ const Someday = () => {
           <VirtualizedTaskList
             tasks={somedayTasks}
             estimatedItemHeight={52}
-            renderTask={(task: Task) => (
-              <div key={task.id} className="flex items-start gap-3 py-3 border-b border-border">
-                <button
-                  onClick={() => updateTask({ id: task.id, updates: { completed: true } })}
-                  className="w-5 h-5 rounded-full border border-muted-foreground hover:border-foreground flex-shrink-0 mt-0.5 transition-colors"
-                />
-                <span className="font-mono text-sm text-foreground">{task.title}</span>
-              </div>
-            )}
+            renderTask={(task: Task) => {
+              const displayText = (task as any).ai_summary && ((task as any).ai_confidence ?? 1) >= 0.6
+                ? (task as any).ai_summary
+                : (task as any).raw_content || task.title;
+              
+              return (
+                <div key={task.id} className="flex items-start gap-3 py-3 border-b border-border">
+                  <button
+                    onClick={() => updateTask({ id: task.id, updates: { completed: true } })}
+                    className="w-5 h-5 rounded-full border border-muted-foreground hover:border-foreground flex-shrink-0 mt-0.5 transition-colors"
+                  />
+                  <span className="text-sm text-foreground/80">{displayText}</span>
+                </div>
+              );
+            }}
           />
         )}
 
