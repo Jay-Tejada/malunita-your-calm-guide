@@ -164,30 +164,22 @@ const SwipeableTaskRow = ({
           className="flex items-start gap-4 px-5 py-4 cursor-pointer transition-colors"
           onClick={handleRowClick}
         >
-          {/* Selection checkbox or completion checkbox */}
-          {isSelectionMode ? (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onToggleSelect();
-              }}
-              className={`w-4 h-4 mt-1 rounded flex-shrink-0 transition-all duration-200 flex items-center justify-center ${
-                isSelected 
-                  ? 'bg-primary border-primary' 
-                  : 'border border-muted-foreground/30 hover:border-muted-foreground/50'
-              }`}
-            >
-              {isSelected && <Check className="w-3 h-3 text-primary-foreground" />}
-            </button>
-          ) : (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onComplete();
-              }}
-              className="w-4 h-4 mt-1 rounded-full border border-muted-foreground/30 hover:border-muted-foreground/50 flex-shrink-0 transition-all duration-200"
-            />
-          )}
+          {/* Unified checkbox with morphing animation */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              isSelectionMode ? onToggleSelect() : onComplete();
+            }}
+            className={`w-4 h-4 mt-1 flex-shrink-0 flex items-center justify-center transition-all duration-300 ease-out ${
+              isSelectionMode 
+                ? `rounded ${isSelected ? 'bg-primary border-primary scale-110' : 'border border-muted-foreground/30 hover:border-muted-foreground/50'}`
+                : 'rounded-full border border-muted-foreground/30 hover:border-muted-foreground/50'
+            }`}
+          >
+            {isSelectionMode && isSelected && (
+              <Check className="w-3 h-3 text-primary-foreground animate-scale-in" />
+            )}
+          </button>
           {isEditing ? (
             <input
               value={editValue}
@@ -505,15 +497,17 @@ const Inbox = () => {
         )}
       </div>
 
-      {/* Quick capture - hide in selection mode */}
-      {!isSelectionMode && (
-        <div className="px-5 pb-5">
-          <CaptureInput
-            placeholder="Capture a thought..."
-            onSubmit={(value) => addTask(value)}
-          />
-        </div>
-      )}
+      {/* Quick capture - animated hide in selection mode */}
+      <div 
+        className={`px-5 overflow-hidden transition-all duration-300 ease-out ${
+          isSelectionMode ? 'max-h-0 opacity-0 pb-0' : 'max-h-20 opacity-100 pb-5'
+        }`}
+      >
+        <CaptureInput
+          placeholder="Capture a thought..."
+          onSubmit={(value) => addTask(value)}
+        />
+      </div>
 
       {/* Task list - dynamic spacing based on content length */}
       <div className="px-1 pb-4">
@@ -560,48 +554,52 @@ const Inbox = () => {
         ))}
       </div>
 
-      {/* Batch action bar - floating at bottom when items selected */}
-      {isSelectionMode && selectedIds.size > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 bg-card/95 backdrop-blur-sm border-t border-border/30 px-4 py-3 safe-area-pb z-50">
-          <div className="flex items-center justify-around max-w-md mx-auto">
-            <button
-              onClick={() => batchMove('today')}
-              className="flex flex-col items-center gap-1 px-4 py-2 text-muted-foreground/70 hover:text-foreground transition-colors"
-            >
-              <Star className="w-5 h-5" />
-              <span className="text-xs">Today</span>
-            </button>
-            <button
-              onClick={() => batchMove('someday')}
-              className="flex flex-col items-center gap-1 px-4 py-2 text-muted-foreground/70 hover:text-foreground transition-colors"
-            >
-              <Moon className="w-5 h-5" />
-              <span className="text-xs">Someday</span>
-            </button>
-            <button
-              onClick={() => batchMove('work')}
-              className="flex flex-col items-center gap-1 px-4 py-2 text-muted-foreground/70 hover:text-foreground transition-colors"
-            >
-              <Briefcase className="w-5 h-5" />
-              <span className="text-xs">Work</span>
-            </button>
-            <button
-              onClick={() => batchMove('home')}
-              className="flex flex-col items-center gap-1 px-4 py-2 text-muted-foreground/70 hover:text-foreground transition-colors"
-            >
-              <Home className="w-5 h-5" />
-              <span className="text-xs">Home</span>
-            </button>
-            <button
-              onClick={batchDelete}
-              className="flex flex-col items-center gap-1 px-4 py-2 text-destructive/60 hover:text-destructive transition-colors"
-            >
-              <Trash2 className="w-5 h-5" />
-              <span className="text-xs">Delete</span>
-            </button>
-          </div>
+      {/* Batch action bar - animated slide up */}
+      <div 
+        className={`fixed bottom-0 left-0 right-0 bg-card/95 backdrop-blur-sm border-t border-border/30 px-4 py-3 safe-area-pb z-50 transition-all duration-300 ease-out ${
+          isSelectionMode && selectedIds.size > 0 
+            ? 'translate-y-0 opacity-100' 
+            : 'translate-y-full opacity-0 pointer-events-none'
+        }`}
+      >
+        <div className="flex items-center justify-around max-w-md mx-auto">
+          <button
+            onClick={() => batchMove('today')}
+            className="flex flex-col items-center gap-1 px-4 py-2 text-muted-foreground/70 hover:text-foreground transition-colors"
+          >
+            <Star className="w-5 h-5" />
+            <span className="text-xs">Today</span>
+          </button>
+          <button
+            onClick={() => batchMove('someday')}
+            className="flex flex-col items-center gap-1 px-4 py-2 text-muted-foreground/70 hover:text-foreground transition-colors"
+          >
+            <Moon className="w-5 h-5" />
+            <span className="text-xs">Someday</span>
+          </button>
+          <button
+            onClick={() => batchMove('work')}
+            className="flex flex-col items-center gap-1 px-4 py-2 text-muted-foreground/70 hover:text-foreground transition-colors"
+          >
+            <Briefcase className="w-5 h-5" />
+            <span className="text-xs">Work</span>
+          </button>
+          <button
+            onClick={() => batchMove('home')}
+            className="flex flex-col items-center gap-1 px-4 py-2 text-muted-foreground/70 hover:text-foreground transition-colors"
+          >
+            <Home className="w-5 h-5" />
+            <span className="text-xs">Home</span>
+          </button>
+          <button
+            onClick={batchDelete}
+            className="flex flex-col items-center gap-1 px-4 py-2 text-destructive/60 hover:text-destructive transition-colors"
+          >
+            <Trash2 className="w-5 h-5" />
+            <span className="text-xs">Delete</span>
+          </button>
         </div>
-      )}
+      </div>
 
       {/* Empty state */}
       {!loading && tasks.length === 0 && (
