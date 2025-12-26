@@ -140,6 +140,33 @@ const Today = () => {
     });
   };
 
+  const handleMoveToWork = async (taskId: string) => {
+    await updateTask({ 
+      id: taskId, 
+      updates: { category: 'work' } 
+    });
+    toast({
+      description: "Moved to work",
+    });
+  };
+
+  const handleMoveToSomeday = async (taskId: string) => {
+    await updateTask({ 
+      id: taskId, 
+      updates: { scheduled_bucket: 'someday' } 
+    });
+    toast({
+      description: "Moved to someday",
+    });
+  };
+
+  const handleDeleteTask = async (taskId: string) => {
+    await supabase.from('tasks').delete().eq('id', taskId);
+    toast({
+      description: "Task deleted",
+    });
+  };
+
   const handleCompleteTask = async (taskId: string) => {
     setCompletingTasks(prev => new Set(prev).add(taskId));
     
@@ -254,6 +281,9 @@ const Today = () => {
         {/* FROM YOUR INBOX SECTION - softer, uses dual-layer collapse */}
         {inboxTasks.length > 0 && (
           <TaskGroup title="From Inbox" icon={<span className="opacity-60">📥</span>} count={inboxTasks.length}>
+            <p className="text-[11px] text-muted-foreground/60 mb-2 px-1">
+              Tap to process or swipe to move
+            </p>
             <div className="space-y-1.5">
               {inboxTasks.map((task: Task) => (
                 <InboxPreviewRow
@@ -261,6 +291,9 @@ const Today = () => {
                   task={task}
                   onMoveToToday={handleMoveToToday}
                   onComplete={handleCompleteTask}
+                  onMoveToWork={handleMoveToWork}
+                  onMoveToSomeday={handleMoveToSomeday}
+                  onDelete={handleDeleteTask}
                 />
               ))}
             </div>
