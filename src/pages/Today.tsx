@@ -18,6 +18,7 @@ import { AppLayout } from '@/ui/AppLayout';
 import { TinyTaskPrompt } from '@/components/tasks/TinyTaskPrompt';
 import { TinyTaskParty } from '@/components/tasks/TinyTaskParty';
 import { deduplicateTasks } from '@/utils/duplicateDetection';
+import { InboxPreviewRow } from '@/components/today/InboxPreviewRow';
 
 const Today = () => {
   const navigate = useNavigate();
@@ -250,18 +251,19 @@ const Today = () => {
           </TaskGroup>
         )}
 
-        {/* FROM YOUR INBOX SECTION */}
+        {/* FROM YOUR INBOX SECTION - softer, uses dual-layer collapse */}
         {inboxTasks.length > 0 && (
-          <TaskGroup title="Inbox" icon={<span>📥</span>} count={inboxTasks.length}>
-            {inboxTasks.map((task: Task) => (
-              <TaskRow
-                key={task.id}
-                title={task.title}
-                isCompleted={task.completed || false}
-                onToggleComplete={() => handleCompleteTask(task.id)}
-                onPress={() => handleMoveToToday(task.id)}
-              />
-            ))}
+          <TaskGroup title="From Inbox" icon={<span className="opacity-60">📥</span>} count={inboxTasks.length}>
+            <div className="space-y-1.5">
+              {inboxTasks.map((task: Task) => (
+                <InboxPreviewRow
+                  key={task.id}
+                  task={task}
+                  onMoveToToday={handleMoveToToday}
+                  onComplete={handleCompleteTask}
+                />
+              ))}
+            </div>
           </TaskGroup>
         )}
 
