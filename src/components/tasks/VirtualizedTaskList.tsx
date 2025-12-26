@@ -3,6 +3,7 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 import { Task } from '@/hooks/useTasks';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useIsMobile } from '@/hooks/useIsMobile';
+import { DualLayerText } from '@/components/shared/DualLayerText';
 
 interface VirtualizedTaskListProps {
   tasks: Task[];
@@ -14,7 +15,7 @@ interface VirtualizedTaskListProps {
   className?: string;
 }
 
-// Memoized task row for better performance
+// Memoized task row with dual-layer display
 const TaskRow = memo(({ 
   task, 
   onToggleComplete, 
@@ -28,7 +29,7 @@ const TaskRow = memo(({
 }) => (
   <div 
     style={style}
-    className="flex items-center gap-3 px-2 py-3 border-b border-foreground/5 cursor-pointer hover:bg-foreground/[0.02] transition-colors"
+    className="flex items-start gap-3 px-2 py-3 border-b border-foreground/5 cursor-pointer hover:bg-foreground/[0.02] transition-colors"
     onClick={() => onTaskClick?.(task)}
   >
     <Checkbox
@@ -37,11 +38,12 @@ const TaskRow = memo(({
         e.stopPropagation();
         onToggleComplete(task);
       }}
-      className="flex-shrink-0"
+      className="flex-shrink-0 mt-0.5"
     />
-    <span className={`font-mono text-sm flex-1 ${task.completed ? 'line-through text-foreground/40' : 'text-foreground/80'}`}>
-      {task.title}
-    </span>
+    <DualLayerText 
+      task={task} 
+      isCompleting={task.completed || false}
+    />
   </div>
 ));
 

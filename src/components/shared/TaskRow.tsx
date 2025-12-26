@@ -2,6 +2,7 @@ import { useState, memo } from "react";
 import { Check, MoreHorizontal } from "lucide-react";
 import { Task } from "@/hooks/useTasks";
 import { useCompletionAnimation, CompletionContext } from "@/hooks/useCompletionAnimation";
+import { DualLayerText } from "@/components/shared/DualLayerText";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -86,7 +87,7 @@ export const TaskRow = memo(({ task, onComplete, onDelete, onEdit, contextOverri
         )}
       </button>
 
-      {/* Task text with context-aware fade */}
+      {/* Task text with dual-layer display */}
       <div 
         className="flex-1 ml-3 transition-all ease-out"
         style={{
@@ -95,16 +96,7 @@ export const TaskRow = memo(({ task, onComplete, onDelete, onEdit, contextOverri
           opacity: isCompleting ? config.rowFadeOpacity : 1,
         }}
       >
-        <p 
-          className={`font-mono text-sm transition-all ease-out ${
-            isCompleting && config.textStrikethrough 
-              ? 'text-foreground/40 line-through decoration-foreground/20' 
-              : 'text-foreground/80'
-          }`}
-          style={{ transitionDuration: '120ms' }}
-        >
-          {task.title}
-        </p>
+        <DualLayerText task={task} isCompleting={isCompleting} />
       </div>
 
       {/* Overflow menu */}

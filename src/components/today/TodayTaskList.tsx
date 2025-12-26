@@ -1,6 +1,7 @@
 import { Check } from "lucide-react";
 import { useTasks, Task } from "@/hooks/useTasks";
 import { cn } from "@/lib/utils";
+import { getDualLayerDisplay } from "@/hooks/useDualLayerDisplay";
 
 interface TodayTaskListProps {
   showCompleted: boolean;
@@ -46,32 +47,36 @@ export const TodayTaskList = ({ showCompleted }: TodayTaskListProps) => {
         {label && (
           <div className="h-px bg-border/20 my-4" />
         )}
-        {tasks.map((task) => (
-          <div
-            key={task.id}
-            className="flex items-start gap-3 py-2.5 px-3 hover:bg-muted/20 rounded-md transition-colors group"
-          >
-            <button
-              onClick={() => handleToggleTask(task.id, task.completed || false)}
-              className={cn(
-                "flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center mt-0.5 transition-all",
-                task.completed
-                  ? "bg-foreground/10 border border-foreground/20"
-                  : "bg-transparent border border-foreground/20 hover:border-foreground/40"
-              )}
+        {tasks.map((task) => {
+          const { displayText } = getDualLayerDisplay(task);
+          
+          return (
+            <div
+              key={task.id}
+              className="flex items-start gap-3 py-2.5 px-3 hover:bg-muted/20 rounded-md transition-colors group"
             >
-              {task.completed && (
-                <Check className="w-3 h-3 text-foreground/60" />
-              )}
-            </button>
-            <span className={cn(
-              "flex-1 font-mono text-[14px] leading-snug",
-              task.completed ? "text-foreground/40 line-through" : "text-foreground/90"
-            )}>
-              {task.title}
-            </span>
-          </div>
-        ))}
+              <button
+                onClick={() => handleToggleTask(task.id, task.completed || false)}
+                className={cn(
+                  "flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center mt-0.5 transition-all",
+                  task.completed
+                    ? "bg-foreground/10 border border-foreground/20"
+                    : "bg-transparent border border-foreground/20 hover:border-foreground/40"
+                )}
+              >
+                {task.completed && (
+                  <Check className="w-3 h-3 text-foreground/60" />
+                )}
+              </button>
+              <span className={cn(
+                "flex-1 text-[14px] leading-snug",
+                task.completed ? "text-foreground/40 line-through" : "text-foreground/90"
+              )}>
+                {displayText}
+              </span>
+            </div>
+          );
+        })}
       </div>
     );
   };
