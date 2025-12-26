@@ -138,16 +138,18 @@ const SwipeableTaskRow = ({
 
   return (
     <div className={`relative overflow-hidden transition-all duration-300 ${isDeferring ? 'h-0 opacity-0' : ''} ${isSelected ? 'bg-primary/5' : ''}`}>
-      {/* Defer background */}
-      <div 
-        className="absolute inset-y-0 right-0 flex items-center justify-end bg-primary/5 transition-all"
-        style={{ width: swipeOffset > 0 ? '100%' : 0 }}
-      >
-        <div className="px-4 flex items-center gap-2 text-primary/50">
-          <Moon className="w-4 h-4" />
-          <span className="text-xs font-mono opacity-70">Someday</span>
+      {/* Defer background - only render when actively swiping */}
+      {swipeOffset > 0 && (
+        <div 
+          className="absolute inset-y-0 right-0 flex items-center justify-end bg-primary/5 transition-all"
+          style={{ width: '100%' }}
+        >
+          <div className="px-4 flex items-center gap-2 text-primary/50">
+            <Moon className="w-4 h-4" />
+            <span className="text-xs font-mono opacity-70">Someday</span>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Task content */}
       <div
