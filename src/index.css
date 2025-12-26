@@ -2614,8 +2614,10 @@ button:active,
 }
 
 /* Ensure content is tall enough to hide address bar */
-body {
-  min-height: 100.1vh;
+html, body {
+  min-height: 100vh;
+  min-height: 100dvh;
+  background-color: hsl(var(--background));
 }
 
 /* Safe area padding for fixed elements */
