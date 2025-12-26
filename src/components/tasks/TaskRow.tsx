@@ -49,7 +49,7 @@ export const TaskRow = memo(({ id, title, completed, category, onClick, isPrimar
       )}
     >
       {/* Status indicator */}
-      <div className="flex-shrink-0 w-4 h-4 flex items-center justify-center">
+      <div className="flex-shrink-0 w-5 h-5 flex items-center justify-center">
         {getStatusIcon()}
       </div>
 

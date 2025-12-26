@@ -96,7 +96,7 @@ export const TodayTaskRow = memo(({ task, onToggle }: TodayTaskRowProps) => {
   return (
     <div
       className={cn(
-        "flex items-start gap-3 py-2 px-3 rounded-md transition-colors group",
+        "flex items-center gap-3 py-2 px-3 rounded-md transition-colors group",
         "hover:bg-muted/20",
         hasDualLayer && "cursor-pointer"
       )}
@@ -107,7 +107,7 @@ export const TodayTaskRow = memo(({ task, onToggle }: TodayTaskRowProps) => {
       <button
         onClick={handleCheckboxClick}
         className={cn(
-          "flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center mt-0.5 transition-all",
+          "flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center transition-all",
           task.completed
             ? "bg-foreground/10 border border-foreground/20"
             : "bg-transparent border-2 border-foreground/30 hover:border-foreground/50 hover:scale-110"
