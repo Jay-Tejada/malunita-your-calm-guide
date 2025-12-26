@@ -75,6 +75,7 @@ const SwipeableTaskRow = ({
   const [swipeOffset, setSwipeOffset] = useState(0);
   const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | null>(null);
   const [isExiting, setIsExiting] = useState(false);
+  const [isCompleting, setIsCompleting] = useState(false);
   const [isHorizontalSwipe, setIsHorizontalSwipe] = useState(false);
   const [isTextExpanded, setIsTextExpanded] = useState(false);
   
@@ -124,8 +125,12 @@ const SwipeableTaskRow = ({
       if (isSelectionMode) return;
       if (isHorizontalSwipe && Math.abs(e.deltaX) > 80 && !isEditing) {
         hapticSuccess();
-        setIsExiting(true);
-        setTimeout(() => onComplete(), 200);
+        // Trigger completion animation sequence
+        setIsCompleting(true);
+        setTimeout(() => {
+          setIsExiting(true);
+          setTimeout(() => onComplete(), 180);
+        }, 120);
       } else {
         setSwipeOffset(0);
         setSwipeDirection(null);
@@ -162,8 +167,31 @@ const SwipeableTaskRow = ({
     }
   };
 
+  // Handle checkbox tap completion with animation
+  const handleCheckboxComplete = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (isSelectionMode) {
+      onToggleSelect();
+      return;
+    }
+    hapticSuccess();
+    setIsCompleting(true);
+    setTimeout(() => {
+      setIsExiting(true);
+      setTimeout(() => onComplete(), 180);
+    }, 120);
+  };
+
   return (
-    <div className={`relative overflow-hidden transition-all duration-300 ${isExiting ? 'h-0 opacity-0' : ''} ${isSelected ? 'bg-primary/5' : ''}`}>
+    <div 
+      className={`relative overflow-hidden transition-all ease-out ${
+        isExiting ? 'max-h-0 opacity-0 translate-y-2' : 'max-h-[500px]'
+      } ${isSelected ? 'bg-primary/5' : ''}`}
+      style={{ 
+        transitionDuration: isExiting ? '200ms' : '300ms',
+        transitionProperty: 'max-height, opacity, transform',
+      }}
+    >
       {/* Complete background (swipe right) */}
       {swipeOffset > 0 && swipeDirection === 'right' && (
         <div 
@@ -200,23 +228,32 @@ const SwipeableTaskRow = ({
         }}
       >
         <div 
-          className="flex items-start gap-4 px-5 py-4 cursor-pointer transition-colors"
+          className={`flex items-start gap-4 px-5 py-4 cursor-pointer transition-all ease-out ${
+            isCompleting ? 'opacity-60' : ''
+          }`}
+          style={{ 
+            transitionDuration: '150ms',
+            transform: isCompleting ? 'translateY(4px)' : 'translateY(0)',
+          }}
           onClick={handleRowClick}
         >
-          {/* Unified checkbox with morphing animation */}
+          {/* Checkbox with completion animation */}
           <button
-            onClick={(e) => {
-              e.stopPropagation();
-              isSelectionMode ? onToggleSelect() : onComplete();
-            }}
-            className={`w-4 h-4 mt-1 flex-shrink-0 flex items-center justify-center transition-all duration-300 ease-out ${
+            onClick={handleCheckboxComplete}
+            className={`w-4 h-4 mt-1 flex-shrink-0 flex items-center justify-center transition-all ease-out ${
               isSelectionMode 
                 ? `rounded ${isSelected ? 'bg-primary border-primary scale-110' : 'border border-muted-foreground/30 hover:border-muted-foreground/50'}`
-                : 'rounded-full border border-muted-foreground/30 hover:border-muted-foreground/50'
+                : isCompleting
+                  ? 'rounded-full bg-emerald-500/80 border-emerald-500/80 scale-110'
+                  : 'rounded-full border border-muted-foreground/30 hover:border-muted-foreground/50'
             }`}
+            style={{ transitionDuration: '100ms' }}
           >
             {isSelectionMode && isSelected && (
               <Check className="w-3 h-3 text-primary-foreground animate-scale-in" />
+            )}
+            {!isSelectionMode && isCompleting && (
+              <Check className="w-3 h-3 text-white animate-scale-in" />
             )}
           </button>
           {isEditing ? (
@@ -234,11 +271,12 @@ const SwipeableTaskRow = ({
             />
           ) : (
             <div className="flex-1 relative">
-              {/* Text content with collapse behavior */}
+              {/* Text content with collapse behavior + completion fade */}
               <p 
-                className={`text-sm text-foreground/70 leading-relaxed tracking-wide whitespace-pre-wrap transition-all duration-200 ${
+                className={`text-sm leading-relaxed tracking-wide whitespace-pre-wrap transition-all ease-out ${
                   isLongEntry && !isTextExpanded ? 'line-clamp-2' : ''
-                }`}
+                } ${isCompleting ? 'text-foreground/40 line-through decoration-foreground/20' : 'text-foreground/70'}`}
+                style={{ transitionDuration: '120ms', transitionDelay: isCompleting ? '30ms' : '0ms' }}
               >
                 {task.title}
               </p>
