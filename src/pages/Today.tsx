@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, ArrowRight } from 'lucide-react';
 import { useTasks, Task } from '@/hooks/useTasks';
+import { useCapture } from '@/hooks/useAICapture';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { MobileTaskCapture } from '@/components/shared/MobileTaskCapture';
@@ -24,6 +25,7 @@ import { TaskEditDialog } from '@/components/TaskEditDialog';
 const Today = () => {
   const navigate = useNavigate();
   const { tasks, updateTask } = useTasks();
+  const { capture, isCapturing } = useCapture();
   const { toast } = useToast();
   const { sessions, startSession, createSession } = useFlowSessions();
   const { habits, toggleCompletion, isCompletedToday } = useHabits();
@@ -123,12 +125,9 @@ const Today = () => {
   };
 
   const handleQuickAdd = async (text: string) => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-    
-    await supabase.from('tasks').insert({
-      user_id: user.id,
-      title: text,
+    // Route through AI pipeline for full processing
+    await capture({
+      text,
       scheduled_bucket: 'today'
     });
   };

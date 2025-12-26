@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { useTasks } from '@/hooks/useTasks';
+import { useCapture } from '@/hooks/useAICapture';
 import { useSmartHints, useModifierKey } from '@/hooks/useSmartHints';
 import { useSmartDateParsing } from '@/hooks/useSmartDateParsing';
 import { useHaptics } from '@/hooks/useHaptics';
@@ -18,7 +18,7 @@ export const QuickCapture = ({ isOpen, onClose, variant, onCapture }: QuickCaptu
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const focusAchievedRef = useRef(false);
   const { toast } = useToast();
-  const { createTasks } = useTasks();
+  const { capture, isCapturing } = useCapture();
   const { currentHint, trackUsage } = useSmartHints();
   const modKey = useModifierKey();
   const haptics = useHaptics();
@@ -104,19 +104,19 @@ export const QuickCapture = ({ isOpen, onClose, variant, onCapture }: QuickCaptu
     }
     
     try {
-      // Use parsed date info for scheduling
-      const taskTitle = parsedDate.cleanTitle || capturedText;
-      const taskData: any = { 
-        title: taskTitle,
-        category: 'inbox' // Always capture to inbox
-      };
+      // Route through AI pipeline - process-input will handle:
+      // - Semantic compression (ai_summary)
+      // - Context indexing (memory_tags)
+      // - Task extraction & classification
+      // - Database persistence with all AI fields
       
-      // If a date/time was detected, set reminder
+      await capture({
+        text: capturedText,
+        category: 'inbox',
+      });
+      
+      // Show date notification if detected (for user feedback)
       if (parsedDate.detectedDate) {
-        taskData.reminder_time = parsedDate.detectedDate.toISOString();
-        taskData.has_reminder = true;
-        taskData.is_time_based = parsedDate.hasTime;
-        
         const timeStr = parsedDate.hasTime 
           ? parsedDate.detectedDate.toLocaleString([], { 
               dateStyle: 'short', 
@@ -125,12 +125,11 @@ export const QuickCapture = ({ isOpen, onClose, variant, onCapture }: QuickCaptu
           : parsedDate.detectedDate.toLocaleDateString();
         
         toast({
-          description: `Scheduled for ${timeStr}`,
+          description: `Captured with date: ${timeStr}`,
           duration: 2000,
         });
       }
       
-      createTasks([taskData]);
       onCapture?.();
     } catch (error) {
       console.error('QuickCapture: Error capturing:', error);

@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, Plus } from 'lucide-react';
 import { useTasks, Task } from '@/hooks/useTasks';
+import { useCapture } from '@/hooks/useAICapture';
 import { useProjects, Project } from '@/hooks/useProjects';
 import { useDeleteTaskWithUndo } from '@/hooks/useDeleteTaskWithUndo';
 import {
@@ -29,6 +30,7 @@ import { NewProjectModal } from '@/components/projects/NewProjectModal';
 const Work = () => {
   const navigate = useNavigate();
   const { tasks, updateTask, createTasks } = useTasks();
+  const { capture, isCapturing } = useCapture();
   const { projects, createProject, updateProject, deleteProject, toggleCollapsed, reorderProjects } = useProjects('work');
   const { deleteTaskWithUndo } = useDeleteTaskWithUndo();
   const [showCompleted, setShowCompleted] = useState(false);
@@ -108,12 +110,13 @@ const Work = () => {
   }, [workTasks, projects]);
 
   const handleCapture = async (text: string, projectId?: string) => {
-    console.log('📝 Creating task with project_id:', projectId);
-    await createTasks([{
-      title: text,
+    console.log('📝 Creating work task via AI pipeline, project_id:', projectId);
+    // Route through AI pipeline for full processing
+    await capture({
+      text,
       category: 'work',
-      project_id: projectId || null
-    }]);
+      project_id: projectId || undefined
+    });
   };
 
   const handleCreateProject = async (project: { name: string; space: string; icon?: string; color?: string }) => {

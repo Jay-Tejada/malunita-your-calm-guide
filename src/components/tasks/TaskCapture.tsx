@@ -1,6 +1,6 @@
 import { useState, KeyboardEvent } from "react";
 import { ArrowRight, Check } from "lucide-react";
-import { useTasks } from "@/hooks/useTasks";
+import { useCapture } from "@/hooks/useAICapture";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
@@ -10,7 +10,7 @@ interface TaskCaptureProps {
 }
 
 export const TaskCapture = ({ placeholder, category }: TaskCaptureProps) => {
-  const { createTasks } = useTasks();
+  const { capture, isCapturing } = useCapture();
   const [quickInput, setQuickInput] = useState("");
   const [showSuccess, setShowSuccess] = useState(false);
   const { toast } = useToast();
@@ -19,10 +19,11 @@ export const TaskCapture = ({ placeholder, category }: TaskCaptureProps) => {
     if (!quickInput.trim()) return;
     
     try {
-      await createTasks([{
-        title: quickInput.trim(),
+      // Route through AI pipeline for full processing
+      await capture({
+        text: quickInput.trim(),
         category,
-      }]);
+      });
       
       setQuickInput("");
       setShowSuccess(true);
