@@ -1,22 +1,37 @@
-import { Check } from "lucide-react";
 import { useTasks, Task } from "@/hooks/useTasks";
-import { cn } from "@/lib/utils";
-import { getDualLayerDisplay } from "@/hooks/useDualLayerDisplay";
+import { TodayTaskRow } from "./TodayTaskRow";
 
 interface TodayTaskListProps {
   showCompleted: boolean;
 }
+
+const TODAY_CONFIDENCE_THRESHOLD = 0.7;
 
 export const TodayTaskList = ({ showCompleted }: TodayTaskListProps) => {
   const { tasks, isLoading, updateTask } = useTasks();
 
   const todayDate = new Date().toISOString().split('T')[0];
 
-  // Get today's tasks
+  // Get today's tasks with confidence gate
   const todayTasks = tasks?.filter(t => {
+    // Always include completed if showCompleted
     if (showCompleted && t.completed) return true;
     if (!showCompleted && t.completed) return false;
-    return t.scheduled_bucket === 'today' || t.focus_date === todayDate;
+    
+    // Check if scheduled for today
+    const isScheduledForToday = t.scheduled_bucket === 'today' || t.focus_date === todayDate;
+    if (!isScheduledForToday) return false;
+    
+    // Confidence gate: items with confidence < 0.7 should stay in Inbox
+    const confidence = (t as any).ai_confidence ?? 1.0;
+    const hasAiSummary = !!(t as any).ai_summary;
+    
+    // If has AI summary with low confidence, exclude from Today
+    if (hasAiSummary && confidence < TODAY_CONFIDENCE_THRESHOLD) {
+      return false;
+    }
+    
+    return true;
   }) || [];
 
   // Group by priority
@@ -43,47 +58,24 @@ export const TodayTaskList = ({ showCompleted }: TodayTaskListProps) => {
     if (tasks.length === 0) return null;
 
     return (
-      <div className="space-y-2">
+      <div className="space-y-0.5">
         {label && (
-          <div className="h-px bg-border/20 my-4" />
+          <div className="h-px bg-border/10 my-3" />
         )}
-        {tasks.map((task) => {
-          const { displayText } = getDualLayerDisplay(task);
-          
-          return (
-            <div
-              key={task.id}
-              className="flex items-start gap-3 py-2.5 px-3 hover:bg-muted/20 rounded-md transition-colors group"
-            >
-              <button
-                onClick={() => handleToggleTask(task.id, task.completed || false)}
-                className={cn(
-                  "flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center mt-0.5 transition-all",
-                  task.completed
-                    ? "bg-foreground/10 border border-foreground/20"
-                    : "bg-transparent border border-foreground/20 hover:border-foreground/40"
-                )}
-              >
-                {task.completed && (
-                  <Check className="w-3 h-3 text-foreground/60" />
-                )}
-              </button>
-              <span className={cn(
-                "flex-1 text-[14px] leading-snug",
-                task.completed ? "text-foreground/40 line-through" : "text-foreground/90"
-              )}>
-                {displayText}
-              </span>
-            </div>
-          );
-        })}
+        {tasks.map((task) => (
+          <TodayTaskRow 
+            key={task.id} 
+            task={task} 
+            onToggle={handleToggleTask}
+          />
+        ))}
       </div>
     );
   };
 
   return (
     <div className="mb-8">
-      <h3 className="text-xs font-mono uppercase tracking-widest text-muted-foreground/40 mb-4">
+      <h3 className="text-xs font-mono uppercase tracking-widest text-muted-foreground/40 mb-3">
         Today's Tasks
       </h3>
 
@@ -96,7 +88,7 @@ export const TodayTaskList = ({ showCompleted }: TodayTaskListProps) => {
           <p className="text-muted-foreground/40 text-sm">No tasks scheduled for today</p>
         </div>
       ) : (
-        <div className="space-y-1">
+        <div className="space-y-0.5">
           {renderTaskGroup(mustTasks)}
           {renderTaskGroup(shouldTasks, shouldTasks.length > 0 && mustTasks.length > 0 ? 'should' : undefined)}
           {renderTaskGroup(couldTasks, couldTasks.length > 0 && (mustTasks.length > 0 || shouldTasks.length > 0) ? 'could' : undefined)}
