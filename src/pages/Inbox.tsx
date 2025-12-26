@@ -6,7 +6,7 @@ import { useSwipeable } from 'react-swipeable';
 import { CaptureInput } from '@/ui/CaptureInput';
 import { colors } from '@/ui/tokens';
 import { AppLayout } from '@/ui/AppLayout';
-import { hapticSwipe, hapticHint } from '@/utils/haptics';
+import { hapticSwipe, hapticHint, hapticLight } from '@/utils/haptics';
 
 const SWIPE_HINT_KEY = 'malunita_inbox_swipe_hint_seen';
 
@@ -330,6 +330,7 @@ const Inbox = () => {
   };
 
   const toggleSelect = (taskId: string) => {
+    hapticLight(); // Tactile feedback on selection toggle
     setSelectedIds(prev => {
       const next = new Set(prev);
       if (next.has(taskId)) {
