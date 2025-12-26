@@ -247,7 +247,7 @@ const SwipeableTaskRow = ({
                 <div 
                   className="absolute bottom-0 left-0 right-0 h-6 pointer-events-none"
                   style={{
-                    background: `linear-gradient(to bottom, transparent, hsl(var(--background)))`
+                    background: 'linear-gradient(to bottom, transparent, hsl(240 6% 6%))',
                   }}
                 />
               )}
@@ -319,6 +319,41 @@ const Inbox = () => {
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  // Forensic: log which element is actually at the very bottom of the viewport
+  useEffect(() => {
+    const log = () => {
+      const x = Math.floor(window.innerWidth / 2);
+      const ys = [window.innerHeight - 2, window.innerHeight - 40, window.innerHeight - 80];
+      const snapshot = ys.map((y) => {
+        const el = document.elementFromPoint(x, y) as HTMLElement | null;
+        if (!el) return { y, el: null };
+        const cs = window.getComputedStyle(el);
+        return {
+          y,
+          tag: el.tagName,
+          id: el.id || undefined,
+          className: el.className || undefined,
+          bg: cs.backgroundColor,
+          position: cs.position,
+          bottom: cs.bottom,
+          height: cs.height,
+        };
+      });
+      console.log('[white-bar-debug] elementFromPoint snapshots', snapshot);
+    };
+
+    // Run once after paint, and keep logging on scroll/resize (capture scroll events too)
+    const raf = requestAnimationFrame(() => requestAnimationFrame(log));
+    window.addEventListener('resize', log);
+    document.addEventListener('scroll', log, true);
+
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener('resize', log);
+      document.removeEventListener('scroll', log, true);
+    };
+  }, []);
 
   // Check if swipe hint should be shown
   useEffect(() => {
@@ -606,7 +641,7 @@ const Inbox = () => {
         <div 
           className="pointer-events-none fixed bottom-0 left-0 right-0 h-16 z-40"
           style={{
-            background: 'linear-gradient(to top, hsl(var(--background)) 0%, transparent 100%)',
+            background: 'linear-gradient(to top, hsl(240 6% 6%) 0%, transparent 100%)',
             opacity: isSelectionMode && selectedIds.size > 0 ? 0 : 1,
             transition: 'opacity 0.3s ease-out',
           }}
