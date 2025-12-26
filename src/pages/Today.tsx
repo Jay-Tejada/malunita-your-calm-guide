@@ -19,6 +19,7 @@ import { TinyTaskPrompt } from '@/components/tasks/TinyTaskPrompt';
 import { TinyTaskParty } from '@/components/tasks/TinyTaskParty';
 import { deduplicateTasks } from '@/utils/duplicateDetection';
 import { InboxPreviewRow } from '@/components/today/InboxPreviewRow';
+import { TaskEditDialog } from '@/components/TaskEditDialog';
 
 const Today = () => {
   const navigate = useNavigate();
@@ -29,6 +30,8 @@ const Today = () => {
   const [focusInput, setFocusInput] = useState('');
   const [showCompleted, setShowCompleted] = useState(false);
   const [completingTasks, setCompletingTasks] = useState<Set<string>>(new Set());
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [taskToEdit, setTaskToEdit] = useState<Task | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   
   // Tiny Task Party state
@@ -186,6 +189,16 @@ const Today = () => {
     }, 400);
   };
 
+  const handleEditTask = (task: Task) => {
+    setTaskToEdit(task);
+    setEditDialogOpen(true);
+  };
+
+  const handleSaveEdit = async (taskId: string, updates: Partial<Task>) => {
+    await updateTask({ id: taskId, updates });
+    toast({ description: "Task updated" });
+  };
+
   return (
     <AppLayout title="Today" showBack>
       <div className="px-4 pt-4 pb-24 md:pb-20">
@@ -242,7 +255,7 @@ const Today = () => {
               title={focusTask.title}
               isCompleted={focusTask.completed || false}
               onToggleComplete={() => handleCompleteTask(focusTask.id)}
-              onPress={() => console.log('Task pressed:', focusTask.id)}
+              onPress={() => handleEditTask(focusTask)}
             />
           </TaskGroup>
         ) : (
@@ -272,7 +285,7 @@ const Today = () => {
                 title={task.title}
                 isCompleted={task.completed || false}
                 onToggleComplete={() => handleCompleteTask(task.id)}
-                onPress={() => console.log('Task pressed:', task.id)}
+                onPress={() => handleEditTask(task)}
               />
             ))}
           </TaskGroup>
@@ -360,6 +373,17 @@ const Today = () => {
         totalMinutes={partyMinutes}
         onClose={() => setPartyOpen(false)}
         onComplete={handlePartyComplete}
+      />
+      
+      {/* Task Edit Dialog */}
+      <TaskEditDialog
+        open={editDialogOpen}
+        task={taskToEdit}
+        onSave={handleSaveEdit}
+        onClose={() => {
+          setEditDialogOpen(false);
+          setTaskToEdit(null);
+        }}
       />
     </AppLayout>
   );
