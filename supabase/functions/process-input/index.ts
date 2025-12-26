@@ -94,6 +94,58 @@ serve(async (req) => {
     }
 
     // ============================================================
+    // STEP 0.5: CONTEXT RETRIEVAL - Use past memory to inform analysis
+    // ============================================================
+    console.log('🔄 Step 0.5: Calling context-retrieve edge function...');
+    let context_retrieved = false;
+    let related_items: any[] = [];
+    let related_items_count = 0;
+    let strongest_match: string | null = null;
+    let relevance_score = 0;
+    let influence_level: 'none' | 'low' | 'medium' | 'high' = 'none';
+
+    try {
+      const retrieveResponse = await fetch(`${supabaseUrl}/functions/v1/context-retrieve`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${supabaseKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          ai_summary,
+          user_id
+        }),
+      });
+
+      if (retrieveResponse.ok) {
+        const retrieveData = await retrieveResponse.json();
+        context_retrieved = retrieveData.context_retrieved || false;
+        related_items = retrieveData.related_items || [];
+        related_items_count = retrieveData.related_items_count || 0;
+        strongest_match = retrieveData.strongest_match || null;
+        relevance_score = retrieveData.relevance_score || 0;
+        influence_level = retrieveData.influence_level || 'none';
+        
+        console.log('✅ Context retrieval result:', { 
+          context_retrieved,
+          related_items_count,
+          strongest_match,
+          influence_level
+        });
+
+        // If high influence, use strongest match as project association hint
+        if (influence_level === 'high' && strongest_match) {
+          console.log('🎯 High influence detected - suggesting project:', strongest_match);
+        }
+      } else {
+        console.warn('⚠️ Context retrieval failed, proceeding without past context');
+      }
+    } catch (retrieveError) {
+      console.error('❌ Context retrieval error:', retrieveError);
+      // Continue without context - this is non-blocking
+    }
+
+    // ============================================================
     // STEP 1: Extract tasks, ideas, decisions, emotion
     // ============================================================
     console.log('🔄 Step 1: Extracting content...');
@@ -234,6 +286,12 @@ serve(async (req) => {
             people: task.people,
             context_markers: task.contextMarkers,
             confidence_score,
+            // Context retrieval fields
+            context_retrieved,
+            related_items_count,
+            strongest_match,
+            relevance_score,
+            influence_level,
           },
           reminder_time: task.reminder_time || null,
           has_reminder: !!task.reminder_time,
@@ -295,6 +353,12 @@ serve(async (req) => {
         related_spaces,
         context_weight,
         project_association,
+        // Context retrieval
+        context_retrieved,
+        related_items_count,
+        strongest_match,
+        relevance_score,
+        influence_level,
       })),
       createdTaskIds: createdTasks.map(t => t.id),
       ideas: extracted.ideas,
