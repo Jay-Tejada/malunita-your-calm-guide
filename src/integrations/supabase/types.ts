@@ -1804,7 +1804,9 @@ export type Database = {
       }
       tasks: {
         Row: {
+          ai_confidence: number | null
           ai_metadata: Json | null
+          ai_summary: string | null
           alignment_reason: string | null
           category: string | null
           completed: boolean | null
@@ -1836,6 +1838,7 @@ export type Database = {
           plan_id: string | null
           primary_focus_alignment: string | null
           project_id: string | null
+          raw_content: string | null
           recurrence_day: number | null
           recurrence_end_date: string | null
           recurrence_pattern: string | null
@@ -1847,7 +1850,9 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          ai_confidence?: number | null
           ai_metadata?: Json | null
+          ai_summary?: string | null
           alignment_reason?: string | null
           category?: string | null
           completed?: boolean | null
@@ -1879,6 +1884,7 @@ export type Database = {
           plan_id?: string | null
           primary_focus_alignment?: string | null
           project_id?: string | null
+          raw_content?: string | null
           recurrence_day?: number | null
           recurrence_end_date?: string | null
           recurrence_pattern?: string | null
@@ -1890,7 +1896,9 @@ export type Database = {
           user_id: string
         }
         Update: {
+          ai_confidence?: number | null
           ai_metadata?: Json | null
+          ai_summary?: string | null
           alignment_reason?: string | null
           category?: string | null
           completed?: boolean | null
@@ -1922,6 +1930,7 @@ export type Database = {
           plan_id?: string | null
           primary_focus_alignment?: string | null
           project_id?: string | null
+          raw_content?: string | null
           recurrence_day?: number | null
           recurrence_end_date?: string | null
           recurrence_pattern?: string | null

@@ -79,8 +79,22 @@ const SwipeableTaskRow = ({
   const [isHorizontalSwipe, setIsHorizontalSwipe] = useState(false);
   const [isTextExpanded, setIsTextExpanded] = useState(false);
   
+  // Dual-layer display logic
+  const hasAiSummary = !!task.ai_summary;
+  const confidence = (task as any).ai_confidence ?? 1.0;
+  const lowConfidence = confidence < 0.6;
+  
+  // Display text: Use ai_summary if available and confidence is good, else raw_content/title
+  const displayText = hasAiSummary && !lowConfidence 
+    ? task.ai_summary 
+    : (task as any).raw_content || task.title;
+  
+  // Raw content for expanded view
+  const rawContent = (task as any).raw_content || task.title;
+  const hasDualLayer = hasAiSummary && rawContent !== task.ai_summary;
+  
   // Determine if this entry should be collapsible
-  const isLongEntry = task.title.length > COLLAPSE_CHAR_THRESHOLD;
+  const isLongEntry = displayText.length > COLLAPSE_CHAR_THRESHOLD || (hasDualLayer && rawContent.length > COLLAPSE_CHAR_THRESHOLD);
   
   // Reset text expansion when actions panel closes
   useEffect(() => {
@@ -274,15 +288,31 @@ const SwipeableTaskRow = ({
             />
           ) : (
             <div className="flex-1 relative">
-              {/* INBOX text: Fade only, NO strikethrough (intake, not achievement) */}
+              {/* Primary display: AI summary or title */}
               <p 
                 className={`text-sm leading-relaxed tracking-wide whitespace-pre-wrap transition-all ease-out ${
                   isLongEntry && !isTextExpanded ? 'line-clamp-2' : ''
                 } ${isCompleting ? 'text-foreground/40' : 'text-foreground/70'}`}
                 style={{ transitionDuration: '100ms' }}
               >
-                {task.title}
+                {displayText}
               </p>
+              
+              {/* Expanded view: Show raw content below summary */}
+              {isTextExpanded && hasDualLayer && (
+                <div className="mt-3 pt-3 border-t border-border/20">
+                  <p className="text-xs text-muted-foreground/50 mb-1.5 uppercase tracking-wide">Original</p>
+                  <p className="text-sm text-foreground/50 leading-relaxed max-h-32 overflow-y-auto whitespace-pre-wrap">
+                    {rawContent}
+                  </p>
+                </div>
+              )}
+              
+              {/* Low confidence indicator */}
+              {hasAiSummary && lowConfidence && (
+                <p className="text-xs text-amber-500/60 mt-1">Low confidence summary available</p>
+              )}
+              
               {/* Fade gradient for collapsed long entries */}
               {isLongEntry && !isTextExpanded && (
                 <div 
