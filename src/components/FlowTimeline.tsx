@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { Play, Check, Clock, Zap, Target, ClipboardList } from 'lucide-react';
 import { format } from 'date-fns';
-import { FlowSession as GeneratedFlowSession } from '@/utils/taskCategorizer';
+import { FlowSession as GeneratedFlowSession, formatSessionDuration } from '@/utils/taskCategorizer';
 
 interface FlowSession {
   id: string;
@@ -48,13 +48,18 @@ const FlowTimeline = ({ sessions, suggestedSession, onStartSession, onViewSessio
     });
   }, [sessions]);
 
+  // Format the suggested session duration for display
+  const formattedDuration = suggestedSession 
+    ? formatSessionDuration(suggestedSession.estimatedMinutes)
+    : '';
+
   if (sessions.length === 0) {
     return (
       <div className="px-4 py-6">
         {suggestedSession ? (
           <div className="text-center">
             <p className="text-sm text-foreground/50 mb-3">
-              I see a group of tasks that could work as a {suggestedSession.estimatedMinutes}-minute block.
+              I see a group of tasks that could work as a {formattedDuration} block.
             </p>
             <button
               onClick={onCreateSuggested}
