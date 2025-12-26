@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, Star, Briefcase, Home, Moon, Trash2, Pencil, ChevronLeft as SwipeIcon } from 'lucide-react';
+import { ChevronLeft, Star, Briefcase, Home, Moon, Trash2, Pencil, ChevronLeft as SwipeIcon, CheckSquare, X, Check } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useSwipeable } from 'react-swipeable';
 import { CaptureInput } from '@/ui/CaptureInput';
@@ -15,6 +15,8 @@ interface SwipeableTaskRowProps {
   isExpanded: boolean;
   isEditing: boolean;
   editValue: string;
+  isSelectionMode: boolean;
+  isSelected: boolean;
   onToggleExpand: () => void;
   onComplete: () => void;
   onMove: (destination: string) => void;
@@ -23,6 +25,7 @@ interface SwipeableTaskRowProps {
   onEditChange: (value: string) => void;
   onSaveEdit: () => void;
   onCancelEdit: () => void;
+  onToggleSelect: () => void;
 }
 
 // Threshold for collapsing long entries
@@ -48,6 +51,8 @@ const SwipeableTaskRow = ({
   isExpanded,
   isEditing,
   editValue,
+  isSelectionMode,
+  isSelected,
   onToggleExpand,
   onComplete,
   onMove,
@@ -56,6 +61,7 @@ const SwipeableTaskRow = ({
   onEditChange,
   onSaveEdit,
   onCancelEdit,
+  onToggleSelect,
 }: SwipeableTaskRowProps) => {
   const [swipeOffset, setSwipeOffset] = useState(0);
   const [isDeferring, setIsDeferring] = useState(false);
@@ -74,6 +80,7 @@ const SwipeableTaskRow = ({
 
   const handlers = useSwipeable({
     onSwiping: (e) => {
+      if (isSelectionMode) return; // Disable swipe in selection mode
       // Only treat as horizontal swipe if clearly horizontal (2:1 ratio minimum)
       // and we've moved enough to be intentional
       if (!isHorizontalSwipe && Math.abs(e.deltaX) > 15 && Math.abs(e.deltaX) > Math.abs(e.deltaY) * 2) {
@@ -86,6 +93,7 @@ const SwipeableTaskRow = ({
       }
     },
     onSwipedLeft: (e) => {
+      if (isSelectionMode) return;
       if (isHorizontalSwipe && Math.abs(e.deltaX) > 80 && !isEditing) {
         hapticSwipe();
         setIsDeferring(true);
@@ -112,8 +120,24 @@ const SwipeableTaskRow = ({
     swipeDuration: 500,
   });
 
+  const handleRowClick = () => {
+    if (isEditing) return;
+    
+    if (isSelectionMode) {
+      onToggleSelect();
+      return;
+    }
+    
+    // If long entry, toggle text expansion first
+    if (isLongEntry && !isTextExpanded) {
+      setIsTextExpanded(true);
+    } else {
+      onToggleExpand();
+    }
+  };
+
   return (
-    <div className={`relative overflow-hidden transition-all duration-300 ${isDeferring ? 'h-0 opacity-0' : ''}`}>
+    <div className={`relative overflow-hidden transition-all duration-300 ${isDeferring ? 'h-0 opacity-0' : ''} ${isSelected ? 'bg-primary/5' : ''}`}>
       {/* Defer background */}
       <div 
         className="absolute inset-y-0 right-0 flex items-center justify-end bg-primary/5 transition-all"
@@ -136,25 +160,32 @@ const SwipeableTaskRow = ({
       >
         <div 
           className="flex items-start gap-4 px-5 py-4 cursor-pointer transition-colors"
-          onClick={() => {
-            if (!isEditing) {
-              // If long entry, toggle text expansion first
-              if (isLongEntry && !isTextExpanded) {
-                setIsTextExpanded(true);
-              } else {
-                onToggleExpand();
-              }
-            }
-          }}
+          onClick={handleRowClick}
         >
-          {/* Minimal checkbox - smaller, lower opacity, outline-only */}
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onComplete();
-            }}
-            className="w-4 h-4 mt-1 rounded-full border border-muted-foreground/30 hover:border-muted-foreground/50 flex-shrink-0 transition-all duration-200"
-          />
+          {/* Selection checkbox or completion checkbox */}
+          {isSelectionMode ? (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleSelect();
+              }}
+              className={`w-4 h-4 mt-1 rounded flex-shrink-0 transition-all duration-200 flex items-center justify-center ${
+                isSelected 
+                  ? 'bg-primary border-primary' 
+                  : 'border border-muted-foreground/30 hover:border-muted-foreground/50'
+              }`}
+            >
+              {isSelected && <Check className="w-3 h-3 text-primary-foreground" />}
+            </button>
+          ) : (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onComplete();
+              }}
+              className="w-4 h-4 mt-1 rounded-full border border-muted-foreground/30 hover:border-muted-foreground/50 flex-shrink-0 transition-all duration-200"
+            />
+          )}
           {isEditing ? (
             <input
               value={editValue}
@@ -183,7 +214,7 @@ const SwipeableTaskRow = ({
                 <div 
                   className="absolute bottom-0 left-0 right-0 h-6 pointer-events-none"
                   style={{
-                    background: 'linear-gradient(to bottom, transparent, hsl(var(--background)))'
+                    background: `linear-gradient(to bottom, transparent, hsl(var(--background)))`
                   }}
                 />
               )}
@@ -192,7 +223,7 @@ const SwipeableTaskRow = ({
         </div>
 
         {/* Expanded actions - softer styling */}
-        {isExpanded && (
+        {isExpanded && !isSelectionMode && (
           <div className="flex items-center gap-1 px-5 py-3 pl-14 bg-muted/10">
             <button
               onClick={() => onMove('today')}
@@ -250,6 +281,10 @@ const Inbox = () => {
   const [editValue, setEditValue] = useState('');
   const [loading, setLoading] = useState(true);
   const [showSwipeHint, setShowSwipeHint] = useState(false);
+  
+  // Batch selection state
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   // Check if swipe hint should be shown
   useEffect(() => {
@@ -293,6 +328,28 @@ const Inbox = () => {
     };
     fetchTasks();
   }, []);
+
+  const toggleSelectionMode = () => {
+    setIsSelectionMode(!isSelectionMode);
+    setSelectedIds(new Set());
+    setExpandedTask(null);
+  };
+
+  const toggleSelect = (taskId: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(taskId)) {
+        next.delete(taskId);
+      } else {
+        next.add(taskId);
+      }
+      return next;
+    });
+  };
+
+  const selectAll = () => {
+    setSelectedIds(new Set(tasks.map(t => t.id)));
+  };
 
   const addTask = async (title?: string) => {
     const taskTitle = title || inputValue.trim();
@@ -356,6 +413,45 @@ const Inbox = () => {
       .eq('id', taskId);
   };
 
+  // Batch actions
+  const batchMove = async (destination: string) => {
+    const idsToMove = Array.from(selectedIds);
+    if (idsToMove.length === 0) return;
+
+    // Optimistically update UI
+    setTasks(prev => prev.filter(t => !selectedIds.has(t.id)));
+    setSelectedIds(new Set());
+    setIsSelectionMode(false);
+
+    const updates: any = { category: destination };
+    if (destination === 'today') {
+      updates.scheduled_bucket = 'today';
+    } else if (destination === 'someday') {
+      updates.scheduled_bucket = 'someday';
+      updates.category = 'inbox';
+    }
+
+    await supabase
+      .from('tasks')
+      .update(updates)
+      .in('id', idsToMove);
+  };
+
+  const batchDelete = async () => {
+    const idsToDelete = Array.from(selectedIds);
+    if (idsToDelete.length === 0) return;
+
+    // Optimistically update UI
+    setTasks(prev => prev.filter(t => !selectedIds.has(t.id)));
+    setSelectedIds(new Set());
+    setIsSelectionMode(false);
+
+    await supabase
+      .from('tasks')
+      .delete()
+      .in('id', idsToDelete);
+  };
+
   const startEditing = (task: any) => {
     setEditingTask(task.id);
     setEditValue(task.title);
@@ -379,23 +475,43 @@ const Inbox = () => {
     <AppLayout 
       title="Inbox" 
       showBack 
-      rightAction={<span className="text-muted-foreground/50 text-sm">{tasks.length}</span>}
+      rightAction={
+        <button 
+          onClick={toggleSelectionMode}
+          className={`text-sm transition-colors ${isSelectionMode ? 'text-primary' : 'text-muted-foreground/50 hover:text-muted-foreground'}`}
+        >
+          {isSelectionMode ? 'Done' : tasks.length > 0 ? <CheckSquare className="w-4 h-4" /> : tasks.length}
+        </button>
+      }
     >
 
       {/* Header subtitle */}
       <div className="px-5 pt-2 pb-4">
         <p className="text-xs text-muted-foreground/40 tracking-wide">
-          Just intake. Nothing here needs action yet.
+          {isSelectionMode 
+            ? `${selectedIds.size} selected` 
+            : 'Just intake. Nothing here needs action yet.'
+          }
         </p>
+        {isSelectionMode && tasks.length > 0 && (
+          <button 
+            onClick={selectAll}
+            className="text-xs text-primary/60 hover:text-primary mt-1"
+          >
+            Select all
+          </button>
+        )}
       </div>
 
-      {/* Quick capture */}
-      <div className="px-5 pb-5">
-        <CaptureInput
-          placeholder="Capture a thought..."
-          onSubmit={(value) => addTask(value)}
-        />
-      </div>
+      {/* Quick capture - hide in selection mode */}
+      {!isSelectionMode && (
+        <div className="px-5 pb-5">
+          <CaptureInput
+            placeholder="Capture a thought..."
+            onSubmit={(value) => addTask(value)}
+          />
+        </div>
+      )}
 
       {/* Task list - dynamic spacing based on content length */}
       <div className="px-1 pb-4">
@@ -405,7 +521,7 @@ const Inbox = () => {
             className={`relative ${index === 0 ? '' : getSpacingClass(task.title.length)}`}
           >
             {/* Swipe hint on first task */}
-            {showSwipeHint && index === 0 && (
+            {showSwipeHint && index === 0 && !isSelectionMode && (
               <div 
                 className="absolute inset-0 z-10 flex items-center justify-end pointer-events-none animate-pulse"
                 onClick={dismissSwipeHint}
@@ -422,6 +538,8 @@ const Inbox = () => {
                 isExpanded={expandedTask === task.id}
                 isEditing={editingTask === task.id}
                 editValue={editValue}
+                isSelectionMode={isSelectionMode}
+                isSelected={selectedIds.has(task.id)}
                 onToggleExpand={() => setExpandedTask(expandedTask === task.id ? null : task.id)}
                 onComplete={() => completeTask(task.id)}
                 onMove={(destination) => {
@@ -433,11 +551,55 @@ const Inbox = () => {
                 onEditChange={setEditValue}
                 onSaveEdit={() => saveEdit(task.id)}
                 onCancelEdit={() => setEditingTask(null)}
+                onToggleSelect={() => toggleSelect(task.id)}
               />
             </div>
           </div>
         ))}
       </div>
+
+      {/* Batch action bar - floating at bottom when items selected */}
+      {isSelectionMode && selectedIds.size > 0 && (
+        <div className="fixed bottom-0 left-0 right-0 bg-card/95 backdrop-blur-sm border-t border-border/30 px-4 py-3 safe-area-pb z-50">
+          <div className="flex items-center justify-around max-w-md mx-auto">
+            <button
+              onClick={() => batchMove('today')}
+              className="flex flex-col items-center gap-1 px-4 py-2 text-muted-foreground/70 hover:text-foreground transition-colors"
+            >
+              <Star className="w-5 h-5" />
+              <span className="text-xs">Today</span>
+            </button>
+            <button
+              onClick={() => batchMove('someday')}
+              className="flex flex-col items-center gap-1 px-4 py-2 text-muted-foreground/70 hover:text-foreground transition-colors"
+            >
+              <Moon className="w-5 h-5" />
+              <span className="text-xs">Someday</span>
+            </button>
+            <button
+              onClick={() => batchMove('work')}
+              className="flex flex-col items-center gap-1 px-4 py-2 text-muted-foreground/70 hover:text-foreground transition-colors"
+            >
+              <Briefcase className="w-5 h-5" />
+              <span className="text-xs">Work</span>
+            </button>
+            <button
+              onClick={() => batchMove('home')}
+              className="flex flex-col items-center gap-1 px-4 py-2 text-muted-foreground/70 hover:text-foreground transition-colors"
+            >
+              <Home className="w-5 h-5" />
+              <span className="text-xs">Home</span>
+            </button>
+            <button
+              onClick={batchDelete}
+              className="flex flex-col items-center gap-1 px-4 py-2 text-destructive/60 hover:text-destructive transition-colors"
+            >
+              <Trash2 className="w-5 h-5" />
+              <span className="text-xs">Delete</span>
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Empty state */}
       {!loading && tasks.length === 0 && (
