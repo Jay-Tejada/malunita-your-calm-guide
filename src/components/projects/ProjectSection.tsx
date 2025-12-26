@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { ChevronDown, ChevronRight, Folder, Plus, GripVertical } from 'lucide-react';
+import { GripVertical } from 'lucide-react';
 import { Project } from '@/hooks/useProjects';
 import { Task } from '@/hooks/useTasks';
 import {
@@ -20,6 +20,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { WorkSortableTaskItem } from '@/components/work/WorkSortableTaskItem';
+import { ProjectHeader } from '@/components/project/ProjectTaskRow';
 
 interface DragHandleProps {
   attributes?: Record<string, any>;
@@ -59,8 +60,11 @@ export const ProjectSection = ({
 }: ProjectSectionProps) => {
   const [inputValue, setInputValue] = useState('');
   const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
+  const [showInput, setShowInput] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  
   const incompleteTasks = tasks.filter(t => !t.completed);
+  const completedTasks = tasks.filter(t => t.completed);
   const isCollapsed = project.is_collapsed;
 
   const sensors = useSensors(
@@ -78,6 +82,10 @@ export const ProjectSection = ({
     if (e.key === 'Enter' && inputValue.trim()) {
       onAddTask(inputValue.trim(), project.id);
       setInputValue('');
+    }
+    if (e.key === 'Escape') {
+      setInputValue('');
+      setShowInput(false);
     }
   };
 
@@ -98,38 +106,27 @@ export const ProjectSection = ({
   };
 
   const activeTask = activeTaskId ? incompleteTasks.find(t => t.id === activeTaskId) : null;
-  const handlePlusClick = () => {
-    inputRef.current?.focus();
+  
+  const handleAddTaskClick = () => {
+    setShowInput(true);
+    setTimeout(() => inputRef.current?.focus(), 50);
   };
 
   return (
     <div className="mb-2 px-4 group/project">
-      {/* Project header - minimal */}
-      <div className="flex items-center gap-2 py-2">
-        <button
-          onClick={onToggleCollapse}
-          className="flex items-center gap-2 flex-1 text-left"
-        >
-          {isCollapsed ? (
-            <ChevronRight size={16} className="text-muted-foreground" />
-          ) : (
-            <ChevronDown size={16} className="text-muted-foreground" />
-          )}
-          <Folder size={16} className="text-muted-foreground" />
-          <span className="font-medium text-sm text-foreground/80">
-            {project.name}
-          </span>
-        </button>
-        
-        <button 
-          onClick={handlePlusClick}
-          className="p-1 hover:bg-foreground/10 rounded text-muted-foreground hover:text-foreground transition-colors"
-        >
-          <Plus size={14} />
-        </button>
-        <span className="text-sm text-muted-foreground">
-          {incompleteTasks.length} active
-        </span>
+      {/* Project header with progress */}
+      <div className="flex items-center gap-2">
+        <div className="flex-1">
+          <ProjectHeader
+            name={project.name}
+            icon={project.icon || undefined}
+            totalTasks={tasks.length}
+            completedTasks={completedTasks.length}
+            isCollapsed={isCollapsed}
+            onToggleCollapse={onToggleCollapse}
+            onAddTask={handleAddTaskClick}
+          />
+        </div>
         
         {/* Drag handle */}
         {dragHandleProps && (
@@ -145,9 +142,9 @@ export const ProjectSection = ({
       
       {/* Project tasks */}
       {!isCollapsed && (
-        <div className="pl-4 ml-4 mt-2 border-l border-foreground/5 space-y-1 pb-3">
-          {incompleteTasks.length === 0 ? (
-            <p className="text-xs text-muted-foreground py-2">No tasks</p>
+        <div className="pl-4 ml-4 mt-2 border-l border-foreground/5 space-y-0.5 pb-3">
+          {incompleteTasks.length === 0 && !showInput ? (
+            <p className="text-xs text-muted-foreground/40 py-2">No tasks yet</p>
           ) : (
             <DndContext
               sensors={sensors}
@@ -179,7 +176,9 @@ export const ProjectSection = ({
                   <div className="bg-background/95 backdrop-blur-sm border border-primary/40 rounded-lg shadow-xl px-3 py-2.5 scale-105 ring-2 ring-primary/20">
                     <div className="flex items-center gap-2">
                       <div className="w-4 h-4 rounded-full border-2 border-primary/50 flex-shrink-0" />
-                      <span className="text-sm text-foreground font-medium">{activeTask.title}</span>
+                      <span className="text-sm text-foreground font-medium">
+                        {(activeTask as any).ai_summary || activeTask.title}
+                      </span>
                     </div>
                   </div>
                 )}
@@ -188,14 +187,19 @@ export const ProjectSection = ({
           )}
           
           {/* Add task to project */}
-          <input
-            ref={inputRef}
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder={`Add task to ${project.name}...`}
-            className="w-full bg-transparent text-sm text-muted-foreground placeholder:text-muted-foreground/40 focus:outline-none py-2 mt-2 border-none"
-          />
+          {showInput && (
+            <input
+              ref={inputRef}
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              onKeyDown={handleKeyDown}
+              onBlur={() => {
+                if (!inputValue.trim()) setShowInput(false);
+              }}
+              placeholder={`Add task to ${project.name}...`}
+              className="w-full bg-transparent text-sm text-muted-foreground placeholder:text-muted-foreground/40 focus:outline-none py-2 mt-1 border-none"
+            />
+          )}
         </div>
       )}
     </div>
