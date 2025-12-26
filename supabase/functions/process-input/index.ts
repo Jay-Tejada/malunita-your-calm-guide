@@ -324,6 +324,32 @@ serve(async (req) => {
     }
 
     // ============================================================
+    // PIPELINE DEBUG LOG - Verification of complete AI pipeline
+    // ============================================================
+    console.log('\n🔬 [PIPELINE DEBUG] Complete verification:', {
+      input_length: raw_content?.length || 0,
+      // Engine execution status
+      compression_ran: ai_summary !== raw_content,
+      retrieval_ran: influence_level !== 'none' || context_retrieved,
+      indexing_ran: memory_tags.length > 0,
+      // Key outputs
+      ai_summary_preview: ai_summary?.substring(0, 50) + '...',
+      raw_content_preserved: !!raw_content && raw_content.length > 0,
+      confidence: confidence_score,
+      // Memory fields
+      memory_tags,
+      project_association,
+      context_weight,
+      // Retrieval fields
+      context_retrieved,
+      related_items_count,
+      strongest_match,
+      influence_level,
+      // Task creation
+      tasks_created: createdTasks.length,
+    });
+
+    // ============================================================
     // Prepare final output
     // ============================================================
     const output = {
