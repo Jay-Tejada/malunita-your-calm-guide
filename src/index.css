@@ -2617,20 +2617,24 @@ button:active,
 /* Global reset + full-viewport dark backdrop (prevents bottom white bar) */
 html {
   min-height: 100%;
-  background-color: hsl(240 29% 3%); /* matches app shell (#050509) */
+  background-color: #1a1a1a;
+  /* Prevent iOS rubber-band bounce from exposing underlying light color */
+  overscroll-behavior: none;
 }
 
 body {
   min-height: 100%;
   margin: 0;
   padding: 0;
+  background-color: #1a1a1a;
   /* iOS safe area */
   padding-bottom: env(safe-area-inset-bottom);
-  background-color: hsl(240 29% 3%);
+  /* Contain vertical overscroll bounce */
+  overscroll-behavior-y: contain;
 }
 
 #root {
-  background-color: hsl(240 29% 3%);
+  background-color: #1a1a1a;
   /* Use flex root so pages can reliably fill remaining space */
   display: flex;
   flex-direction: column;
