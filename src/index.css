@@ -2614,18 +2614,28 @@ button:active,
   transition: opacity 150ms ease;
 }
 
-/* Ensure content fills viewport with proper background (prevents white gaps on mobile) */
-html,
+/* Global reset + full-viewport dark backdrop (prevents bottom white bar) */
+html {
+  min-height: 100%;
+  background-color: hsl(240 29% 3%); /* matches app shell (#050509) */
+}
+
 body {
-  min-height: 100vh;
-  min-height: 100dvh;
-  background-color: hsl(var(--background));
+  min-height: 100%;
+  margin: 0;
+  padding: 0;
+  /* iOS safe area */
+  padding-bottom: env(safe-area-inset-bottom);
+  background-color: hsl(240 29% 3%);
 }
 
 #root {
-  min-height: 100vh;
-  min-height: 100dvh;
-  background-color: hsl(var(--background));
+  background-color: hsl(240 29% 3%);
+  /* Use flex root so pages can reliably fill remaining space */
+  display: flex;
+  flex-direction: column;
+  /* Avoid extra scroll caused by body safe-area padding */
+  min-height: calc(100dvh - env(safe-area-inset-bottom));
 }
 
 /* When running as installed PWA, the body gets safe-area padding.
