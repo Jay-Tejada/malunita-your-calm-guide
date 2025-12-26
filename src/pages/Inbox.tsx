@@ -28,6 +28,21 @@ interface SwipeableTaskRowProps {
 // Threshold for collapsing long entries
 const COLLAPSE_CHAR_THRESHOLD = 100;
 
+// Thresholds for dynamic spacing based on content length
+const SHORT_THRESHOLD = 50;
+const MEDIUM_THRESHOLD = 150;
+
+// Get spacing class based on content length for visual rhythm
+const getSpacingClass = (length: number): string => {
+  if (length < SHORT_THRESHOLD) {
+    return 'mt-2'; // Compact: 8px
+  } else if (length < MEDIUM_THRESHOLD) {
+    return 'mt-4'; // Standard: 16px
+  } else {
+    return 'mt-5'; // Breathing room: 20px
+  }
+};
+
 const SwipeableTaskRow = ({
   task,
   isExpanded,
@@ -382,10 +397,13 @@ const Inbox = () => {
         />
       </div>
 
-      {/* Task list - spaced items, no borders */}
-      <div className="space-y-1 px-1">
-        {tasks.map((task, index) => (
-          <div key={task.id} className="relative">
+      {/* Task list - dynamic spacing based on content length */}
+      <div className="px-1 pb-4">
+      {tasks.map((task, index) => (
+          <div 
+            key={task.id} 
+            className={`relative ${index === 0 ? '' : getSpacingClass(task.title.length)}`}
+          >
             {/* Swipe hint on first task */}
             {showSwipeHint && index === 0 && (
               <div 
