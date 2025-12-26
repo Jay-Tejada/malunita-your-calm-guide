@@ -26,7 +26,7 @@ import {
 export default function Settings() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { updateAvailable, applyUpdate } = useAppUpdate();
+  const { updateAvailable, applyUpdate, checkForUpdates, isChecking } = useAppUpdate();
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [isInstalled, setIsInstalled] = useState(false);
 
@@ -171,17 +171,28 @@ export default function Settings() {
               <Button
                 variant={updateAvailable ? "default" : "outline"}
                 size="sm"
-                onClick={() => {
+                disabled={isChecking}
+                onClick={async () => {
                   hapticLight();
-                  applyUpdate();
-                  toast({
-                    title: "Updating...",
-                    description: "The app will refresh with the latest version",
-                  });
+                  if (updateAvailable) {
+                    applyUpdate();
+                    toast({
+                      title: "Updating...",
+                      description: "The app will refresh with the latest version",
+                    });
+                  } else {
+                    const hasUpdate = await checkForUpdates();
+                    toast({
+                      title: hasUpdate ? "Update found!" : "You're up to date",
+                      description: hasUpdate 
+                        ? "Tap again to install the update" 
+                        : "No new updates available",
+                    });
+                  }
                 }}
               >
-                <RefreshCw className="w-4 h-4 mr-2" />
-                {updateAvailable ? "Update Available" : "Check Update"}
+                <RefreshCw className={`w-4 h-4 mr-2 ${isChecking ? 'animate-spin' : ''}`} />
+                {updateAvailable ? "Update Available" : isChecking ? "Checking..." : "Check Update"}
               </Button>
             </div>
           </CardContent>
