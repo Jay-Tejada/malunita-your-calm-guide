@@ -601,6 +601,18 @@ const Inbox = () => {
         ))}
       </div>
 
+      {/* Bottom fade gradient to indicate scrollable content */}
+      {tasks.length > 5 && (
+        <div 
+          className="pointer-events-none fixed bottom-0 left-0 right-0 h-16 z-40"
+          style={{
+            background: 'linear-gradient(to top, hsl(var(--background)) 0%, transparent 100%)',
+            opacity: isSelectionMode && selectedIds.size > 0 ? 0 : 1,
+            transition: 'opacity 0.3s ease-out',
+          }}
+        />
+      )}
+
       {/* Batch action bar - animated slide up */}
       <div 
         className={`fixed bottom-0 left-0 right-0 bg-card/95 backdrop-blur-sm border-t border-border/30 px-4 py-3 safe-area-pb z-50 transition-all duration-300 ease-out ${
