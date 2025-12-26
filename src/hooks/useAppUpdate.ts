@@ -1,38 +1,36 @@
 import { useState, useEffect, useCallback } from 'react';
 
-const APP_VERSION = '1.0.0';
-
 export function useAppUpdate() {
   const [updateAvailable, setUpdateAvailable] = useState(false);
   const [registration, setRegistration] = useState<ServiceWorkerRegistration | null>(null);
+  const [isChecking, setIsChecking] = useState(false);
 
   useEffect(() => {
-    checkVersion();
-
+    // Get the existing service worker registration from vite-plugin-pwa
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js').then((reg) => {
+      navigator.serviceWorker.ready.then((reg) => {
         setRegistration(reg);
-
-        // Check for updates every 30 seconds
-        const interval = setInterval(() => {
-          reg.update();
-        }, 30000);
+        console.log('[PWA Update] Service worker ready');
+        
+        // Check if there's already a waiting worker
+        if (reg.waiting) {
+          console.log('[PWA Update] Update already waiting');
+          setUpdateAvailable(true);
+        }
 
         // Listen for new service worker
         reg.addEventListener('updatefound', () => {
+          console.log('[PWA Update] Update found');
           const newWorker = reg.installing;
           if (newWorker) {
             newWorker.addEventListener('statechange', () => {
               if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                console.log('[PWA Update] New version installed and waiting');
                 setUpdateAvailable(true);
               }
             });
           }
         });
-
-        return () => clearInterval(interval);
-      }).catch((err) => {
-        console.log('Service worker registration failed:', err);
       });
 
       // Reload when new service worker takes over
@@ -40,36 +38,55 @@ export function useAppUpdate() {
       navigator.serviceWorker.addEventListener('controllerchange', () => {
         if (!refreshing) {
           refreshing = true;
+          console.log('[PWA Update] Controller changed, reloading...');
           window.location.reload();
         }
       });
     }
   }, []);
 
-  const checkVersion = async () => {
+  const checkForUpdates = useCallback(async () => {
+    if (!registration || isChecking) return false;
+    
+    setIsChecking(true);
+    console.log('[PWA Update] Manually checking for updates...');
+    
     try {
-      const res = await fetch('/version.json?t=' + Date.now());
-      const data = await res.json();
-
-      if (data.version !== APP_VERSION) {
-        if (data.forceUpdate) {
-          window.location.reload();
-        } else {
-          setUpdateAvailable(true);
-        }
+      await registration.update();
+      console.log('[PWA Update] Update check complete');
+      
+      // Small delay to allow updatefound event to fire
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Check if there's a waiting worker after the update check
+      if (registration.waiting) {
+        setUpdateAvailable(true);
+        return true;
       }
-    } catch (e) {
-      console.log('Version check failed, offline?');
+      return false;
+    } catch (err) {
+      console.error('[PWA Update] Update check failed:', err);
+      return false;
+    } finally {
+      setIsChecking(false);
     }
-  };
+  }, [registration, isChecking]);
 
   const applyUpdate = useCallback(() => {
+    console.log('[PWA Update] Applying update...');
     if (registration?.waiting) {
-      registration.waiting.postMessage('SKIP_WAITING');
+      // Tell the waiting service worker to activate
+      registration.waiting.postMessage({ type: 'SKIP_WAITING' });
     } else {
+      // No waiting worker, just reload to get latest
       window.location.reload();
     }
   }, [registration]);
 
-  return { updateAvailable, applyUpdate };
+  return { 
+    updateAvailable, 
+    applyUpdate, 
+    checkForUpdates, 
+    isChecking 
+  };
 }
