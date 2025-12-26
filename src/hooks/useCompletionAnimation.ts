@@ -1,4 +1,5 @@
 import { useLocation } from "react-router-dom";
+import { hapticCompleteForContext, HapticContext } from "@/utils/haptics";
 
 export type CompletionContext = 'inbox' | 'today' | 'work' | 'home' | 'someday' | 'project';
 
@@ -125,12 +126,17 @@ export function getCompletionContext(pathname: string): CompletionContext {
 export function useCompletionAnimation(contextOverride?: CompletionContext): {
   context: CompletionContext;
   config: CompletionAnimationConfig;
+  triggerHaptic: (isStreak?: boolean) => Promise<void>;
 } {
   const location = useLocation();
   const context = contextOverride || getCompletionContext(location.pathname);
   const config = animationConfigs[context];
   
-  return { context, config };
+  const triggerHaptic = async (isStreak: boolean = false) => {
+    await hapticCompleteForContext(context as HapticContext, isStreak);
+  };
+  
+  return { context, config, triggerHaptic };
 }
 
 export function getCompletionConfig(context: CompletionContext): CompletionAnimationConfig {
