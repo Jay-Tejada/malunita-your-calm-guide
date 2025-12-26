@@ -16,6 +16,7 @@ import { updatePriorityStorms } from "@/ai/priorityStormPredictor";
 import { celebrations, getRandomToast } from "@/lib/celebrations";
 import { useTaskStreak } from "./useTaskStreak";
 import { useProgressVisibility } from "@/contexts/ProgressContext";
+import { captureLearnSignal } from "./useLearnSignal";
 
 export interface Task {
   id: string;
@@ -222,6 +223,9 @@ export const useTasks = () => {
       queryClient.cancelQueries({ queryKey: ['tasks'] });
 
       const previousTasks = queryClient.getQueryData<Task[]>(['tasks']);
+      
+      // Find the original task before update for learning signal capture
+      const originalTask = previousTasks?.find(t => t.id === id);
 
       // Optimistically update the cache immediately
       queryClient.setQueryData<Task[]>(['tasks'], (old) =>
@@ -230,7 +234,7 @@ export const useTasks = () => {
         )
       );
 
-      return { previousTasks };
+      return { previousTasks, originalTask, updates };
     },
     onError: (err, variables, context) => {
       // Rollback to previous value on error
@@ -243,9 +247,41 @@ export const useTasks = () => {
         variant: "destructive",
       });
     },
-    onSuccess: async (data) => {
+    onSuccess: async (data, variables, context) => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
       
+      // === LEARNING SIGNAL CAPTURE ===
+      const originalTask = context?.originalTask;
+      const updates = context?.updates;
+      
+      if (originalTask && updates) {
+        // Capture destination/category corrections
+        if (updates.category && updates.category !== originalTask.category) {
+          captureLearnSignal({
+            type: 'destination_correction',
+            from: originalTask.category || 'inbox',
+            to: updates.category,
+          }, data.id);
+        }
+        
+        // Capture scheduled_bucket corrections
+        if (updates.scheduled_bucket && updates.scheduled_bucket !== originalTask.scheduled_bucket) {
+          captureLearnSignal({
+            type: 'destination_correction',
+            from: originalTask.scheduled_bucket || 'inbox',
+            to: updates.scheduled_bucket,
+          }, data.id);
+        }
+        
+        // Capture title/summary edits
+        if (updates.title && updates.title !== originalTask.title) {
+          captureLearnSignal({
+            type: 'summary_edit',
+            original: originalTask.title?.substring(0, 50),
+            edited: updates.title?.substring(0, 50),
+          }, data.id);
+        }
+      }
       // If task is marked as ONE-thing (is_focus), store embedding and update burnout status
       if (data.is_focus && !data.completed) {
         try {
@@ -511,12 +547,15 @@ export const useTasks = () => {
       
       const previousTasks = queryClient.getQueryData<Task[]>(['tasks']);
       
+      // Find the task being deleted for learning signal capture
+      const deletedTask = previousTasks?.find(t => t.id === id);
+      
       // Optimistically remove the task immediately
       queryClient.setQueryData<Task[]>(['tasks'], (old) =>
         old?.filter((task) => task.id !== id)
       );
       
-      return { previousTasks };
+      return { previousTasks, deletedTask };
     },
     onError: (err, id, context) => {
       // Rollback on error
@@ -529,9 +568,21 @@ export const useTasks = () => {
         variant: "destructive",
       });
     },
-    onSuccess: async () => {
+    onSuccess: async (_, id, context) => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
       
+      // === LEARNING SIGNAL CAPTURE ===
+      const deletedTask = context?.deletedTask;
+      
+      if (deletedTask) {
+        // If this was a subtask (has parent), capture as decomposition rejection
+        if (deletedTask.parent_task_id) {
+          captureLearnSignal({
+            type: 'decomposition_rejection',
+            action: 'delete',
+          }, deletedTask.parent_task_id);
+        }
+      }
       // Update priority storm predictions when tasks are deleted
       const { data: { user } } = await supabase.auth.getUser();
       if (user?.id) {

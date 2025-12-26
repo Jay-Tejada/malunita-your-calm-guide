@@ -2165,6 +2165,77 @@ export type Database = {
         }
         Relationships: []
       }
+      user_learning_preferences: {
+        Row: {
+          confidence_bias: number
+          created_at: string
+          decomposition_threshold: number
+          edit_frequency: number
+          preferred_destinations: Json
+          signals_processed: number
+          task_granularity: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          confidence_bias?: number
+          created_at?: string
+          decomposition_threshold?: number
+          edit_frequency?: number
+          preferred_destinations?: Json
+          signals_processed?: number
+          task_granularity?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          confidence_bias?: number
+          created_at?: string
+          decomposition_threshold?: number
+          edit_frequency?: number
+          preferred_destinations?: Json
+          signals_processed?: number
+          task_granularity?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_learning_signals: {
+        Row: {
+          created_at: string
+          id: string
+          signal_data: Json
+          signal_type: string
+          task_id: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          signal_data?: Json
+          signal_type: string
+          task_id?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          signal_data?: Json
+          signal_type?: string
+          task_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_learning_signals_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_patterns: {
         Row: {
           id: string

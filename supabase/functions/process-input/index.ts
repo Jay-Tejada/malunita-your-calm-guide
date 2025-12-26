@@ -53,11 +53,33 @@ serve(async (req) => {
       .select('name')
       .eq('user_id', user_id);
 
+    // Fetch user's learning preferences (from implicit behavioral signals)
+    const { data: learningPrefs } = await supabase
+      .from('user_learning_preferences')
+      .select('*')
+      .eq('user_id', user_id)
+      .single();
+
+    console.log('📊 User learning preferences:', learningPrefs ? {
+      granularity: learningPrefs.task_granularity,
+      decomposition_threshold: learningPrefs.decomposition_threshold,
+      confidence_bias: learningPrefs.confidence_bias,
+      signals_processed: learningPrefs.signals_processed,
+    } : 'None found');
+
     const userContext = {
       goal: profile?.current_goal || null,
       preferences: profile?.focus_preferences || {},
       prefixes: profile?.common_prefixes || [],
       customCategories: customCategories?.map(c => c.name) || [],
+      // Learning preferences
+      learningPrefs: {
+        preferred_destinations: learningPrefs?.preferred_destinations || {},
+        task_granularity: learningPrefs?.task_granularity || 'balanced',
+        decomposition_threshold: learningPrefs?.decomposition_threshold || 0.7,
+        confidence_bias: learningPrefs?.confidence_bias || 0,
+        edit_frequency: learningPrefs?.edit_frequency || 0,
+      },
     };
 
     // ============================================================
