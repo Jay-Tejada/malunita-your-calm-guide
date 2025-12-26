@@ -19,7 +19,7 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
-import { SortableTaskItem } from './SortableTaskItem';
+import { WorkSortableTaskItem } from '@/components/work/WorkSortableTaskItem';
 
 interface DragHandleProps {
   attributes?: Record<string, any>;
@@ -160,7 +160,7 @@ export const ProjectSection = ({
                 strategy={verticalListSortingStrategy}
               >
                 {incompleteTasks.filter(t => !t.parent_task_id).map(task => (
-                  <SortableTaskItem
+                  <WorkSortableTaskItem
                     key={task.id}
                     task={task}
                     allTasks={allTasks}

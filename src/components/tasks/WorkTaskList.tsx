@@ -1,7 +1,7 @@
 import { useMemo, useCallback } from "react";
 import { useTasks } from "@/hooks/useTasks";
 import { useProjectTasks } from "@/hooks/useProjectTasks";
-import { TaskRow } from "@/components/shared/TaskRow";
+import { WorkTaskRow } from "@/components/work/WorkTaskRow";
 
 interface WorkTaskListProps {
   showCompleted: boolean;
@@ -74,10 +74,10 @@ export const WorkTaskList = ({ showCompleted }: WorkTaskListProps) => {
   }
 
   return (
-    <div className="space-y-0 mb-8">
-      {/* Ungrouped tasks first (implicit "General" group - no header) */}
+    <div className="space-y-1 mb-8">
+      {/* Ungrouped tasks first */}
       {tasksWithoutProjects.map((task) => (
-        <TaskRow
+        <WorkTaskRow
           key={task.id}
           task={task}
           onComplete={handleComplete}
@@ -91,16 +91,17 @@ export const WorkTaskList = ({ showCompleted }: WorkTaskListProps) => {
         const project = projects?.find(p => p.id === projectId);
         return (
           <div key={projectId}>
-            <h3 className="text-[10px] uppercase tracking-widest text-muted-foreground/30 mt-6 mb-2">
+            <h3 className="text-[10px] uppercase tracking-widest text-muted-foreground/30 mt-6 mb-2 px-3">
               {project?.title || 'Project'}
             </h3>
             {projectTasks.map((task) => (
-              <TaskRow
+              <WorkTaskRow
                 key={task.id}
                 task={task}
                 onComplete={handleComplete}
                 onDelete={handleDelete}
                 onEdit={handleEdit}
+                projectName={project?.title}
               />
             ))}
           </div>
