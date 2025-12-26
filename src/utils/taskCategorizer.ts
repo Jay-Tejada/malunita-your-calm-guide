@@ -73,6 +73,40 @@ export const estimateMinutes = (type: TaskType): number => {
   return estimates[type];
 };
 
+// Max single task estimate: 60 minutes
+const MAX_SINGLE_TASK_MINUTES = 60;
+// Max session duration: 90 minutes (Pomodoro-friendly)
+const MAX_SESSION_MINUTES = 90;
+// Min session duration for display
+const MIN_SESSION_MINUTES = 5;
+
+// Calculate capped session duration from tasks
+export const calculateSessionDuration = (tasks: { analysis: { estimatedMinutes: number } }[], maxTasks?: number): number => {
+  const selectedTasks = maxTasks ? tasks.slice(0, maxTasks) : tasks;
+  const rawTotal = selectedTasks.reduce((sum, t) => sum + Math.min(t.analysis.estimatedMinutes, MAX_SINGLE_TASK_MINUTES), 0);
+  return Math.min(Math.max(rawTotal, MIN_SESSION_MINUTES), MAX_SESSION_MINUTES);
+};
+
+// Format duration for display
+export const formatSessionDuration = (minutes: number): string => {
+  if (minutes <= 60) {
+    return `${minutes}-minute`;
+  } else if (minutes <= 90) {
+    const hours = minutes / 60;
+    return hours === 1 ? '1-hour' : `${hours.toFixed(1).replace('.0', '')}-hour`;
+  }
+  // Should not reach here due to caps, but fallback
+  const blocks = Math.ceil(minutes / 45);
+  return `${blocks} focused blocks`;
+};
+
+// Get block suggestion when tasks exceed cap
+export const getBlockSuggestion = (totalMinutes: number, taskCount: number): string | null => {
+  if (totalMinutes <= MAX_SESSION_MINUTES) return null;
+  const blocks = Math.ceil(totalMinutes / 45);
+  return `These ${taskCount} tasks could fit into ${blocks} focused blocks`;
+};
+
 // Enhanced analysis types
 export interface TaskAnalysis {
   type: TaskType;
@@ -147,83 +181,88 @@ export const generateFlowSessions = (tasks: any[]): FlowSession[] => {
   const sessions: FlowSession[] = [];
   const analyzed = tasks.map(t => ({ ...t, analysis: analyzeTask(t) }));
   
-  // 1. Tiny Task Fiesta (low cognitive, quick tasks)
+  // 1. Tiny Task Fiesta (low cognitive, quick tasks) - cap at 10 tasks
   const tinyTasks = analyzed.filter(t => 
     t.analysis.cognitiveLoad === 'low' && 
     t.analysis.estimatedMinutes <= 5
   );
   if (tinyTasks.length >= 3) {
+    const selectedTiny = tinyTasks.slice(0, 10);
     sessions.push({
       id: 'tiny-tasks',
       type: 'tiny_task_fiesta',
       label: 'Tiny Task Fiesta',
-      description: `Clear ${tinyTasks.length} quick tasks`,
-      tasks: tinyTasks,
-      estimatedMinutes: tinyTasks.reduce((sum, t) => sum + t.analysis.estimatedMinutes, 0),
+      description: `Clear ${selectedTiny.length} quick tasks`,
+      tasks: selectedTiny,
+      estimatedMinutes: calculateSessionDuration(selectedTiny),
       icon: 'zap',
     });
   }
   
-  // 2. Focus Block (high cognitive, deep work)
+  // 2. Focus Block (high cognitive, deep work) - max 3 tasks, 45 min default
   const deepTasks = analyzed.filter(t => 
     t.analysis.type === 'deep_work' || 
     t.analysis.cognitiveLoad === 'high'
   );
   if (deepTasks.length >= 1) {
+    const selectedDeep = deepTasks.slice(0, 3);
     sessions.push({
       id: 'focus-block',
       type: 'focus_block',
       label: 'Focus Block',
       description: 'Deep work requiring concentration',
-      tasks: deepTasks.slice(0, 3),
-      estimatedMinutes: 45,
+      tasks: selectedDeep,
+      estimatedMinutes: Math.min(calculateSessionDuration(selectedDeep), 45),
       icon: 'target',
     });
   }
   
-  // 3. Admin Hour (admin tasks)
+  // 3. Admin Hour (admin tasks) - cap at 6 tasks
   const adminTasks = analyzed.filter(t => t.analysis.type === 'admin');
   if (adminTasks.length >= 3) {
+    const selectedAdmin = adminTasks.slice(0, 6);
     sessions.push({
       id: 'admin-hour',
       type: 'admin_hour',
       label: 'Admin Hour',
       description: 'Life maintenance tasks',
-      tasks: adminTasks,
-      estimatedMinutes: adminTasks.reduce((sum, t) => sum + t.analysis.estimatedMinutes, 0),
+      tasks: selectedAdmin,
+      estimatedMinutes: calculateSessionDuration(selectedAdmin),
       icon: 'clipboard',
     });
   }
   
-  // 4. Avoidance Buster (tasks you've been putting off)
+  // 4. Avoidance Buster (tasks you've been putting off) - cap at 5 tasks
   const avoidedTasks = analyzed.filter(t => t.analysis.isAvoided);
   if (avoidedTasks.length >= 2) {
+    const selectedAvoided = avoidedTasks.slice(0, 5);
     sessions.push({
       id: 'avoidance-buster',
       type: 'avoidance_buster',
       label: 'Avoidance Buster',
-      description: `${avoidedTasks.length} tasks you've been putting off`,
-      tasks: avoidedTasks,
-      estimatedMinutes: avoidedTasks.reduce((sum, t) => sum + t.analysis.estimatedMinutes, 0),
+      description: `${selectedAvoided.length} tasks you've been putting off`,
+      tasks: selectedAvoided,
+      estimatedMinutes: calculateSessionDuration(selectedAvoided),
       icon: 'alert-triangle',
     });
   }
   
-  // 5. Communication Batch (communication tasks)
+  // 5. Communication Batch (communication tasks) - cap at 8 tasks
   const commTasks = analyzed.filter(t => t.analysis.type === 'communication');
   if (commTasks.length >= 3) {
+    const selectedComm = commTasks.slice(0, 8);
     sessions.push({
       id: 'comms-batch',
       type: 'communication_batch',
       label: 'Communication Batch',
-      description: `Clear ${commTasks.length} messages`,
-      tasks: commTasks,
-      estimatedMinutes: commTasks.reduce((sum, t) => sum + t.analysis.estimatedMinutes, 0),
+      description: `Clear ${selectedComm.length} messages`,
+      tasks: selectedComm,
+      estimatedMinutes: calculateSessionDuration(selectedComm),
       icon: 'message-square',
     });
   }
   
-  // 6. Project Pulse (tasks sharing same project/category)
+  // 6. Project Pulse (tasks sharing same project/category) - cap at 5 tasks per project
   const projectGroups: Record<string, any[]> = {};
   analyzed.forEach(task => {
     const project = task.custom_category_id || task.category || null;
@@ -235,14 +274,15 @@ export const generateFlowSessions = (tasks: any[]): FlowSession[] => {
   Object.entries(projectGroups).forEach(([projectId, projectTasks]) => {
     if (projectTasks.length >= 3) {
       const projectName = projectTasks[0].category || 'Project';
+      const selectedProject = projectTasks.slice(0, 5);
       
       sessions.push({
         id: `project-${projectId}`,
         type: 'project_pulse',
         label: `${projectName} Focus`,
-        description: `${projectTasks.length} related tasks`,
-        tasks: projectTasks,
-        estimatedMinutes: projectTasks.reduce((sum, t) => sum + t.analysis.estimatedMinutes, 0),
+        description: `${selectedProject.length} related tasks`,
+        tasks: selectedProject,
+        estimatedMinutes: calculateSessionDuration(selectedProject),
         icon: 'folder',
       });
     }
