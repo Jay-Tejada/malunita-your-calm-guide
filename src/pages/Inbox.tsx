@@ -6,7 +6,7 @@ import { useSwipeable } from 'react-swipeable';
 import { CaptureInput } from '@/ui/CaptureInput';
 import { colors } from '@/ui/tokens';
 import { AppLayout } from '@/ui/AppLayout';
-import { hapticSwipe, hapticHint, hapticLight, hapticSuccess, hapticMedium } from '@/utils/haptics';
+import { hapticSwipe, hapticHint, hapticLight, hapticMedium, hapticCompleteInbox } from '@/utils/haptics';
 import {
   Dialog,
   DialogContent,
@@ -124,7 +124,7 @@ const SwipeableTaskRow = ({
     onSwipedRight: (e) => {
       if (isSelectionMode) return;
       if (isHorizontalSwipe && Math.abs(e.deltaX) > 80 && !isEditing) {
-        hapticSuccess();
+        hapticCompleteInbox();
         // Trigger completion animation sequence
         setIsCompleting(true);
         setTimeout(() => {
@@ -175,7 +175,8 @@ const SwipeableTaskRow = ({
       onToggleSelect();
       return;
     }
-    hapticSuccess();
+    // INBOX: Ultra-light haptic - acknowledges without celebrating
+    hapticCompleteInbox();
     setIsCompleting(true);
     // Inbox uses minimal timing - quick fade and collapse
     setTimeout(() => {

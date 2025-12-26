@@ -2,7 +2,6 @@ import { useState, memo } from "react";
 import { Check, MoreHorizontal } from "lucide-react";
 import { Task } from "@/hooks/useTasks";
 import { useCompletionAnimation, CompletionContext } from "@/hooks/useCompletionAnimation";
-import { hapticSuccess } from "@/utils/haptics";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,12 +21,13 @@ export const TaskRow = memo(({ task, onComplete, onDelete, onEdit, contextOverri
   const [isCompleting, setIsCompleting] = useState(false);
   const [isExiting, setIsExiting] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
-  const { config } = useCompletionAnimation(contextOverride);
+  const { config, triggerHaptic } = useCompletionAnimation(contextOverride);
 
   const handleComplete = async () => {
     if (isCompleting) return;
     
-    hapticSuccess();
+    // Trigger context-aware haptic
+    triggerHaptic(false);
     setIsCompleting(true);
     
     // Staggered animation sequence based on context
