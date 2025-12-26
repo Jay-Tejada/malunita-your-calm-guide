@@ -167,7 +167,8 @@ const SwipeableTaskRow = ({
     }
   };
 
-  // Handle checkbox tap completion with animation
+  // INBOX context: Softest animation - fade only, no slide, quick collapse
+  // Timing: 80ms exit delay, 120ms total before complete
   const handleCheckboxComplete = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (isSelectionMode) {
@@ -176,20 +177,22 @@ const SwipeableTaskRow = ({
     }
     hapticSuccess();
     setIsCompleting(true);
+    // Inbox uses minimal timing - quick fade and collapse
     setTimeout(() => {
       setIsExiting(true);
-      setTimeout(() => onComplete(), 180);
-    }, 120);
+      setTimeout(() => onComplete(), 120);
+    }, 80);
   };
 
+  // INBOX: No slide movement (translate-y stays 0), just fade and collapse
   return (
     <div 
       className={`relative overflow-hidden transition-all ease-out ${
-        isExiting ? 'max-h-0 opacity-0 translate-y-2' : 'max-h-[500px]'
+        isExiting ? 'max-h-0 opacity-0' : 'max-h-[500px]'
       } ${isSelected ? 'bg-primary/5' : ''}`}
       style={{ 
-        transitionDuration: isExiting ? '200ms' : '300ms',
-        transitionProperty: 'max-height, opacity, transform',
+        transitionDuration: isExiting ? '150ms' : '300ms',
+        transitionProperty: 'max-height, opacity',
       }}
     >
       {/* Complete background (swipe right) */}
@@ -227,46 +230,32 @@ const SwipeableTaskRow = ({
           touchAction: isHorizontalSwipe ? 'pan-x' : 'pan-y',
         }}
       >
+        {/* INBOX: Softer fade (opacity 50%), no slide movement */}
         <div 
           className={`flex items-start gap-4 px-5 py-4 cursor-pointer transition-all ease-out ${
-            isCompleting ? 'opacity-60' : ''
+            isCompleting ? 'opacity-50' : ''
           }`}
-          style={{ 
-            transitionDuration: '150ms',
-            transform: isCompleting ? 'translateY(4px)' : 'translateY(0)',
-          }}
+          style={{ transitionDuration: '100ms' }}
           onClick={handleRowClick}
         >
-          {/* Checkbox with tactile micro-interaction */}
+          {/* INBOX Checkbox: Subtle scale (1.08), NO ripple, quick fill */}
           <button
             onClick={handleCheckboxComplete}
             className={`relative w-4 h-4 mt-1 flex-shrink-0 flex items-center justify-center transition-all ease-out ${
               isSelectionMode 
                 ? `rounded ${isSelected ? 'bg-primary border-primary scale-110' : 'border border-muted-foreground/30 hover:border-muted-foreground/50'}`
                 : isCompleting
-                  ? 'rounded-full bg-emerald-500/80 border-emerald-500/80'
+                  ? 'rounded-full bg-emerald-500/70 border-emerald-500/70 scale-[1.08]'
                   : 'rounded-full border border-muted-foreground/30 hover:border-muted-foreground/50 active:scale-95'
             }`}
-            style={{ 
-              transitionDuration: '100ms',
-              animation: isCompleting ? 'checkbox-pulse 120ms ease-out' : 'none',
-            }}
+            style={{ transitionDuration: '100ms' }}
           >
-            {/* Ripple effect on completion */}
-            {isCompleting && (
-              <span 
-                className="absolute inset-0 rounded-full pointer-events-none"
-                style={{
-                  animation: 'checkbox-ripple 150ms ease-out forwards',
-                  background: 'radial-gradient(circle, hsl(var(--primary) / 0.25) 0%, transparent 70%)',
-                }}
-              />
-            )}
+            {/* NO ripple in Inbox - keep it calm */}
             {isSelectionMode && isSelected && (
               <Check className="w-3 h-3 text-primary-foreground animate-scale-in" />
             )}
             {!isSelectionMode && isCompleting && (
-              <Check className="w-3 h-3 text-white" style={{ animation: 'checkmark-draw 100ms ease-out' }} />
+              <Check className="w-3 h-3 text-white animate-scale-in" />
             )}
           </button>
           {isEditing ? (
@@ -284,12 +273,12 @@ const SwipeableTaskRow = ({
             />
           ) : (
             <div className="flex-1 relative">
-              {/* Text content with collapse behavior + completion fade */}
+              {/* INBOX text: Fade only, NO strikethrough (intake, not achievement) */}
               <p 
                 className={`text-sm leading-relaxed tracking-wide whitespace-pre-wrap transition-all ease-out ${
                   isLongEntry && !isTextExpanded ? 'line-clamp-2' : ''
-                } ${isCompleting ? 'text-foreground/40 line-through decoration-foreground/20' : 'text-foreground/70'}`}
-                style={{ transitionDuration: '120ms', transitionDelay: isCompleting ? '30ms' : '0ms' }}
+                } ${isCompleting ? 'text-foreground/40' : 'text-foreground/70'}`}
+                style={{ transitionDuration: '100ms' }}
               >
                 {task.title}
               </p>
