@@ -6,7 +6,7 @@ import { useSwipeable } from 'react-swipeable';
 import { CaptureInput } from '@/ui/CaptureInput';
 import { colors } from '@/ui/tokens';
 import { AppLayout } from '@/ui/AppLayout';
-import { hapticSwipe, hapticHint, hapticLight } from '@/utils/haptics';
+import { hapticSwipe, hapticHint, hapticLight, hapticSuccess } from '@/utils/haptics';
 
 const SWIPE_HINT_KEY = 'malunita_inbox_swipe_hint_seen';
 
@@ -64,7 +64,8 @@ const SwipeableTaskRow = ({
   onToggleSelect,
 }: SwipeableTaskRowProps) => {
   const [swipeOffset, setSwipeOffset] = useState(0);
-  const [isDeferring, setIsDeferring] = useState(false);
+  const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | null>(null);
+  const [isExiting, setIsExiting] = useState(false);
   const [isHorizontalSwipe, setIsHorizontalSwipe] = useState(false);
   const [isTextExpanded, setIsTextExpanded] = useState(false);
   
@@ -88,28 +89,44 @@ const SwipeableTaskRow = ({
       }
       
       // Only apply swipe offset for confirmed horizontal swipes
-      if (isHorizontalSwipe && e.dir === 'Left' && !isEditing) {
-        setSwipeOffset(Math.min(Math.abs(e.deltaX), 100));
+      if (isHorizontalSwipe && !isEditing) {
+        if (e.dir === 'Left') {
+          setSwipeDirection('left');
+          setSwipeOffset(Math.min(Math.abs(e.deltaX), 100));
+        } else if (e.dir === 'Right') {
+          setSwipeDirection('right');
+          setSwipeOffset(Math.min(Math.abs(e.deltaX), 100));
+        }
       }
     },
     onSwipedLeft: (e) => {
       if (isSelectionMode) return;
       if (isHorizontalSwipe && Math.abs(e.deltaX) > 80 && !isEditing) {
         hapticSwipe();
-        setIsDeferring(true);
+        setIsExiting(true);
         setTimeout(() => onMove('someday'), 200);
       } else {
         setSwipeOffset(0);
+        setSwipeDirection(null);
       }
       setIsHorizontalSwipe(false);
     },
-    onSwipedRight: () => {
-      setSwipeOffset(0);
+    onSwipedRight: (e) => {
+      if (isSelectionMode) return;
+      if (isHorizontalSwipe && Math.abs(e.deltaX) > 80 && !isEditing) {
+        hapticSuccess();
+        setIsExiting(true);
+        setTimeout(() => onComplete(), 200);
+      } else {
+        setSwipeOffset(0);
+        setSwipeDirection(null);
+      }
       setIsHorizontalSwipe(false);
     },
     onTouchEndOrOnMouseUp: () => {
       if (swipeOffset < 80) {
         setSwipeOffset(0);
+        setSwipeDirection(null);
       }
       setIsHorizontalSwipe(false);
     },
@@ -137,9 +154,22 @@ const SwipeableTaskRow = ({
   };
 
   return (
-    <div className={`relative overflow-hidden transition-all duration-300 ${isDeferring ? 'h-0 opacity-0' : ''} ${isSelected ? 'bg-primary/5' : ''}`}>
-      {/* Defer background - only render when actively swiping */}
-      {swipeOffset > 0 && (
+    <div className={`relative overflow-hidden transition-all duration-300 ${isExiting ? 'h-0 opacity-0' : ''} ${isSelected ? 'bg-primary/5' : ''}`}>
+      {/* Complete background (swipe right) */}
+      {swipeOffset > 0 && swipeDirection === 'right' && (
+        <div 
+          className="absolute inset-y-0 left-0 flex items-center justify-start bg-emerald-500/10 transition-all"
+          style={{ width: '100%' }}
+        >
+          <div className="px-4 flex items-center gap-2 text-emerald-500/70">
+            <Check className="w-4 h-4" />
+            <span className="text-xs font-mono opacity-70">Done</span>
+          </div>
+        </div>
+      )}
+      
+      {/* Defer background (swipe left) */}
+      {swipeOffset > 0 && swipeDirection === 'left' && (
         <div 
           className="absolute inset-y-0 right-0 flex items-center justify-end bg-primary/5 transition-all"
           style={{ width: '100%' }}
@@ -154,9 +184,9 @@ const SwipeableTaskRow = ({
       {/* Task content */}
       <div
         {...handlers}
-        className="relative"
+        className="relative bg-background"
         style={{ 
-          transform: `translateX(-${swipeOffset}px)`,
+          transform: `translateX(${swipeDirection === 'right' ? swipeOffset : -swipeOffset}px)`,
           touchAction: isHorizontalSwipe ? 'pan-x' : 'pan-y',
         }}
       >
