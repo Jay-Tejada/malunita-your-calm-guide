@@ -25,6 +25,9 @@ interface SwipeableTaskRowProps {
   onCancelEdit: () => void;
 }
 
+// Threshold for collapsing long entries
+const COLLAPSE_CHAR_THRESHOLD = 100;
+
 const SwipeableTaskRow = ({
   task,
   isExpanded,
@@ -42,6 +45,17 @@ const SwipeableTaskRow = ({
   const [swipeOffset, setSwipeOffset] = useState(0);
   const [isDeferring, setIsDeferring] = useState(false);
   const [isHorizontalSwipe, setIsHorizontalSwipe] = useState(false);
+  const [isTextExpanded, setIsTextExpanded] = useState(false);
+  
+  // Determine if this entry should be collapsible
+  const isLongEntry = task.title.length > COLLAPSE_CHAR_THRESHOLD;
+  
+  // Reset text expansion when actions panel closes
+  useEffect(() => {
+    if (!isExpanded) {
+      setIsTextExpanded(false);
+    }
+  }, [isExpanded]);
 
   const handlers = useSwipeable({
     onSwiping: (e) => {
@@ -109,7 +123,12 @@ const SwipeableTaskRow = ({
           className="flex items-start gap-4 px-5 py-4 cursor-pointer transition-colors"
           onClick={() => {
             if (!isEditing) {
-              onToggleExpand();
+              // If long entry, toggle text expansion first
+              if (isLongEntry && !isTextExpanded) {
+                setIsTextExpanded(true);
+              } else {
+                onToggleExpand();
+              }
             }
           }}
         >
@@ -135,9 +154,25 @@ const SwipeableTaskRow = ({
               onClick={(e) => e.stopPropagation()}
             />
           ) : (
-            <p className="flex-1 text-sm text-foreground/70 leading-relaxed tracking-wide">
-              {task.title}
-            </p>
+            <div className="flex-1 relative">
+              {/* Text content with collapse behavior */}
+              <p 
+                className={`text-sm text-foreground/70 leading-relaxed tracking-wide whitespace-pre-wrap transition-all duration-200 ${
+                  isLongEntry && !isTextExpanded ? 'line-clamp-2' : ''
+                }`}
+              >
+                {task.title}
+              </p>
+              {/* Fade gradient for collapsed long entries */}
+              {isLongEntry && !isTextExpanded && (
+                <div 
+                  className="absolute bottom-0 left-0 right-0 h-6 pointer-events-none"
+                  style={{
+                    background: 'linear-gradient(to bottom, transparent, hsl(var(--background)))'
+                  }}
+                />
+              )}
+            </div>
           )}
         </div>
 
