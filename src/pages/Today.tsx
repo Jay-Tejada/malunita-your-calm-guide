@@ -17,6 +17,7 @@ import { TaskGroup } from '@/ui/tasks/TaskGroup';
 import { AppLayout } from '@/ui/AppLayout';
 import { TinyTaskPrompt } from '@/components/tasks/TinyTaskPrompt';
 import { TinyTaskParty } from '@/components/tasks/TinyTaskParty';
+import { deduplicateTasks } from '@/utils/duplicateDetection';
 
 const Today = () => {
   const navigate = useNavigate();
@@ -60,20 +61,32 @@ const Today = () => {
   // Show habits in the morning (before noon)
   const isMorning = new Date().getHours() < 12;
   
-  const todayTasks = tasks?.filter(t => 
+  // Deduplicate all tasks first
+  const deduplicatedTasks = useMemo(() => {
+    if (!tasks) return [];
+    return deduplicateTasks(tasks as any[], ['today', 'work', 'home', 'inbox', 'someday']);
+  }, [tasks]);
+  
+  const todayTasks = deduplicatedTasks.filter(t => 
     t.scheduled_bucket === 'today' && !t.completed
-  ) || [];
+  );
 
   const focusTask = todayTasks.find(t => t.is_focus);
   const regularTasks = todayTasks.filter(t => !t.is_focus);
   
-  const completedTasks = tasks?.filter(t => 
+  const completedTasks = deduplicatedTasks.filter(t => 
     t.scheduled_bucket === 'today' && t.completed
-  ) || [];
+  );
 
-  const inboxTasks = tasks?.filter(t => 
-    (t.category === 'inbox' || !t.scheduled_bucket) && !t.completed
-  ).slice(0, 5) || [];
+  // Get today task IDs for exclusion from inbox
+  const todayTaskIds = new Set(todayTasks.map(t => t.id));
+
+  // Inbox tasks: exclude any already in Today section AND exclude duplicates
+  const inboxTasks = deduplicatedTasks.filter(t => 
+    (t.category === 'inbox' || !t.scheduled_bucket) && 
+    !t.completed &&
+    !todayTaskIds.has(t.id) // Exclude tasks already shown in Today
+  ).slice(0, 5);
 
   const today = new Date().toLocaleDateString('en-US', { 
     weekday: 'long', 
