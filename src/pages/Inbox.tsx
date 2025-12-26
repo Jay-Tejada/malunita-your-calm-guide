@@ -84,41 +84,42 @@ const SwipeableTaskRow = ({
   });
 
   return (
-    <div className={`relative overflow-hidden transition-all duration-200 ${isDeferring ? 'h-0 opacity-0' : ''}`}>
+    <div className={`relative overflow-hidden transition-all duration-300 ${isDeferring ? 'h-0 opacity-0' : ''}`}>
       {/* Defer background */}
       <div 
-        className="absolute inset-y-0 right-0 flex items-center justify-end bg-primary/10 transition-all"
+        className="absolute inset-y-0 right-0 flex items-center justify-end bg-primary/5 transition-all"
         style={{ width: swipeOffset > 0 ? '100%' : 0 }}
       >
-        <div className="px-4 flex items-center gap-2 text-primary/70">
+        <div className="px-4 flex items-center gap-2 text-primary/50">
           <Moon className="w-4 h-4" />
-          <span className="text-xs font-mono">Someday</span>
+          <span className="text-xs font-mono opacity-70">Someday</span>
         </div>
       </div>
 
       {/* Task content */}
       <div
         {...handlers}
-        className="relative bg-background"
+        className="relative"
         style={{ 
           transform: `translateX(-${swipeOffset}px)`,
           touchAction: isHorizontalSwipe ? 'pan-x' : 'pan-y',
         }}
       >
         <div 
-          className="flex items-start gap-3 px-4 py-3 cursor-pointer hover:bg-muted/50 transition-colors"
+          className="flex items-start gap-4 px-5 py-4 cursor-pointer transition-colors"
           onClick={() => {
             if (!isEditing) {
               onToggleExpand();
             }
           }}
         >
+          {/* Minimal checkbox - smaller, lower opacity, outline-only */}
           <button
             onClick={(e) => {
               e.stopPropagation();
               onComplete();
             }}
-            className="w-5 h-5 mt-0.5 rounded-full border border-muted-foreground hover:border-foreground hover:bg-muted flex-shrink-0 transition-colors"
+            className="w-4 h-4 mt-1 rounded-full border border-muted-foreground/30 hover:border-muted-foreground/50 flex-shrink-0 transition-all duration-200"
           />
           {isEditing ? (
             <input
@@ -130,58 +131,58 @@ const SwipeableTaskRow = ({
               }}
               onBlur={onSaveEdit}
               autoFocus
-              className="flex-1 font-mono text-sm text-foreground leading-relaxed bg-transparent border-b border-border focus:outline-none focus:border-accent"
+              className="flex-1 font-mono text-sm text-foreground/80 leading-relaxed bg-transparent border-b border-border/50 focus:outline-none focus:border-accent/50"
               onClick={(e) => e.stopPropagation()}
             />
           ) : (
-            <p className="flex-1 font-mono text-sm text-foreground leading-relaxed">
+            <p className="flex-1 text-sm text-foreground/70 leading-relaxed tracking-wide">
               {task.title}
             </p>
           )}
         </div>
 
-        {/* Expanded actions */}
+        {/* Expanded actions - softer styling */}
         {isExpanded && (
-          <div className="flex items-center gap-1 px-4 py-2 pl-12 bg-muted/30 border-t border-border">
+          <div className="flex items-center gap-1 px-5 py-3 pl-14 bg-muted/10">
             <button
               onClick={() => onMove('today')}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-colors"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-muted-foreground/70 hover:text-foreground/70 rounded transition-colors"
             >
-              <Star className="w-3.5 h-3.5" />
+              <Star className="w-3 h-3" />
               Today
             </button>
             <button
               onClick={() => onMove('someday')}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-colors"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-muted-foreground/70 hover:text-foreground/70 rounded transition-colors"
             >
-              <Moon className="w-3.5 h-3.5" />
+              <Moon className="w-3 h-3" />
               Someday
             </button>
             <button
               onClick={() => onMove('work')}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-colors"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-muted-foreground/70 hover:text-foreground/70 rounded transition-colors"
             >
-              <Briefcase className="w-3.5 h-3.5" />
+              <Briefcase className="w-3 h-3" />
               Work
             </button>
             <button
               onClick={() => onMove('home')}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-colors"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-muted-foreground/70 hover:text-foreground/70 rounded transition-colors"
             >
-              <Home className="w-3.5 h-3.5" />
+              <Home className="w-3 h-3" />
               Home
             </button>
             <button
               onClick={onStartEdit}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-colors ml-auto"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-muted-foreground/50 hover:text-foreground/60 rounded transition-colors ml-auto"
             >
-              <Pencil className="w-3.5 h-3.5" />
+              <Pencil className="w-3 h-3" />
             </button>
             <button
               onClick={onDelete}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-destructive/70 hover:text-destructive hover:bg-destructive/10 rounded transition-colors"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-destructive/40 hover:text-destructive/60 rounded transition-colors"
             >
-              <Trash2 className="w-3.5 h-3.5" />
+              <Trash2 className="w-3 h-3" />
             </button>
           </div>
         )}
@@ -328,19 +329,26 @@ const Inbox = () => {
     <AppLayout 
       title="Inbox" 
       showBack 
-      rightAction={<span style={{ color: colors.text.muted }}>{tasks.length}</span>}
+      rightAction={<span className="text-muted-foreground/50 text-sm">{tasks.length}</span>}
     >
 
+      {/* Header subtitle */}
+      <div className="px-5 pt-2 pb-4">
+        <p className="text-xs text-muted-foreground/40 tracking-wide">
+          Just intake. Nothing here needs action yet.
+        </p>
+      </div>
+
       {/* Quick capture */}
-      <div className="px-4 py-3" style={{ borderBottom: `1px solid ${colors.border.subtle}` }}>
+      <div className="px-5 pb-5">
         <CaptureInput
           placeholder="Capture a thought..."
           onSubmit={(value) => addTask(value)}
         />
       </div>
 
-      {/* Task list - let AppLayout handle scrolling */}
-      <div className="divide-y divide-border">
+      {/* Task list - spaced items, no borders */}
+      <div className="space-y-1 px-1">
         {tasks.map((task, index) => (
           <div key={task.id} className="relative">
             {/* Swipe hint on first task */}
@@ -349,9 +357,9 @@ const Inbox = () => {
                 className="absolute inset-0 z-10 flex items-center justify-end pointer-events-none animate-pulse"
                 onClick={dismissSwipeHint}
               >
-                <div className="flex items-center gap-1 pr-6 text-primary/60">
+                <div className="flex items-center gap-1 pr-6 text-primary/40">
                   <SwipeIcon className="w-4 h-4 animate-[bounce_1s_ease-in-out_infinite]" style={{ animationDirection: 'alternate' }} />
-                  <span className="text-xs font-mono">swipe to defer</span>
+                  <span className="text-xs opacity-70">swipe to defer</span>
                 </div>
               </div>
             )}
@@ -380,10 +388,10 @@ const Inbox = () => {
 
       {/* Empty state */}
       {!loading && tasks.length === 0 && (
-        <div className="px-4 py-16 text-center">
-          <p className="text-sm text-muted-foreground mb-1">Inbox empty</p>
-          <p className="text-xs text-muted-foreground/70">
-            Capture thoughts above, organize later
+        <div className="px-5 py-20 text-center">
+          <p className="text-sm text-muted-foreground/60 mb-2">Nothing captured yet</p>
+          <p className="text-xs text-muted-foreground/30">
+            Write a thought above. No pressure.
           </p>
         </div>
       )}
