@@ -2648,6 +2648,34 @@ body.pwa-standalone #root {
   min-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
 }
 
+/* Force Radix/shadcn portal overlays to dark (prevents light-token flashes) */
+[data-radix-dialog-overlay],
+[data-radix-alert-dialog-overlay],
+[data-radix-drawer-overlay],
+[data-radix-sheet-overlay],
+[data-radix-portal] [data-radix-dialog-overlay],
+[data-radix-portal] [data-radix-alert-dialog-overlay] {
+  background-color: hsl(240 6% 6% / 0.8) !important;
+}
+
+/* Common overlay utility backgrounds used across the app */
+.bg-background\/95 {
+  background-color: hsl(240 6% 6% / 0.95) !important;
+}
+
+.bg-background\/90 {
+  background-color: hsl(240 6% 6% / 0.9) !important;
+}
+
+.bg-background {
+  background-color: hsl(240 6% 6%) !important;
+}
+
+/* Overlay fixes for Radix presentation wrappers when open */
+[data-radix-portal] [data-state="open"][role="presentation"] {
+  background-color: hsl(240 6% 6% / 0.95) !important;
+}
+
 /* Safe area padding for fixed elements */
 .safe-area-bottom {
   padding-bottom: max(1rem, env(safe-area-inset-bottom));
