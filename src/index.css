@@ -2614,7 +2614,14 @@ button:active,
 }
 
 /* Ensure content is tall enough to hide address bar */
-html, body {
+html, body, #root {
+  min-height: 100vh;
+  min-height: 100dvh;
+  background-color: hsl(var(--background));
+}
+
+/* Ensure all wrapper elements have background */
+#root > div {
   min-height: 100vh;
   min-height: 100dvh;
   background-color: hsl(var(--background));
