@@ -237,23 +237,36 @@ const SwipeableTaskRow = ({
           }}
           onClick={handleRowClick}
         >
-          {/* Checkbox with completion animation */}
+          {/* Checkbox with tactile micro-interaction */}
           <button
             onClick={handleCheckboxComplete}
-            className={`w-4 h-4 mt-1 flex-shrink-0 flex items-center justify-center transition-all ease-out ${
+            className={`relative w-4 h-4 mt-1 flex-shrink-0 flex items-center justify-center transition-all ease-out ${
               isSelectionMode 
                 ? `rounded ${isSelected ? 'bg-primary border-primary scale-110' : 'border border-muted-foreground/30 hover:border-muted-foreground/50'}`
                 : isCompleting
-                  ? 'rounded-full bg-emerald-500/80 border-emerald-500/80 scale-110'
-                  : 'rounded-full border border-muted-foreground/30 hover:border-muted-foreground/50'
+                  ? 'rounded-full bg-emerald-500/80 border-emerald-500/80'
+                  : 'rounded-full border border-muted-foreground/30 hover:border-muted-foreground/50 active:scale-95'
             }`}
-            style={{ transitionDuration: '100ms' }}
+            style={{ 
+              transitionDuration: '100ms',
+              animation: isCompleting ? 'checkbox-pulse 120ms ease-out' : 'none',
+            }}
           >
+            {/* Ripple effect on completion */}
+            {isCompleting && (
+              <span 
+                className="absolute inset-0 rounded-full pointer-events-none"
+                style={{
+                  animation: 'checkbox-ripple 150ms ease-out forwards',
+                  background: 'radial-gradient(circle, hsl(var(--primary) / 0.25) 0%, transparent 70%)',
+                }}
+              />
+            )}
             {isSelectionMode && isSelected && (
               <Check className="w-3 h-3 text-primary-foreground animate-scale-in" />
             )}
             {!isSelectionMode && isCompleting && (
-              <Check className="w-3 h-3 text-white animate-scale-in" />
+              <Check className="w-3 h-3 text-white" style={{ animation: 'checkmark-draw 100ms ease-out' }} />
             )}
           </button>
           {isEditing ? (
