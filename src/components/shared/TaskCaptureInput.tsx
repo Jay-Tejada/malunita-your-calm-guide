@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { ArrowRight, Check } from "lucide-react";
-import { useTasks } from "@/hooks/useTasks";
+import { useCapture } from "@/hooks/useAICapture";
 import { useToast } from "@/hooks/use-toast";
 
 interface TaskCaptureInputProps {
@@ -16,7 +16,7 @@ export const TaskCaptureInput = ({
 }: TaskCaptureInputProps) => {
   const [input, setInput] = useState("");
   const [showSuccess, setShowSuccess] = useState(false);
-  const { createTasks } = useTasks();
+  const { capture, isCapturing } = useCapture();
   const { toast } = useToast();
 
   const handleCapture = async () => {
@@ -24,12 +24,14 @@ export const TaskCaptureInput = ({
 
     try {
       if (onCapture) {
+        // Custom handler provided (for page-specific logic)
         onCapture(input.trim());
       } else {
-        await createTasks([{
-          title: input.trim(),
-          category: category || null,
-        }]);
+        // Route through AI pipeline for full processing
+        await capture({
+          text: input.trim(),
+          category: category || 'inbox',
+        });
       }
 
       // Show success state briefly
