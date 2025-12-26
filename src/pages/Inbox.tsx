@@ -6,7 +6,16 @@ import { useSwipeable } from 'react-swipeable';
 import { CaptureInput } from '@/ui/CaptureInput';
 import { colors } from '@/ui/tokens';
 import { AppLayout } from '@/ui/AppLayout';
-import { hapticSwipe, hapticHint, hapticLight, hapticSuccess } from '@/utils/haptics';
+import { hapticSwipe, hapticHint, hapticLight, hapticSuccess, hapticMedium } from '@/utils/haptics';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 
 const SWIPE_HINT_KEY = 'malunita_inbox_swipe_hint_seen';
 
@@ -309,6 +318,7 @@ const Inbox = () => {
   // Batch selection state
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   // Check if swipe hint should be shown
   useEffect(() => {
@@ -470,11 +480,17 @@ const Inbox = () => {
     setTasks(prev => prev.filter(t => !selectedIds.has(t.id)));
     setSelectedIds(new Set());
     setIsSelectionMode(false);
+    setShowDeleteConfirm(false);
 
     await supabase
       .from('tasks')
       .delete()
       .in('id', idsToDelete);
+  };
+
+  const handleDeleteClick = () => {
+    hapticMedium();
+    setShowDeleteConfirm(true);
   };
 
   const startEditing = (task: any) => {
@@ -623,7 +639,7 @@ const Inbox = () => {
             <span className="text-xs">Home</span>
           </button>
           <button
-            onClick={batchDelete}
+            onClick={handleDeleteClick}
             className="flex flex-col items-center gap-1 px-4 py-2 text-destructive/60 hover:text-destructive transition-colors"
           >
             <Trash2 className="w-5 h-5" />
@@ -631,6 +647,34 @@ const Inbox = () => {
           </button>
         </div>
       </div>
+
+      {/* Delete confirmation dialog */}
+      <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        <DialogContent className="max-w-xs">
+          <DialogHeader>
+            <DialogTitle>Delete {selectedIds.size} item{selectedIds.size !== 1 ? 's' : ''}?</DialogTitle>
+            <DialogDescription>
+              This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex-row gap-2 sm:justify-end">
+            <Button
+              variant="outline"
+              onClick={() => setShowDeleteConfirm(false)}
+              className="flex-1 sm:flex-none"
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={batchDelete}
+              className="flex-1 sm:flex-none"
+            >
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Empty state */}
       {!loading && tasks.length === 0 && (
