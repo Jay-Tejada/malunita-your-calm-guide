@@ -2613,15 +2613,18 @@ button:active,
   transition: opacity 150ms ease;
 }
 
-/* Ensure content is tall enough to hide address bar */
-html, body, #root {
-  min-height: 100vh;
-  min-height: 100dvh;
+/* Ensure content fills viewport with proper background */
+html {
+  height: 100%;
   background-color: hsl(var(--background));
 }
 
-/* Ensure all wrapper elements have background */
-#root > div {
+body {
+  min-height: 100%;
+  background-color: hsl(var(--background));
+}
+
+#root {
   min-height: 100vh;
   min-height: 100dvh;
   background-color: hsl(var(--background));
