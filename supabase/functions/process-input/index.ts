@@ -14,126 +14,6 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Helper function to call semantic-compress
-async function semanticCompress(text: string): Promise<{ ai_summary: string; confidence_score: number }> {
-  const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-  
-  if (!LOVABLE_API_KEY) {
-    console.warn('LOVABLE_API_KEY not set, using raw text as summary');
-    return { ai_summary: text, confidence_score: 0.5 };
-  }
-
-  try {
-    const systemPrompt = `You are a semantic compression engine. Transform raw human input into a single, clear, actionable sentence.
-Rules:
-- Remove filler words but preserve meaning
-- Do NOT invent intent
-- Do NOT split into multiple tasks
-- Output a single sentence that captures the core intent
-Return JSON: { "ai_summary": "...", "confidence_score": 0.0-1.0 }`;
-
-    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: text }
-        ],
-        temperature: 0.3,
-      }),
-    });
-
-    if (!response.ok) {
-      console.error('Semantic compress failed:', response.status);
-      return { ai_summary: text, confidence_score: 0.5 };
-    }
-
-    const data = await response.json();
-    const content = data.choices?.[0]?.message?.content || '';
-    
-    // Try to parse JSON from response
-    const jsonMatch = content.match(/\{[\s\S]*\}/);
-    if (jsonMatch) {
-      const parsed = JSON.parse(jsonMatch[0]);
-      return {
-        ai_summary: parsed.ai_summary || text,
-        confidence_score: parsed.confidence_score || 0.7
-      };
-    }
-    
-    return { ai_summary: content.trim() || text, confidence_score: 0.7 };
-  } catch (error) {
-    console.error('Semantic compress error:', error);
-    return { ai_summary: text, confidence_score: 0.5 };
-  }
-}
-
-// Helper function to call context-index
-async function contextIndex(aiSummary: string, destination?: string, project?: string): Promise<{ memory_tags: string[]; related_spaces: string[]; context_weight: number }> {
-  const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-  
-  if (!LOVABLE_API_KEY) {
-    console.warn('LOVABLE_API_KEY not set, skipping context indexing');
-    return { memory_tags: [], related_spaces: [], context_weight: 0.5 };
-  }
-
-  try {
-    const systemPrompt = `You are a context indexing engine. Extract semantic signals for memory retrieval.
-Given a task summary, identify:
-- memory_tags: 2-5 abstract, reusable themes (not task-specific words)
-- related_spaces: 1-3 life domains (work, home, health, finance, social, creative, learning)
-- context_weight: 0.0-1.0 importance for long-term memory
-
-Return JSON only: { "memory_tags": [...], "related_spaces": [...], "context_weight": 0.0-1.0 }`;
-
-    const userPrompt = `Summary: "${aiSummary}"${destination ? `\nDestination: ${destination}` : ''}${project ? `\nProject: ${project}` : ''}`;
-
-    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt }
-        ],
-        temperature: 0.3,
-      }),
-    });
-
-    if (!response.ok) {
-      console.error('Context index failed:', response.status);
-      return { memory_tags: [], related_spaces: [], context_weight: 0.5 };
-    }
-
-    const data = await response.json();
-    const content = data.choices?.[0]?.message?.content || '';
-    
-    const jsonMatch = content.match(/\{[\s\S]*\}/);
-    if (jsonMatch) {
-      const parsed = JSON.parse(jsonMatch[0]);
-      return {
-        memory_tags: (parsed.memory_tags || []).slice(0, 5),
-        related_spaces: (parsed.related_spaces || []).slice(0, 3),
-        context_weight: Math.min(1, Math.max(0, parsed.context_weight || 0.5))
-      };
-    }
-    
-    return { memory_tags: [], related_spaces: [], context_weight: 0.5 };
-  } catch (error) {
-    console.error('Context index error:', error);
-    return { memory_tags: [], related_spaces: [], context_weight: 0.5 };
-  }
-}
-
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -149,12 +29,16 @@ serve(async (req) => {
       );
     }
 
-    console.log('Processing input for user:', user_id?.substring(0, 8) + '...', 'textLength:', text?.length, 'persist:', persist);
+    console.log('🧠 Processing input for user:', user_id?.substring(0, 8) + '...', 'textLength:', text?.length, 'persist:', persist);
 
     // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // Preserve raw input FIRST - this NEVER gets lost
+    const raw_content = text;
+    console.log('📝 Raw content preserved:', raw_content.substring(0, 50) + '...');
 
     // Fetch user profile for context
     const { data: profile } = await supabase
@@ -176,29 +60,67 @@ serve(async (req) => {
       customCategories: customCategories?.map(c => c.name) || [],
     };
 
-    // STEP 0: Semantic Compression (NEW - now connected!)
-    console.log('Step 0: Running semantic compression...');
-    const { ai_summary, confidence_score } = await semanticCompress(text);
-    console.log('Semantic compression result:', { ai_summary: ai_summary.substring(0, 50), confidence_score });
+    // ============================================================
+    // STEP 0: SEMANTIC COMPRESSION - Call the dedicated edge function
+    // ============================================================
+    console.log('🔄 Step 0: Calling semantic-compress edge function...');
+    let ai_summary = raw_content; // Fallback: use raw if compression fails
+    let confidence_score = 0.5;
+    
+    try {
+      const compressionResponse = await fetch(`${supabaseUrl}/functions/v1/semantic-compress`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${supabaseKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ text: raw_content }),
+      });
 
+      if (compressionResponse.ok) {
+        const compressionData = await compressionResponse.json();
+        ai_summary = compressionData.ai_summary || raw_content;
+        confidence_score = compressionData.confidence_score || 0.7;
+        console.log('✅ Semantic compression result:', { 
+          ai_summary: ai_summary.substring(0, 60), 
+          confidence_score 
+        });
+      } else {
+        console.warn('⚠️ Semantic compression failed, using raw input as summary');
+      }
+    } catch (compressError) {
+      console.error('❌ Semantic compression error:', compressError);
+      // Continue with raw_content as fallback
+    }
+
+    // ============================================================
     // STEP 1: Extract tasks, ideas, decisions, emotion
-    console.log('Step 1: Extracting content...');
+    // ============================================================
+    console.log('🔄 Step 1: Extracting content...');
     const extracted = await extractFromInput(text, userContext);
 
+    // ============================================================
     // STEP 2: Classify tasks (tiny, complex, etc.)
-    console.log('Step 2: Classifying tasks...');
+    // ============================================================
+    console.log('🔄 Step 2: Classifying tasks...');
     const classified = await classifyTasks(extracted.tasks);
 
+    // ============================================================
     // STEP 3: Score priority
-    console.log('Step 3: Scoring priorities...');
+    // ============================================================
+    console.log('🔄 Step 3: Scoring priorities...');
     const scored = await scorePriority(classified, userContext);
 
+    // ============================================================
     // STEP 4: Infer context (people, deadlines, locations, categories)
-    console.log('Step 4: Inferring context...');
+    // ============================================================
+    console.log('🔄 Step 4: Inferring context...');
     const contextualized = await inferContext(scored, text);
 
+    // ============================================================
     // STEP 5: Compute virtual flags
-    console.log('Step 5: Computing virtual task flags...');
+    // ============================================================
+    console.log('🔄 Step 5: Computing virtual task flags...');
     const { computeVirtualFlags } = await import('../_shared/taskTypeClassifier.ts');
     
     const enrichedWithFlags = contextualized.map(task => {
@@ -212,17 +134,58 @@ serve(async (req) => {
       };
     });
 
-    // STEP 6: Context Indexing (NEW - now connected!)
-    console.log('Step 6: Running context indexing...');
-    const contextIndex_result = await contextIndex(ai_summary, category, undefined);
-    console.log('Context indexing result:', contextIndex_result);
+    // ============================================================
+    // STEP 6: CONTEXT INDEXING - Call the dedicated edge function
+    // ============================================================
+    console.log('🔄 Step 6: Calling context-index edge function...');
+    let memory_tags: string[] = [];
+    let related_spaces: string[] = [];
+    let context_weight = 0.5;
+    let project_association: string | null = null;
 
+    try {
+      const indexResponse = await fetch(`${supabaseUrl}/functions/v1/context-index`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${supabaseKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          ai_summary,
+          destination: category || 'inbox',
+          related_project: project_id,
+        }),
+      });
+
+      if (indexResponse.ok) {
+        const indexData = await indexResponse.json();
+        memory_tags = indexData.memory_tags || [];
+        related_spaces = indexData.related_spaces || [];
+        context_weight = indexData.context_weight || 0.5;
+        project_association = indexData.project_association || null;
+        console.log('✅ Context indexing result:', { 
+          memory_tags, 
+          related_spaces, 
+          context_weight 
+        });
+      } else {
+        console.warn('⚠️ Context indexing failed, continuing without memory tags');
+      }
+    } catch (indexError) {
+      console.error('❌ Context indexing error:', indexError);
+      // Continue without memory tags
+    }
+
+    // ============================================================
     // STEP 7: Route tasks to buckets
-    console.log('Step 7: Routing tasks...');
+    // ============================================================
+    console.log('🔄 Step 7: Routing tasks...');
     const routing = await routeTasks(enrichedWithFlags, userContext);
 
+    // ============================================================
     // STEP 8: Generate contextual AI response
-    console.log('Step 8: Generating response...');
+    // ============================================================
+    console.log('🔄 Step 8: Generating response...');
     const aiResponse = generateResponse({
       emotion: extracted.emotion || 'ok',
       taskCount: enrichedWithFlags.length,
@@ -235,35 +198,47 @@ serve(async (req) => {
       originalText: text
     });
 
-    // STEP 9: Persist tasks to database (NEW!)
+    // ============================================================
+    // STEP 9: PERSIST TASKS TO DATABASE
+    // ============================================================
     let createdTasks: any[] = [];
     if (persist) {
-      console.log('Step 9: Persisting tasks to database...');
+      console.log('🔄 Step 9: Persisting tasks to database...');
       
-      const tasksToInsert = enrichedWithFlags.map(task => ({
-        user_id,
-        title: task.cleaned || task.raw,
-        raw_content: text, // Preserve original input
-        ai_summary: ai_summary,
-        ai_confidence: confidence_score,
-        category: category || task.category || 'inbox',
-        scheduled_bucket: scheduled_bucket || null,
-        project_id: project_id || null,
-        is_tiny_task: task.tiny_task || task.isTiny || false,
-        ai_metadata: {
-          task_type: task.task_type,
-          heavy_task: task.heavy_task,
-          emotional_weight: task.emotional_weight,
-          memory_tags: contextIndex_result.memory_tags,
-          related_spaces: contextIndex_result.related_spaces,
-          context_weight: contextIndex_result.context_weight,
-          priority: task.priority,
-          people: task.people,
-          context_markers: task.contextMarkers,
-        },
-        reminder_time: task.reminder_time || null,
-        has_reminder: !!task.reminder_time,
-      }));
+      const tasksToInsert = enrichedWithFlags.map(task => {
+        // Determine title: prefer ai_summary if confident, else use cleaned/raw
+        let title = task.cleaned || task.raw;
+        if (confidence_score >= 0.6 && ai_summary && ai_summary !== raw_content) {
+          title = ai_summary;
+        }
+        
+        return {
+          user_id,
+          title,
+          raw_content, // ALWAYS preserve original input
+          ai_summary, // Compressed version
+          ai_confidence: confidence_score,
+          category: category || task.category || 'inbox',
+          scheduled_bucket: scheduled_bucket || null,
+          project_id: project_id || null,
+          is_tiny_task: task.tiny_task || task.isTiny || false,
+          ai_metadata: {
+            task_type: task.task_type,
+            heavy_task: task.heavy_task,
+            emotional_weight: task.emotional_weight,
+            memory_tags,
+            related_spaces,
+            context_weight,
+            project_association,
+            priority: task.priority,
+            people: task.people,
+            context_markers: task.contextMarkers,
+            confidence_score,
+          },
+          reminder_time: task.reminder_time || null,
+          has_reminder: !!task.reminder_time,
+        };
+      });
 
       const { data: insertedTasks, error: insertError } = await supabase
         .from('tasks')
@@ -271,22 +246,35 @@ serve(async (req) => {
         .select();
 
       if (insertError) {
-        console.error('Failed to insert tasks:', insertError);
+        console.error('❌ Failed to insert tasks:', insertError);
         throw new Error(`Failed to persist tasks: ${insertError.message}`);
       }
 
       createdTasks = insertedTasks || [];
-      console.log(`Successfully created ${createdTasks.length} task(s)`);
+      console.log(`✅ Successfully created ${createdTasks.length} task(s) with AI enrichment`);
+      
+      // Log what was saved for debugging
+      createdTasks.forEach((task, i) => {
+        console.log(`  📋 Task ${i + 1}:`, {
+          id: task.id,
+          title: task.title?.substring(0, 40),
+          has_raw_content: !!task.raw_content,
+          has_ai_summary: !!task.ai_summary,
+          confidence: task.ai_confidence
+        });
+      });
     }
 
+    // ============================================================
     // Prepare final output
+    // ============================================================
     const output = {
       tasks: enrichedWithFlags.map((task, index) => ({
         id: createdTasks[index]?.id || null,
         raw: task.raw,
         cleaned: task.cleaned,
         ai_summary,
-        raw_content: text,
+        raw_content,
         confidence_score,
         priority: task.priority,
         isTiny: task.isTiny,
@@ -303,9 +291,10 @@ serve(async (req) => {
         heavy_task: task.heavy_task,
         emotional_weight: task.emotional_weight,
         // Memory indexing
-        memory_tags: contextIndex_result.memory_tags,
-        related_spaces: contextIndex_result.related_spaces,
-        context_weight: contextIndex_result.context_weight,
+        memory_tags,
+        related_spaces,
+        context_weight,
+        project_association,
       })),
       createdTaskIds: createdTasks.map(t => t.id),
       ideas: extracted.ideas,
@@ -324,7 +313,7 @@ serve(async (req) => {
       routing,
     };
 
-    console.log('Processing complete. Tasks:', output.tasks?.length, 'Persisted:', createdTasks.length);
+    console.log('🎉 Processing complete. Tasks:', output.tasks?.length, 'Persisted:', createdTasks.length);
 
     return new Response(
       JSON.stringify(output),
@@ -332,7 +321,7 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Error in process-input:', error);
+    console.error('❌ Error in process-input:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return new Response(
       JSON.stringify({ error: errorMessage }),
