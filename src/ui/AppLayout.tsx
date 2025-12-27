@@ -1,5 +1,6 @@
 // src/ui/AppLayout.tsx
 
+import { useNavigate } from "react-router-dom";
 import { colors, typography } from "@/ui/tokens";
 
 interface AppLayoutProps {
@@ -17,6 +18,16 @@ export function AppLayout({
   children,
   showOrbDock = false,
 }: AppLayoutProps) {
+  const navigate = useNavigate();
+
+  const handleBack = () => {
+    // If there's browser history, go back; otherwise navigate to home
+    if (window.history.length > 1) {
+      navigate(-1);
+    } else {
+      navigate("/");
+    }
+  };
   return (
     <div
       className="min-h-screen flex flex-col"
@@ -36,7 +47,7 @@ export function AppLayout({
         >
           <div className="w-10">
             {showBack && (
-              <button onClick={() => window.history.back()} style={{ color: colors.text.secondary }}>
+              <button onClick={handleBack} style={{ color: colors.text.secondary }}>
                 ←
               </button>
             )}
