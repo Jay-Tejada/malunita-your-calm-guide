@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useOrbStore } from "@/state/orbState";
+import type { Task } from "@/hooks/useTasks";
 
 interface CaptureOptions {
   text: string;
@@ -128,15 +129,80 @@ export const useAICapture = () => {
         throw error;
       }
     },
-    onSuccess: async (result) => {
-      // Invalidate tasks cache to show new tasks
-      await queryClient.invalidateQueries({ queryKey: ['tasks'] });
-      
-      console.log(`✅ AI Capture complete: ${result.taskCount} task(s), AI processed: ${result.aiProcessed}`);
+    // Optimistic update: show the task immediately while AI pipeline runs
+    onMutate: (variables) => {
+      queryClient.cancelQueries({ queryKey: ['tasks'] });
+
+      const previousQueries = queryClient.getQueriesData<Task[]>({ queryKey: ['tasks'] });
+      const now = new Date().toISOString();
+      const tempId = `temp-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+
+      const optimisticTask: Task = {
+        id: tempId,
+        user_id: 'optimistic',
+        title: variables.text.trim(),
+        completed: false,
+        has_reminder: false,
+        has_person_name: false,
+        is_time_based: false,
+        input_method: 'text',
+        is_focus: false,
+        created_at: now,
+        updated_at: now,
+        category: variables.category ?? 'inbox',
+        scheduled_bucket: (variables.scheduled_bucket as any) ?? null,
+        project_id: variables.project_id ?? null,
+        // Ensure it appears at the top in /work where sorting is display_order asc
+        display_order: -Date.now(),
+        _optimistic: true,
+      };
+
+      queryClient.setQueriesData<Task[]>({ queryKey: ['tasks'] }, (old) => {
+        const existing = (old ?? []) as Task[];
+        return [optimisticTask, ...existing];
+      });
+
+      return { previousQueries, tempId };
     },
-    onError: (error: any) => {
+    onSuccess: async (result, _variables, context) => {
+      // Replace temp id with the real id when we can (single-task capture)
+      if (context?.tempId) {
+        if (result.taskIds.length === 1) {
+          const realId = result.taskIds[0];
+          queryClient.setQueriesData<Task[]>({ queryKey: ['tasks'] }, (old) =>
+            (old ?? []).map((t) =>
+              t.id === context.tempId ? { ...t, id: realId, _optimistic: false } : t
+            )
+          );
+        } else {
+          // If AI extracted multiple tasks, remove the placeholder and rely on refetch
+          queryClient.setQueriesData<Task[]>({ queryKey: ['tasks'] }, (old) =>
+            (old ?? []).filter((t) => t.id !== context.tempId)
+          );
+        }
+      }
+
+      // Invalidate tasks cache to sync full server data (AI fields, ordering)
+      await queryClient.invalidateQueries({ queryKey: ['tasks'] });
+
+      console.log(
+        `✅ AI Capture complete: ${result.taskCount} task(s), AI processed: ${result.aiProcessed}`
+      );
+    },
+    onError: (error: any, _variables, context) => {
+      // Roll back optimistic insert(s)
+      if (context?.previousQueries?.length) {
+        for (const [queryKey, data] of context.previousQueries) {
+          queryClient.setQueryData(queryKey, data);
+        }
+      } else if (context?.tempId) {
+        queryClient.setQueriesData<Task[]>({ queryKey: ['tasks'] }, (old) =>
+          (old ?? []).filter((t) => t.id !== context.tempId)
+        );
+      }
+
       console.error('❌ AI Capture mutation failed:', error);
-      
+
       toast({
         title: "Capture failed",
         description: error.message || "Failed to capture your input. Please try again.",
