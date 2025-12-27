@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Outlet, useLocation } from "react-router-dom";
 import { MiniOrb } from "@/components/home/MiniOrb";
+import { BottomNav } from "@/components/BottomNav";
 import { LeftDrawer } from "@/components/LeftDrawer";
 import { RightDrawer } from "@/components/RightDrawer";
 import { QuickCapture } from "@/components/QuickCapture";
@@ -211,6 +212,8 @@ export const Layout = () => {
           {/* Page Content */}
           <Outlet />
         </div>
+
+        <BottomNav />
 
         {/* Drawers - always sharp and outside the blur wrapper */}
         <LeftDrawer
