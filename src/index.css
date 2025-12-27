@@ -2688,6 +2688,19 @@ body.pwa-standalone #root {
   background-color: hsl(240 6% 6%) !important;
 }
 
+/* Force card backgrounds to dark as well */
+.bg-card {
+  background-color: hsl(240 6% 6%) !important;
+}
+
+.bg-card\/95 {
+  background-color: hsl(240 6% 6% / 0.95) !important;
+}
+
+.bg-card\/90 {
+  background-color: hsl(240 6% 6% / 0.9) !important;
+}
+
 /* Overlay fixes for Radix presentation wrappers when open */
 [data-radix-portal] [data-state="open"][role="presentation"] {
   background-color: hsl(240 6% 6% / 0.95) !important;
