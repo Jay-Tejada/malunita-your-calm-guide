@@ -143,8 +143,9 @@ export const useAICapture = () => {
         variant: "destructive",
       });
     },
-    retry: 1,
-    retryDelay: 500,
+    // IMPORTANT: No retry - the edge function persists on its own,
+    // so retrying would create duplicate tasks
+    retry: false,
   });
 };
 
