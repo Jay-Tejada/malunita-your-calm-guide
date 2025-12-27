@@ -1,6 +1,7 @@
 // src/ui/AppLayout.tsx
 
 import { useNavigate } from "react-router-dom";
+import { Home } from "lucide-react";
 import { colors, typography } from "@/ui/tokens";
 
 interface AppLayoutProps {
@@ -20,13 +21,16 @@ export function AppLayout({
 }: AppLayoutProps) {
   const navigate = useNavigate();
 
+  const goHome = () => navigate("/");
+
   const handleBack = () => {
-    // If there's browser history, go back; otherwise navigate to home
-    if (window.history.length > 1) {
+    // React Router keeps an internal index in history.state.idx; this is more reliable than history.length
+    const idx = typeof window.history.state?.idx === "number" ? window.history.state.idx : 0;
+    if (idx > 0) {
       navigate(-1);
-    } else {
-      navigate("/");
+      return;
     }
+    goHome();
   };
   return (
     <div
@@ -47,7 +51,12 @@ export function AppLayout({
         >
           <div className="w-10">
             {showBack && (
-              <button onClick={handleBack} style={{ color: colors.text.secondary }}>
+              <button
+                onClick={handleBack}
+                className="p-2 -ml-2"
+                aria-label="Go back"
+                style={{ color: colors.text.secondary }}
+              >
                 ←
               </button>
             )}
@@ -61,7 +70,19 @@ export function AppLayout({
           >
             {title}
           </h1>
-          <div className="w-10 flex justify-end">{rightAction}</div>
+          <div className="w-10 flex justify-end">
+            {rightAction ??
+              (showBack ? (
+                <button
+                  onClick={goHome}
+                  className="p-2 -mr-2"
+                  aria-label="Go home"
+                  style={{ color: colors.text.secondary }}
+                >
+                  <Home className="h-4 w-4" />
+                </button>
+              ) : null)}
+          </div>
         </header>
       )}
 
