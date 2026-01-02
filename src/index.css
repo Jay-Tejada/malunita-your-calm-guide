@@ -107,8 +107,8 @@ All colors MUST be HSL.
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 0% / 0.07; /* rgba(0,0,0,0.07) minimal border */
-    --input: 0 0% 0% / 0.10; /* rgba(0,0,0,0.10) for input borders */
+    --border: 40 10% 90%; /* light warm gray border */
+    --input: 40 10% 85%; /* slightly darker for inputs */
     --ring: 0 0% 13%;
     
     /* Surface and UI Elements */
