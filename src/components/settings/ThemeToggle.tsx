@@ -1,4 +1,4 @@
-import { useTheme } from '@/hooks/useTheme';
+import { useTheme } from 'next-themes';
 import { Sun, Moon, Monitor } from 'lucide-react';
 
 export function ThemeToggle() {
