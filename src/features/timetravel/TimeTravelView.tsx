@@ -76,7 +76,7 @@ export const TimeTravelView = () => {
   };
 
   return (
-    <div className="relative h-full w-full overflow-hidden bg-gradient-to-b from-background via-background/80 to-primary/5">
+    <div className="relative h-full w-full overflow-hidden bg-bg-app">
       {/* Controls */}
       <div className="absolute top-4 right-4 z-20 flex gap-2">
         <Button

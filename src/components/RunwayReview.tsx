@@ -410,25 +410,15 @@ export const RunwayReview = ({ onClose }: RunwayReviewProps) => {
     }
   };
 
-  // Visual theme based on time of day
-  const theme = timeOfDay === 'morning' 
-    ? {
-        gradient: 'from-amber-50 via-orange-50 to-yellow-50',
-        overlay: 'bg-gradient-to-b from-transparent via-amber-100/20 to-amber-200/30',
-        text: 'text-amber-900',
-        accent: 'text-orange-600'
-      }
-    : {
-        gradient: 'from-slate-900 via-indigo-950 to-slate-900',
-        overlay: 'bg-gradient-to-b from-transparent via-indigo-950/30 to-purple-950/20',
-        text: 'text-slate-100',
-        accent: 'text-purple-300'
-      };
+  // Visual theme - static, no time-of-day changes
+  const theme = {
+    text: 'text-text-primary',
+    accent: 'text-accent-color'
+  };
 
   return (
-    <div className={`fixed inset-0 z-50 bg-gradient-to-br ${theme.gradient} overflow-y-auto`}>
-      {/* Overlay animation */}
-      <div className={`absolute inset-0 ${theme.overlay} animate-pulse`} style={{ animationDuration: '8s' }} />
+    <div className="fixed inset-0 z-50 bg-bg-app overflow-y-auto">
+      {/* Static background - no overlay animation */}
       
       {/* Close button */}
       <button
