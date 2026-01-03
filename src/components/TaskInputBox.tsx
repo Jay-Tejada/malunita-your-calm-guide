@@ -9,6 +9,7 @@ import { processRawInput } from "@/lib/taskProcessing";
 import { getClarification } from "@/lib/clarificationEngine";
 import { runTaskPipeline } from "@/lib/intelligence/taskPipeline";
 import { useTasks } from "@/hooks/useTasks";
+import { useCapture } from "@/hooks/useAICapture";
 import { useDailyIntelligence } from "@/hooks/useDailyIntelligence";
 import { useCompanionEvents } from "@/hooks/useCompanionEvents";
 import { Loader2, Plus, Sparkles, Bold, Italic, Link2, Code } from "lucide-react";
@@ -32,6 +33,7 @@ export const TaskInputBox = () => {
   const [selectedTasks, setSelectedTasks] = useState<Set<number>>(new Set());
   
   const { createTasks } = useTasks();
+  const { capture } = useCapture();
   const { toast } = useToast();
   const { refetch } = useDailyIntelligence();
   const { onTaskCreated } = useCompanionEvents();

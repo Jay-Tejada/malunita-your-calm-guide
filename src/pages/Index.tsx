@@ -23,6 +23,7 @@ import { useOfflineStatus } from "@/hooks/useOfflineStatus";
 import Orb from "@/components/Orb";
 import Search from "@/components/Search";
 import { useTasks } from "@/hooks/useTasks";
+import { useCapture } from "@/hooks/useAICapture";
 import { useProfile } from "@/hooks/useProfile";
 import { StartMyDayModal } from "@/components/rituals/StartMyDayModal";
 import { StartMyDayFlow, StartMyDayResult } from '@/components/rituals/StartMyDayFlow';
@@ -91,7 +92,8 @@ const Index = () => {
   
   // Profile and tasks for modal
   const { profile } = useProfile();
-  const { tasks, createTasks, updateTask } = useTasks();
+  const { tasks, updateTask } = useTasks();
+  const { capture } = useCapture();
   
   // Get tiny/small tasks for the party (tasks marked as tiny or inbox tasks)
   const tinyTasks = tasks?.filter(t => 
@@ -316,11 +318,11 @@ const Index = () => {
 
       const text = data?.text?.trim();
       if (text) {
-        await createTasks([{
-          title: text,
+        // Route through AI pipeline for full processing
+        await capture({
+          text,
           category: 'inbox',
-          input_method: 'voice',
-        }]);
+        });
         
         toast({
           description: "Added to inbox",
@@ -566,15 +568,15 @@ const Index = () => {
         isOpen={captureOpen}
         onClose={() => setCaptureOpen(false)}
         onSubmit={async (text) => {
-          const result = await createTasks([{
-            title: text,
+          // Route through AI pipeline for full processing
+          const result = await capture({
+            text,
             category: 'inbox',
-            input_method: 'voice',
-          }]);
+          });
           toast({ description: "Added to inbox" });
           handleTaskCreated();
           // Return the first created task for auto-categorization
-          return result?.[0] ? { id: result[0].id } : undefined;
+          return result?.taskIds?.[0] ? { id: result.taskIds[0] } : undefined;
         }}
       />
       </motion.div>

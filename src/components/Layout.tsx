@@ -7,8 +7,7 @@ import { RightDrawer } from "@/components/RightDrawer";
 import { QuickCapture } from "@/components/QuickCapture";
 import Search from "@/components/Search";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
-import { useProcessInputMutation } from "@/hooks/useProcessInputMutation";
-import { useTasks } from "@/hooks/useTasks";
+import { useCapture } from "@/hooks/useAICapture";
 import { toast } from "@/hooks/use-toast";
 import { useCompanionVisibility } from "@/state/useCompanionVisibility";
 import ActiveSessionBar from "@/components/ActiveSessionBar";
@@ -29,8 +28,7 @@ export const Layout = () => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
-  const processInputMutation = useProcessInputMutation();
-  const { createTasks } = useTasks();
+  const { capture, isCapturing } = useCapture();
   const { isVisible: isCompanionVisible, show: showCompanion, hide: hideCompanion } = useCompanionVisibility();
   const { activeSession, completeSession, abandonSession } = useFlowSessions();
   const { isOpen: quickCaptureOpen, openQuickCapture, closeQuickCapture } = useQuickCapture();
@@ -70,20 +68,10 @@ export const Layout = () => {
     }
   };
 
-  // Handle quick capture submission
+  // Handle quick capture submission - routes through full AI pipeline
   const handleQuickCapture = async (text: string) => {
     try {
-      const result = await processInputMutation.mutateAsync({ text });
-      
-      if (result?.tasks && result.tasks.length > 0) {
-        const tasksToCreate = result.tasks.map(task => ({
-          title: task.title,
-          category: task.category || 'inbox',
-          input_method: 'text' as const,
-        }));
-
-        await createTasks(tasksToCreate);
-      }
+      await capture({ text, category: 'inbox' });
     } catch (error) {
       console.error('Failed to process quick capture:', error);
       toast({
