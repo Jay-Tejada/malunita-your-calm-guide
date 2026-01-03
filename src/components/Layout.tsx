@@ -20,7 +20,6 @@ import { UpdateBanner } from "@/components/UpdateBanner";
 import { DrawerProvider } from "@/contexts/DrawerContext";
 
 import { useOrbEvolution } from "@/hooks/useOrbEvolution";
-import { useOrbBackground } from "@/hooks/useOrbBackground";
 
 export const Layout = () => {
   const [leftDrawerOpen, setLeftDrawerOpen] = useState(false);
@@ -36,10 +35,9 @@ export const Layout = () => {
   const { activeSession, completeSession, abandonSession } = useFlowSessions();
   const { isOpen: quickCaptureOpen, openQuickCapture, closeQuickCapture } = useQuickCapture();
 
-  // Orb state sync, evolution, and background
+  // Orb state sync and evolution
   useOrbSync(userId);
   useOrbEvolution(userId);
-  useOrbBackground();
 
   // Get user ID and auth state
   useEffect(() => {
