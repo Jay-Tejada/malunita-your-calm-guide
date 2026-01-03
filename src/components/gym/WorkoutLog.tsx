@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Plus, Check, X, AlertCircle } from 'lucide-react';
+import { Plus, Check, X, AlertCircle, Copy } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { 
   normalizeExerciseName, 
@@ -481,22 +481,45 @@ const WorkoutLog = () => {
       {/* Today's log */}
       {Object.keys(groupedSets).length > 0 && (
         <div className="space-y-3">
-          {Object.entries(groupedSets).map(([exercise, exerciseSets]) => (
-            <div key={exercise}>
-              <p className="font-mono text-sm text-foreground/70 mb-1">{exercise}</p>
-              <div className="pl-4 space-y-0.5">
-                {exerciseSets.map((set) => (
-                  <SwipeableSetItem
-                    key={set.id}
-                    set={set}
-                    isRecentlyAdded={recentlyAdded === set.id}
-                    onDelete={handleDeleteSet}
-                    onEdit={handleEditSet}
-                  />
-                ))}
+          {Object.entries(groupedSets).map(([exercise, exerciseSets]) => {
+            const lastSet = exerciseSets[exerciseSets.length - 1];
+            
+            const handleRepeatSet = () => {
+              if (!lastSet) return;
+              addExerciseSet({
+                exercise: lastSet.exercise_name,
+                weight: lastSet.weight,
+                reps: lastSet.reps,
+                isBodyweight: lastSet.is_bodyweight,
+              });
+            };
+            
+            return (
+              <div key={exercise}>
+                <div className="flex items-center justify-between mb-1">
+                  <p className="font-mono text-sm text-foreground/70">{exercise}</p>
+                  <button
+                    onClick={handleRepeatSet}
+                    className="p-1.5 rounded-md text-foreground/40 hover:text-foreground/70 hover:bg-foreground/5 transition-colors"
+                    title="Repeat last set"
+                  >
+                    <Copy className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+                <div className="pl-4 space-y-0.5">
+                  {exerciseSets.map((set) => (
+                    <SwipeableSetItem
+                      key={set.id}
+                      set={set}
+                      isRecentlyAdded={recentlyAdded === set.id}
+                      onDelete={handleDeleteSet}
+                      onEdit={handleEditSet}
+                    />
+                  ))}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
