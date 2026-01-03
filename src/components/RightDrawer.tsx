@@ -24,13 +24,13 @@ export const RightDrawer = memo(function RightDrawer({ isOpen, onClose }: RightD
     <AnimatePresence>
       {isOpen && (
         <>
-          {/* Backdrop */}
+          {/* Backdrop with theme-based scrim + subtle blur */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 cursor-pointer"
+            transition={{ duration: 0.18, ease: "easeOut" }}
+            className="fixed inset-0 bg-bg-overlay backdrop-blur-[3px] z-40 cursor-pointer"
             onClick={onClose}
             aria-label="Close drawer"
           />

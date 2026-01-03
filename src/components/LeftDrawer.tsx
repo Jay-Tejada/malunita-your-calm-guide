@@ -400,13 +400,13 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate, onSearchOpen }: LeftDr
       <AnimatePresence>
         {isOpen && (
           <>
-            {/* Backdrop with blur */}
+            {/* Backdrop with theme-based scrim + subtle blur */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="fixed inset-0 bg-black/10 backdrop-blur-[14px] z-40"
+              transition={{ duration: 0.18, ease: "easeOut" }}
+              className="fixed inset-0 bg-bg-overlay backdrop-blur-[3px] z-40"
               onClick={onClose}
             />
 
