@@ -82,10 +82,13 @@ export const ProjectSection = ({
     if (e.key === 'Enter' && inputValue.trim()) {
       onAddTask(inputValue.trim(), project.id);
       setInputValue('');
+      // Keep input open and focused for flow mode
+      setTimeout(() => inputRef.current?.focus(), 10);
     }
     if (e.key === 'Escape') {
       setInputValue('');
       setShowInput(false);
+      inputRef.current?.blur();
     }
   };
 
