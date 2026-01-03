@@ -123,7 +123,7 @@ export const ProjectTaskRow = memo(({
           )}
         >
           {(isCompleting || status === 'completed') && (
-            <Check className="w-2.5 h-2.5 text-white" />
+            <Check className="w-2.5 h-2.5 text-success-foreground" />
           )}
         </button>
 

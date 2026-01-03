@@ -445,14 +445,14 @@ export const RunwayReview = ({ onClose }: RunwayReviewProps) => {
 
       {/* Voice Transcript Display */}
       {voiceTranscript && (
-        <div className="absolute bottom-24 right-6 z-10 max-w-xs bg-white/90 backdrop-blur-sm rounded-lg p-4 shadow-lg animate-in fade-in duration-200">
-          <p className="text-sm text-gray-800">{voiceTranscript}</p>
+        <div className="absolute bottom-24 right-6 z-10 max-w-xs bg-bg-surface/90 backdrop-blur-sm rounded-lg p-4 shadow-lg animate-in fade-in duration-200">
+          <p className="text-sm text-text-primary">{voiceTranscript}</p>
         </div>
       )}
 
       {isProcessingVoice && (
-        <div className="absolute bottom-24 right-6 z-10 bg-white/90 backdrop-blur-sm rounded-lg p-4 shadow-lg">
-          <p className="text-sm text-gray-800">Processing...</p>
+        <div className="absolute bottom-24 right-6 z-10 bg-bg-surface/90 backdrop-blur-sm rounded-lg p-4 shadow-lg">
+          <p className="text-sm text-text-primary">Processing...</p>
         </div>
       )}
 
@@ -619,7 +619,7 @@ const TaskSection = ({ title, description, tasks, theme, onMarkDone, onArchive, 
   };
 
   return (
-    <div className={`backdrop-blur-sm rounded-2xl p-6 border-2 ${variant ? variantStyles[variant] : 'bg-white/10'}`}>
+    <div className={`backdrop-blur-sm rounded-2xl p-6 border-2 ${variant ? variantStyles[variant] : 'bg-bg-surface/10'}`}>
       <div className="mb-4">
         <h3 className={`text-lg font-semibold mb-1 ${theme.text}`}>{title}</h3>
         {description && (
@@ -630,7 +630,7 @@ const TaskSection = ({ title, description, tasks, theme, onMarkDone, onArchive, 
         {tasks.map((task) => (
           <div
             key={task.id}
-            className="flex items-start gap-3 bg-white/10 hover:bg-white/15 rounded-xl p-4 transition-colors"
+            className="flex items-start gap-3 bg-bg-surface-2/50 hover:bg-bg-surface-2/70 rounded-xl p-4 transition-colors"
           >
             <div className="flex-1">
               <p className={`font-medium ${theme.text}`}>{task.title}</p>

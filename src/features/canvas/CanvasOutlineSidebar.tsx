@@ -131,8 +131,8 @@ function SortablePageItem({
             className={cn(
               "group flex items-center gap-2 py-1.5 rounded-md cursor-pointer transition-all duration-150 motion-reduce:transition-none",
               isActive
-                ? "bg-white/5 text-canvas-text"
-                : "text-canvas-text-muted hover:bg-white/[0.03] hover:text-canvas-text",
+                ? "bg-canvas-active text-canvas-text"
+                : "text-canvas-text-muted hover:bg-canvas-active/50 hover:text-canvas-text",
               isDragging && "shadow-lg bg-canvas-sidebar"
             )}
             style={{ paddingLeft: `${level * 16 + 8}px`, paddingRight: '8px' }}

@@ -23,11 +23,11 @@ const moodEmojis = {
 };
 
 const moodColors = {
-  calm: 'bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300',
-  stressed: 'bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-300',
-  momentum: 'bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-300',
-  stuck: 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300',
-  playful: 'bg-purple-100 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300',
+  calm: 'bg-blue-500/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400',
+  stressed: 'bg-destructive/10 dark:bg-destructive/20 text-destructive dark:text-red-400',
+  momentum: 'bg-success/10 dark:bg-success/20 text-success dark:text-green-400',
+  stuck: 'bg-bg-surface-2 text-text-muted',
+  playful: 'bg-purple-500/10 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400',
 };
 
 const energyIcons = {

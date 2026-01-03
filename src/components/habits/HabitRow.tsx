@@ -25,7 +25,7 @@ export function HabitRow({ habit, isCompleted, streak, weekCompletions, onToggle
         className={cn(
           "w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-200",
           isCompleted
-            ? "bg-green-500 border-green-500 text-white scale-110"
+            ? "bg-success border-success text-success-foreground scale-110"
             : "border-foreground/20 hover:border-foreground/40"
         )}
       >

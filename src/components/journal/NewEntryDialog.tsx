@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { useImageUpload } from "./useImageUpload";
 import { ImageGrid } from "./ImageGrid";
+import { cn } from "@/lib/utils";
 
 interface ExistingEntry {
   id: string;
@@ -366,18 +367,12 @@ export const NewEntryDialog = ({ isOpen, onClose, prefillContent = '', editEntry
           <button
             onClick={handleSeal}
             disabled={isSaving || isUploading}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-full text-sm text-foreground/60 hover:text-foreground/80 transition-all disabled:opacity-50"
-            style={{
-              background: (content.trim() || images.length > 0) 
-                ? 'radial-gradient(circle at 30% 30%, #fffbf0, #fef3e2, #fde9c9)' 
-                : 'transparent',
-              boxShadow: (content.trim() || images.length > 0) 
-                ? '0 4px 16px rgba(200, 170, 120, 0.12)' 
-                : undefined,
-              border: (content.trim() || images.length > 0) 
-                ? 'none' 
-                : '1px solid rgba(0,0,0,0.05)'
-            }}
+            className={cn(
+              "flex items-center gap-2 px-5 py-2.5 rounded-full text-sm transition-all disabled:opacity-50",
+              (content.trim() || images.length > 0) 
+                ? "bg-accent-color text-accent-foreground hover:opacity-90" 
+                : "text-foreground/60 hover:text-foreground/80 border border-border-subtle"
+            )}
           >
             <Check className="w-4 h-4" />
             <span>{isUploading ? "Uploading..." : "Seal Entry"}</span>

@@ -252,12 +252,12 @@ export const WorkSortableTaskItem = ({
           className={cn(
             "w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 transition-all",
             isCompleting
-              ? "bg-emerald-500/80 border border-emerald-500"
+              ? "bg-success/80 border border-success"
               : "border border-foreground/20 hover:border-foreground/40"
           )}
         >
           {isCompleting && (
-            <Check className="w-2.5 h-2.5 text-white" />
+            <Check className="w-2.5 h-2.5 text-success-foreground" />
           )}
         </button>
 
