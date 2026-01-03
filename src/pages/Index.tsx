@@ -25,6 +25,7 @@ import Search from "@/components/Search";
 import { useTasks } from "@/hooks/useTasks";
 import { useProfile } from "@/hooks/useProfile";
 import { StartMyDayModal } from "@/components/rituals/StartMyDayModal";
+import { StartMyDayFlow, StartMyDayResult } from '@/components/rituals/StartMyDayFlow';
 import { TinyTaskFiestaCard } from "@/components/home/TinyTaskFiestaCard";
 import TinyTaskParty from "@/components/TinyTaskParty";
 import { CaptureSheet } from "@/components/capture/CaptureSheet";
@@ -351,19 +352,19 @@ const Index = () => {
         transition={{ duration: 0.3, ease: "easeInOut" }}
         className="contents"
       >
-        {/* Start My Day Modal */}
-        <StartMyDayModal
-        isOpen={showStartMyDay}
-        onClose={() => setShowStartMyDay(false)}
-        userName={profile?.companion_name || "Friend"}
-        taskCount={todayTaskCount}
-        inboxCount={inboxCount}
-        onNext={(intention) => {
-          console.log("User's intention:", intention);
-          setShowStartMyDay(false);
-          setShowTinyTaskFiesta(true); // Show fiesta card after completing flow
-        }}
-      />
+        {/* Start My Day Flow - 3-step operational decision funnel */}
+        <StartMyDayFlow
+          isOpen={showStartMyDay}
+          onClose={() => setShowStartMyDay(false)}
+          onComplete={(result: StartMyDayResult) => {
+            console.log("Start My Day completed:", result);
+            setShowStartMyDay(false);
+            // Only show fiesta if primary task was set and we have tiny tasks
+            if (result.primaryTaskId && tinyTasks.length > 0) {
+              setShowTinyTaskFiesta(true);
+            }
+          }}
+        />
       
       <OfflineIndicator />
       
