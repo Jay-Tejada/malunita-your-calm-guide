@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Plus, Check, X, AlertCircle, Repeat } from 'lucide-react';
+import { Plus, Check, X, AlertCircle, CopyPlus } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { 
   normalizeExerciseName, 
@@ -503,7 +503,7 @@ const WorkoutLog = () => {
                     className="p-1.5 rounded-md text-foreground/40 hover:text-foreground/70 hover:bg-foreground/5 transition-colors"
                     title="Repeat last set"
                   >
-                    <Repeat className="w-3.5 h-3.5" />
+                    <CopyPlus className="w-3.5 h-3.5" />
                   </button>
                 </div>
                 <div className="pl-4 space-y-0.5">
