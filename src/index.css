@@ -2674,19 +2674,15 @@ body.pwa-standalone #root {
   min-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
 }
 
-/* Force Radix/shadcn portal overlays to dark (prevents light-token flashes) */
+/* Radix/shadcn portal overlays - use theme tokens */
 [data-radix-dialog-overlay],
 [data-radix-alert-dialog-overlay],
 [data-radix-drawer-overlay],
 [data-radix-sheet-overlay],
 [data-radix-portal] [data-radix-dialog-overlay],
 [data-radix-portal] [data-radix-alert-dialog-overlay] {
-  background-color: hsl(240 6% 6% / 0.8) !important;
-}
-
-/* Common overlay utility backgrounds used across the app */
-.bg-background\/95 {
-  background-color: hsl(240 6% 6% / 0.95) !important;
+  background-color: hsl(var(--bg-overlay)) !important;
+  backdrop-filter: blur(3px);
 }
 
 .bg-background\/90 {

@@ -308,7 +308,7 @@ export function VoiceSheet({
   return (
     <Drawer.Root open={open} onOpenChange={onOpenChange}>
       <Drawer.Portal>
-        <Drawer.Overlay className="fixed inset-0 bg-black/40 z-[100]" />
+        <Drawer.Overlay className="fixed inset-0 bg-bg-overlay backdrop-blur-[3px] z-[100]" />
         <Drawer.Content className="bg-background flex flex-col h-[90vh] mt-24 fixed bottom-0 left-0 right-0 z-[100] rounded-t-[24px]">
           {isSupported ? <VoiceContent /> : <FallbackContent />}
         </Drawer.Content>
