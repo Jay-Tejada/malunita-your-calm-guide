@@ -406,7 +406,7 @@ export const LeftDrawer = ({ isOpen, onClose, onNavigate, onSearchOpen }: LeftDr
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.18, ease: "easeOut" }}
-              className="fixed inset-0 bg-bg-overlay backdrop-blur-[3px] z-40"
+              className="fixed inset-0 bg-black/40 backdrop-blur-[2px] z-40"
               onClick={onClose}
             />
 
