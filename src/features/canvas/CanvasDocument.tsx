@@ -492,7 +492,7 @@ export function CanvasDocument({ page, blocks, onSectionChange }: CanvasDocument
             <DialogContent className="max-w-full h-full p-0 bg-black/95 border-none animate-fade-in motion-reduce:animate-none">
               <button
                 onClick={() => setMobileFullscreenImage(null)}
-                className="absolute top-4 right-4 z-50 p-2 rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors"
+                className="absolute top-4 right-4 z-50 p-2 rounded-full bg-bg-surface-2/30 text-text-primary hover:bg-bg-surface-2/50 transition-colors"
               >
                 <X className="w-6 h-6" />
               </button>

@@ -39,11 +39,11 @@ export function HabitCard({ habit, onToggle }: HabitCardProps) {
         className={cn(
           "w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-200",
           habit.completed 
-            ? "border-green-500 bg-green-500 scale-110" 
+            ? "border-success bg-success scale-110" 
             : "border-muted-foreground/30 hover:border-muted-foreground/50"
         )}
       >
-        {habit.completed && <Check className="w-4 h-4 text-white" />}
+        {habit.completed && <Check className="w-4 h-4 text-success-foreground" />}
       </div>
       
       {/* Icon */}

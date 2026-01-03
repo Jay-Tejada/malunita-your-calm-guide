@@ -1964,24 +1964,24 @@ All colors MUST be HSL.
     transform: translateY(-1px);
   }
 
-  /* Scrollbar styling */
+  /* Scrollbar styling - theme aware */
   ::-webkit-scrollbar {
     width: 10px;
     height: 10px;
   }
 
   ::-webkit-scrollbar-track {
-    background: rgba(0, 0, 0, 0.03);
+    background: hsl(var(--bg-surface-2) / 0.5);
     border-radius: 8px;
   }
 
   ::-webkit-scrollbar-thumb {
-    background: rgba(0, 0, 0, 0.10);
+    background: hsl(var(--border-strong));
     border-radius: 8px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: rgba(0, 0, 0, 0.15);
+    background: hsl(var(--text-muted) / 0.5);
   }
 
   /* ============================================= */

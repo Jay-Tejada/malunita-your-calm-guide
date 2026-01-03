@@ -29,7 +29,7 @@ export function HabitQuickToggle({ habit, isCompleted, onToggle }: HabitQuickTog
         className={cn(
           "w-4 h-4 rounded-full border flex items-center justify-center transition-all",
           isCompleted
-            ? "bg-green-500 border-green-500 text-white"
+            ? "bg-success border-success text-success-foreground"
             : "border-foreground/20"
         )}
       >

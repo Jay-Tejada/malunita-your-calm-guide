@@ -81,9 +81,9 @@ const SortableCategoryItem = ({ category, onEdit, onDelete }: SortableCategoryIt
       <div className="flex items-center gap-3 flex-1">
         <div
           className="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
-          style={{ backgroundColor: category.color || '#6B7280' }}
+          style={{ backgroundColor: category.color || 'hsl(var(--muted))' }}
         >
-          <IconComponent className="w-4 h-4 text-white" />
+          <IconComponent className="w-4 h-4 text-primary-foreground" />
         </div>
         <span className="font-medium">{category.name}</span>
       </div>

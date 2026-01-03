@@ -77,25 +77,25 @@ export const InstallPromptBanner = () => {
     <div className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-primary/90 to-accent/90 backdrop-blur-sm shadow-lg animate-in slide-in-from-top duration-300">
       <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
         <div className="flex items-center gap-3 flex-1 min-w-0">
-          <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center flex-shrink-0">
-            <Download className="w-5 h-5 text-white" />
+          <div className="w-10 h-10 bg-primary-foreground/20 rounded-xl flex items-center justify-center flex-shrink-0">
+            <Download className="w-5 h-5 text-primary-foreground" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-white font-medium text-sm">Install Malunita</p>
-            <p className="text-white/80 text-xs truncate">Add to home screen for quick access</p>
+            <p className="text-primary-foreground font-medium text-sm">Install Malunita</p>
+            <p className="text-primary-foreground/80 text-xs truncate">Add to home screen for quick access</p>
           </div>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
           <Button
             onClick={handleInstallClick}
             size="sm"
-            className="bg-white text-primary hover:bg-white/90 h-8 px-3 text-sm font-medium"
+            className="bg-primary-foreground text-primary hover:bg-primary-foreground/90 h-8 px-3 text-sm font-medium"
           >
             Install
           </Button>
           <button
             onClick={handleDismiss}
-            className="text-white/80 hover:text-white transition-colors p-1"
+            className="text-primary-foreground/80 hover:text-primary-foreground transition-colors p-1"
             aria-label="Dismiss"
           >
             <X className="w-5 h-5" />

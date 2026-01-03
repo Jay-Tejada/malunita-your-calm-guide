@@ -51,12 +51,12 @@ export const ImageGrid = ({ images, uploadingImages, onRemove, editable = false 
 
             {/* Upload progress overlay */}
             {img.type === "uploading" && (
-              <div className="absolute inset-0 flex items-center justify-center bg-black/20 rounded-lg">
+              <div className="absolute inset-0 flex items-center justify-center bg-black/30 rounded-lg">
                 <div className="flex flex-col items-center gap-2">
-                  <Loader2 className="w-6 h-6 text-white animate-spin" />
-                  <div className="w-16 h-1 bg-white/30 rounded-full overflow-hidden">
+                  <Loader2 className="w-6 h-6 text-text-primary animate-spin" />
+                  <div className="w-16 h-1 bg-bg-surface-2/50 rounded-full overflow-hidden">
                     <div 
-                      className="h-full bg-white transition-all duration-300"
+                      className="h-full bg-accent-color transition-all duration-300"
                       style={{ width: `${img.progress}%` }}
                     />
                   </div>
@@ -71,7 +71,7 @@ export const ImageGrid = ({ images, uploadingImages, onRemove, editable = false 
                   e.stopPropagation();
                   onRemove(img.url);
                 }}
-                className="absolute top-2 right-2 p-1.5 bg-black/50 rounded-full text-white/80 hover:text-white hover:bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity"
+                className="absolute top-2 right-2 p-1.5 bg-black/50 rounded-full text-text-primary/80 hover:text-text-primary hover:bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity"
               >
                 <X className="w-4 h-4" />
               </button>

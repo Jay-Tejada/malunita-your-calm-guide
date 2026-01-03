@@ -87,13 +87,7 @@ What is a more insightful, strategic version that helps the user start their day
           className="fixed top-4 left-1/2 -translate-x-1/2 z-50 max-w-2xl w-full px-4"
         >
           <div
-            style={{
-              backgroundColor: "#F8F4EC",
-              color: "#3D3325",
-              borderRadius: "16px",
-              boxShadow: "0 4px 12px rgba(0, 0, 0, 0.08)",
-            }}
-            className={`px-6 py-4 ${hasRichContent ? 'flex items-center justify-between gap-4' : 'text-center'}`}
+            className={`bg-bg-surface text-text-primary rounded-2xl shadow-lg border border-border-subtle px-6 py-4 ${hasRichContent ? 'flex items-center justify-between gap-4' : 'text-center'}`}
           >
             <div className={hasRichContent ? 'flex-1' : ''}>
               <p className="text-sm font-semibold">{enhancedMessage}</p>

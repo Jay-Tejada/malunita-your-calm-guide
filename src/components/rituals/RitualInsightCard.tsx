@@ -47,7 +47,7 @@ export function RitualInsightCard(props: Props) {
   // Night ritual
   const { insight } = props;
   return (
-    <div className="p-4 rounded-lg bg-slate-50/50 dark:bg-slate-900/10 space-y-3">
+    <div className="p-4 rounded-lg bg-bg-surface-2/50 space-y-3">
       <p className="text-xs uppercase tracking-wide opacity-50">Day Complete</p>
       
       <p className="font-medium text-foreground">

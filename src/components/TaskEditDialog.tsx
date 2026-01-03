@@ -113,7 +113,7 @@ export const TaskEditDialog = ({ open, task, onSave, onClose }: TaskEditDialogPr
             <div className="flex items-center gap-2">
               <span className="text-xs text-muted-foreground">Cluster:</span>
               <span 
-                className="inline-block rounded-full px-2 py-0.5 bg-neutral-100 text-neutral-500 font-mono"
+                className="inline-block rounded-full px-2 py-0.5 bg-bg-surface-2 text-text-muted font-mono"
                 style={{ fontSize: '10px' }}
               >
                 {task.cluster.label || clusterDomain.label}
