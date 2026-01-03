@@ -694,7 +694,7 @@ const Inbox = () => {
       </div>
 
       {/* Task list - dynamic spacing based on content length */}
-      <div className="px-1 pb-4">
+      <div className="px-1 pb-24">
       {tasks.map((task, index) => (
           <div 
             key={task.id} 
@@ -741,7 +741,7 @@ const Inbox = () => {
       {/* Bottom fade gradient to indicate scrollable content */}
       {tasks.length > 5 && (
         <div 
-          className="pointer-events-none fixed bottom-0 left-0 right-0 h-16 z-40 bg-gradient-to-t from-bg-app to-transparent"
+          className="pointer-events-none fixed bottom-16 left-0 right-0 h-16 z-40 bg-gradient-to-t from-background to-transparent"
           style={{
             opacity: isSelectionMode && selectedIds.size > 0 ? 0 : 1,
             transition: 'opacity 0.3s ease-out',
