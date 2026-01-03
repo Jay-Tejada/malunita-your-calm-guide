@@ -132,9 +132,7 @@ export const WorkTaskRow = memo(({
         <p 
           className={cn(
             "text-[14px] leading-relaxed",
-            isCompleting
-              ? "text-foreground/40 line-through" 
-              : "text-foreground/90"
+            isCompleting ? "text-text-muted line-through" : "text-text-primary"
           )}
         >
           {displayText}
@@ -142,7 +140,7 @@ export const WorkTaskRow = memo(({
 
         {/* Raw content preview - 1 line, muted */}
         {showRawPreview && !isExpanded && (
-          <p className="text-[13px] text-foreground/40 leading-snug truncate">
+          <p className="text-[13px] text-text-muted leading-snug truncate">
             {rawPreview}
           </p>
         )}
@@ -150,18 +148,18 @@ export const WorkTaskRow = memo(({
         {/* Expand indicator */}
         {hasDualLayer && !isExpanded && (
           <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-            <ChevronDown className="w-3 h-3 text-muted-foreground/40" />
-            <span className="text-xs text-muted-foreground/40">More</span>
+            <ChevronDown className="w-3 h-3 text-text-muted" />
+            <span className="text-xs text-text-muted">More</span>
           </div>
         )}
 
         {/* Expanded state - full raw_content */}
         {isExpanded && hasDualLayer && (
           <div 
-            className="mt-2 pt-2 border-t border-border/10 animate-fade-in space-y-2"
+            className="mt-2 pt-2 border-t border-border-subtle animate-fade-in space-y-2"
             style={{ animationDuration: '120ms' }}
           >
-            <p className="text-[13px] text-foreground/50 leading-relaxed whitespace-pre-wrap max-h-48 overflow-y-auto">
+            <p className="text-[13px] text-text-secondary leading-relaxed whitespace-pre-wrap max-h-48 overflow-y-auto">
               {rawContent}
             </p>
             
@@ -171,7 +169,7 @@ export const WorkTaskRow = memo(({
                 e.stopPropagation();
                 setIsExpanded(false);
               }}
-              className="flex items-center gap-1 text-xs text-muted-foreground/40 hover:text-muted-foreground/60 transition-colors"
+              className="flex items-center gap-1 text-xs text-text-muted hover:text-text-secondary transition-colors"
             >
               <ChevronDown className="w-3 h-3 rotate-180" />
               Less
@@ -185,7 +183,7 @@ export const WorkTaskRow = memo(({
             {memoryTags.slice(0, 3).map((tag: string, idx: number) => (
               <span 
                 key={idx}
-                className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-primary/10 text-primary/70"
+                className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-bg-surface-2 text-text-secondary border border-border-subtle"
               >
                 {tag}
               </span>
@@ -205,7 +203,7 @@ export const WorkTaskRow = memo(({
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button
-              className="text-foreground/20 hover:text-foreground/40 transition-colors p-1"
+              className="text-text-muted hover:text-text-secondary hover:bg-bg-surface-2 rounded transition-colors p-1"
               aria-label="Task options"
             >
               <MoreHorizontal className="w-4 h-4" />
@@ -213,22 +211,22 @@ export const WorkTaskRow = memo(({
           </DropdownMenuTrigger>
           <DropdownMenuContent 
             align="end" 
-            className="bg-background shadow-sm rounded-lg border border-foreground/10 z-50"
+            className="bg-bg-surface shadow-sm rounded-lg border border-border-subtle z-50"
           >
             <DropdownMenuItem
               onClick={() => onEdit(task.id)}
-              className="font-mono text-sm text-foreground/80 cursor-pointer hover:bg-foreground/5"
+              className="font-mono text-sm text-text-secondary cursor-pointer hover:bg-bg-surface-2"
             >
               Edit
             </DropdownMenuItem>
             <DropdownMenuItem
-              className="font-mono text-sm text-foreground/80 cursor-pointer hover:bg-foreground/5"
+              className="font-mono text-sm text-text-secondary cursor-pointer hover:bg-bg-surface-2"
             >
               Move
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => onDelete(task.id)}
-              className="font-mono text-sm text-foreground/80 cursor-pointer hover:bg-foreground/5"
+              className="font-mono text-sm text-text-secondary cursor-pointer hover:bg-bg-surface-2"
             >
               Delete
             </DropdownMenuItem>
