@@ -8,6 +8,7 @@ import { useCompanionIdentity } from "@/hooks/useCompanionIdentity";
 import { useCompanionEmotion } from "@/hooks/useCompanionEmotion";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useAssistantMemory } from "@/hooks/useAssistantMemory";
+import { useWakeLock } from "@/hooks/useWakeLock";
 import { MoodSelector } from "@/components/MoodSelector";
 import { TaskConfirmation } from "@/components/TaskConfirmation";
 import { ConversationalTaskFlow } from "@/components/ConversationalTaskFlow";
@@ -140,6 +141,7 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
   const isMobile = useIsMobile();
   const { createSession } = useCaptureSessions();
   const { addMessage, getRecentContext } = useAssistantMemory();
+  const { requestWakeLock, releaseWakeLock, isActive: wakeLockActive } = useWakeLock();
   
   // Store extract-tasks metadata for capture session
   const [extractMetadata, setExtractMetadata] = useState<{
@@ -440,6 +442,9 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
     // Start recording
     console.log('🚀 Starting new recording...');
     try {
+      // Request wake lock to prevent screen timeout during recording
+      await requestWakeLock();
+      
       console.log('📱 Requesting microphone access...');
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       console.log('✅ Microphone access granted');
@@ -570,6 +575,9 @@ export const MalunitaVoice = forwardRef<MalunitaVoiceRef, MalunitaVoiceProps>(({
 
       mediaRecorder.onstop = async () => {
         console.log('🛑 RECORDING STOPPED');
+        // Release wake lock when recording stops
+        await releaseWakeLock();
+        
         setIsListening(false);
         setIsProcessing(true);
         setTranscribedText("");
