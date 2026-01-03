@@ -117,8 +117,8 @@ export const InboxPreviewRow = memo(({
               <div className="flex-1 min-w-0 relative">
                 <span 
                   className={cn(
-                    "text-[13px] leading-relaxed text-foreground/70",
-                    task.completed && "text-foreground/40 line-through"
+                    "text-[13px] leading-relaxed text-text-secondary",
+                    task.completed && "text-text-muted line-through"
                   )}
                 >
                   {displayText}
@@ -126,7 +126,7 @@ export const InboxPreviewRow = memo(({
                 
                 {/* Expand indicator */}
                 {hasMoreContent && (
-                  <span className="text-muted-foreground/40 ml-1">
+                  <span className="text-text-muted ml-1">
                     {isExpanded ? (
                       <ChevronUp className="w-3 h-3 inline" />
                     ) : (
@@ -140,12 +140,12 @@ export const InboxPreviewRow = memo(({
             {/* Expanded state - show raw_content */}
             {isExpanded && hasDualLayer && (
               <div 
-                className="mt-2 pt-2 border-t border-border/30"
+                className="mt-2 pt-2 border-t border-border-subtle"
                 onClick={handleToggleExpand}
               >
                 {/* Show ai_summary as header if it exists and differs from displayText */}
                 {(task as any).ai_summary && (task as any).ai_summary !== displayText.replace('…', '') && (
-                  <p className="text-[12px] font-medium text-foreground/60 mb-1.5">
+                  <p className="text-[12px] font-medium text-text-muted mb-1.5">
                     {(task as any).ai_summary}
                   </p>
                 )}

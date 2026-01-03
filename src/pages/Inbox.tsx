@@ -8,6 +8,7 @@ import { colors } from '@/ui/tokens';
 import { AppLayout } from '@/ui/AppLayout';
 import { hapticSwipe, hapticHint, hapticLight, hapticMedium, hapticCompleteInbox } from '@/utils/haptics';
 import { getDualLayerDisplay } from '@/hooks/useDualLayerDisplay';
+import { cn } from '@/lib/utils';
 import {
   Dialog,
   DialogContent,
@@ -251,13 +252,16 @@ const SwipeableTaskRow = ({
           {/* INBOX Checkbox: Subtle scale (1.08), NO ripple, quick fill */}
           <button
             onClick={handleCheckboxComplete}
-            className={`relative w-4 h-4 mt-1 flex-shrink-0 flex items-center justify-center transition-all ease-out ${
+            className={cn(
+              "relative w-4 h-4 mt-1 flex-shrink-0 flex items-center justify-center transition-all ease-out border",
               isSelectionMode 
-                ? `rounded ${isSelected ? 'bg-primary border-primary scale-110' : 'border border-muted-foreground/30 hover:border-muted-foreground/50'}`
+                ? isSelected 
+                  ? "rounded bg-primary border-primary scale-110" 
+                  : "rounded border-border-strong hover:border-accent-muted"
                 : isCompleting
-                  ? 'rounded-full bg-emerald-500/70 border-emerald-500/70 scale-[1.08]'
-                  : 'rounded-full border border-muted-foreground/30 hover:border-muted-foreground/50 active:scale-95'
-            }`}
+                  ? "rounded-full bg-success border-success scale-[1.08]"
+                  : "rounded-full border-border-strong hover:border-accent-muted active:scale-95"
+            )}
             style={{ transitionDuration: '100ms' }}
           >
             {/* NO ripple in Inbox - keep it calm */}
@@ -265,7 +269,7 @@ const SwipeableTaskRow = ({
               <Check className="w-3 h-3 text-primary-foreground animate-scale-in" />
             )}
             {!isSelectionMode && isCompleting && (
-              <Check className="w-3 h-3 text-white animate-scale-in" />
+              <Check className="w-3 h-3 text-success-foreground animate-scale-in" />
             )}
           </button>
           {isEditing ? (
@@ -342,10 +346,7 @@ const SwipeableTaskRow = ({
               {/* Fade gradient for collapsed long entries */}
               {isLongEntry && !isTextExpanded && (
                 <div 
-                  className="absolute bottom-6 left-0 right-0 h-6 pointer-events-none"
-                  style={{
-                    background: 'linear-gradient(to bottom, transparent, hsl(var(--background)))',
-                  }}
+                  className="absolute bottom-6 left-0 right-0 h-6 pointer-events-none bg-gradient-to-b from-transparent to-bg-surface"
                 />
               )}
             </div>
@@ -354,10 +355,10 @@ const SwipeableTaskRow = ({
 
         {/* Expanded actions - softer styling */}
         {isExpanded && !isSelectionMode && (
-          <div className="flex items-center gap-1 px-5 py-3 pl-14 bg-muted/10">
+          <div className="flex items-center gap-1 px-5 py-3 pl-14 bg-bg-surface-2">
             <button
               onClick={() => onMove('today')}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-muted-foreground/70 hover:text-foreground/70 rounded transition-colors"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-text-muted hover:text-text-secondary rounded transition-colors"
             >
               <Star className="w-3 h-3" />
               Today

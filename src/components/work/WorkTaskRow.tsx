@@ -115,14 +115,14 @@ export const WorkTaskRow = memo(({
           handleComplete();
         }}
         className={cn(
-          "flex-shrink-0 w-4.5 h-4.5 rounded-full flex items-center justify-center mt-1 transition-all",
+          "flex-shrink-0 w-4.5 h-4.5 rounded-full flex items-center justify-center mt-1 transition-all border",
           isCompleting
-            ? "bg-emerald-500/80 border border-emerald-500"
-            : "bg-transparent border border-foreground/20 hover:border-foreground/40"
+            ? "bg-success border-success"
+            : "bg-transparent border-border-strong hover:border-accent-muted"
         )}
       >
         {isCompleting && (
-          <Check className="w-2.5 h-2.5 text-white" />
+          <Check className="w-2.5 h-2.5 text-success-foreground" />
         )}
       </button>
 
@@ -132,7 +132,7 @@ export const WorkTaskRow = memo(({
         <p 
           className={cn(
             "text-[14px] leading-relaxed",
-            isCompleting 
+            isCompleting
               ? "text-foreground/40 line-through" 
               : "text-foreground/90"
           )}
