@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { colors, typography } from "@/ui/tokens";
 import { checkTinyTaskCluster } from "@/hooks/useTaskCategorization";
 
 interface TinyTaskPromptProps {
@@ -32,46 +31,22 @@ export function TinyTaskPrompt({ userId, onCreateFiesta }: TinyTaskPromptProps) 
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -10 }}
-        className="mx-5 mb-4 p-4 rounded-xl"
-        style={{
-          backgroundColor: colors.bg.elevated,
-          border: `1px solid ${colors.border.subtle}`,
-        }}
+        className="mx-5 mb-4 p-4 rounded-xl bg-card border border-border"
       >
-        <p
-          style={{
-            fontFamily: typography.fontFamily,
-            fontSize: typography.bodyS.size,
-            color: colors.text.secondary,
-            marginBottom: 8,
-          }}
-        >
+        <p className="font-mono text-sm text-muted-foreground mb-2">
           I see {cluster.tasks.length} quick tasks that could work as a {cluster.totalMinutes}-minute block.
         </p>
 
         <div className="flex gap-2">
           <button
             onClick={() => onCreateFiesta(cluster.tasks, cluster.totalMinutes)}
-            className="px-4 py-2 rounded-lg transition-colors"
-            style={{
-              fontFamily: typography.fontFamily,
-              fontSize: typography.bodyS.size,
-              fontWeight: 500,
-              backgroundColor: colors.accent.primary,
-              color: colors.bg.base,
-            }}
+            className="px-4 py-2 rounded-lg transition-colors font-mono text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90"
           >
             Create "Tiny Task Fiesta"
           </button>
           <button
             onClick={() => setDismissed(true)}
-            className="px-4 py-2 rounded-lg transition-colors"
-            style={{
-              fontFamily: typography.fontFamily,
-              fontSize: typography.bodyS.size,
-              color: colors.text.muted,
-              backgroundColor: "transparent",
-            }}
+            className="px-4 py-2 rounded-lg transition-colors font-mono text-sm text-muted-foreground hover:text-foreground hover:bg-accent/10"
           >
             Not now
           </button>
