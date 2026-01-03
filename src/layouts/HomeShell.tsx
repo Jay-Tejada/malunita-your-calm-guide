@@ -25,7 +25,7 @@ export function HomeShell({
   const { isVisible } = useCompanionVisibility();
 
   return (
-    <div className="min-h-screen w-full flex bg-gradient-to-br from-background via-background to-muted/10">
+    <div className="min-h-screen w-full flex bg-bg-app">
       {/* Main Content Area */}
       <div className="flex-1 relative">
         {children}

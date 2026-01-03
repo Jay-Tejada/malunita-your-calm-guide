@@ -336,7 +336,7 @@ All colors MUST be HSL.
     font-weight: 500;
   }
 
-  /* Paper texture overlay */
+  /* Paper texture overlay - STATIC, no animation */
   body::before {
     content: '';
     position: fixed;
@@ -347,11 +347,11 @@ All colors MUST be HSL.
     pointer-events: none;
     z-index: 0;
     background-image: url('/images/texture.png');
-    background-size: 105%; /* Slightly larger to allow for shifting */
+    background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
-    opacity: 0.06;
-    animation: paper-texture-shift 60s ease-in-out infinite;
+    opacity: 0.04;
+    /* NO animation - static texture */
   }
 
   /* Dark mode texture - inverted for darker appearance */
@@ -685,16 +685,16 @@ All colors MUST be HSL.
     transition: all 0.3s ease-out;
   }
 
-  /* Focus Task Highlight */
+  /* Focus Task Highlight - solid colors, no gradients */
   .focus-task {
-    background: linear-gradient(135deg, hsl(var(--card)) 0%, hsl(30 5% 18%) 100%);
-    border-left: 3px solid hsl(var(--accent));
+    background: hsl(var(--bg-surface));
+    border-left: 3px solid hsl(var(--accent-color));
     padding: 16px;
     border-radius: 8px;
   }
 
   .dark .focus-task {
-    background: linear-gradient(135deg, hsl(var(--card)) 0%, hsl(30 4% 20%) 100%);
+    background: hsl(var(--bg-surface));
   }
 
   .focus-task-container .focus-task {

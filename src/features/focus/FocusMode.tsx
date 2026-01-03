@@ -227,10 +227,10 @@ export const FocusMode = ({ onClose }: FocusModeProps) => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 bg-background/95 backdrop-blur-sm flex items-center justify-center p-4"
+      className="fixed inset-0 z-50 bg-bg-app/95 backdrop-blur-sm flex items-center justify-center p-4"
     >
-      {/* Dimmed background with subtle texture */}
-      <div className="absolute inset-0 bg-gradient-to-b from-background via-muted/30 to-background" />
+      {/* Static background */}
+      <div className="absolute inset-0 bg-bg-app" />
       
       {/* Main content */}
       <div className="relative z-10 w-full max-w-md flex flex-col items-center gap-6">
