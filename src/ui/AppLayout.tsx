@@ -2,7 +2,6 @@
 
 import { useNavigate } from "react-router-dom";
 import { Home } from "lucide-react";
-import { colors, typography } from "@/ui/tokens";
 
 interface AppLayoutProps {
   title?: string;
@@ -33,41 +32,22 @@ export function AppLayout({
     goHome();
   };
   return (
-    <div
-      className="min-h-screen flex flex-col"
-      style={{
-        backgroundColor: colors.bg.base,
-        fontFamily: typography.fontFamily,
-      }}
-    >
+    <div className="min-h-screen flex flex-col bg-background font-mono">
       {/* Header */}
       {title && (
-        <header
-          className="flex items-center justify-between px-5 py-4 sticky top-0 z-30"
-          style={{
-            backgroundColor: colors.bg.base,
-            borderBottom: `1px solid ${colors.border.subtle}`,
-          }}
-        >
+        <header className="flex items-center justify-between px-5 py-4 sticky top-0 z-30 bg-background border-b border-border">
           <div className="w-10">
             {showBack && (
               <button
                 onClick={handleBack}
-                className="p-2 -ml-2"
+                className="p-2 -ml-2 text-muted-foreground"
                 aria-label="Go back"
-                style={{ color: colors.text.secondary }}
               >
                 ←
               </button>
             )}
           </div>
-          <h1
-            style={{
-              fontSize: typography.titleM.size,
-              fontWeight: typography.titleM.weight,
-              color: colors.text.primary,
-            }}
-          >
+          <h1 className="text-xl font-medium text-foreground">
             {title}
           </h1>
           <div className="w-10 flex justify-end">
@@ -75,9 +55,8 @@ export function AppLayout({
               (showBack ? (
                 <button
                   onClick={goHome}
-                  className="p-2 -mr-2"
+                  className="p-2 -mr-2 text-muted-foreground"
                   aria-label="Go home"
-                  style={{ color: colors.text.secondary }}
                 >
                   <Home className="h-4 w-4" />
                 </button>

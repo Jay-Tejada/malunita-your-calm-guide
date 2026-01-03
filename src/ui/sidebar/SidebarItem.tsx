@@ -1,6 +1,6 @@
 // src/ui/sidebar/SidebarItem.tsx
 
-import { colors, typography } from "@/ui/tokens";
+import { cn } from "@/lib/utils";
 
 interface SidebarItemProps {
   icon?: string;
@@ -15,32 +15,24 @@ export function SidebarItem({ icon, label, path, active, badge, onNavigate }: Si
   return (
     <button
       onClick={() => onNavigate(path)}
-      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors"
-      style={{
-        backgroundColor: active ? colors.bg.surface : "transparent",
-        borderLeft: active ? `2px solid ${colors.accent.primary}` : "2px solid transparent",
-      }}
+      className={cn(
+        "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors",
+        active 
+          ? "bg-accent/10 border-l-2 border-primary" 
+          : "border-l-2 border-transparent hover:bg-accent/5"
+      )}
     >
-      {icon && <span style={{ fontSize: 14, width: 20, textAlign: "center" }}>{icon}</span>}
+      {icon && <span className="text-sm w-5 text-center">{icon}</span>}
       <span
-        style={{
-          fontFamily: typography.fontFamily,
-          fontSize: typography.bodyS.size,
-          color: active ? colors.text.primary : colors.text.secondary,
-          flex: 1,
-          textAlign: "left",
-        }}
+        className={cn(
+          "font-mono text-sm flex-1 text-left",
+          active ? "text-foreground" : "text-muted-foreground"
+        )}
       >
         {label}
       </span>
       {badge !== undefined && (
-        <span
-          style={{
-            fontFamily: typography.fontFamily,
-            fontSize: typography.labelS.size,
-            color: colors.text.muted,
-          }}
-        >
+        <span className="font-mono text-xs text-muted-foreground">
           {badge}
         </span>
       )}

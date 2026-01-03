@@ -22,7 +22,7 @@ export function TaskRow({
   return (
     <motion.div
       className={cn(
-        "flex gap-4 px-5 py-4 cursor-pointer bg-bg-surface hover:bg-bg-surface-2 transition-colors border-b border-border-subtle",
+        "flex gap-4 px-5 py-4 cursor-pointer bg-card hover:bg-accent/5 transition-colors border-b border-border",
         metadata ? "items-start" : "items-center"
       )}
       style={{ minHeight: 64 }}
@@ -45,8 +45,8 @@ export function TaskRow({
           className={cn(
             "w-[22px] h-[22px] rounded-full flex items-center justify-center transition-all border-[1.5px]",
             isCompleted 
-              ? "bg-accent-color border-accent-color" 
-              : "bg-transparent border-border-strong hover:border-accent-muted"
+              ? "bg-primary border-primary" 
+              : "bg-transparent border-border hover:border-primary/50"
           )}
         >
           {isCompleted && (
@@ -54,7 +54,7 @@ export function TaskRow({
               <path
                 d="M2.5 6L5 8.5L9.5 3.5"
                 stroke="currentColor"
-                className="text-bg-app"
+                className="text-primary-foreground"
                 strokeWidth="1.5"
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -69,14 +69,14 @@ export function TaskRow({
         <p
           className={cn(
             "font-mono text-base leading-relaxed",
-            isCompleted ? "text-text-muted line-through" : "text-text-primary"
+            isCompleted ? "text-muted-foreground line-through" : "text-foreground"
           )}
         >
           {title}
         </p>
         
         {metadata && (
-          <p className="font-mono text-sm leading-tight text-text-secondary mt-1">
+          <p className="font-mono text-sm leading-tight text-muted-foreground mt-1">
             {metadata}
           </p>
         )}
