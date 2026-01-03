@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { Drawer } from 'vaul';
 import { Mic, X, Send, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useWakeLock } from '@/hooks/useWakeLock';
 import '@/types/speech.d.ts';
 
 interface VoiceSheetProps {
@@ -21,6 +22,7 @@ export function VoiceSheet({
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const recognitionRef = useRef<any>(null);
+  const { requestWakeLock, releaseWakeLock } = useWakeLock();
 
   // Check browser support
   useEffect(() => {
@@ -43,12 +45,15 @@ export function VoiceSheet({
     }
   }, [open]);
 
-  const startRecording = useCallback(() => {
+  const startRecording = useCallback(async () => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
       console.error('Speech recognition not supported');
       return;
     }
+
+    // Request wake lock to prevent screen timeout during recording
+    await requestWakeLock();
 
     try {
       const recognition = new SpeechRecognition();
@@ -92,8 +97,10 @@ export function VoiceSheet({
         }
       };
 
-      recognition.onend = () => {
+      recognition.onend = async () => {
         console.log('Speech recognition ended');
+        // Release wake lock when recording ends
+        await releaseWakeLock();
         setIsRecording(false);
         setIsProcessing(false);
         recognitionRef.current = null;
@@ -106,12 +113,14 @@ export function VoiceSheet({
     }
   }, []);
 
-  const stopRecording = useCallback(() => {
+  const stopRecording = useCallback(async () => {
     if (recognitionRef.current) {
       setIsProcessing(true);
       recognitionRef.current.stop();
     }
-  }, []);
+    // Ensure wake lock is released
+    await releaseWakeLock();
+  }, [releaseWakeLock]);
 
   const handleVoiceButton = () => {
     if (isRecording) {

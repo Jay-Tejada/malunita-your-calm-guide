@@ -20,6 +20,7 @@ import { useNavigate } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { OfflineIndicator } from "@/components/OfflineIndicator";
 import { useOfflineStatus } from "@/hooks/useOfflineStatus";
+import { useWakeLock } from "@/hooks/useWakeLock";
 import Orb from "@/components/Orb";
 import Search from "@/components/Search";
 import { useTasks } from "@/hooks/useTasks";
@@ -68,6 +69,7 @@ const Index = () => {
 
   const isMobile = useIsMobile();
   const { isOnline } = useOfflineStatus();
+  const { requestWakeLock, releaseWakeLock } = useWakeLock();
   
   // Capture sheet state
   const [captureOpen, setCaptureOpen] = useState(false);
@@ -264,6 +266,9 @@ const Index = () => {
 
   const startOrbRecording = async () => {
     try {
+      // Request wake lock to prevent screen timeout during recording
+      await requestWakeLock();
+      
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const mediaRecorder = new MediaRecorder(stream);
       mediaRecorderRef.current = mediaRecorder;
@@ -276,6 +281,8 @@ const Index = () => {
       };
 
       mediaRecorder.onstop = async () => {
+        // Release wake lock when recording stops
+        await releaseWakeLock();
         const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
         stream.getTracks().forEach(track => track.stop());
         await processOrbRecording(audioBlob);
@@ -284,6 +291,8 @@ const Index = () => {
       mediaRecorder.start();
       setIsOrbRecording(true);
     } catch (error) {
+      // Release wake lock on error
+      await releaseWakeLock();
       console.error('Error accessing microphone:', error);
       toast({
         title: "Microphone access needed",
@@ -293,10 +302,12 @@ const Index = () => {
     }
   };
 
-  const stopOrbRecording = () => {
+  const stopOrbRecording = async () => {
     if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
       mediaRecorderRef.current.stop();
     }
+    // Ensure wake lock is released
+    await releaseWakeLock();
     setIsOrbRecording(false);
     setIsOrbProcessing(true);
   };
