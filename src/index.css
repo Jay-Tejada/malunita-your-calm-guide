@@ -77,114 +77,158 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Notion-inspired Design System - Warm Neutral Beige */
-    --background: 40 20% 98%; /* #FAF9F7 warm cream, aged notebook paper */
-    --foreground: 0 0% 13%; /* #212121 near black for text */
-    --foreground-soft: 0 0% 45%; /* #737373 secondary text */
+    /* ============================================
+       SEMANTIC THEME TOKENS - LIGHT MODE
+       Warm paper aesthetic
+       ============================================ */
+    
+    /* App Backgrounds */
+    --bg-app: 48 33% 97%; /* #FAFAF7 warm paper off-white */
+    --bg-surface: 0 0% 100%; /* #FFFFFF cards/rows */
+    --bg-surface-2: 48 20% 96%; /* #F5F5F0 hover/pressed/selected */
+    --bg-overlay: 0 0% 0% / 0.10; /* rgba(0,0,0,0.10) scrim */
+    
+    /* Text Colors */
+    --text-primary: 0 0% 10%; /* #1A1A1A */
+    --text-secondary: 0 0% 29%; /* #4A4A4A */
+    --text-muted: 0 0% 54%; /* #8A8A8A */
+    
+    /* Borders */
+    --border-subtle: 0 0% 0% / 0.06; /* rgba(0,0,0,0.06) */
+    --border-strong: 0 0% 0% / 0.12; /* rgba(0,0,0,0.12) */
+    
+    /* Accent */
+    --accent-color: 0 0% 13%; /* #212121 */
+    --accent-muted: 0 0% 45%; /* #737373 */
+    
+    /* Legacy compatibility mappings */
+    --background: 48 33% 97%;
+    --foreground: 0 0% 10%;
+    --foreground-soft: 0 0% 29%;
 
-    --card: 0 0% 100%; /* #FFFFFF clean white cards */
-    --card-strong: 40 14% 97%; /* #FAF9F7 subtle off-white */
-    --card-foreground: 0 0% 13%; /* #212121 */
+    --card: 0 0% 100%;
+    --card-strong: 48 20% 96%;
+    --card-foreground: 0 0% 10%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 13%;
+    --popover-foreground: 0 0% 10%;
 
-    --primary: 0 0% 13%; /* #212121 dark for primary actions */
-    --primary-foreground: 0 0% 100%; /* white text on primary */
+    --primary: 0 0% 10%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 40 14% 97%; /* card-strong for secondary */
-    --secondary-foreground: 0 0% 13%;
+    --secondary: 48 20% 96%;
+    --secondary-foreground: 0 0% 10%;
 
-    --muted: 40 14% 97%; /* card-strong for muted */
-    --muted-foreground: 0 0% 45%; /* foreground-soft */
+    --muted: 48 20% 96%;
+    --muted-foreground: 0 0% 54%;
 
-    --accent: 40 14% 97%; /* card-strong */
-    --accent-foreground: 0 0% 13%;
+    --accent: 48 20% 96%;
+    --accent-foreground: 0 0% 10%;
 
-    --success: 142 71% 45%; /* green for success */
+    --success: 142 71% 45%;
     --success-foreground: 0 0% 100%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 40 10% 90%; /* light warm gray border */
-    --input: 40 10% 85%; /* slightly darker for inputs */
+    --border: 40 10% 90%;
+    --input: 40 10% 85%;
     --ring: 0 0% 13%;
     
-    /* Surface and UI Elements */
-    --surface: 0 0% 100%; /* same as card */
-    
-    /* Sidebar */
-    --sidebar-bg: 40 20% 98%; /* same as background - warm cream */
-    --sidebar-active: 40 14% 97%; /* card-strong */
+    --surface: 0 0% 100%;
+    --sidebar-bg: 48 33% 97%;
+    --sidebar-active: 48 20% 96%;
 
     /* Canvas Design System */
-    --canvas-bg: 42 33% 96%; /* #FAF7F2 warm cream */
-    --canvas-sidebar: 40 30% 94%; /* #F5F0E8 */
-    --canvas-text: 30 8% 16%; /* #2D2A26 */
-    --canvas-text-muted: 30 6% 45%; /* muted text */
-    --canvas-accent: 28 52% 64%; /* #D4A574 warm tan */
-    --canvas-border: 30 10% 88%; /* subtle border */
-    --canvas-active: 28 40% 90%; /* active highlight */
+    --canvas-bg: 48 33% 97%;
+    --canvas-sidebar: 48 20% 96%;
+    --canvas-text: 0 0% 10%;
+    --canvas-text-muted: 0 0% 54%;
+    --canvas-accent: 28 52% 64%;
+    --canvas-border: 40 10% 90%;
+    --canvas-active: 48 20% 96%;
 
-    --radius: 10px; /* rounded corners: 10px */
+    --radius: 10px;
   }
 
-  /* Dark Mode - Warm Charcoal with improved text contrast */
+  /* ============================================
+     SEMANTIC THEME TOKENS - DARK MODE
+     Soft black aesthetic
+     ============================================ */
   .dark {
-    --background: 30 6% 14%; /* #252422 slightly warmer charcoal */
-    --foreground: 35 20% 93%; /* #F0EDE8 brighter cream for text */
-    --foreground-soft: 32 12% 70%; /* #B8B0A4 readable secondary */
+    /* App Backgrounds */
+    --bg-app: 220 10% 5%; /* #0B0C0E soft black */
+    --bg-surface: 0 0% 10%; /* #1A1A1A */
+    --bg-surface-2: 0 0% 15%; /* #252525 */
+    --bg-overlay: 0 0% 0% / 0.45; /* rgba(0,0,0,0.45) */
+    
+    /* Text Colors */
+    --text-primary: 0 0% 96%; /* #F5F5F5 */
+    --text-secondary: 0 0% 69%; /* #B0B0B0 */
+    --text-muted: 0 0% 42%; /* #6A6A6A */
+    
+    /* Borders */
+    --border-subtle: 0 0% 100% / 0.06; /* rgba(255,255,255,0.06) */
+    --border-strong: 0 0% 100% / 0.12; /* rgba(255,255,255,0.12) */
+    
+    /* Accent */
+    --accent-color: 0 0% 96%;
+    --accent-muted: 0 0% 60%;
 
-    --card: 30 5% 16%; /* #2A2826 slightly lighter card */
-    --card-strong: 30 4% 19%; /* #312F2C hover state */
-    --card-foreground: 35 20% 93%;
+    /* Legacy compatibility mappings */
+    --background: 220 10% 5%;
+    --foreground: 0 0% 96%;
+    --foreground-soft: 0 0% 69%;
 
-    --popover: 30 5% 16%;
-    --popover-foreground: 35 20% 93%;
+    --card: 0 0% 10%;
+    --card-strong: 0 0% 15%;
+    --card-foreground: 0 0% 96%;
 
-    --primary: 35 20% 93%; /* cream for primary actions */
-    --primary-foreground: 30 6% 14%; /* charcoal text on primary */
+    --popover: 0 0% 10%;
+    --popover-foreground: 0 0% 96%;
 
-    --secondary: 30 4% 19%; /* card-strong for secondary */
-    --secondary-foreground: 35 20% 93%;
+    --primary: 0 0% 96%;
+    --primary-foreground: 0 0% 10%;
 
-    --muted: 30 4% 19%;
-    --muted-foreground: 32 12% 70%; /* foreground-soft - readable */
+    --secondary: 0 0% 15%;
+    --secondary-foreground: 0 0% 96%;
 
-    --accent: 38 30% 78%; /* #D4C5A9 warm accent for headers */
-    --accent-foreground: 30 6% 14%;
+    --muted: 0 0% 15%;
+    --muted-foreground: 0 0% 42%;
+
+    --accent: 0 0% 15%;
+    --accent-foreground: 0 0% 96%;
 
     --success: 120 45% 45%;
-    --success-foreground: 35 20% 93%;
+    --success-foreground: 0 0% 96%;
 
     --destructive: 0 70% 45%;
-    --destructive-foreground: 35 20% 93%;
+    --destructive-foreground: 0 0% 96%;
 
-    --border: 30 8% 24%; /* #3A3632 visible but subtle */
-    --input: 30 8% 28%;
-    --ring: 35 20% 93%;
+    --border: 0 0% 20%;
+    --input: 0 0% 24%;
+    --ring: 0 0% 96%;
     
-    --surface: 30 5% 16%;
-    --sidebar-bg: 30 6% 14%;
-    --sidebar-active: 30 4% 19%;
+    --surface: 0 0% 10%;
+    --sidebar-bg: 220 10% 5%;
+    --sidebar-active: 0 0% 15%;
 
     /* Canvas Design System - Dark Mode */
-    --canvas-bg: 20 8% 10%; /* #1C1917 matte charcoal */
-    --canvas-sidebar: 20 6% 13%; /* #252220 */
-    --canvas-text: 35 15% 90%; /* #E8E4DF */
-    --canvas-text-muted: 30 8% 55%;
-    --canvas-accent: 30 30% 53%; /* #A68B6A */
-    --canvas-border: 20 6% 20%;
-    --canvas-active: 20 8% 18%;
+    --canvas-bg: 220 10% 5%;
+    --canvas-sidebar: 0 0% 10%;
+    --canvas-text: 0 0% 96%;
+    --canvas-text-muted: 0 0% 42%;
+    --canvas-accent: 30 30% 53%;
+    --canvas-border: 0 0% 20%;
+    --canvas-active: 0 0% 15%;
 
-    --focus-glow: 30 5% 18%;
+    --focus-glow: 0 0% 12%;
     
-    /* Softer orb for dark mode - moon-like glow */
-    --orb-dark-base: 30 8% 22%; /* #3D3832 warm dark gray */
-    --orb-dark-accent: 30 6% 27%; /* #4A4540 slightly lighter */
-    --orb-dark-inner: 30 10% 32%; /* #5A524A inner highlight */
-    --orb-dark-glow-color: 35 12% 66%; /* rgba(180, 170, 155) */
+    /* Softer orb for dark mode */
+    --orb-dark-base: 0 0% 14%;
+    --orb-dark-accent: 0 0% 18%;
+    --orb-dark-inner: 0 0% 22%;
+    --orb-dark-glow-color: 0 0% 50%;
     --orb-dark-glow-opacity: 0.25;
   }
 

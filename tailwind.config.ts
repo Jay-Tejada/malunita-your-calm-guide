@@ -14,6 +14,25 @@ export default {
     },
     extend: {
       colors: {
+        /* ============================================
+           SEMANTIC THEME TOKENS
+           ============================================ */
+        "bg-app": "hsl(var(--bg-app))",
+        "bg-surface": "hsl(var(--bg-surface))",
+        "bg-surface-2": "hsl(var(--bg-surface-2))",
+        "bg-overlay": "hsl(var(--bg-overlay))",
+        
+        "text-primary": "hsl(var(--text-primary))",
+        "text-secondary": "hsl(var(--text-secondary))",
+        "text-muted": "hsl(var(--text-muted))",
+        
+        "border-subtle": "hsl(var(--border-subtle))",
+        "border-strong": "hsl(var(--border-strong))",
+        
+        "accent-color": "hsl(var(--accent-color))",
+        "accent-muted": "hsl(var(--accent-muted))",
+        
+        /* Legacy compatibility */
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
