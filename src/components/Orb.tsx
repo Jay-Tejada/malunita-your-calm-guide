@@ -1,68 +1,58 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 
 type TimeOfDay = 'morning' | 'midday' | 'evening' | 'night';
-type OrbState = 'idle' | 'listening' | 'processing' | 'settling';
+type AIConfidence = 'low' | 'medium' | 'high';
+type InteractionState = 'idle' | 'listening' | 'processing';
 
 interface OrbProps {
   size?: number;
   onClick?: () => void;
   className?: string;
   forceTime?: TimeOfDay;
+  aiConfidence?: AIConfidence;
+  interactionState?: InteractionState;
+  isPassive?: boolean;
+  // Legacy props for backward compatibility
   isRecording?: boolean;
   isProcessing?: boolean;
   isFocused?: boolean;
-  isPassive?: boolean;
 }
 
 /**
- * Malunita Orb - Alive, intelligent, state-aware
+ * Malunita Orb - Confidence-driven intelligence indicator
  * 
  * Design philosophy:
- * - Never static - always subtle organic motion
- * - No hard edges, no flat fills
- * - Slow, organic, irregular animations
- * - Presence, not decoration
+ * - Deterministic behavior based on ai_confidence and interaction_state
+ * - "This understands me and is ready when I am"
+ * - No fast animations, no icons, no color cycling
+ * - Subtle, organic motion that conveys understanding level
  */
 const Orb = ({ 
   size = 200, 
   onClick, 
   className = '', 
   forceTime,
-  isRecording = false, 
-  isProcessing = false,
-  isFocused = false,
+  aiConfidence = 'medium', // Default to medium if unavailable
+  interactionState = 'idle',
   isPassive = false,
+  // Legacy prop mapping
+  isRecording = false,
+  isProcessing = false,
+  isFocused = false, // Kept for backward compatibility
 }: OrbProps) => {
   const [timeOfDay, setTimeOfDay] = useState<TimeOfDay>('midday');
-  const [orbState, setOrbState] = useState<OrbState>('idle');
   const [breathPhase, setBreathPhase] = useState(0);
-  const [wanderOffset, setWanderOffset] = useState({ x: 0, y: 0 });
-  const prevStateRef = useRef<OrbState>('idle');
-  const breathIntervalRef = useRef<number>();
-  const wanderIntervalRef = useRef<number>();
 
-  // Determine current state
-  useEffect(() => {
-    const prevState = prevStateRef.current;
-    let newState: OrbState = 'idle';
-    
-    if (isRecording) {
-      newState = 'listening';
-    } else if (isProcessing) {
-      newState = 'processing';
-    } else if (prevState === 'listening' || prevState === 'processing') {
-      // Settling back from active state
-      newState = 'settling';
-      const timer = setTimeout(() => setOrbState('idle'), 800);
-      return () => clearTimeout(timer);
-    }
-    
-    prevStateRef.current = newState;
-    setOrbState(newState);
-  }, [isRecording, isProcessing]);
+  // Map legacy props to new system
+  const effectiveInteractionState: InteractionState = useMemo(() => {
+    if (interactionState !== 'idle') return interactionState;
+    if (isRecording) return 'listening';
+    if (isProcessing) return 'processing';
+    return 'idle';
+  }, [interactionState, isRecording, isProcessing]);
 
-  // Time of day detection
+  // Time of day detection (kept for color palette)
   useEffect(() => {
     if (forceTime) {
       setTimeOfDay(forceTime);
@@ -82,45 +72,23 @@ const Orb = ({
     return () => clearInterval(interval);
   }, [forceTime]);
 
-  // Organic breathing - irregular timing for life-like feel
+  // Deterministic breathing based on confidence level
+  // Low: no motion | Medium: very slow | High: gentle, settled
   useEffect(() => {
-    if (isPassive) return;
-    
-    const breathe = () => {
-      setBreathPhase(p => (p + 1) % 360);
-      // Vary next breath timing slightly for organic feel
-      const nextInterval = 50 + Math.random() * 20;
-      breathIntervalRef.current = window.setTimeout(breathe, nextInterval);
-    };
-    
-    breathe();
-    return () => {
-      if (breathIntervalRef.current) clearTimeout(breathIntervalRef.current);
-    };
-  }, [isPassive]);
-
-  // Subtle wandering motion - slow, irregular drift
-  useEffect(() => {
-    if (isPassive) {
-      setWanderOffset({ x: 0, y: 0 });
+    if (isPassive || aiConfidence === 'low') {
+      setBreathPhase(0);
       return;
     }
     
-    const wander = () => {
-      setWanderOffset({
-        x: (Math.random() - 0.5) * 2,
-        y: (Math.random() - 0.5) * 2,
-      });
-      // Very slow wander updates
-      const nextWander = 3000 + Math.random() * 2000;
-      wanderIntervalRef.current = window.setTimeout(wander, nextWander);
-    };
+    // Deterministic interval based on confidence
+    const breathInterval = aiConfidence === 'high' ? 80 : 100;
     
-    wander();
-    return () => {
-      if (wanderIntervalRef.current) clearTimeout(wanderIntervalRef.current);
-    };
-  }, [isPassive]);
+    const interval = setInterval(() => {
+      setBreathPhase(p => (p + 1) % 360);
+    }, breathInterval);
+    
+    return () => clearInterval(interval);
+  }, [isPassive, aiConfidence]);
 
   // Color palettes - warm, organic tones
   const palettes = useMemo(() => ({
@@ -156,65 +124,84 @@ const Orb = ({
 
   const colors = palettes[timeOfDay];
 
-  // Calculate organic breathing values
+  // Calculate breathing values (only active for medium/high confidence)
   const breathRad = (breathPhase * Math.PI) / 180;
-  const primaryBreath = Math.sin(breathRad * 0.7); // Slow primary cycle
-  const secondaryBreath = Math.sin(breathRad * 1.3 + 0.5) * 0.3; // Faster secondary
-  const combinedBreath = (primaryBreath + secondaryBreath) / 1.3;
+  const primaryBreath = aiConfidence === 'low' ? 0 : Math.sin(breathRad * 0.5);
+  
+  // Confidence-driven behavior modifiers
+  const confidenceModifiers = useMemo(() => {
+    switch (aiConfidence) {
+      case 'low':
+        return {
+          breathScale: 0,        // Still
+          glowIntensity: 0.5,    // Minimal glow
+          innerMotion: 0,        // No internal motion
+          density: 1.15,         // Dense appearance (slightly smaller, more solid)
+        };
+      case 'medium':
+        return {
+          breathScale: 0.01,     // ±1% scale - very slow breathing
+          glowIntensity: 0.75,   // Soft glow
+          innerMotion: 0.3,      // Faint internal motion
+          density: 1.0,
+        };
+      case 'high':
+        return {
+          breathScale: 0.015,    // Slightly more pronounced
+          glowIntensity: 1.0,    // Subtle layered glow
+          innerMotion: 0.7,      // Gentle internal rotation
+          density: 0.95,         // "Settled and ready" - slightly expanded
+        };
+    }
+  }, [aiConfidence]);
 
-  // State-specific modifiers
-  const stateModifiers = useMemo(() => {
-    switch (orbState) {
+  // Interaction state modifiers (applied on top of confidence)
+  const interactionModifiers = useMemo(() => {
+    switch (effectiveInteractionState) {
       case 'listening':
         return {
-          scale: 1.04 + combinedBreath * 0.02,
-          glowIntensity: 1.4,
-          glowSpread: 1.3,
-          innerMotion: 1.5,
+          scaleBoost: 0.03,      // Slight expansion
+          glowBoost: 0.3,        // Glow increases
+          motionBoost: 0,
         };
       case 'processing':
         return {
-          scale: 1.0 + combinedBreath * 0.015,
-          glowIntensity: 1.1,
-          glowSpread: 1.1,
-          innerMotion: 2.0, // More internal activity
-        };
-      case 'settling':
-        return {
-          scale: 1.02 + combinedBreath * 0.01,
-          glowIntensity: 1.2,
-          glowSpread: 1.0,
-          innerMotion: 0.8,
+          scaleBoost: 0,
+          glowBoost: 0.1,
+          motionBoost: 0.4,      // Internal motion increases slightly
         };
       default: // idle
         return {
-          scale: 1.0 + combinedBreath * 0.018,
-          glowIntensity: 1.0,
-          glowSpread: 1.0,
-          innerMotion: 1.0,
+          scaleBoost: 0,
+          glowBoost: 0,
+          motionBoost: 0,
         };
     }
-  }, [orbState, combinedBreath]);
+  }, [effectiveInteractionState]);
 
-  // Passive state dampening
+  // Calculate final values
   const passiveMultiplier = isPassive ? 0.3 : 1;
-  const finalScale = 1 + (stateModifiers.scale - 1) * passiveMultiplier;
-  const finalGlowIntensity = stateModifiers.glowIntensity * passiveMultiplier + (1 - passiveMultiplier);
+  
+  const finalBreathScale = confidenceModifiers.breathScale * primaryBreath * passiveMultiplier;
+  const finalScale = confidenceModifiers.density + finalBreathScale + interactionModifiers.scaleBoost;
+  
+  const finalGlowIntensity = (confidenceModifiers.glowIntensity + interactionModifiers.glowBoost) * passiveMultiplier;
+  const finalInnerMotion = (confidenceModifiers.innerMotion + interactionModifiers.motionBoost) * passiveMultiplier;
 
   // Dynamic glow size
   const baseGlowSize = size * 0.35;
-  const dynamicGlowSize = baseGlowSize * stateModifiers.glowSpread * (0.9 + combinedBreath * 0.15);
+  const dynamicGlowSize = baseGlowSize * finalGlowIntensity;
 
-  // Inner movement for "intelligence" feel
-  const innerShift = {
-    x: Math.sin(breathRad * 0.5) * 3 * stateModifiers.innerMotion,
-    y: Math.cos(breathRad * 0.7) * 2 * stateModifiers.innerMotion,
+  // Inner movement for "intelligence" feel (only for medium/high confidence)
+  const innerShift = aiConfidence === 'low' ? { x: 0, y: 0 } : {
+    x: Math.sin(breathRad * 0.3) * 3 * finalInnerMotion,
+    y: Math.cos(breathRad * 0.4) * 2 * finalInnerMotion,
   };
 
   // Gradient position shift for subtle internal motion
   const gradientCenter = {
-    x: 35 + innerShift.x + wanderOffset.x,
-    y: 35 + innerShift.y + wanderOffset.y,
+    x: 35 + innerShift.x,
+    y: 35 + innerShift.y,
   };
 
   return (
@@ -224,49 +211,47 @@ const Orb = ({
       style={{ width: size, height: size }}
       animate={{
         scale: finalScale,
-        x: wanderOffset.x * (isPassive ? 0 : 1),
-        y: wanderOffset.y * (isPassive ? 0 : 1),
       }}
       transition={{
-        scale: { duration: 0.8, ease: 'easeInOut' },
-        x: { duration: 4, ease: 'easeInOut' },
-        y: { duration: 4, ease: 'easeInOut' },
+        scale: { duration: 1.2, ease: 'easeInOut' },
       }}
-      whileTap={{ scale: finalScale * 0.97 }}
+      whileTap={onClick ? { scale: finalScale * 0.97 } : undefined}
       role={onClick ? 'button' : undefined}
       tabIndex={onClick ? 0 : undefined}
       aria-label={
-        isRecording ? 'Listening...' : 
-        isProcessing ? 'Processing...' : 
+        effectiveInteractionState === 'listening' ? 'Listening...' : 
+        effectiveInteractionState === 'processing' ? 'Processing...' : 
         'Malunita orb - tap to interact'
       }
     >
-      {/* Outer ambient glow - soft halo */}
+      {/* Outer ambient glow - soft halo (visibility based on confidence) */}
       <motion.div
         className="absolute inset-0 rounded-full pointer-events-none"
         style={{
           background: `radial-gradient(circle at 50% 50%, ${colors.glow} 0%, transparent 70%)`,
         }}
         animate={{
-          opacity: 0.4 + combinedBreath * 0.15 * finalGlowIntensity,
-          scale: 1.2 + combinedBreath * 0.08,
+          opacity: 0.3 + primaryBreath * 0.1 * finalGlowIntensity,
+          scale: 1.15 + primaryBreath * 0.05,
         }}
-        transition={{ duration: 0.6, ease: 'easeOut' }}
+        transition={{ duration: 1.0, ease: 'easeOut' }}
       />
 
-      {/* Secondary glow layer - depth */}
-      <motion.div
-        className="absolute rounded-full pointer-events-none"
-        style={{
-          inset: -dynamicGlowSize * 0.3,
-          background: `radial-gradient(circle at 50% 50%, ${colors.glow} 0%, transparent 60%)`,
-          filter: 'blur(20px)',
-        }}
-        animate={{
-          opacity: 0.25 * finalGlowIntensity + combinedBreath * 0.1,
-        }}
-        transition={{ duration: 0.8 }}
-      />
+      {/* Secondary glow layer - depth (only for high confidence) */}
+      {aiConfidence === 'high' && (
+        <motion.div
+          className="absolute rounded-full pointer-events-none"
+          style={{
+            inset: -dynamicGlowSize * 0.3,
+            background: `radial-gradient(circle at 50% 50%, ${colors.glow} 0%, transparent 60%)`,
+            filter: 'blur(20px)',
+          }}
+          animate={{
+            opacity: 0.2 + primaryBreath * 0.08,
+          }}
+          transition={{ duration: 1.2 }}
+        />
+      )}
 
       {/* Main orb body */}
       <div
@@ -307,12 +292,12 @@ const Orb = ({
             filter: 'blur(8px)',
           }}
           animate={{
-            opacity: 0.6 + combinedBreath * 0.25,
+            opacity: aiConfidence === 'low' ? 0.3 : 0.5 + primaryBreath * 0.2,
             x: innerShift.x * 0.5,
             y: innerShift.y * 0.5,
-            scale: 1 + combinedBreath * 0.05,
+            scale: 1 + primaryBreath * 0.03 * finalInnerMotion,
           }}
-          transition={{ duration: 0.4, ease: 'easeOut' }}
+          transition={{ duration: 0.6, ease: 'easeOut' }}
         />
 
         {/* Subtle surface texture - very fine grain */}
@@ -325,8 +310,53 @@ const Orb = ({
           }}
         />
 
-        {/* Processing state: slow internal current */}
-        {orbState === 'processing' && (
+        {/* High confidence: gentle internal rotation (settled and ready) */}
+        {aiConfidence === 'high' && (
+          <motion.div
+            className="absolute inset-[20%] rounded-full pointer-events-none"
+            style={{
+              background: `conic-gradient(
+                from 0deg,
+                transparent 0%,
+                ${colors.inner} 20%,
+                transparent 40%,
+                ${colors.inner} 60%,
+                transparent 80%
+              )`,
+              filter: 'blur(15px)',
+              opacity: 0.15,
+            }}
+            animate={{ rotate: 360 }}
+            transition={{
+              duration: 20, // Very slow rotation
+              repeat: Infinity,
+              ease: 'linear',
+            }}
+          />
+        )}
+
+        {/* Listening state: expanded luminance */}
+        {effectiveInteractionState === 'listening' && (
+          <motion.div
+            className="absolute inset-[10%] rounded-full pointer-events-none"
+            style={{
+              background: `radial-gradient(circle at 40% 40%, ${colors.inner} 0%, transparent 60%)`,
+              filter: 'blur(15px)',
+            }}
+            animate={{
+              opacity: [0.25, 0.4, 0.25],
+              scale: [1, 1.03, 1],
+            }}
+            transition={{
+              duration: 3, // Slow, not fast
+              repeat: Infinity,
+              ease: 'easeInOut',
+            }}
+          />
+        )}
+
+        {/* Processing state: subtle internal motion increase */}
+        {effectiveInteractionState === 'processing' && (
           <motion.div
             className="absolute inset-[15%] rounded-full pointer-events-none"
             style={{
@@ -336,38 +366,16 @@ const Orb = ({
                 ${colors.inner} 15%,
                 transparent 30%,
                 ${colors.inner} 45%,
-                transparent 60%,
-                ${colors.inner} 75%,
-                transparent 90%
+                transparent 60%
               )`,
               filter: 'blur(12px)',
-              opacity: 0.3,
+              opacity: 0.2,
             }}
             animate={{ rotate: 360 }}
             transition={{
-              duration: 8,
+              duration: 12, // Slow, no spinners
               repeat: Infinity,
               ease: 'linear',
-            }}
-          />
-        )}
-
-        {/* Listening state: expanded luminance */}
-        {orbState === 'listening' && (
-          <motion.div
-            className="absolute inset-[10%] rounded-full pointer-events-none"
-            style={{
-              background: `radial-gradient(circle at 40% 40%, ${colors.inner} 0%, transparent 60%)`,
-              filter: 'blur(15px)',
-            }}
-            animate={{
-              opacity: [0.3, 0.5, 0.3],
-              scale: [1, 1.05, 1],
-            }}
-            transition={{
-              duration: 2.5,
-              repeat: Infinity,
-              ease: 'easeInOut',
             }}
           />
         )}
@@ -406,6 +414,8 @@ export const OrbMini = ({
     <Orb 
       size={size} 
       forceTime={timeOfDay}
+      aiConfidence="medium"
+      isPassive
       className={`orb-mini ${className}`}
     />
   );
