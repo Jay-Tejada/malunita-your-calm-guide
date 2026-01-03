@@ -225,9 +225,9 @@ export const TaskCard = ({ id, title, time, context, completed, selected, onTogg
       onTouchEnd={handleTouchEnd}
       onTouchCancel={handleTouchEnd}
       className={cn(
-        "group grid grid-cols-[24px_1fr_auto] gap-3 items-start px-4 py-3 hover:bg-foreground/[0.02] transition-colors",
+        "group grid grid-cols-[24px_1fr_auto] gap-3 items-start px-4 py-3 bg-bg-surface hover:bg-bg-surface-2 transition-colors",
         completed && "opacity-60",
-        selected && "bg-foreground/[0.03]",
+        selected && "bg-bg-surface-2",
         isDragging && "opacity-50"
       )}
     >
