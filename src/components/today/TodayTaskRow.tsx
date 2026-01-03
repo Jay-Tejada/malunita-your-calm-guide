@@ -107,14 +107,14 @@ export const TodayTaskRow = memo(({ task, onToggle }: TodayTaskRowProps) => {
       <button
         onClick={handleCheckboxClick}
         className={cn(
-          "flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center transition-all",
+          "flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center transition-all border",
           task.completed
-            ? "bg-foreground/10 border border-foreground/20"
-            : "bg-transparent border-2 border-foreground/30 hover:border-foreground/50 hover:scale-110"
+            ? "bg-bg-surface-2 border-border-strong"
+            : "bg-transparent border-2 border-border-strong hover:border-accent-muted hover:scale-110"
         )}
       >
         {task.completed && (
-          <Check className="w-3 h-3 text-foreground/60" />
+          <Check className="w-3 h-3 text-text-muted" />
         )}
       </button>
 
@@ -126,8 +126,8 @@ export const TodayTaskRow = memo(({ task, onToggle }: TodayTaskRowProps) => {
             className={cn(
               "text-[14px] leading-tight font-medium",
               task.completed 
-                ? "text-foreground/40 line-through" 
-                : "text-foreground"
+                ? "text-text-muted line-through" 
+                : "text-text-primary"
             )}
           >
             {displayText}

@@ -2640,10 +2640,10 @@ button:active,
   transition: opacity 150ms ease;
 }
 
-/* Global reset + full-viewport dark backdrop (prevents bottom white bar) */
+/* Global reset + full-viewport backdrop using theme tokens */
 html {
   min-height: 100%;
-  background-color: hsl(240 6% 6%); /* #1a1a1a */
+  background-color: hsl(var(--bg-app));
   /* Prevent iOS rubber-band bounce from exposing underlying light color */
   overscroll-behavior: none;
 }
@@ -2652,7 +2652,7 @@ body {
   min-height: 100%;
   margin: 0;
   padding: 0;
-  background-color: hsl(240 6% 6%);
+  background-color: hsl(var(--bg-app));
   /* iOS safe area */
   padding-bottom: env(safe-area-inset-bottom);
   /* Contain vertical overscroll bounce */
@@ -2768,15 +2768,15 @@ input:focus-visible {
   outline-offset: 2px;
 }
 
-/* Placeholder styling for Malunita dark theme */
+/* Placeholder styling using theme tokens */
 .malunita-input::placeholder {
-  color: #5C5C70;
+  color: hsl(var(--text-muted));
 }
 
-/* Malunita dark theme class */
+/* Malunita dark theme class - uses theme tokens */
 .malunita-dark {
-  background-color: #050509;
-  color: #FFFFFF;
+  background-color: hsl(var(--bg-app));
+  color: hsl(var(--text-primary));
   font-family: "IBM Plex Mono", monospace;
   -webkit-font-smoothing: antialiased;
 }
