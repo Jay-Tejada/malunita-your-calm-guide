@@ -160,7 +160,7 @@ All colors MUST be HSL.
     --bg-app: 220 10% 5%; /* #0B0C0E soft black */
     --bg-surface: 0 0% 10%; /* #1A1A1A */
     --bg-surface-2: 0 0% 15%; /* #252525 */
-    --bg-overlay: 0 0% 0% / 0.45; /* rgba(0,0,0,0.45) */
+    --bg-overlay: 0 0% 0% / 0.50; /* rgba(0,0,0,0.50) */
     
     /* Text Colors */
     --text-primary: 0 0% 96%; /* #F5F5F5 */
@@ -2660,7 +2660,7 @@ body {
 }
 
 #root {
-  background-color: hsl(240 6% 6%);
+  background-color: hsl(var(--bg-app));
   /* Use flex root so pages can reliably fill remaining space */
   display: flex;
   flex-direction: column;
@@ -2682,33 +2682,12 @@ body.pwa-standalone #root {
 [data-radix-portal] [data-radix-dialog-overlay],
 [data-radix-portal] [data-radix-alert-dialog-overlay] {
   background-color: hsl(var(--bg-overlay)) !important;
-  backdrop-filter: blur(3px);
-}
-
-.bg-background\/90 {
-  background-color: hsl(240 6% 6% / 0.9) !important;
-}
-
-.bg-background {
-  background-color: hsl(240 6% 6%) !important;
-}
-
-/* Force card backgrounds to dark as well */
-.bg-card {
-  background-color: hsl(240 6% 6%) !important;
-}
-
-.bg-card\/95 {
-  background-color: hsl(240 6% 6% / 0.95) !important;
-}
-
-.bg-card\/90 {
-  background-color: hsl(240 6% 6% / 0.9) !important;
+  backdrop-filter: blur(2px);
 }
 
 /* Overlay fixes for Radix presentation wrappers when open */
 [data-radix-portal] [data-state="open"][role="presentation"] {
-  background-color: hsl(240 6% 6% / 0.95) !important;
+  background-color: transparent !important;
 }
 
 /* Safe area padding for fixed elements */
