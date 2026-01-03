@@ -3,8 +3,8 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { ThemeProvider } from "next-themes";
 import { useEffect, lazy, Suspense } from "react";
+import { useTheme } from "@/hooks/useTheme";
 import { startEmotionalMemoryMonitoring } from "@/state/emotionalMemory";
 import { initializeAILearningListeners } from "@/state/aiLearningEvents";
 import { supabase } from "@/integrations/supabase/client";
@@ -107,7 +107,9 @@ const queryClient = new QueryClient({
 const App = () => {
   const { shouldShowRitual, dismissRitual } = useRitualTrigger();
   const { showRitualCutscene } = useCutsceneManager();
-
+  
+  // Initialize theme on app load
+  useTheme();
   const handleRitualComplete = async (type: 'morning' | 'evening') => {
     // Update profile with ritual completion timestamp FIRST
     try {
@@ -269,10 +271,9 @@ const App = () => {
   return (
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem={true}>
-          <TooltipProvider>
-            <ProgressProvider>
-              <FocusTimerProvider>
+        <TooltipProvider>
+          <ProgressProvider>
+            <FocusTimerProvider>
                 <QuickCaptureProvider>
                 <Toaster />
                 <Sonner />
@@ -339,12 +340,11 @@ const App = () => {
               </Routes>
             </Suspense>
           </BrowserRouter>
-                </QuickCaptureProvider>
-              </FocusTimerProvider>
-            </ProgressProvider>
+              </QuickCaptureProvider>
+            </FocusTimerProvider>
+          </ProgressProvider>
         </TooltipProvider>
-      </ThemeProvider>
-    </QueryClientProvider>
+      </QueryClientProvider>
     </ErrorBoundary>
   );
 };
