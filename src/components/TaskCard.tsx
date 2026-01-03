@@ -240,14 +240,14 @@ export const TaskCard = ({ id, title, time, context, completed, selected, onTogg
         {...attributes}
         {...listeners}
         className={cn(
-          "w-6 h-6 mt-0.5 rounded-full flex items-center justify-center transition-all cursor-pointer",
+          "w-6 h-6 mt-0.5 rounded-full flex items-center justify-center transition-all cursor-pointer border",
           completed
-            ? "bg-foreground/10 border border-foreground/20"
-            : "bg-transparent border border-foreground/20 hover:border-foreground/40"
+            ? "bg-bg-surface-2 border-border-strong"
+            : "bg-transparent border-border-strong hover:border-accent-muted"
         )}
       >
         {completed && (
-          <Check className="w-3 h-3 text-foreground/60" />
+          <Check className="w-3 h-3 text-text-muted" />
         )}
       </button>
 
@@ -259,7 +259,7 @@ export const TaskCard = ({ id, title, time, context, completed, selected, onTogg
         <p
           className={cn(
             "font-mono text-sm leading-relaxed break-words",
-            completed ? "text-foreground/40 line-through" : "text-foreground/70"
+            completed ? "text-text-muted line-through" : "text-text-primary"
           )}
         >
           {title}
@@ -267,7 +267,7 @@ export const TaskCard = ({ id, title, time, context, completed, selected, onTogg
         
         {/* Metadata */}
         {(time || context || cluster?.domain) && (
-          <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground/60">
+          <div className="flex items-center gap-2 mt-1 text-xs text-text-muted">
             {time && (
               <span className="flex items-center gap-1">
                 <Clock className="w-3 h-3" />
@@ -276,7 +276,7 @@ export const TaskCard = ({ id, title, time, context, completed, selected, onTogg
             )}
             {context && <span>• {context}</span>}
             {cluster?.domain && (
-              <span className="inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 bg-foreground/5">
+              <span className="inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 bg-bg-surface-2 border border-border-subtle text-text-secondary">
                 {cluster.label || clusterDomain.label}
               </span>
             )}
@@ -292,7 +292,7 @@ export const TaskCard = ({ id, title, time, context, completed, selected, onTogg
               e.stopPropagation();
               onEdit();
             }}
-            className="p-1.5 text-foreground/40 hover:text-foreground/60 rounded hover:bg-foreground/5 transition-colors"
+            className="p-1.5 text-text-muted hover:text-text-secondary rounded hover:bg-bg-surface-2 transition-colors"
             title="Edit"
           >
             <Edit2 className="w-4 h-4" />
@@ -306,7 +306,7 @@ export const TaskCard = ({ id, title, time, context, completed, selected, onTogg
               handleMoveToToday(e);
             }}
             disabled={isMovingToToday}
-            className="p-1.5 text-foreground/40 hover:text-foreground/60 rounded hover:bg-foreground/5 transition-colors disabled:opacity-50"
+            className="p-1.5 text-text-muted hover:text-text-secondary rounded hover:bg-bg-surface-2 transition-colors disabled:opacity-50"
             title="Move to Today"
           >
             <Star className="w-4 h-4" />

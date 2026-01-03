@@ -25,15 +25,15 @@ interface TaskRowProps {
 export const TaskRow = memo(({ id, title, completed, category, onClick, isPrimaryFocus, onPlanThis, onEdit, onDelete, onMoveToToday }: TaskRowProps) => {
   const getStatusIcon = () => {
     if (completed) {
-      return <Check className="w-3 h-3 text-primary/70" />;
+      return <Check className="w-3 h-3 text-text-muted" />;
     }
     if (isPrimaryFocus) {
-      return <Star className="w-3 h-3 text-primary fill-primary" />;
+      return <Star className="w-3 h-3 text-accent-color fill-accent-color" />;
     }
     if (category === "in-review") {
-      return <Clock className="w-3 h-3 text-foreground/40" />;
+      return <Clock className="w-3 h-3 text-text-muted" />;
     }
-    return <Circle className="w-2 h-2 text-foreground/30" />;
+    return <Circle className="w-2 h-2 text-text-muted/70" />;
   };
 
   return (
@@ -41,11 +41,10 @@ export const TaskRow = memo(({ id, title, completed, category, onClick, isPrimar
       data-task-id={id}
       onClick={onClick}
       className={cn(
-        "w-full flex items-center gap-3 px-3 py-2.5 rounded-md group",
-        "hover:bg-background/40 transition-all duration-200",
+        "w-full flex items-center gap-3 px-3 py-2.5 rounded-md group bg-bg-surface hover:bg-bg-surface-2 transition-colors",
         "text-left",
         "hover:-translate-y-0.5 hover:shadow-sm active:scale-[0.98]",
-        isPrimaryFocus && "bg-primary/5 border border-primary/20"
+        isPrimaryFocus && "bg-bg-surface-2 border border-border-strong"
       )}
     >
       {/* Status indicator */}
@@ -56,12 +55,12 @@ export const TaskRow = memo(({ id, title, completed, category, onClick, isPrimar
       {/* Task title */}
       <div className={cn(
         "flex-1 font-mono text-sm",
-        completed ? "text-foreground/50 line-through" : "text-foreground/90",
-        isPrimaryFocus && "font-semibold text-primary"
+        completed ? "text-text-muted line-through" : "text-text-primary",
+        isPrimaryFocus && "font-semibold text-accent-color"
       )}>
         {title}
         {isPrimaryFocus && (
-          <span className="ml-2 text-[10px] font-medium text-primary/70 uppercase tracking-wide">
+          <span className="ml-2 text-[10px] font-medium text-accent-muted uppercase tracking-wide">
             Primary Focus
           </span>
         )}
@@ -74,10 +73,10 @@ export const TaskRow = memo(({ id, title, completed, category, onClick, isPrimar
             onClick={(e) => e.stopPropagation()}
             className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
           >
-            <MoreVertical className="w-4 h-4 text-muted-foreground hover:text-foreground" />
+            <MoreVertical className="w-4 h-4 text-text-muted hover:text-text-secondary" />
           </button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-48">
+        <DropdownMenuContent align="end" className="w-48 bg-bg-surface border border-border-subtle text-text-secondary z-50">
           {onEdit && (
             <DropdownMenuItem
               onClick={(e) => {

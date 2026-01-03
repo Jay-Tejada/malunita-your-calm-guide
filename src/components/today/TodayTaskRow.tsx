@@ -135,12 +135,12 @@ export const TodayTaskRow = memo(({ task, onToggle }: TodayTaskRowProps) => {
           
           {/* Needs review indicator */}
           {needsReview && !task.completed && (
-            <AlertCircle className="w-3.5 h-3.5 text-amber-500/60 flex-shrink-0" />
+            <AlertCircle className="w-3.5 h-3.5 text-accent-color/60 flex-shrink-0" />
           )}
           
           {/* Expand indicator - subtle */}
           {hasDualLayer && !isExpanded && !task.completed && (
-            <ChevronDown className="w-3 h-3 text-muted-foreground/30 opacity-0 group-hover:opacity-100 transition-opacity" />
+            <ChevronDown className="w-3 h-3 text-text-muted/60 opacity-0 group-hover:opacity-100 transition-opacity" />
           )}
         </div>
 
@@ -151,7 +151,7 @@ export const TodayTaskRow = memo(({ task, onToggle }: TodayTaskRowProps) => {
             style={{ animationDuration: '100ms' }}
           >
             <p 
-              className="text-[13px] text-foreground/40 leading-snug line-clamp-4 overflow-y-auto"
+              className="text-[13px] text-text-secondary leading-snug line-clamp-4 overflow-y-auto"
               style={{ maxHeight: '4.5em' }}
             >
               {rawContent}
@@ -163,7 +163,7 @@ export const TodayTaskRow = memo(({ task, onToggle }: TodayTaskRowProps) => {
                 e.stopPropagation();
                 setIsExpanded(false);
               }}
-              className="mt-1.5 text-xs text-muted-foreground/30 hover:text-muted-foreground/50 transition-colors"
+              className="mt-1.5 text-xs text-text-muted hover:text-text-secondary transition-colors"
             >
               <ChevronDown className="w-3 h-3 rotate-180 inline mr-0.5" />
               less

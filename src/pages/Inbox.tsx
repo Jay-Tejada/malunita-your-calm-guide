@@ -198,9 +198,11 @@ const SwipeableTaskRow = ({
   // INBOX: No slide movement (translate-y stays 0), just fade and collapse
   return (
     <div 
-      className={`relative overflow-hidden transition-all ease-out ${
-        isExiting ? 'max-h-0 opacity-0' : 'max-h-[500px]'
-      } ${isSelected ? 'bg-primary/5' : ''}`}
+      className={cn(
+        "relative overflow-hidden transition-all ease-out",
+        isExiting ? "max-h-0 opacity-0" : "max-h-[500px]",
+        isSelected && "bg-bg-surface-2 border-l-2 border-l-accent-color"
+      )}
       style={{ 
         transitionDuration: isExiting ? '150ms' : '300ms',
         transitionProperty: 'max-height, opacity',
@@ -209,10 +211,10 @@ const SwipeableTaskRow = ({
       {/* Complete background (swipe right) */}
       {swipeOffset > 0 && swipeDirection === 'right' && (
         <div 
-          className="absolute inset-y-0 left-0 flex items-center justify-start bg-emerald-500/10 transition-all"
+          className="absolute inset-y-0 left-0 flex items-center justify-start bg-success/10 transition-all"
           style={{ width: '100%' }}
         >
-          <div className="px-4 flex items-center gap-2 text-emerald-500/70">
+          <div className="px-4 flex items-center gap-2 text-success/70">
             <Check className="w-4 h-4" />
             <span className="text-xs font-mono opacity-70">Done</span>
           </div>
@@ -222,10 +224,10 @@ const SwipeableTaskRow = ({
       {/* Defer background (swipe left) */}
       {swipeOffset > 0 && swipeDirection === 'left' && (
         <div 
-          className="absolute inset-y-0 right-0 flex items-center justify-end bg-primary/5 transition-all"
+          className="absolute inset-y-0 right-0 flex items-center justify-end bg-bg-surface-2 transition-all"
           style={{ width: '100%' }}
         >
-          <div className="px-4 flex items-center gap-2 text-primary/50">
+          <div className="px-4 flex items-center gap-2 text-text-muted">
             <Moon className="w-4 h-4" />
             <span className="text-xs font-mono opacity-70">Someday</span>
           </div>
@@ -235,7 +237,7 @@ const SwipeableTaskRow = ({
       {/* Task content */}
       <div
         {...handlers}
-        className="relative bg-background"
+        className="relative bg-bg-surface border-b border-border-subtle"
         style={{ 
           transform: `translateX(${swipeDirection === 'right' ? swipeOffset : -swipeOffset}px)`,
           touchAction: isHorizontalSwipe ? 'pan-x' : 'pan-y',
@@ -282,16 +284,18 @@ const SwipeableTaskRow = ({
               }}
               onBlur={onSaveEdit}
               autoFocus
-              className="flex-1 font-mono text-sm text-foreground/80 leading-relaxed bg-transparent border-b border-border/50 focus:outline-none focus:border-accent/50"
+              className="flex-1 font-mono text-sm text-text-primary leading-relaxed bg-transparent border-b border-border-subtle focus:outline-none focus:border-accent-muted"
               onClick={(e) => e.stopPropagation()}
             />
           ) : (
             <div className="flex-1 relative">
               {/* Primary display: AI summary or title */}
               <p 
-                className={`text-sm leading-relaxed tracking-wide whitespace-pre-wrap transition-all ease-out ${
-                  isLongEntry && !isTextExpanded ? 'line-clamp-2' : ''
-                } ${isCompleting ? 'text-foreground/40' : 'text-foreground/70'}`}
+                className={cn(
+                  "text-sm leading-relaxed tracking-wide whitespace-pre-wrap transition-all ease-out",
+                  isLongEntry && !isTextExpanded && "line-clamp-2",
+                  isCompleting ? "text-text-muted" : "text-text-secondary"
+                )}
                 style={{ transitionDuration: '100ms' }}
               >
                 {displayText}
@@ -300,8 +304,8 @@ const SwipeableTaskRow = ({
               {/* Expand indicator */}
               {showExpandIndicator && !isTextExpanded && !isCompleting && (
                 <div className="flex items-center gap-1 mt-1.5">
-                  <ChevronDown className="w-3 h-3 text-muted-foreground/40" />
-                  <span className="text-xs text-muted-foreground/40">
+                  <ChevronDown className="w-3 h-3 text-text-muted" />
+                  <span className="text-xs text-text-muted">
                     {hasDualLayer ? 'Show original' : 'Show more'}
                   </span>
                 </div>
@@ -310,16 +314,16 @@ const SwipeableTaskRow = ({
               {/* Expanded view: Show raw content below summary */}
               {isTextExpanded && hasDualLayer && (
                 <div 
-                  className="mt-3 pt-3 border-t border-border/20 animate-fade-in"
+                  className="mt-3 pt-3 border-t border-border-subtle animate-fade-in"
                   style={{ animationDuration: '150ms' }}
                 >
-                  <p className="text-xs text-muted-foreground/50 mb-1.5 uppercase tracking-wide">Original</p>
-                  <p className="text-sm text-foreground/50 leading-relaxed max-h-32 overflow-y-auto whitespace-pre-wrap">
+                  <p className="text-xs text-text-muted mb-1.5 uppercase tracking-wide">Original</p>
+                  <p className="text-sm text-text-secondary leading-relaxed max-h-32 overflow-y-auto whitespace-pre-wrap">
                     {rawContent}
                   </p>
                   <button 
                     onClick={(e) => { e.stopPropagation(); setIsTextExpanded(false); }}
-                    className="flex items-center gap-1 mt-2 text-xs text-muted-foreground/40 hover:text-muted-foreground/60 transition-colors"
+                    className="flex items-center gap-1 mt-2 text-xs text-text-muted hover:text-text-secondary transition-colors"
                   >
                     <ChevronDown className="w-3 h-3 rotate-180" />
                     Collapse
@@ -340,7 +344,7 @@ const SwipeableTaskRow = ({
               
               {/* Low confidence indicator */}
               {hasAiSummary && lowConfidence && !isTextExpanded && (
-                <p className="text-xs text-amber-500/50 mt-1">Low confidence summary</p>
+                <p className="text-xs text-text-muted mt-1">Low confidence summary</p>
               )}
               
               {/* Fade gradient for collapsed long entries */}
@@ -365,34 +369,34 @@ const SwipeableTaskRow = ({
             </button>
             <button
               onClick={() => onMove('someday')}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-muted-foreground/70 hover:text-foreground/70 rounded transition-colors"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-text-muted hover:text-text-secondary rounded transition-colors"
             >
               <Moon className="w-3 h-3" />
               Someday
             </button>
             <button
               onClick={() => onMove('work')}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-muted-foreground/70 hover:text-foreground/70 rounded transition-colors"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-text-muted hover:text-text-secondary rounded transition-colors"
             >
               <Briefcase className="w-3 h-3" />
               Work
             </button>
             <button
               onClick={() => onMove('home')}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-muted-foreground/70 hover:text-foreground/70 rounded transition-colors"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-text-muted hover:text-text-secondary rounded transition-colors"
             >
               <Home className="w-3 h-3" />
               Home
             </button>
             <button
               onClick={onStartEdit}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-muted-foreground/50 hover:text-foreground/60 rounded transition-colors ml-auto"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-text-muted hover:text-text-secondary rounded transition-colors ml-auto"
             >
               <Pencil className="w-3 h-3" />
             </button>
             <button
               onClick={onDelete}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-destructive/40 hover:text-destructive/60 rounded transition-colors"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-destructive/70 hover:text-destructive rounded transition-colors"
             >
               <Trash2 className="w-3 h-3" />
             </button>

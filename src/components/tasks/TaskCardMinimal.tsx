@@ -274,23 +274,13 @@ export function TaskCardMinimal({ task, fullTask, isPrimaryFocus }: TaskCardMini
               <CalendarPlus size={16} />
             </button>
           )}
-          
           {/* Fix AI Output Button */}
           <button
             onClick={(e) => {
               e.stopPropagation();
               setShowCorrectionPanel(true);
             }}
-            className="opacity-0 group-hover:opacity-100 transition-opacity"
-            style={{
-              marginTop: "2px",
-              padding: "4px",
-              borderRadius: "4px",
-              color: "#9B8C7A",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
+            className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded text-text-muted hover:text-text-secondary hover:bg-bg-surface-2"
             title="Fix AI Output"
           >
             <Settings size={16} />
@@ -302,16 +292,7 @@ export function TaskCardMinimal({ task, fullTask, isPrimaryFocus }: TaskCardMini
               e.stopPropagation();
               setShowLearningDialog(true);
             }}
-            className="opacity-0 group-hover:opacity-100 transition-opacity"
-            style={{
-              marginTop: "2px",
-              padding: "4px",
-              borderRadius: "4px",
-              color: "#9B8C7A",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
+            className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded text-text-muted hover:text-text-secondary hover:bg-bg-surface-2"
             title="Help Malunita learn from this"
           >
             <Sparkles size={16} />

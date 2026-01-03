@@ -152,7 +152,7 @@ export const InboxPreviewRow = memo(({
                 
                 {/* Original content */}
                 <div 
-                  className="text-[12px] text-foreground/50 leading-relaxed max-h-24 overflow-y-auto whitespace-pre-wrap"
+                  className="text-[12px] text-text-muted leading-relaxed max-h-24 overflow-y-auto whitespace-pre-wrap"
                 >
                   {rawContent}
                 </div>
@@ -161,7 +161,7 @@ export const InboxPreviewRow = memo(({
           </div>
         </DropdownMenuTrigger>
         
-        <DropdownMenuContent align="start" className="w-48">
+        <DropdownMenuContent align="start" className="w-48 bg-bg-surface border border-border-subtle text-text-secondary z-50">
           <DropdownMenuItem onClick={() => handleAction(() => onMoveToToday(task.id))}>
             <ArrowRight className="w-4 h-4 mr-2" />
             Add to Today
@@ -217,7 +217,7 @@ export const InboxPreviewRow = memo(({
         }}
         className={cn(
           "flex-shrink-0 p-1.5 rounded-md transition-all",
-          "text-muted-foreground/40 hover:text-foreground hover:bg-muted",
+          "text-text-muted hover:text-text-secondary hover:bg-bg-surface-2",
           "opacity-0 group-hover:opacity-100"
         )}
         title="Add to Today"

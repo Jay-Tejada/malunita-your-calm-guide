@@ -59,8 +59,8 @@ export const TaskRow = memo(({ task, onComplete, onDelete, onEdit, contextOverri
         disabled={isCompleting}
         className={`relative flex items-center justify-center w-5 h-5 border rounded-full bg-transparent transition-all flex-shrink-0 ${
           isCompleting 
-            ? 'border-emerald-500/80 bg-emerald-500/80' 
-            : 'border-foreground/20 hover:border-foreground/40'
+            ? 'border-success bg-success' 
+            : 'border-border-strong hover:border-accent-muted'
         }`}
         style={{
           transitionDuration: `${config.checkboxPulseDuration}ms`,
@@ -81,7 +81,7 @@ export const TaskRow = memo(({ task, onComplete, onDelete, onEdit, contextOverri
         )}
         {isCompleting && (
           <Check 
-            className="w-3 h-3 text-white" 
+            className="w-3 h-3 text-success-foreground" 
             style={{ animation: 'checkmark-draw 100ms ease-out' }} 
           />
         )}
@@ -100,11 +100,11 @@ export const TaskRow = memo(({ task, onComplete, onDelete, onEdit, contextOverri
       </div>
 
       {/* Overflow menu */}
-      <div className={`transition-opacity duration-200 ${isHovered && !isCompleting ? 'opacity-100' : 'opacity-0'}`}>
+      <div className={`transition-opacity duration-200 ${isHovered && !isCompleting ? 'opacity-100' : 'opacity-0'}`}> 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button
-              className="text-foreground/20 hover:text-foreground/40 transition-colors p-1"
+              className="text-text-muted hover:text-text-secondary hover:bg-bg-surface-2 rounded transition-colors p-1"
               aria-label="Task options"
             >
               <MoreHorizontal className="w-4 h-4" />
@@ -112,22 +112,22 @@ export const TaskRow = memo(({ task, onComplete, onDelete, onEdit, contextOverri
           </DropdownMenuTrigger>
           <DropdownMenuContent 
             align="end" 
-            className="bg-background shadow-sm rounded-lg border border-foreground/10 z-50"
+            className="bg-bg-surface shadow-sm rounded-lg border border-border-subtle z-50"
           >
             <DropdownMenuItem
               onClick={() => onEdit(task.id)}
-              className="font-mono text-sm text-foreground/80 cursor-pointer hover:bg-foreground/5"
+              className="font-mono text-sm text-text-secondary cursor-pointer hover:bg-bg-surface-2"
             >
               Edit
             </DropdownMenuItem>
             <DropdownMenuItem
-              className="font-mono text-sm text-foreground/80 cursor-pointer hover:bg-foreground/5"
+              className="font-mono text-sm text-text-secondary cursor-pointer hover:bg-bg-surface-2"
             >
               Move
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => onDelete(task.id)}
-              className="font-mono text-sm text-foreground/80 cursor-pointer hover:bg-foreground/5"
+              className="font-mono text-sm text-text-secondary cursor-pointer hover:bg-bg-surface-2"
             >
               Delete
             </DropdownMenuItem>
