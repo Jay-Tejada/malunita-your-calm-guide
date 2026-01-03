@@ -186,13 +186,11 @@ export function TaskCardMinimal({ task, fullTask, isPrimaryFocus }: TaskCardMini
   return (
     <>
       <div
-        className="w-full py-4 transition-opacity hover:opacity-90 cursor-pointer flex items-start gap-3 group"
-        style={{
-          borderBottom: "1px solid #E6E1D7",
-          backgroundColor: isPrimaryFocus ? "rgba(139, 69, 19, 0.05)" : "transparent",
-          borderLeft: isPrimaryFocus ? "3px solid #8B4513" : "none",
-          paddingLeft: isPrimaryFocus ? "12px" : "0",
-        }}
+        className={cn(
+          "w-full py-4 transition-colors cursor-pointer flex items-start gap-3 group",
+          "bg-bg-surface hover:bg-bg-surface-2 border-b border-border-subtle",
+          isPrimaryFocus && "border-l-2 border-l-accent-color pl-3"
+        )}
       >
       {/* Checkbox */}
       <button
@@ -200,84 +198,45 @@ export function TaskCardMinimal({ task, fullTask, isPrimaryFocus }: TaskCardMini
         disabled={isCompleting}
         className={cn(
           "flex-shrink-0 mt-0.5 w-5 h-5 rounded-full flex items-center justify-center transition-all",
-          isCompleting
-            ? "bg-foreground/10 border border-foreground/20"
-            : "bg-transparent border border-foreground/20 hover:border-foreground/40"
+          "border border-border-strong",
+          isCompleting && "bg-bg-surface-2"
         )}
       >
         {isCompleting && (
-          <Check className="w-3 h-3 text-foreground/60" />
+          <Check className="w-3 h-3 text-text-muted" />
         )}
       </button>
 
       <div className="flex-1">
         {/* Task Title */}
-        <div
-          className="font-medium mb-1 flex items-center gap-2 flex-wrap"
-          style={{
-            color: "#3B352B",
-            fontSize: "15px",
-          }}
-        >
+        <div className="font-medium mb-1 flex items-center gap-2 flex-wrap text-[15px] text-text-primary">
           <span>{task.title}</span>
           {isPrimaryFocus && (
-            <span 
-              className="text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded"
-              style={{
-                color: "#8B4513",
-                backgroundColor: "rgba(139, 69, 19, 0.1)",
-              }}
-            >
+            <span className="text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded bg-accent/20 text-accent-foreground">
               Primary Focus
             </span>
           )}
           {/* Intelligence Tags */}
           {fullTask?.priority && (
-            <span 
-              className="text-[9px] font-mono font-semibold uppercase tracking-wide px-1.5 py-0.5"
-              style={{
-                color: "#7D7467",
-                border: "1px solid #B5A89A",
-                borderRadius: "2px",
-              }}
-            >
+            <span className="text-[9px] font-mono font-semibold uppercase tracking-wide px-1.5 py-0.5 border border-border-strong rounded-sm text-text-secondary">
               {fullTask.priority}
             </span>
           )}
           {fullTask?.category && (
-            <span 
-              className="text-[9px] font-mono uppercase tracking-wide px-1.5 py-0.5"
-              style={{
-                color: "#7D7467",
-                backgroundColor: "rgba(181, 168, 154, 0.15)",
-                borderRadius: "2px",
-              }}
-            >
+            <span className="text-[9px] font-mono uppercase tracking-wide px-1.5 py-0.5 bg-bg-surface-2 rounded-sm text-text-secondary">
               {fullTask.category}
             </span>
           )}
           {fullTask?.is_tiny && (
             <div title="Quick task">
-              <Zap 
-                size={12} 
-                style={{ 
-                  color: "#7D7467",
-                  flexShrink: 0 
-                }} 
-              />
+              <Zap size={12} className="text-text-muted flex-shrink-0" />
             </div>
           )}
         </div>
 
         {/* Subtext: Due Date and Section */}
         {(dueDate || task.section) && (
-          <div
-            className="flex items-center gap-3"
-            style={{
-              color: "#7D7467",
-              fontSize: "13px",
-            }}
-          >
+          <div className="flex items-center gap-3 text-[13px] text-text-secondary">
             {dueDate && <span>{dueDate}</span>}
             {task.section && (
               <>
@@ -297,16 +256,7 @@ export function TaskCardMinimal({ task, fullTask, isPrimaryFocus }: TaskCardMini
             <button
               onClick={handleBreakDown}
               disabled={isSplitting}
-              className="opacity-0 group-hover:opacity-100 transition-opacity"
-              style={{
-                marginTop: "2px",
-                padding: "4px",
-                borderRadius: "4px",
-                color: "#9B8C7A",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
+              className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded text-text-muted hover:text-text-secondary"
               title="Break down into smaller tasks"
             >
               <Split size={16} />
@@ -318,16 +268,7 @@ export function TaskCardMinimal({ task, fullTask, isPrimaryFocus }: TaskCardMini
             <button
               onClick={handleMoveToToday}
               disabled={isMovingToToday}
-              className="opacity-0 group-hover:opacity-100 transition-opacity"
-              style={{
-                marginTop: "2px",
-                padding: "4px",
-                borderRadius: "4px",
-                color: "#9B8C7A",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
+              className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded text-text-muted hover:text-text-secondary"
               title="Move to Today"
             >
               <CalendarPlus size={16} />

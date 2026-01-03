@@ -103,9 +103,9 @@ export const InboxPreviewRow = memo(({
     <div
       className={cn(
         "flex items-start gap-3 py-2.5 px-3 rounded-lg transition-colors group",
-        "bg-muted/30 hover:bg-muted/50",
-        "active:bg-muted/60 active:scale-[0.99] transition-transform",
-        isOpen && "bg-muted/50"
+        "bg-bg-surface hover:bg-bg-surface-2",
+        "active:bg-bg-surface-2 active:scale-[0.99] transition-transform",
+        isOpen && "bg-bg-surface-2"
       )}
     >
       {/* Task content - tappable for action menu */}

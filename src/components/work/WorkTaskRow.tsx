@@ -101,7 +101,7 @@ export const WorkTaskRow = memo(({
     <div
       className={cn(
         "flex items-start gap-3 py-3 px-3 rounded-lg transition-colors group",
-        "hover:bg-muted/30",
+        "bg-bg-surface hover:bg-bg-surface-2",
         hasDualLayer && "cursor-pointer"
       )}
       onClick={handleToggleExpand}

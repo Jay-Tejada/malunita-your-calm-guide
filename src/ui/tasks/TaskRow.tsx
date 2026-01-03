@@ -1,8 +1,8 @@
 // src/ui/tasks/TaskRow.tsx
 
 import { motion } from "framer-motion";
-import { colors, typography } from "@/ui/tokens";
 import { haptics } from "@/hooks/useHaptics";
+import { cn } from "@/lib/utils";
 
 interface TaskRowProps {
   title: string;
@@ -21,12 +21,11 @@ export function TaskRow({
 }: TaskRowProps) {
   return (
     <motion.div
-      className={`flex ${metadata ? "items-start" : "items-center"} gap-4 px-5 py-4 cursor-pointer`}
-      style={{
-        minHeight: 64,
-        borderBottom: `1px solid ${colors.border.subtle}`,
-      }}
-      whileTap={{ backgroundColor: colors.bg.elevated }}
+      className={cn(
+        "flex gap-4 px-5 py-4 cursor-pointer bg-bg-surface hover:bg-bg-surface-2 transition-colors border-b border-border-subtle",
+        metadata ? "items-start" : "items-center"
+      )}
+      style={{ minHeight: 64 }}
       onClick={onPress}
     >
       {/* Checkbox */}
@@ -34,28 +33,28 @@ export function TaskRow({
         onClick={(e) => {
           e.stopPropagation();
           if (!isCompleted) {
-            haptics.success(); // Satisfying click when completing
+            haptics.success();
           } else {
-            haptics.lightTap(); // Light tap when uncompleting
+            haptics.lightTap();
           }
           onToggleComplete?.();
         }}
-        className={`flex-shrink-0 ${metadata ? "mt-1" : ""}`}
+        className={cn("flex-shrink-0", metadata && "mt-1")}
       >
         <div
-          className="rounded-full flex items-center justify-center transition-all"
-          style={{
-            width: 22,
-            height: 22,
-            border: `1.5px solid ${isCompleted ? colors.accent.primary : colors.border.strong}`,
-            backgroundColor: isCompleted ? colors.accent.primary : "transparent",
-          }}
+          className={cn(
+            "w-[22px] h-[22px] rounded-full flex items-center justify-center transition-all border-[1.5px]",
+            isCompleted 
+              ? "bg-accent-color border-accent-color" 
+              : "bg-transparent border-border-strong hover:border-accent-muted"
+          )}
         >
           {isCompleted && (
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
               <path
                 d="M2.5 6L5 8.5L9.5 3.5"
-                stroke={colors.bg.base}
+                stroke="currentColor"
+                className="text-bg-app"
                 strokeWidth="1.5"
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -68,27 +67,16 @@ export function TaskRow({
       {/* Content */}
       <div className="flex-1 min-w-0">
         <p
-          style={{
-            fontFamily: typography.fontFamily,
-            fontSize: typography.bodyM.size,
-            lineHeight: typography.bodyM.lineHeight,
-            color: isCompleted ? colors.text.muted : colors.text.primary,
-            textDecoration: isCompleted ? "line-through" : "none",
-          }}
+          className={cn(
+            "font-mono text-base leading-relaxed",
+            isCompleted ? "text-text-muted line-through" : "text-text-primary"
+          )}
         >
           {title}
         </p>
         
         {metadata && (
-          <p
-            style={{
-              fontFamily: typography.fontFamily,
-              fontSize: typography.bodyS.size,
-              lineHeight: typography.bodyS.lineHeight,
-              color: colors.text.secondary,
-              marginTop: 4,
-            }}
-          >
+          <p className="font-mono text-sm leading-tight text-text-secondary mt-1">
             {metadata}
           </p>
         )}

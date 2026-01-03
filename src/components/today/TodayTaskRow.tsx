@@ -97,7 +97,7 @@ export const TodayTaskRow = memo(({ task, onToggle }: TodayTaskRowProps) => {
     <div
       className={cn(
         "flex items-center gap-3 py-2 px-3 rounded-md transition-colors group",
-        "hover:bg-muted/20",
+        "bg-bg-surface hover:bg-bg-surface-2",
         hasDualLayer && "cursor-pointer"
       )}
       onClick={handleToggleExpand}
