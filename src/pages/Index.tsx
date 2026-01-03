@@ -95,6 +95,9 @@ const Index = () => {
   const { tasks, updateTask } = useTasks();
   const { capture } = useCapture();
   
+  // Dynamic focus status from real data (must be called before any early returns)
+  const focusStatus = useDynamicFocusStatus();
+  
   // Get tiny/small tasks for the party (tasks marked as tiny or inbox tasks)
   const tinyTasks = tasks?.filter(t => 
     !t.completed && 
@@ -340,9 +343,6 @@ const Index = () => {
       setIsOrbProcessing(false);
     }
   };
-
-  // Dynamic focus status from real data
-  const focusStatus = useDynamicFocusStatus();
 
   return (
     <AnimatePresence mode="wait">
