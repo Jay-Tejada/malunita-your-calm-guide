@@ -30,6 +30,7 @@ import TinyTaskParty from "@/components/TinyTaskParty";
 import { CaptureSheet } from "@/components/capture/CaptureSheet";
 import { Haptics, ImpactStyle } from "@capacitor/haptics";
 import { useDrawerState } from "@/contexts/DrawerContext";
+import { useDynamicFocusStatus } from "@/hooks/useDynamicFocusStatus";
 
 const Index = () => {
   // Initialize daily reset monitoring
@@ -337,10 +338,8 @@ const Index = () => {
     }
   };
 
-  // One-liner text based on focus state
-  const getOneLiner = () => {
-    return "Focus is set. You know what to do.";
-  };
+  // Dynamic focus status from real data
+  const focusStatus = useDynamicFocusStatus();
 
   return (
     <AnimatePresence mode="wait">
@@ -406,8 +405,8 @@ const Index = () => {
               />
               
               {/* Status text below orb - fixed height to prevent layout shift */}
-              <p className="mt-6 h-5 text-sm text-muted-foreground/50 text-center font-light">
-                {isOrbRecording ? 'listening...' : isOrbProcessing ? 'transcribing...' : getOneLiner()}
+              <p className="mt-6 h-5 text-sm text-text-muted text-center font-light">
+                {isOrbRecording ? 'listening...' : isOrbProcessing ? 'transcribing...' : focusStatus.text}
               </p>
               
               {/* Cancel hint when focused */}
@@ -473,8 +472,8 @@ const Index = () => {
               />
               
               {/* Status text below orb - fixed height to prevent layout shift */}
-              <p className="mt-6 h-5 text-sm text-muted-foreground/50 text-center font-light">
-                {isOrbRecording ? 'listening...' : isOrbProcessing ? 'transcribing...' : getOneLiner()}
+              <p className="mt-6 h-5 text-sm text-text-muted text-center font-light">
+                {isOrbRecording ? 'listening...' : isOrbProcessing ? 'transcribing...' : focusStatus.text}
               </p>
               
               {/* Cancel hint when focused */}
