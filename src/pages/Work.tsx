@@ -29,7 +29,7 @@ import { NewProjectModal } from '@/components/projects/NewProjectModal';
 
 const Work = () => {
   const navigate = useNavigate();
-  const { tasks, updateTask, createTasks } = useTasks();
+  const { tasks, updateTask } = useTasks();
   const { capture, isCapturing } = useCapture();
   const { projects, createProject, updateProject, deleteProject, toggleCollapsed, reorderProjects } = useProjects('work');
   const { deleteTaskWithUndo } = useDeleteTaskWithUndo();
@@ -134,12 +134,12 @@ const Work = () => {
 
   const handleAddSubtask = async (parentId: string, title: string) => {
     const parentTask = tasks?.find(t => t.id === parentId);
-    await createTasks([{
-      title,
+    // Route subtask through AI pipeline for enrichment
+    await capture({
+      text: title,
       category: 'work',
-      project_id: parentTask?.project_id || null,
-      parent_task_id: parentId
-    }]);
+      project_id: parentTask?.project_id || undefined
+    });
   };
 
   const handleDeleteTask = async (taskId: string) => {

@@ -2,15 +2,16 @@ import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, Plus } from 'lucide-react';
 import { useTasks, Task } from '@/hooks/useTasks';
+import { useCapture } from '@/hooks/useAICapture';
 import { useProjects, Project } from '@/hooks/useProjects';
 import { useDeleteTaskWithUndo } from '@/hooks/useDeleteTaskWithUndo';
-import { supabase } from '@/integrations/supabase/client';
 import { ProjectSection } from '@/components/projects/ProjectSection';
 import { NewProjectModal } from '@/components/projects/NewProjectModal';
 
 const HomeTasks = () => {
   const navigate = useNavigate();
-  const { tasks, updateTask, createTasks } = useTasks();
+  const { tasks, updateTask } = useTasks();
+  const { capture } = useCapture();
   const { projects, createProject, updateProject, deleteProject, toggleCollapsed } = useProjects('home');
   const { deleteTaskWithUndo } = useDeleteTaskWithUndo();
   const [input, setInput] = useState('');
@@ -46,14 +47,11 @@ const HomeTasks = () => {
   }, [homeTasks, projects]);
 
   const handleCapture = async (text: string, projectId?: string) => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-    
-    await supabase.from('tasks').insert({
-      user_id: user.id,
-      title: text,
+    // Route through AI pipeline for full processing
+    await capture({
+      text,
       category: 'home',
-      project_id: projectId || null
+      project_id: projectId || undefined
     });
   };
 
@@ -79,12 +77,12 @@ const HomeTasks = () => {
 
   const handleAddSubtask = async (parentId: string, title: string) => {
     const parentTask = tasks?.find(t => t.id === parentId);
-    await createTasks([{
-      title,
+    // Route subtask through AI pipeline for enrichment
+    await capture({
+      text: title,
       category: 'home',
-      project_id: parentTask?.project_id || null,
-      parent_task_id: parentId
-    }]);
+      project_id: parentTask?.project_id || undefined
+    });
   };
 
   const handleDeleteTask = async (taskId: string) => {

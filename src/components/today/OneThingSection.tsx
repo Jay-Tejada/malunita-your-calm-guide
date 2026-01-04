@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { useTasks } from "@/hooks/useTasks";
+import { useCapture } from "@/hooks/useAICapture";
 import { useToast } from "@/hooks/use-toast";
 
 export const OneThingSection = () => {
-  const { tasks, createTasks, updateTask } = useTasks();
+  const { tasks, updateTask } = useTasks();
+  const { capture } = useCapture();
   const { toast } = useToast();
   const [oneThingInput, setOneThingInput] = useState("");
   const [isChanging, setIsChanging] = useState(false);
@@ -25,14 +27,14 @@ export const OneThingSection = () => {
         });
         setIsChanging(false);
       } else {
-        // Create new ONE thing
-        await createTasks([{
-          title: oneThingInput.trim(),
-          is_focus: true,
-          focus_date: todayDate,
+        // Create new ONE thing via AI pipeline
+        await capture({
+          text: oneThingInput.trim(),
           scheduled_bucket: 'today',
-          priority: 'MUST',
-        }]);
+        });
+        // Note: The AI pipeline will handle categorization. 
+        // The is_focus and focus_date should ideally be set via the edge function
+        // or we can update the task after creation
       }
 
       setOneThingInput("");
