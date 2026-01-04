@@ -328,6 +328,15 @@ const Index = () => {
     setRecordingDuration(0);
   };
 
+  // Auto-stop recording gracefully at 60 seconds
+  useEffect(() => {
+    if (isOrbRecording && recordingDuration >= 60) {
+      // Graceful stop - no hard cut
+      stopOrbRecording();
+      setIsFocused(false);
+    }
+  }, [isOrbRecording, recordingDuration]);
+
   const processOrbRecording = async (audioBlob: Blob) => {
     try {
       // Convert to base64
@@ -479,10 +488,22 @@ const Index = () => {
                 </AnimatePresence>
               </div>
               
-              {/* Tap to stop hint - very low contrast */}
-              <AnimatePresence>
-                {isFocused && (
+              {/* Hint text - contextual based on recording duration */}
+              <AnimatePresence mode="wait">
+                {isFocused && recordingDuration >= 55 ? (
                   <motion.p 
+                    key="wrapping"
+                    className="mt-3 text-[10px] text-foreground/30 text-center"
+                    initial={{ opacity: 0, y: 2 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -2 }}
+                    transition={{ duration: 0.4 }}
+                  >
+                    Wrapping this thought…
+                  </motion.p>
+                ) : isFocused ? (
+                  <motion.p 
+                    key="tap-stop"
                     className="mt-3 text-[10px] text-foreground/20 text-center"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
@@ -491,7 +512,7 @@ const Index = () => {
                   >
                     tap to stop
                   </motion.p>
-                )}
+                ) : null}
               </AnimatePresence>
             </div>
             
@@ -618,10 +639,22 @@ const Index = () => {
                 </AnimatePresence>
               </div>
               
-              {/* Tap to stop hint - very low contrast */}
-              <AnimatePresence>
-                {isFocused && (
+              {/* Hint text - contextual based on recording duration */}
+              <AnimatePresence mode="wait">
+                {isFocused && recordingDuration >= 55 ? (
                   <motion.p 
+                    key="wrapping"
+                    className="mt-3 text-[10px] text-foreground/30 text-center"
+                    initial={{ opacity: 0, y: 2 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -2 }}
+                    transition={{ duration: 0.4 }}
+                  >
+                    Wrapping this thought…
+                  </motion.p>
+                ) : isFocused ? (
+                  <motion.p 
+                    key="tap-stop"
                     className="mt-3 text-[10px] text-foreground/20 text-center"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
@@ -630,7 +663,7 @@ const Index = () => {
                   >
                     tap to stop
                   </motion.p>
-                )}
+                ) : null}
               </AnimatePresence>
             </div>
             
