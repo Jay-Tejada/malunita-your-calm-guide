@@ -174,6 +174,13 @@ const Index = () => {
     return () => subscription.unsubscribe();
   }, []);
 
+  // Auto-stop recording gracefully at 60 seconds (must be before early returns)
+  useEffect(() => {
+    if (isOrbRecording && recordingDuration >= 60) {
+      setWasAutoStopped(true);
+    }
+  }, [isOrbRecording, recordingDuration]);
+
   const handleCompanionComplete = async (name: string, personality: PersonalityType) => {
     const colorwayMap = {
       zen: 'zen-default',
@@ -344,16 +351,13 @@ const Index = () => {
     setRecordingDuration(0);
   };
 
-  // Auto-stop recording gracefully at 60 seconds
+  // Effect to execute auto-stop when wasAutoStopped is set (triggered by hook before early returns)
   useEffect(() => {
-    if (isOrbRecording && recordingDuration >= 60) {
-      // Mark as auto-stopped (not manual)
-      setWasAutoStopped(true);
-      // Graceful stop - no hard cut
+    if (wasAutoStopped && isOrbRecording) {
       stopOrbRecording();
       setIsFocused(false);
     }
-  }, [isOrbRecording, recordingDuration]);
+  }, [wasAutoStopped]);
 
   const processOrbRecording = async (audioBlob: Blob) => {
     try {
