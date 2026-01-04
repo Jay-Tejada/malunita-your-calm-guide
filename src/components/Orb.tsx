@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
+import { AmbientParticles } from './orb/AmbientParticles';
 
 type TimeOfDay = 'morning' | 'midday' | 'evening' | 'night';
 type AIConfidence = 'low' | 'medium' | 'high';
@@ -224,6 +225,13 @@ const Orb = ({
         'Malunita orb - tap to interact'
       }
     >
+      {/* Ambient particles - appears during listening state */}
+      <AmbientParticles 
+        isActive={effectiveInteractionState === 'listening'} 
+        orbSize={size}
+        color={colors.edge}
+      />
+
       {/* Outer ambient glow - soft halo (visibility based on confidence) */}
       <motion.div
         className="absolute inset-0 rounded-full pointer-events-none"
