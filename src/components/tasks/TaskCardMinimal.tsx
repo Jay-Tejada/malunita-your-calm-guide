@@ -3,13 +3,15 @@ import { useState } from "react";
 import { useTasks, Task } from "@/hooks/useTasks";
 import { useCompanionEvents } from "@/hooks/useCompanionEvents";
 import { useTaskStreak } from "@/hooks/useTaskStreak";
-import { Check, Sparkles, Zap, Settings, Split, CalendarPlus } from "lucide-react";
+import { Check, Sparkles, Zap, Settings, Split, CalendarPlus, ChevronDown } from "lucide-react";
 import { TaskLearningDialog } from "../TaskLearningDialog";
 import { TaskCorrectionPanel } from "./TaskCorrectionPanel";
 import { TaskActionSheet } from "./TaskActionSheet";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+
+const CONFIDENCE_THRESHOLD = 0.5;
 
 interface TaskCardMinimalProps {
   task: {
@@ -22,6 +24,33 @@ interface TaskCardMinimalProps {
   isPrimaryFocus?: boolean;
 }
 
+// Get dual-layer display for TaskCardMinimal
+function getMinimalDualLayerDisplay(task: { title: string }, fullTask?: Task) {
+  const aiSummary = (fullTask as any)?.ai_summary;
+  const rawContent = (fullTask as any)?.raw_content || task.title;
+  const confidence = (fullTask as any)?.ai_confidence ?? 1.0;
+  
+  const hasAiSummary = !!aiSummary && aiSummary !== rawContent;
+  const lowConfidence = confidence < CONFIDENCE_THRESHOLD;
+  
+  // Use ai_summary if available and confident, else raw_content/title
+  let displayText = hasAiSummary && !lowConfidence 
+    ? aiSummary 
+    : rawContent || task.title;
+  
+  // Fallback
+  if (!displayText) displayText = 'Empty capture';
+  
+  const hasDualLayer = hasAiSummary && rawContent !== aiSummary;
+  
+  return {
+    displayText,
+    rawContent,
+    hasDualLayer,
+    lowConfidence: hasAiSummary && lowConfidence,
+  };
+}
+
 export function TaskCardMinimal({ task, fullTask, isPrimaryFocus }: TaskCardMinimalProps) {
   const { updateTask, createTasks } = useTasks();
   const { onTaskCompleted, onQuickWinCompleted } = useCompanionEvents();
@@ -32,6 +61,9 @@ export function TaskCardMinimal({ task, fullTask, isPrimaryFocus }: TaskCardMini
   const [showCorrectionPanel, setShowCorrectionPanel] = useState(false);
   const [isSplitting, setIsSplitting] = useState(false);
   const [isMovingToToday, setIsMovingToToday] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
+  
+  const { displayText, rawContent, hasDualLayer, lowConfidence } = getMinimalDualLayerDisplay(task, fullTask);
 
   const formatDueDate = (dateString?: string) => {
     if (!dateString) return null;
@@ -207,14 +239,30 @@ export function TaskCardMinimal({ task, fullTask, isPrimaryFocus }: TaskCardMini
         )}
       </button>
 
-      <div className="flex-1">
-        {/* Task Title */}
+      <div 
+        className="flex-1 cursor-pointer"
+        onClick={(e) => {
+          if (hasDualLayer) {
+            e.stopPropagation();
+            setIsExpanded(!isExpanded);
+          }
+        }}
+      >
+        {/* Task Title - ai_summary by default */}
         <div className="font-medium mb-1 flex items-center gap-2 flex-wrap text-[15px] text-text-primary">
-          <span>{task.title}</span>
+          <span>{displayText}</span>
           {isPrimaryFocus && (
             <span className="text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded bg-accent/20 text-accent-foreground">
               Primary Focus
             </span>
+          )}
+          {/* Expand indicator */}
+          {hasDualLayer && !isExpanded && (
+            <ChevronDown className="w-3 h-3 text-text-muted/60 opacity-0 group-hover:opacity-100 transition-opacity" />
+          )}
+          {/* Low confidence indicator */}
+          {lowConfidence && (
+            <span className="text-[9px] text-amber-500/70 uppercase tracking-wide">review</span>
           )}
           {/* Intelligence Tags */}
           {fullTask?.priority && (
@@ -234,8 +282,31 @@ export function TaskCardMinimal({ task, fullTask, isPrimaryFocus }: TaskCardMini
           )}
         </div>
 
+        {/* Expanded: Show raw_content */}
+        {isExpanded && hasDualLayer && (
+          <div 
+            className="mt-2 pt-2 border-t border-border/10 animate-fade-in"
+            style={{ animationDuration: '100ms' }}
+          >
+            <p className="text-[12px] text-text-secondary/70 uppercase tracking-wide mb-1">Original</p>
+            <p className="text-[13px] text-text-secondary leading-relaxed whitespace-pre-wrap max-h-24 overflow-y-auto">
+              {rawContent}
+            </p>
+            <button 
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsExpanded(false);
+              }}
+              className="flex items-center gap-0.5 mt-1.5 text-[11px] text-text-muted hover:text-text-secondary transition-colors"
+            >
+              <ChevronDown className="w-3 h-3 rotate-180" />
+              Less
+            </button>
+          </div>
+        )}
+
         {/* Subtext: Due Date and Section */}
-        {(dueDate || task.section) && (
+        {(dueDate || task.section) && !isExpanded && (
           <div className="flex items-center gap-3 text-[13px] text-text-secondary">
             {dueDate && <span>{dueDate}</span>}
             {task.section && (
