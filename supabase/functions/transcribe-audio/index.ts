@@ -7,35 +7,16 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-const MAX_AUDIO_SIZE = 25 * 1024 * 1024 // 25MB in base64 characters
+const MAX_AUDIO_SIZE = 25 * 1024 * 1024 // 25MB
 
-function processBase64Chunks(base64String: string, chunkSize = 32768) {
-  const chunks: Uint8Array[] = [];
-  let position = 0;
-  
-  while (position < base64String.length) {
-    const chunk = base64String.slice(position, position + chunkSize);
-    const binaryChunk = atob(chunk);
-    const bytes = new Uint8Array(binaryChunk.length);
-    
-    for (let i = 0; i < binaryChunk.length; i++) {
-      bytes[i] = binaryChunk.charCodeAt(i);
-    }
-    
-    chunks.push(bytes);
-    position += chunkSize;
+// Fast base64 decode using TextDecoder
+function decodeBase64Fast(base64: string): Uint8Array {
+  const binaryString = atob(base64);
+  const bytes = new Uint8Array(binaryString.length);
+  for (let i = 0; i < binaryString.length; i++) {
+    bytes[i] = binaryString.charCodeAt(i);
   }
-
-  const totalLength = chunks.reduce((acc, chunk) => acc + chunk.length, 0);
-  const result = new Uint8Array(totalLength);
-  let offset = 0;
-
-  for (const chunk of chunks) {
-    result.set(chunk, offset);
-    offset += chunk.length;
-  }
-
-  return result;
+  return bytes;
 }
 
 serve(async (req) => {
@@ -43,10 +24,11 @@ serve(async (req) => {
     return new Response('ok', { headers: corsHeaders })
   }
 
+  const startTime = Date.now();
   console.log('Transcribe-audio function called');
 
   try {
-    // Get user from JWT (already validated by Supabase since verify_jwt = true)
+    // Quick auth check - just validate JWT exists
     const authHeader = req.headers.get('Authorization')
     if (!authHeader) {
       return new Response(
@@ -55,13 +37,7 @@ serve(async (req) => {
       )
     }
 
-    // Create Supabase client for database operations
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    )
-
-    // Extract user ID from JWT
+    // Extract user ID from JWT (skip database validation for speed)
     const jwt = authHeader.replace('Bearer ', '')
     const payload = JSON.parse(atob(jwt.split('.')[1]))
     const userId = payload.sub
@@ -73,22 +49,7 @@ serve(async (req) => {
       )
     }
 
-    console.log('User authenticated:', userId);
-
-    // Check rate limit
-    const { data: rateLimitOk } = await supabase.rpc('check_rate_limit', {
-      _user_id: userId,
-      _endpoint: 'transcribe-audio',
-      _max_requests: 20,
-      _window_minutes: 1
-    })
-
-    if (!rateLimitOk) {
-      return new Response(
-        JSON.stringify({ error: 'Rate limit exceeded. Please try again in a moment.' }),
-        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
-    }
+    console.log('User authenticated:', userId, `(${Date.now() - startTime}ms)`);
 
     const { audio } = await req.json()
     
@@ -107,39 +68,70 @@ serve(async (req) => {
       )
     }
 
-    console.log('Transcribing audio for user:', userId)
-
-    const binaryAudio = processBase64Chunks(audio)
-    
-    // Create FormData with proper audio format for Whisper API
-    const formData = new FormData()
-    const blob = new Blob([binaryAudio], { type: 'audio/webm' })
+  console.log('Decoding audio...', `(${Date.now() - startTime}ms)`);
+  const binaryAudio = decodeBase64Fast(audio);
+  
+  // Create FormData
+  const formData = new FormData()
+  const blob = new Blob([binaryAudio.buffer], { type: 'audio/webm' })
     formData.append('file', blob, 'recording.webm')
-    formData.append('model', 'whisper-1')
+    formData.append('model', 'whisper-large-v3-turbo')
     formData.append('response_format', 'json')
 
-    console.log('Calling OpenAI API...');
-    const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${Deno.env.get('OPENAI_API_KEY')}`,
-      },
-      body: formData,
-    })
+    // Use Groq for faster transcription (10x faster than OpenAI Whisper)
+    const GROQ_API_KEY = Deno.env.get('GROQ_API_KEY');
+    const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
+    
+    let response: Response;
+    
+    if (GROQ_API_KEY) {
+      // Groq Whisper - much faster
+      console.log('Using Groq Whisper...', `(${Date.now() - startTime}ms)`);
+      response = await fetch('https://api.groq.com/openai/v1/audio/transcriptions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${GROQ_API_KEY}`,
+        },
+        body: formData,
+      });
+    } else {
+      // Fallback to OpenAI
+      console.log('Using OpenAI Whisper...', `(${Date.now() - startTime}ms)`);
+      formData.set('model', 'whisper-1');
+      response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${OPENAI_API_KEY}`,
+        },
+        body: formData,
+      });
+    }
 
-    console.log('OpenAI API response status:', response.status);
+    console.log('API response status:', response.status, `(${Date.now() - startTime}ms)`);
     
     if (!response.ok) {
       const errorText = await response.text()
-      console.error('OpenAI API error:', response.status, errorText)
+      console.error('API error:', response.status, errorText)
       return new Response(
-        JSON.stringify({ error: 'Transcription service temporarily unavailable', details: errorText }),
+        JSON.stringify({ error: 'Transcription service temporarily unavailable' }),
         { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
     const result = await response.json()
-    console.log('Transcription successful - textLength:', result.text?.length || 0)
+    console.log('Transcription complete:', result.text?.length || 0, 'chars', `(${Date.now() - startTime}ms total)`);
+
+    // Fire-and-forget rate limit tracking (don't await)
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+    supabase.rpc('check_rate_limit', {
+      _user_id: userId,
+      _endpoint: 'transcribe-audio',
+      _max_requests: 30,
+      _window_minutes: 1
+    });
 
     return new Response(
       JSON.stringify({ text: result.text }),
