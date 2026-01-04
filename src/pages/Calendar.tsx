@@ -1,56 +1,36 @@
 import { useState, useMemo, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { SimpleHeader } from "@/components/SimpleHeader";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar as CalendarIcon, ArrowLeft, Plus, Clock, MapPin, CheckCircle, Trash2, Repeat } from "lucide-react";
-import { hapticLight, hapticSuccess } from "@/utils/haptics";
-import { format, addDays, startOfWeek, isSameDay, parseISO } from "date-fns";
+import { Plus } from "lucide-react";
+import { format, addDays, isSameDay, isPast, startOfDay } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useTasks } from "@/hooks/useTasks";
 import { useToast } from "@/hooks/use-toast";
-import { MapboxLocationPicker } from "@/components/MapboxLocationPicker";
-import { MapFullScreen } from "@/components/MapFullScreen";
-import { useMapboxToken } from "@/hooks/useMapboxToken";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { hapticLight, hapticSuccess } from "@/utils/haptics";
+import { AppLayout } from "@/ui/AppLayout";
+import { CalendarEventSheet } from "@/components/calendar/CalendarEventSheet";
 
 interface CalendarEvent {
   id: string;
   title: string;
   date: Date;
-  time: string;
-  location?: string;
-  description?: string;
+  time: string | null; // null = all-day
   completed: boolean;
   taskId: string;
   recurrencePattern?: 'none' | 'daily' | 'weekly' | 'monthly';
+  description?: string;
+  locationAddress?: string;
+}
+
+interface GroupedEvents {
+  date: Date;
+  events: CalendarEvent[];
 }
 
 const Calendar = () => {
-  const navigate = useNavigate();
   const { toast } = useToast();
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const [isNewEventDialogOpen, setIsNewEventDialogOpen] = useState(false);
-  const [isEditEventDialogOpen, setIsEditEventDialogOpen] = useState(false);
-  const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
-  const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
-  const [newEventTitle, setNewEventTitle] = useState("");
-  const [newEventDate, setNewEventDate] = useState("");
-  const [newEventTime, setNewEventTime] = useState("");
-  const [newEventLocation, setNewEventLocation] = useState("");
-  const [newEventLocationLat, setNewEventLocationLat] = useState<number | null>(null);
-  const [newEventLocationLng, setNewEventLocationLng] = useState<number | null>(null);
-  const [newEventDescription, setNewEventDescription] = useState("");
-  const [recurrencePattern, setRecurrencePattern] = useState<'none' | 'daily' | 'weekly' | 'monthly'>('none');
-  const [recurrenceDay, setRecurrenceDay] = useState<number>(0);
-  const [recurrenceEndDate, setRecurrenceEndDate] = useState("");
   const { tasks, isLoading, updateTask, createTasks, deleteTask } = useTasks();
+  
+  const [isEventSheetOpen, setIsEventSheetOpen] = useState(false);
+  const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
   
   // Convert tasks with reminder times to calendar events
   const events = useMemo(() => {
@@ -58,100 +38,146 @@ const Calendar = () => {
     
     return tasks
       .filter(task => task.reminder_time)
-      .map(task => ({
-        id: task.id,
-        title: task.title,
-        date: new Date(task.reminder_time!),
-        time: format(new Date(task.reminder_time!), "h:mm a"),
-        location: task.category ? task.category.charAt(0).toUpperCase() + task.category.slice(1) : undefined,
-        description: task.context,
-        completed: task.completed,
-        taskId: task.id,
-        recurrencePattern: task.recurrence_pattern || 'none',
-      }));
-  }, [tasks]);
-  
-  const [isLocationPickerOpen, setIsLocationPickerOpen] = useState(false);
-  const [viewingLocation, setViewingLocation] = useState<{ address: string; lat: number; lng: number } | null>(null);
-  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
-  const [travelTimes, setTravelTimes] = useState<Record<string, { duration: number; distance: number }>>({});
-  const { token: mapboxToken } = useMapboxToken();
-
-  // Get user's current location
-  useEffect(() => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setUserLocation({
-            lat: position.coords.latitude,
-            lng: position.coords.longitude,
-          });
-        },
-        (error) => {
-          console.log('Location access denied:', error);
-        }
-      );
-    }
-  }, []);
-
-  // Calculate travel times for events with locations
-  useEffect(() => {
-    if (!userLocation || !mapboxToken) return;
-
-    const eventsWithLocations = events.filter(event => {
-      const task = tasks?.find(t => t.id === event.taskId);
-      return task?.location_lat && task?.location_lng;
-    });
-
-    eventsWithLocations.forEach(async (event) => {
-      const task = tasks?.find(t => t.id === event.taskId);
-      if (!task?.location_lat || !task?.location_lng) return;
-
-      try {
-        const response = await fetch(
-          `https://api.mapbox.com/directions/v5/mapbox/driving/${userLocation.lng},${userLocation.lat};${task.location_lng},${task.location_lat}?access_token=${mapboxToken}&geometries=geojson`
-        );
-        const data = await response.json();
+      .map(task => {
+        const eventDate = new Date(task.reminder_time!);
+        const timeStr = format(eventDate, "H:mm");
+        // Check if it's an "all-day" event (midnight or no specific time set)
+        const isAllDay = timeStr === "0:00";
         
-        if (data.routes && data.routes[0]) {
-          setTravelTimes(prev => ({
-            ...prev,
-            [event.taskId]: {
-              duration: Math.round(data.routes[0].duration / 60), // Convert to minutes
-              distance: Math.round(data.routes[0].distance / 1000), // Convert to km
-            },
-          }));
-        }
-      } catch (error) {
-        console.error('Error fetching travel time:', error);
+        return {
+          id: task.id,
+          title: task.title,
+          date: eventDate,
+          time: isAllDay ? null : format(eventDate, "H:mm"),
+          completed: task.completed || false,
+          taskId: task.id,
+          recurrencePattern: task.recurrence_pattern || 'none',
+          description: task.context || undefined,
+          locationAddress: task.location_address || undefined,
+        };
+      })
+      .sort((a, b) => a.date.getTime() - b.date.getTime());
+  }, [tasks]);
+
+  // Group events by day for the next 14 days (or more if there are events)
+  const groupedEvents = useMemo(() => {
+    const today = startOfDay(new Date());
+    const daysToShow = 14;
+    const groups: GroupedEvents[] = [];
+    
+    // Create groups for each day
+    for (let i = 0; i < daysToShow; i++) {
+      const date = addDays(today, i);
+      const dayEvents = events.filter(event => isSameDay(event.date, date));
+      groups.push({ date, events: dayEvents });
+    }
+    
+    // Include any events beyond 14 days
+    const futureEvents = events.filter(
+      event => event.date > addDays(today, daysToShow - 1)
+    );
+    
+    futureEvents.forEach(event => {
+      const existingGroup = groups.find(g => isSameDay(g.date, event.date));
+      if (!existingGroup) {
+        groups.push({ date: event.date, events: [event] });
       }
     });
-  }, [userLocation, events, tasks, mapboxToken]);
+    
+    return groups.sort((a, b) => a.date.getTime() - b.date.getTime());
+  }, [events]);
 
-  const handleOpenLocation = (lat: number, lng: number, address: string) => {
-    const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
-    const appleMapsUrl = `http://maps.apple.com/?q=${lat},${lng}`;
-    const wazeUrl = `https://waze.com/ul?ll=${lat},${lng}&navigate=yes`;
-    const uberUrl = `https://m.uber.com/ul/?action=setPickup&pickup=my_location&dropoff[latitude]=${lat}&dropoff[longitude]=${lng}`;
-
-    return {
-      googleMaps: googleMapsUrl,
-      appleMaps: appleMapsUrl,
-      waze: wazeUrl,
-      uber: uberUrl,
-    };
+  const handleEventClick = (event: CalendarEvent) => {
+    hapticLight();
+    setEditingEvent(event);
+    setIsEventSheetOpen(true);
   };
 
-  const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 }); // Start on Monday
-  const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
-
-  const getEventsForDate = (date: Date) => {
-    return events.filter(event => isSameDay(event.date, date));
+  const handleAddEvent = () => {
+    hapticLight();
+    setEditingEvent(null);
+    setIsEventSheetOpen(true);
   };
 
-  const upcomingEvents = events
-    .filter(event => event.date >= new Date() && !event.completed)
-    .sort((a, b) => a.date.getTime() - b.date.getTime());
+  const handleSaveEvent = async (eventData: {
+    title: string;
+    date: string;
+    time: string | null;
+    description?: string;
+  }) => {
+    try {
+      const dateTimeStr = eventData.time 
+        ? `${eventData.date}T${eventData.time}`
+        : `${eventData.date}T00:00`;
+      const reminderDateTime = new Date(dateTimeStr);
+      
+      if (editingEvent) {
+        // Update existing event
+        await updateTask({
+          id: editingEvent.taskId,
+          updates: {
+            title: eventData.title,
+            reminder_time: reminderDateTime.toISOString(),
+            context: eventData.description || undefined,
+          }
+        });
+        
+        hapticSuccess();
+        toast({
+          title: "Event updated",
+          description: "Your calendar event has been updated.",
+        });
+      } else {
+        // Create new event
+        await createTasks([{
+          title: eventData.title,
+          reminder_time: reminderDateTime.toISOString(),
+          context: eventData.description || undefined,
+          has_reminder: true,
+        }]);
+        
+        hapticSuccess();
+        toast({
+          title: "Event added",
+          description: "Your calendar event has been added.",
+        });
+      }
+      
+      setIsEventSheetOpen(false);
+      setEditingEvent(null);
+    } catch (error) {
+      console.error('Error saving event:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save event. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteEvent = async () => {
+    if (!editingEvent) return;
+    
+    try {
+      await deleteTask(editingEvent.taskId);
+      
+      hapticSuccess();
+      toast({
+        title: "Event removed",
+        description: "Your calendar event has been removed.",
+      });
+      
+      setIsEventSheetOpen(false);
+      setEditingEvent(null);
+    } catch (error) {
+      console.error('Error deleting event:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete event. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
 
   const handleToggleComplete = async (eventId: string, completed: boolean) => {
     try {
@@ -165,806 +191,152 @@ const Calendar = () => {
     }
   };
 
-  const handleCreateEvent = async () => {
-    if (!newEventTitle.trim() || !newEventDate || !newEventTime) {
-      toast({
-        title: "Missing information",
-        description: "Please fill in the title, date, and time.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      const reminderDateTime = new Date(`${newEventDate}T${newEventTime}`);
-      
-      await createTasks([{
-        title: newEventTitle,
-        reminder_time: reminderDateTime.toISOString(),
-        context: newEventDescription || undefined,
-        has_reminder: true,
-        location_address: newEventLocation || undefined,
-        location_lat: newEventLocationLat,
-        location_lng: newEventLocationLng,
-        recurrence_pattern: recurrencePattern,
-        recurrence_day: recurrencePattern === 'weekly' ? recurrenceDay : undefined,
-        recurrence_end_date: recurrenceEndDate ? new Date(recurrenceEndDate).toISOString() : undefined,
-      }]);
-
-      hapticSuccess();
-      toast({
-        title: "Event created",
-        description: recurrencePattern !== 'none' 
-          ? "Your recurring event has been added."
-          : "Your calendar event has been added.",
-      });
-
-      // Reset form
-      setNewEventTitle("");
-      setNewEventDate("");
-      setNewEventTime("");
-      setNewEventLocation("");
-      setNewEventLocationLat(null);
-      setNewEventLocationLng(null);
-      setNewEventDescription("");
-      setRecurrencePattern('none');
-      setRecurrenceDay(0);
-      setRecurrenceEndDate("");
-      setIsNewEventDialogOpen(false);
-    } catch (error) {
-      console.error('Error creating event:', error);
-      toast({
-        title: "Error",
-        description: "Failed to create event. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleEventClick = (event: CalendarEvent) => {
+  const scrollToToday = () => {
     hapticLight();
-    const task = tasks?.find(t => t.id === event.taskId);
-    setEditingEvent(event);
-    setNewEventTitle(event.title);
-    setNewEventDate(format(event.date, "yyyy-MM-dd"));
-    setNewEventTime(format(event.date, "HH:mm"));
-    setNewEventLocation(task?.location_address || "");
-    setNewEventLocationLat(task?.location_lat || null);
-    setNewEventLocationLng(task?.location_lng || null);
-    setNewEventDescription(event.description || "");
-    setRecurrencePattern(task?.recurrence_pattern || 'none');
-    setRecurrenceDay(task?.recurrence_day || 0);
-    setRecurrenceEndDate(task?.recurrence_end_date ? format(new Date(task.recurrence_end_date), "yyyy-MM-dd") : "");
-    setIsEditEventDialogOpen(true);
-  };
-
-  const handleUpdateEvent = async () => {
-    if (!editingEvent || !newEventTitle.trim() || !newEventDate || !newEventTime) {
-      toast({
-        title: "Missing information",
-        description: "Please fill in the title, date, and time.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      const reminderDateTime = new Date(`${newEventDate}T${newEventTime}`);
-      
-      await updateTask({
-        id: editingEvent.taskId,
-        updates: {
-          title: newEventTitle,
-          reminder_time: reminderDateTime.toISOString(),
-          context: newEventDescription || undefined,
-          location_address: newEventLocation || undefined,
-          location_lat: newEventLocationLat,
-          location_lng: newEventLocationLng,
-          recurrence_pattern: recurrencePattern,
-          recurrence_day: recurrencePattern === 'weekly' ? recurrenceDay : undefined,
-          recurrence_end_date: recurrenceEndDate ? new Date(recurrenceEndDate).toISOString() : undefined,
-        }
-      });
-
-      hapticSuccess();
-      toast({
-        title: "Event updated",
-        description: "Your calendar event has been updated.",
-      });
-
-      // Reset form
-      setNewEventTitle("");
-      setNewEventDate("");
-      setNewEventTime("");
-      setNewEventLocation("");
-      setNewEventLocationLat(null);
-      setNewEventLocationLng(null);
-      setNewEventDescription("");
-      setRecurrencePattern('none');
-      setRecurrenceDay(0);
-      setRecurrenceEndDate("");
-      setEditingEvent(null);
-      setIsEditEventDialogOpen(false);
-    } catch (error) {
-      console.error('Error updating event:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update event. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleDeleteEvent = async () => {
-    if (!editingEvent) return;
-
-    try {
-      await deleteTask(editingEvent.taskId);
-
-      hapticSuccess();
-      toast({
-        title: "Event deleted",
-        description: "Your calendar event has been removed.",
-      });
-
-      // Reset form
-      setNewEventTitle("");
-      setNewEventDate("");
-      setNewEventTime("");
-      setNewEventLocation("");
-      setNewEventLocationLat(null);
-      setNewEventLocationLng(null);
-      setNewEventDescription("");
-      setRecurrencePattern('none');
-      setRecurrenceDay(0);
-      setRecurrenceEndDate("");
-      setEditingEvent(null);
-      setIsEditEventDialogOpen(false);
-      setIsDeleteAlertOpen(false);
-    } catch (error) {
-      console.error('Error deleting event:', error);
-      toast({
-        title: "Error",
-        description: "Failed to delete event. Please try again.",
-        variant: "destructive",
-      });
+    const todayElement = document.getElementById('calendar-today');
+    if (todayElement) {
+      todayElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   };
 
   return (
-    <div className="min-h-screen pb-20 bg-background">
-      <div className="container max-w-4xl mx-auto px-4">
-        <SimpleHeader title="Calendar" />
-      </div>
-      <main className="container max-w-4xl mx-auto px-4 pt-4">
-        <div className="mb-8 md:hidden">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => {
-              hapticLight();
-              navigate("/");
-            }}
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Home
-          </Button>
-        </div>
+    <AppLayout 
+      title="Calendar" 
+      showBack
+      rightAction={
+        <button
+          onClick={handleAddEvent}
+          className="p-2 -mr-2 text-muted-foreground hover:text-foreground transition-colors"
+          aria-label="Add event"
+        >
+          <Plus className="h-4 w-4" />
+        </button>
+      }
+    >
+      <div className="px-5 pb-24">
+        {/* Jump to Today - subtle indicator */}
+        <button
+          onClick={scrollToToday}
+          className="text-[10px] uppercase tracking-widest text-muted-foreground/50 hover:text-muted-foreground transition-colors mb-6"
+        >
+          Today ↓
+        </button>
 
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-2">
-            <h1 className="text-3xl font-bold flex items-center gap-2">
-              <CalendarIcon className="w-8 h-8" />
-              Calendar
-            </h1>
-            <Button 
-              size="sm" 
-              variant="default"
-              onClick={() => {
-                hapticLight();
-                setIsNewEventDialogOpen(true);
-              }}
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              New Event
-            </Button>
-          </div>
-          <p className="text-muted-foreground">
-            Your schedule and appointments
-          </p>
-        </div>
-
-        {/* Week View */}
-        <Card className="mb-6">
-          <CardContent className="p-4">
-            <div className="grid grid-cols-7 gap-2">
-              {weekDays.map((day, index) => {
-                const dayEvents = getEventsForDate(day);
-                const isToday = isSameDay(day, new Date());
-                const isSelected = isSameDay(day, selectedDate);
-                
-                return (
-                  <button
-                    key={index}
-                    onClick={() => {
-                      hapticLight();
-                      setSelectedDate(day);
-                    }}
-                    className={cn(
-                      "flex flex-col items-center p-2 rounded-lg transition-all",
-                      "hover:bg-accent/50",
-                      isSelected && "bg-primary text-primary-foreground",
-                      isToday && !isSelected && "border-2 border-primary"
-                    )}
-                  >
-                    <span className="text-xs font-medium mb-1">
-                      {format(day, "EEE")}
-                    </span>
+        {isLoading ? (
+          <p className="text-sm text-muted-foreground">Loading...</p>
+        ) : (
+          <div className="space-y-6">
+            {groupedEvents.map((group, groupIndex) => {
+              const isToday = isSameDay(group.date, new Date());
+              const dayLabel = format(group.date, "EEE");
+              const dateLabel = format(group.date, "MMM d");
+              
+              return (
+                <div 
+                  key={group.date.toISOString()} 
+                  id={isToday ? 'calendar-today' : undefined}
+                  className="relative"
+                >
+                  {/* Day header */}
+                  <div className={cn(
+                    "flex items-baseline gap-2 mb-2",
+                    isToday && "text-foreground",
+                    !isToday && "text-muted-foreground"
+                  )}>
                     <span className={cn(
-                      "text-lg font-bold",
-                      isToday && !isSelected && "text-primary"
+                      "text-sm font-medium",
+                      isToday && "text-primary"
                     )}>
-                      {format(day, "d")}
+                      {dayLabel}
                     </span>
-                    {dayEvents.length > 0 && (
-                      <div className="flex gap-1 mt-1">
-                        {dayEvents.slice(0, 3).map((_, i) => (
-                          <div
-                            key={i}
-                            className={cn(
-                              "w-1.5 h-1.5 rounded-full",
-                              isSelected ? "bg-primary-foreground" : "bg-primary"
-                            )}
-                          />
-                        ))}
-                      </div>
+                    <span className="text-[10px] tracking-wide">
+                      · {dateLabel}
+                    </span>
+                    {isToday && (
+                      <span className="text-[9px] uppercase tracking-widest text-primary/60 ml-1">
+                        today
+                      </span>
                     )}
-                  </button>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Upcoming Events List */}
-        <div>
-          <h2 className="text-xl font-semibold mb-4">Upcoming Events</h2>
-          
-          {isLoading ? (
-            <Card>
-              <CardContent className="p-6 text-center">
-                <p className="text-muted-foreground">Loading events...</p>
-              </CardContent>
-            </Card>
-          ) : upcomingEvents.length === 0 ? (
-            <Card>
-              <CardContent className="p-6 text-center">
-                <CalendarIcon className="w-12 h-12 mx-auto mb-3 text-muted-foreground/50" />
-                <p className="text-muted-foreground">No upcoming events</p>
-                <p className="text-sm text-muted-foreground mt-2">
-                  Add reminder times to your tasks to see them here
-                </p>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="space-y-3">
-              {upcomingEvents.map((event) => (
-                <Card
-                  key={event.id}
-                  className={cn(
-                    "hover:shadow-md transition-shadow cursor-pointer",
-                    event.completed && "opacity-60"
-                  )}
-                  onClick={() => handleEventClick(event)}
-                >
-                  <CardContent className="p-4">
-                    <div className="flex items-start gap-4">
-                      <div className="flex flex-col items-center min-w-[60px] bg-primary/10 rounded-lg p-2">
-                        <span className="text-xs font-medium text-primary uppercase">
-                          {format(event.date, "MMM")}
-                        </span>
-                        <span className="text-2xl font-bold text-primary">
-                          {format(event.date, "d")}
-                        </span>
-                        <span className="text-xs text-muted-foreground">
-                          {format(event.date, "EEE")}
-                        </span>
-                      </div>
-                      
-                      <div className="flex-1">
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="flex-1">
-                            <h3 className={cn(
-                              "font-semibold text-foreground mb-1",
-                              event.completed && "line-through"
-                            )}>
-                              {event.title}
-                            </h3>
-                            {event.recurrencePattern && event.recurrencePattern !== 'none' && (
-                              <div className="flex items-center gap-1 text-xs text-muted-foreground mb-1">
-                                <Repeat className="w-3 h-3" />
-                                <span className="capitalize">{event.recurrencePattern}</span>
+                  </div>
+                  
+                  {/* Events list */}
+                  {group.events.length === 0 ? (
+                    <p className="text-sm text-muted-foreground/40 pl-1">
+                      (no scheduled events)
+                    </p>
+                  ) : (
+                    <ul className="space-y-1.5">
+                      {group.events.map((event) => {
+                        const isPastEvent = isPast(event.date) && !isSameDay(event.date, new Date());
+                        
+                        return (
+                          <li key={event.id}>
+                            <button
+                              onClick={() => handleEventClick(event)}
+                              className={cn(
+                                "w-full text-left flex items-start gap-2 py-0.5 group transition-opacity",
+                                isPastEvent && "opacity-50",
+                                event.completed && "opacity-40"
+                              )}
+                            >
+                              {/* Bullet */}
+                              <span className={cn(
+                                "text-muted-foreground/60 select-none mt-0.5",
+                                event.completed && "text-primary/40"
+                              )}>
+                                •
+                              </span>
+                              
+                              {/* Event content */}
+                              <div className="flex-1 min-w-0">
+                                <span className={cn(
+                                  "text-sm",
+                                  event.time 
+                                    ? "text-muted-foreground" 
+                                    : "sr-only"
+                                )}>
+                                  {event.time && `${event.time} – `}
+                                </span>
+                                <span className={cn(
+                                  "text-sm text-foreground",
+                                  event.completed && "line-through text-muted-foreground"
+                                )}>
+                                  {event.title}
+                                </span>
+                                
+                                {/* Recurrence indicator */}
+                                {event.recurrencePattern && event.recurrencePattern !== 'none' && (
+                                  <span className="text-[10px] text-muted-foreground/50 ml-2">
+                                    ↻
+                                  </span>
+                                )}
                               </div>
-                            )}
-                          </div>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleToggleComplete(event.taskId, event.completed);
-                            }}
-                            className="h-8 w-8 p-0"
-                          >
-                            <CheckCircle className={cn(
-                              "w-5 h-5",
-                              event.completed ? "fill-primary text-primary" : "text-muted-foreground"
-                            )} />
-                          </Button>
-                        </div>
-                        <div className="flex flex-col gap-1 text-sm text-muted-foreground">
-                          <div className="flex items-center gap-2">
-                            <Clock className="w-4 h-4" />
-                            <span>{event.time}</span>
-                          </div>
-                          {event.location && (
-                            <div className="flex items-center gap-2">
-                              <MapPin className="w-4 h-4" />
-                              <span>{event.location}</span>
-                            </div>
-                          )}
-                          {(() => {
-                            const task = tasks?.find(t => t.id === event.taskId);
-                            if (task?.location_address && task?.location_lat && task?.location_lng) {
-                              const urls = handleOpenLocation(task.location_lat, task.location_lng, task.location_address);
-                              const travelTime = travelTimes[event.taskId];
-                              return (
-                                <div className="space-y-1">
-                                  <Popover>
-                                    <PopoverTrigger asChild>
-                                      <button
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          hapticLight();
-                                        }}
-                                        className="flex items-center gap-2 text-primary hover:underline text-sm"
-                                      >
-                                        <MapPin className="w-4 h-4" />
-                                        <span>{task.location_address}</span>
-                                      </button>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-56 p-2" align="start">
-                                      <div className="space-y-1">
-                                        <p className="font-mono text-xs text-muted-foreground px-2 py-1">
-                                          Open in...
-                                        </p>
-                                        <button
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            hapticLight();
-                                            window.open(urls.googleMaps, '_blank');
-                                          }}
-                                          className="w-full text-left px-2 py-1.5 text-sm hover:bg-accent rounded-md"
-                                        >
-                                          🗺️ Google Maps
-                                        </button>
-                                        <button
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            hapticLight();
-                                            window.open(urls.appleMaps, '_blank');
-                                          }}
-                                          className="w-full text-left px-2 py-1.5 text-sm hover:bg-accent rounded-md"
-                                        >
-                                          🍎 Apple Maps
-                                        </button>
-                                        <button
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            hapticLight();
-                                            window.open(urls.waze, '_blank');
-                                          }}
-                                          className="w-full text-left px-2 py-1.5 text-sm hover:bg-accent rounded-md"
-                                        >
-                                          🚗 Waze
-                                        </button>
-                                        <button
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            hapticLight();
-                                            window.open(urls.uber, '_blank');
-                                          }}
-                                          className="w-full text-left px-2 py-1.5 text-sm hover:bg-accent rounded-md"
-                                        >
-                                          🚕 Uber
-                                        </button>
-                                        <div className="border-t border-border my-1" />
-                                        <button
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            hapticLight();
-                                            setViewingLocation({
-                                              address: task.location_address!,
-                                              lat: task.location_lat!,
-                                              lng: task.location_lng!,
-                                            });
-                                          }}
-                                          className="w-full text-left px-2 py-1.5 text-sm hover:bg-accent rounded-md"
-                                        >
-                                          👁️ Preview on map
-                                        </button>
-                                      </div>
-                                    </PopoverContent>
-                                  </Popover>
-                                  {travelTime && (
-                                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                      <Clock className="w-3 h-3" />
-                                      <span>{travelTime.duration} min drive ({travelTime.distance} km)</span>
-                                    </div>
-                                  )}
-                                </div>
-                              );
-                            }
-                            return null;
-                          })()}
-                          {event.description && (
-                            <p className="text-xs mt-1 text-muted-foreground/80">
-                              {event.description}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-        </div>
-      </main>
-
-      {/* New Event Dialog */}
-      <Dialog open={isNewEventDialogOpen} onOpenChange={setIsNewEventDialogOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Create New Event</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 pt-4">
-            <div className="space-y-2">
-              <Label htmlFor="title">Event Title</Label>
-              <Input
-                id="title"
-                placeholder="Meeting, Appointment, etc."
-                value={newEventTitle}
-                onChange={(e) => setNewEventTitle(e.target.value)}
-              />
-            </div>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="date">Date</Label>
-                <Input
-                  id="date"
-                  type="date"
-                  value={newEventDate}
-                  onChange={(e) => setNewEventDate(e.target.value)}
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="time">Time</Label>
-                <Input
-                  id="time"
-                  type="time"
-                  value={newEventTime}
-                  onChange={(e) => setNewEventTime(e.target.value)}
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="location">Location (optional)</Label>
-              <div className="flex gap-2">
-                <Input
-                  id="location"
-                  placeholder="660 white plains"
-                  value={newEventLocation}
-                  onChange={(e) => setNewEventLocation(e.target.value)}
-                  className="flex-1"
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  onClick={() => {
-                    hapticLight();
-                    setIsLocationPickerOpen(true);
-                  }}
-                >
-                  <MapPin className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="description">Description (optional)</Label>
-              <Textarea
-                id="description"
-                placeholder="Add notes..."
-                value={newEventDescription}
-                onChange={(e) => setNewEventDescription(e.target.value)}
-                rows={3}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="recurrence">Repeat</Label>
-              <Select value={recurrencePattern} onValueChange={(value: any) => setRecurrencePattern(value)}>
-                <SelectTrigger id="recurrence">
-                  <SelectValue placeholder="Does not repeat" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">Does not repeat</SelectItem>
-                  <SelectItem value="daily">Daily</SelectItem>
-                  <SelectItem value="weekly">Weekly</SelectItem>
-                  <SelectItem value="monthly">Monthly</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {recurrencePattern === 'weekly' && (
-              <div className="space-y-2">
-                <Label htmlFor="recurrence-day">Day of Week</Label>
-                <Select value={recurrenceDay.toString()} onValueChange={(value) => setRecurrenceDay(parseInt(value))}>
-                  <SelectTrigger id="recurrence-day">
-                    <SelectValue placeholder="Select day" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="0">Sunday</SelectItem>
-                    <SelectItem value="1">Monday</SelectItem>
-                    <SelectItem value="2">Tuesday</SelectItem>
-                    <SelectItem value="3">Wednesday</SelectItem>
-                    <SelectItem value="4">Thursday</SelectItem>
-                    <SelectItem value="5">Friday</SelectItem>
-                    <SelectItem value="6">Saturday</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-
-            {recurrencePattern !== 'none' && (
-              <div className="space-y-2">
-                <Label htmlFor="recurrence-end">End Date (optional)</Label>
-                <Input
-                  id="recurrence-end"
-                  type="date"
-                  value={recurrenceEndDate}
-                  onChange={(e) => setRecurrenceEndDate(e.target.value)}
-                />
-              </div>
-            )}
-
-            <div className="flex gap-2 pt-2">
-              <Button
-                variant="outline"
-                className="flex-1"
-                onClick={() => {
-                  hapticLight();
-                  setIsNewEventDialogOpen(false);
-                }}
-              >
-                Cancel
-              </Button>
-              <Button
-                className="flex-1"
-                onClick={handleCreateEvent}
-              >
-                Create Event
-              </Button>
-            </div>
+                            </button>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
+                </div>
+              );
+            })}
           </div>
-        </DialogContent>
-      </Dialog>
+        )}
+      </div>
 
-      {/* Edit Event Dialog */}
-      <Dialog open={isEditEventDialogOpen} onOpenChange={setIsEditEventDialogOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Edit Event</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 pt-4">
-            <div className="space-y-2">
-              <Label htmlFor="edit-title">Event Title</Label>
-              <Input
-                id="edit-title"
-                placeholder="Meeting, Appointment, etc."
-                value={newEventTitle}
-                onChange={(e) => setNewEventTitle(e.target.value)}
-              />
-            </div>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="edit-date">Date</Label>
-                <Input
-                  id="edit-date"
-                  type="date"
-                  value={newEventDate}
-                  onChange={(e) => setNewEventDate(e.target.value)}
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="edit-time">Time</Label>
-                <Input
-                  id="edit-time"
-                  type="time"
-                  value={newEventTime}
-                  onChange={(e) => setNewEventTime(e.target.value)}
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="edit-location">Location (optional)</Label>
-              <div className="flex gap-2">
-                <Input
-                  id="edit-location"
-                  placeholder="660 white plains"
-                  value={newEventLocation}
-                  onChange={(e) => setNewEventLocation(e.target.value)}
-                  className="flex-1"
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  onClick={() => {
-                    hapticLight();
-                    setIsLocationPickerOpen(true);
-                  }}
-                >
-                  <MapPin className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="edit-description">Description (optional)</Label>
-              <Textarea
-                id="edit-description"
-                placeholder="Add notes..."
-                value={newEventDescription}
-                onChange={(e) => setNewEventDescription(e.target.value)}
-                rows={3}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="edit-recurrence">Repeat</Label>
-              <Select value={recurrencePattern} onValueChange={(value: any) => setRecurrencePattern(value)}>
-                <SelectTrigger id="edit-recurrence">
-                  <SelectValue placeholder="Does not repeat" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">Does not repeat</SelectItem>
-                  <SelectItem value="daily">Daily</SelectItem>
-                  <SelectItem value="weekly">Weekly</SelectItem>
-                  <SelectItem value="monthly">Monthly</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {recurrencePattern === 'weekly' && (
-              <div className="space-y-2">
-                <Label htmlFor="edit-recurrence-day">Day of Week</Label>
-                <Select value={recurrenceDay.toString()} onValueChange={(value) => setRecurrenceDay(parseInt(value))}>
-                  <SelectTrigger id="edit-recurrence-day">
-                    <SelectValue placeholder="Select day" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="0">Sunday</SelectItem>
-                    <SelectItem value="1">Monday</SelectItem>
-                    <SelectItem value="2">Tuesday</SelectItem>
-                    <SelectItem value="3">Wednesday</SelectItem>
-                    <SelectItem value="4">Thursday</SelectItem>
-                    <SelectItem value="5">Friday</SelectItem>
-                    <SelectItem value="6">Saturday</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-
-            {recurrencePattern !== 'none' && (
-              <div className="space-y-2">
-                <Label htmlFor="edit-recurrence-end">End Date (optional)</Label>
-                <Input
-                  id="edit-recurrence-end"
-                  type="date"
-                  value={recurrenceEndDate}
-                  onChange={(e) => setRecurrenceEndDate(e.target.value)}
-                />
-              </div>
-            )}
-
-            <div className="flex gap-2 pt-2">
-              <Button
-                variant="destructive"
-                onClick={() => {
-                  hapticLight();
-                  setIsDeleteAlertOpen(true);
-                }}
-              >
-                <Trash2 className="w-4 h-4 mr-2" />
-                Delete
-              </Button>
-              <div className="flex-1" />
-              <Button
-                variant="outline"
-                onClick={() => {
-                  hapticLight();
-                  setIsEditEventDialogOpen(false);
-                  setEditingEvent(null);
-                }}
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={handleUpdateEvent}
-              >
-                Save Changes
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Delete Confirmation Dialog */}
-      <AlertDialog open={isDeleteAlertOpen} onOpenChange={setIsDeleteAlertOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Event</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete this event? This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => hapticLight()}>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDeleteEvent}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {/* Location Picker */}
-      <MapboxLocationPicker
-        open={isLocationPickerOpen}
-        onOpenChange={setIsLocationPickerOpen}
-        accessToken={mapboxToken}
-        onConfirm={(location) => {
-          setNewEventLocation(location.address);
-          setNewEventLocationLat(location.lat);
-          setNewEventLocationLng(location.lng);
-          hapticSuccess();
+      {/* Event Sheet (slide-up for create/edit) */}
+      <CalendarEventSheet
+        isOpen={isEventSheetOpen}
+        onClose={() => {
+          setIsEventSheetOpen(false);
+          setEditingEvent(null);
         }}
+        event={editingEvent}
+        onSave={handleSaveEvent}
+        onDelete={editingEvent ? handleDeleteEvent : undefined}
+        onToggleComplete={editingEvent ? () => handleToggleComplete(editingEvent.taskId, editingEvent.completed) : undefined}
       />
-
-      {/* Location Viewer */}
-      {viewingLocation && (
-        <MapFullScreen
-          open={!!viewingLocation}
-          onOpenChange={(open) => !open && setViewingLocation(null)}
-          lat={viewingLocation.lat}
-          lng={viewingLocation.lng}
-          address={viewingLocation.address}
-          accessToken={mapboxToken}
-        />
-      )}
-    </div>
+    </AppLayout>
   );
 };
 
