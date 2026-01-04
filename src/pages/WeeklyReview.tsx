@@ -5,9 +5,16 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { hapticLight } from '@/utils/haptics';
 import { generateWeeklyReport, WeeklyReport } from '@/utils/generateWeeklyReport';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, startOfWeek } from 'date-fns';
 import { CreatureSprite } from '@/components/CreatureSprite';
 import { useProfile } from '@/hooks/useProfile';
+import WeeklyRemind from '@/components/weekly-review/WeeklyRemind';
+import WeeklyReflect from '@/components/weekly-review/WeeklyReflect';
+import { useWeeklyRemindData } from '@/hooks/useWeeklyRemindData';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+
+type ReviewStage = 'remind' | 'reflect' | 'review';
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const DAY_NAMES: Record<string, string> = {
@@ -23,9 +30,14 @@ const DAY_NAMES: Record<string, string> = {
 const WeeklyReview = () => {
   const navigate = useNavigate();
   const { profile } = useProfile();
+  const { toast } = useToast();
+  const [stage, setStage] = useState<ReviewStage>('remind');
   const [weekOffset, setWeekOffset] = useState(0);
   const [report, setReport] = useState<WeeklyReport | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSavingReflection, setIsSavingReflection] = useState(false);
+  
+  const { data: remindData, isLoading: isLoadingRemind } = useWeeklyRemindData();
 
   useEffect(() => {
     const loadReport = async () => {
@@ -36,6 +48,52 @@ const WeeklyReview = () => {
     };
     loadReport();
   }, [weekOffset]);
+
+  const handleReflectionComplete = async (reflections: { wentWell: string; feltOff: string }) => {
+    if (!reflections.wentWell && !reflections.feltOff) {
+      setStage('review');
+      return;
+    }
+
+    setIsSavingReflection(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
+      const weekStartStr = format(weekStart, 'yyyy-MM-dd');
+
+      // Extract simple themes (keywords that appear multiple times or are significant)
+      const allText = `${reflections.wentWell} ${reflections.feltOff}`.toLowerCase();
+      const themeKeywords = ['overload', 'momentum', 'distraction', 'focus', 'energy', 'tired', 'productive', 'stuck', 'progress', 'balance'];
+      const themes = themeKeywords.filter(k => allText.includes(k));
+
+      await supabase
+        .from('weekly_reflections')
+        .upsert({
+          user_id: user.id,
+          week_start: weekStartStr,
+          went_well: reflections.wentWell || null,
+          felt_off: reflections.feltOff || null,
+          themes_extracted: themes,
+        }, { onConflict: 'user_id,week_start' });
+
+      setStage('review');
+    } catch (error) {
+      console.error('Error saving reflection:', error);
+      toast({
+        title: 'Error saving reflection',
+        description: 'Your reflection could not be saved. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSavingReflection(false);
+    }
+  };
+
+  const handleSkipReflection = () => {
+    setStage('review');
+  };
 
   const weekLabel = weekOffset === 0 ? 'This Week' : 
                     weekOffset === -1 ? 'Last Week' : 
@@ -107,15 +165,78 @@ const WeeklyReview = () => {
         </Button>
       </div>
 
+      {/* Stage Indicator */}
+      {stage !== 'review' && (
+        <div className="flex items-center justify-center gap-2 py-3 border-b border-border/30">
+          <button
+            onClick={() => setStage('remind')}
+            className={`px-3 py-1 text-xs rounded-full transition-colors ${
+              stage === 'remind'
+                ? 'bg-foreground/10 text-foreground'
+                : 'text-foreground/40'
+            }`}
+          >
+            Remind
+          </button>
+          <span className="text-foreground/20">→</span>
+          <button
+            onClick={() => setStage('reflect')}
+            className={`px-3 py-1 text-xs rounded-full transition-colors ${
+              stage === 'reflect'
+                ? 'bg-foreground/10 text-foreground'
+                : 'text-foreground/40'
+            }`}
+          >
+            Reflect
+          </button>
+          <span className="text-foreground/20">→</span>
+          <span className="px-3 py-1 text-xs text-foreground/30">Review</span>
+        </div>
+      )}
+
       {/* Content */}
       <div className="p-4 pb-24 space-y-6">
-        {isLoading ? (
+        {/* Remind Stage */}
+        {stage === 'remind' && (
+          <>
+            <div className="text-center py-2">
+              <p className="text-sm text-foreground/50">
+                Re-anchor in what last week was actually about.
+              </p>
+            </div>
+            <WeeklyRemind
+              priorities={remindData?.priorities || []}
+              projectsTouched={remindData?.projectsTouched || []}
+              rolledOverTasks={remindData?.rolledOverTasks || []}
+              calendarHighlights={remindData?.calendarHighlights || []}
+              isLoading={isLoadingRemind}
+            />
+            <div className="flex justify-end pt-4">
+              <Button onClick={() => setStage('reflect')} className="gap-2">
+                Continue
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+            </div>
+          </>
+        )}
+
+        {/* Reflect Stage */}
+        {stage === 'reflect' && (
+          <WeeklyReflect
+            onComplete={handleReflectionComplete}
+            onSkip={handleSkipReflection}
+            isSaving={isSavingReflection}
+          />
+        )}
+
+        {/* Review Stage (existing content) */}
+        {stage === 'review' && isLoading ? (
           <div className="space-y-4">
             <div className="h-24 bg-foreground/5 rounded-xl animate-pulse" />
             <div className="h-32 bg-foreground/5 rounded-xl animate-pulse" />
             <div className="h-48 bg-foreground/5 rounded-xl animate-pulse" />
           </div>
-        ) : report ? (
+        ) : stage === 'review' && report ? (
           <>
             {/* Summary */}
             <div className="text-center py-4">
@@ -271,11 +392,11 @@ const WeeklyReview = () => {
               </Button>
             </div>
           </>
-        ) : (
+        ) : stage === 'review' ? (
           <div className="text-center py-12">
             <p className="text-foreground/40">No data available for this week.</p>
           </div>
-        )}
+        ) : null}
       </div>
     </div>
   );
