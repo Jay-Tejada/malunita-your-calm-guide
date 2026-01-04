@@ -175,11 +175,33 @@ const Index = () => {
   }, []);
 
   // Auto-stop recording gracefully at 60 seconds (must be before early returns)
+  // Inline the stop logic since stopOrbRecording is defined after early returns
   useEffect(() => {
     if (isOrbRecording && recordingDuration >= 60) {
+      // Mark as auto-stopped for "Continue this thought" affordance
       setWasAutoStopped(true);
+      
+      // Clear recording timer
+      if (recordingTimerRef.current) {
+        clearInterval(recordingTimerRef.current);
+        recordingTimerRef.current = null;
+      }
+      
+      // Stop the media recorder
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
+        mediaRecorderRef.current.stop();
+      }
+      
+      // Update states
+      setIsOrbRecording(false);
+      setIsOrbProcessing(true);
+      setRecordingDuration(0);
+      setIsFocused(false);
+      
+      // Release wake lock
+      releaseWakeLock();
     }
-  }, [isOrbRecording, recordingDuration]);
+  }, [isOrbRecording, recordingDuration, releaseWakeLock]);
 
   const handleCompanionComplete = async (name: string, personality: PersonalityType) => {
     const colorwayMap = {
@@ -350,14 +372,6 @@ const Index = () => {
     setIsOrbProcessing(true);
     setRecordingDuration(0);
   };
-
-  // Effect to execute auto-stop when wasAutoStopped is set (triggered by hook before early returns)
-  useEffect(() => {
-    if (wasAutoStopped && isOrbRecording) {
-      stopOrbRecording();
-      setIsFocused(false);
-    }
-  }, [wasAutoStopped]);
 
   const processOrbRecording = async (audioBlob: Blob) => {
     try {
