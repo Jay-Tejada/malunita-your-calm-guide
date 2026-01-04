@@ -78,8 +78,10 @@ const Index = () => {
   // Direct orb recording state (kept for legacy/desktop direct recording)
   const [isOrbRecording, setIsOrbRecording] = useState(false);
   const [isOrbProcessing, setIsOrbProcessing] = useState(false);
+  const [recordingDuration, setRecordingDuration] = useState(0);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
+  const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
   
   // Start my day modal state
   const [showStartMyDay, setShowStartMyDay] = useState(false);
@@ -291,6 +293,12 @@ const Index = () => {
 
       mediaRecorder.start();
       setIsOrbRecording(true);
+      setRecordingDuration(0);
+      
+      // Track recording duration
+      recordingTimerRef.current = setInterval(() => {
+        setRecordingDuration(prev => prev + 1);
+      }, 1000);
     } catch (error) {
       // Release wake lock on error
       await releaseWakeLock();
@@ -304,6 +312,12 @@ const Index = () => {
   };
 
   const stopOrbRecording = async () => {
+    // Clear recording timer
+    if (recordingTimerRef.current) {
+      clearInterval(recordingTimerRef.current);
+      recordingTimerRef.current = null;
+    }
+    
     if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
       mediaRecorderRef.current.stop();
     }
@@ -311,6 +325,7 @@ const Index = () => {
     await releaseWakeLock();
     setIsOrbRecording(false);
     setIsOrbProcessing(true);
+    setRecordingDuration(0);
   };
 
   const processOrbRecording = async (audioBlob: Blob) => {
@@ -421,6 +436,7 @@ const Index = () => {
                 isProcessing={isOrbProcessing}
                 isFocused={isFocused}
                 isPassive={isAnyDrawerOpen}
+                recordingDuration={recordingDuration}
               />
               
               {/* Status text - minimal during recording */}
@@ -559,6 +575,7 @@ const Index = () => {
                 isProcessing={isOrbProcessing}
                 isFocused={isFocused}
                 isPassive={isAnyDrawerOpen}
+                recordingDuration={recordingDuration}
               />
               
               {/* Status text - minimal during recording */}

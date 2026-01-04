@@ -18,6 +18,8 @@ interface OrbProps {
   isRecording?: boolean;
   isProcessing?: boolean;
   isFocused?: boolean;
+  // Recording duration in seconds - used for subtle winding down behavior
+  recordingDuration?: number;
 }
 
 /**
@@ -41,6 +43,7 @@ const Orb = ({
   isRecording = false,
   isProcessing = false,
   isFocused = false, // Kept for backward compatibility
+  recordingDuration = 0,
 }: OrbProps) => {
   const [timeOfDay, setTimeOfDay] = useState<TimeOfDay>('midday');
   const [breathPhase, setBreathPhase] = useState(0);
@@ -52,6 +55,10 @@ const Orb = ({
     if (isProcessing) return 'processing';
     return 'idle';
   }, [interactionState, isRecording, isProcessing]);
+  
+  // Subtle "winding down" behavior at 45+ seconds
+  // This is subconscious - user won't notice but may naturally wrap up
+  const isWindingDown = effectiveInteractionState === 'listening' && recordingDuration >= 45;
 
   // Time of day detection (kept for color palette)
   useEffect(() => {
@@ -75,6 +82,7 @@ const Orb = ({
 
   // Deterministic breathing based on confidence level
   // Low: no motion | Medium: very slow | High: gentle, settled
+  // Winding down: slower breathing for subconscious wrap-up cue
   useEffect(() => {
     if (isPassive || aiConfidence === 'low') {
       setBreathPhase(0);
@@ -82,14 +90,18 @@ const Orb = ({
     }
     
     // Deterministic interval based on confidence
-    const breathInterval = aiConfidence === 'high' ? 80 : 100;
+    // Winding down slows breathing by ~30% (subconscious cue)
+    let breathInterval = aiConfidence === 'high' ? 80 : 100;
+    if (isWindingDown) {
+      breathInterval = Math.floor(breathInterval * 1.3); // Slower breathing
+    }
     
     const interval = setInterval(() => {
       setBreathPhase(p => (p + 1) % 360);
     }, breathInterval);
     
     return () => clearInterval(interval);
-  }, [isPassive, aiConfidence]);
+  }, [isPassive, aiConfidence, isWindingDown]);
 
   // Color palettes - warm, organic tones
   const palettes = useMemo(() => ({
@@ -161,8 +173,9 @@ const Orb = ({
     switch (effectiveInteractionState) {
       case 'listening':
         return {
-          scaleBoost: 0.03,      // Slight expansion
-          glowBoost: 0.3,        // Glow increases
+          // Winding down: glow tightens inward (subtle contraction)
+          scaleBoost: isWindingDown ? 0.015 : 0.03,      // Slight contraction when winding down
+          glowBoost: isWindingDown ? 0.15 : 0.3,         // Glow tightens inward
           motionBoost: 0,
         };
       case 'processing':
@@ -178,7 +191,7 @@ const Orb = ({
           motionBoost: 0,
         };
     }
-  }, [effectiveInteractionState]);
+  }, [effectiveInteractionState, isWindingDown]);
 
   // Calculate final values
   const passiveMultiplier = isPassive ? 0.3 : 1;
