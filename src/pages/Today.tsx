@@ -21,6 +21,7 @@ import { TinyTaskParty } from '@/components/tasks/TinyTaskParty';
 import { deduplicateTasks } from '@/utils/duplicateDetection';
 import { InboxPreviewRow } from '@/components/today/InboxPreviewRow';
 import { TaskEditDialog } from '@/components/TaskEditDialog';
+import WeeklyPrioritiesCard from '@/components/today/WeeklyPrioritiesCard';
 
 const Today = () => {
   const navigate = useNavigate();
@@ -200,9 +201,12 @@ const Today = () => {
 
   return (
     <AppLayout title="Today" showBack>
-      <div className="px-4 pt-4 pb-24 md:pb-20">
+      <div className="px-4 pt-4 pb-24 md:pb-20 space-y-4">
         {/* Date */}
-        <p className="text-xs text-muted-foreground text-center mb-6">{today}</p>
+        <p className="text-xs text-muted-foreground text-center">{today}</p>
+
+        {/* Weekly Priorities */}
+        <WeeklyPrioritiesCard />
 
         {/* Tiny Task Fiesta Prompt */}
         {userId && (
