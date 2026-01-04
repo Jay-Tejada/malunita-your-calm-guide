@@ -407,10 +407,11 @@ const Index = () => {
 
           {/* CENTER - Everything vertically & horizontally centered */}
           <div className="flex-1 flex flex-col items-center justify-center px-4">
-            {/* Orb - direct voice capture on mobile (same as desktop) */}
+            {/* Rebalanced layout: Orb (ambient) → Focus Line (hero) → Button → Hint */}
             <div className="flex flex-col items-center relative" style={{ zIndex: 50 }}>
+              {/* Orb - reduced size, ambient presence */}
               <Orb
-                size={140}
+                size={120}
                 onClick={handleVoiceCapture}
                 isRecording={isOrbRecording}
                 isProcessing={isOrbProcessing}
@@ -418,24 +419,26 @@ const Index = () => {
                 isPassive={isAnyDrawerOpen}
               />
               
-              {/* Status text below orb - fixed height to prevent layout shift */}
-              <p className="mt-6 h-5 text-sm text-text-muted text-center font-light">
-                {isOrbRecording ? 'listening...' : isOrbProcessing ? 'transcribing...' : focusStatus.text}
-              </p>
+              {/* Focus Line - THE HERO - larger, full contrast, primary anchor */}
+              <div className="mt-7 text-center max-w-[280px]">
+                <p className="text-base font-normal text-foreground leading-relaxed tracking-tight">
+                  {isOrbRecording ? 'listening...' : isOrbProcessing ? 'transcribing...' : focusStatus.text}
+                </p>
+              </div>
               
               {/* Cancel hint when focused */}
               {isFocused && (
-                <p className="mt-2 text-xs text-white/40 text-center animate-fade-in">
+                <p className="mt-3 text-xs text-foreground/30 text-center animate-fade-in">
                   tap to stop
                 </p>
               )}
             </div>
             
-            {/* Start my day button - only show if fiesta card is not visible */}
+            {/* Start my day button - outlined, invitation not demand */}
             {!showTinyTaskFiesta && (
               <button
                 onClick={() => setShowStartMyDay(true)}
-                className="mt-8 flex items-center gap-2 px-5 py-2.5 rounded-full border border-foreground/10 text-xs text-foreground/40 hover:text-foreground/60 hover:bg-foreground/[0.02] transition-colors"
+                className="mt-5 flex items-center gap-2 px-5 py-2.5 rounded-full border border-border/50 text-xs text-muted-foreground hover:text-foreground hover:border-border transition-colors"
               >
                 <Sun className="w-3.5 h-3.5" />
                 Start my day
@@ -444,7 +447,7 @@ const Index = () => {
             
             {/* Tiny Task Fiesta Card - shows after Start My Day flow */}
             {showTinyTaskFiesta && (
-              <div className="mt-8">
+              <div className="mt-5">
                 <TinyTaskFiestaCard
                   onDismiss={() => setShowTinyTaskFiesta(false)}
                   onStart={() => {
@@ -455,8 +458,8 @@ const Index = () => {
               </div>
             )}
             
-            {/* Search hint */}
-            <p className="mt-6 text-[10px] text-muted-foreground/20">
+            {/* Search hint - quiet utility */}
+            <p className="mt-4 text-[10px] text-muted-foreground/25">
               Press / to search
             </p>
           </div>
@@ -472,12 +475,13 @@ const Index = () => {
           onDreamModeClick={handleDreamModeClick}
           activeCategory={activeCategory}
         >
-          {/* Minimal centered content */}
+          {/* Minimal centered content - Rebalanced layout */}
           <div className="min-h-[85vh] flex flex-col items-center justify-center">
-            {/* Orb */}
+            {/* Rebalanced layout: Orb (ambient) → Focus Line (hero) → Button → Hint */}
             <div className="flex flex-col items-center relative" style={{ zIndex: 50 }}>
+              {/* Orb - reduced size (~15% smaller), ambient presence */}
               <Orb
-                size={180}
+                size={155}
                 onClick={handleVoiceCapture}
                 isRecording={isOrbRecording}
                 isProcessing={isOrbProcessing}
@@ -485,24 +489,26 @@ const Index = () => {
                 isPassive={isAnyDrawerOpen}
               />
               
-              {/* Status text below orb - fixed height to prevent layout shift */}
-              <p className="mt-6 h-5 text-sm text-text-muted text-center font-light">
-                {isOrbRecording ? 'listening...' : isOrbProcessing ? 'transcribing...' : focusStatus.text}
-              </p>
+              {/* Focus Line - THE HERO - larger, full contrast, primary anchor */}
+              <div className="mt-8 text-center max-w-md">
+                <p className="text-lg font-normal text-foreground leading-relaxed tracking-tight">
+                  {isOrbRecording ? 'listening...' : isOrbProcessing ? 'transcribing...' : focusStatus.text}
+                </p>
+              </div>
               
               {/* Cancel hint when focused */}
               {isFocused && (
-                <p className="mt-2 text-xs text-white/40 text-center animate-fade-in">
+                <p className="mt-3 text-xs text-foreground/30 text-center animate-fade-in">
                   tap to stop
                 </p>
               )}
             </div>
             
-            {/* Start my day button - only show if fiesta card is not visible */}
+            {/* Start my day button - outlined, invitation not demand */}
             {!showTinyTaskFiesta && (
               <button
                 onClick={() => setShowStartMyDay(true)}
-                className="mt-8 flex items-center gap-2 px-5 py-2.5 rounded-full border border-foreground/10 text-xs text-foreground/40 hover:text-foreground/60 hover:bg-foreground/[0.02] transition-colors"
+                className="mt-6 flex items-center gap-2 px-5 py-2.5 rounded-full border border-border/50 text-xs text-muted-foreground hover:text-foreground hover:border-border transition-colors"
               >
                 <Sun className="w-3.5 h-3.5" />
                 Start my day
@@ -511,7 +517,7 @@ const Index = () => {
             
             {/* Tiny Task Fiesta Card - shows after Start My Day flow */}
             {showTinyTaskFiesta && (
-              <div className="mt-8">
+              <div className="mt-6">
                 <TinyTaskFiestaCard
                   onDismiss={() => setShowTinyTaskFiesta(false)}
                   onStart={() => {
@@ -522,8 +528,8 @@ const Index = () => {
               </div>
             )}
             
-            {/* Search hint */}
-            <p className="mt-6 text-[10px] text-muted-foreground/20">
+            {/* Search hint - quiet utility */}
+            <p className="mt-4 text-[10px] text-muted-foreground/25">
               Press / to search
             </p>
           </div>
