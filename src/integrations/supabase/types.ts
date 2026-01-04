@@ -2356,6 +2356,39 @@ export type Database = {
         }
         Relationships: []
       }
+      weekly_reflections: {
+        Row: {
+          created_at: string
+          felt_off: string | null
+          id: string
+          themes_extracted: Json | null
+          updated_at: string
+          user_id: string
+          week_start: string
+          went_well: string | null
+        }
+        Insert: {
+          created_at?: string
+          felt_off?: string | null
+          id?: string
+          themes_extracted?: Json | null
+          updated_at?: string
+          user_id: string
+          week_start: string
+          went_well?: string | null
+        }
+        Update: {
+          created_at?: string
+          felt_off?: string | null
+          id?: string
+          themes_extracted?: Json | null
+          updated_at?: string
+          user_id?: string
+          week_start?: string
+          went_well?: string | null
+        }
+        Relationships: []
+      }
       workout_sessions: {
         Row: {
           created_at: string | null
