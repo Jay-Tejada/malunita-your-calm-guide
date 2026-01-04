@@ -52,6 +52,7 @@ export const HomeOrb = ({
   const [interruptionAlert, setInterruptionAlert] = useState<string | null>(null);
   const [showTextInput, setShowTextInput] = useState(false);
   const [taskText, setTaskText] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
   const [isLongPress, setIsLongPress] = useState(false);
   const [isLongPressing, setIsLongPressing] = useState(false);
@@ -94,14 +95,23 @@ export const HomeOrb = ({
   };
 
   const handleTextSubmit = async () => {
-    if (!taskText.trim()) return;
+    const textToSubmit = taskText.trim();
+    if (!textToSubmit || isSubmitting) return;
+
+    // Immediately close dialog and clear input to prevent double-submission
+    setIsSubmitting(true);
+    setShowTextInput(false);
+    setTaskText("");
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!user) {
+        setIsSubmitting(false);
+        return;
+      }
 
       const result = await processInput({
-        text: taskText,
+        text: textToSubmit,
         userId: user.id,
       });
 
@@ -128,11 +138,12 @@ export const HomeOrb = ({
         onAIAlertsUpdate(alerts);
       }
 
-      setTaskText("");
-      setShowTextInput(false);
+      toast.success("Task added");
     } catch (error) {
       console.error('Failed to process input:', error);
       toast.error("Failed to add task");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -312,14 +323,20 @@ export const HomeOrb = ({
               value={taskText}
               onChange={(e) => setTaskText(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === 'Enter') {
+                if (e.key === 'Enter' && !isSubmitting) {
+                  e.preventDefault();
                   handleTextSubmit();
                 }
               }}
               placeholder="Type your task..."
               autoFocus
+              disabled={isSubmitting}
             />
-            <Button onClick={handleTextSubmit} size="icon">
+            <Button 
+              onClick={handleTextSubmit} 
+              size="icon"
+              disabled={isSubmitting || !taskText.trim()}
+            >
               <Plus className="h-4 w-4" />
             </Button>
           </div>
