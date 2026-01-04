@@ -22,6 +22,7 @@ import { OfflineIndicator } from "@/components/OfflineIndicator";
 import { useOfflineStatus } from "@/hooks/useOfflineStatus";
 import { useWakeLock } from "@/hooks/useWakeLock";
 import Orb from "@/components/Orb";
+import { ListeningOverlay } from "@/components/orb/ListeningOverlay";
 import Search from "@/components/Search";
 import { useTasks } from "@/hooks/useTasks";
 import { useCapture } from "@/hooks/useAICapture";
@@ -398,6 +399,9 @@ const Index = () => {
       {isMobile ? (
         /* MOBILE LAYOUT - Minimal & Centered */
         <div className="mobile-home min-h-screen bg-background flex flex-col">
+          {/* Listening overlay - soft background dim */}
+          <ListeningOverlay isActive={isOrbRecording || isOrbProcessing} />
+          
           {/* Offline banner */}
           {!isOnline && (
             <div className="sticky top-0 z-50 bg-destructive/90 backdrop-blur-sm text-destructive-foreground text-center py-2 text-sm">
@@ -419,49 +423,114 @@ const Index = () => {
                 isPassive={isAnyDrawerOpen}
               />
               
-              {/* Focus Line - THE HERO - larger, full contrast, primary anchor */}
+              {/* Status text - minimal during recording */}
               <div className="mt-7 text-center max-w-[280px]">
-                <p className="text-base font-normal text-foreground leading-relaxed tracking-tight">
-                  {isOrbRecording ? 'listening...' : isOrbProcessing ? 'transcribing...' : focusStatus.text}
-                </p>
+                <AnimatePresence mode="wait">
+                  {isOrbRecording ? (
+                    <motion.p 
+                      key="listening"
+                      className="text-sm font-light text-foreground/40 leading-relaxed tracking-wide"
+                      initial={{ opacity: 0, y: 4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -4 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      listening…
+                    </motion.p>
+                  ) : isOrbProcessing ? (
+                    <motion.p 
+                      key="transcribing"
+                      className="text-sm font-light text-foreground/40 leading-relaxed tracking-wide"
+                      initial={{ opacity: 0, y: 4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -4 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      transcribing…
+                    </motion.p>
+                  ) : (
+                    <motion.p 
+                      key="focus"
+                      className="text-base font-normal text-foreground leading-relaxed tracking-tight"
+                      initial={{ opacity: 0, y: 4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -4 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      {focusStatus.text}
+                    </motion.p>
+                  )}
+                </AnimatePresence>
               </div>
               
-              {/* Cancel hint when focused */}
-              {isFocused && (
-                <p className="mt-3 text-xs text-foreground/30 text-center animate-fade-in">
-                  tap to stop
-                </p>
-              )}
+              {/* Tap to stop hint - very low contrast */}
+              <AnimatePresence>
+                {isFocused && (
+                  <motion.p 
+                    className="mt-3 text-[10px] text-foreground/20 text-center"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.4, delay: 0.2 }}
+                  >
+                    tap to stop
+                  </motion.p>
+                )}
+              </AnimatePresence>
             </div>
             
-            {/* Start my day button - outlined, invitation not demand */}
-            {!showTinyTaskFiesta && (
-              <button
-                onClick={() => setShowStartMyDay(true)}
-                className="mt-5 flex items-center gap-2 px-5 py-2.5 rounded-full border border-border/50 text-xs text-muted-foreground hover:text-foreground hover:border-border transition-colors"
-              >
-                <Sun className="w-3.5 h-3.5" />
-                Start my day
-              </button>
-            )}
+            {/* Start my day button - hidden during recording */}
+            <AnimatePresence>
+              {!showTinyTaskFiesta && !isOrbRecording && !isOrbProcessing && (
+                <motion.button
+                  onClick={() => setShowStartMyDay(true)}
+                  className="mt-5 flex items-center gap-2 px-5 py-2.5 rounded-full border border-border/50 text-xs text-muted-foreground hover:text-foreground hover:border-border transition-colors"
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 8 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <Sun className="w-3.5 h-3.5" />
+                  Start my day
+                </motion.button>
+              )}
+            </AnimatePresence>
             
-            {/* Tiny Task Fiesta Card - shows after Start My Day flow */}
-            {showTinyTaskFiesta && (
-              <div className="mt-5">
-                <TinyTaskFiestaCard
-                  onDismiss={() => setShowTinyTaskFiesta(false)}
-                  onStart={() => {
-                    setShowTinyTaskParty(true);
-                    setShowTinyTaskFiesta(false);
-                  }}
-                />
-              </div>
-            )}
+            {/* Tiny Task Fiesta Card - hidden during recording */}
+            <AnimatePresence>
+              {showTinyTaskFiesta && !isOrbRecording && !isOrbProcessing && (
+                <motion.div 
+                  className="mt-5"
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 8 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <TinyTaskFiestaCard
+                    onDismiss={() => setShowTinyTaskFiesta(false)}
+                    onStart={() => {
+                      setShowTinyTaskParty(true);
+                      setShowTinyTaskFiesta(false);
+                    }}
+                  />
+                </motion.div>
+              )}
+            </AnimatePresence>
             
-            {/* Search hint - quiet utility */}
-            <p className="mt-4 text-[10px] text-muted-foreground/25">
-              Press / to search
-            </p>
+            {/* Search hint - hidden during recording */}
+            <AnimatePresence>
+              {!isOrbRecording && !isOrbProcessing && (
+                <motion.p 
+                  className="mt-4 text-[10px] text-muted-foreground/25"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  Press / to search
+                </motion.p>
+              )}
+            </AnimatePresence>
           </div>
         </div>
       ) : (
@@ -475,6 +544,9 @@ const Index = () => {
           onDreamModeClick={handleDreamModeClick}
           activeCategory={activeCategory}
         >
+          {/* Listening overlay - soft background dim */}
+          <ListeningOverlay isActive={isOrbRecording || isOrbProcessing} />
+          
           {/* Minimal centered content - Rebalanced layout */}
           <div className="min-h-[85vh] flex flex-col items-center justify-center">
             {/* Rebalanced layout: Orb (ambient) → Focus Line (hero) → Button → Hint */}
@@ -489,49 +561,114 @@ const Index = () => {
                 isPassive={isAnyDrawerOpen}
               />
               
-              {/* Focus Line - THE HERO - larger, full contrast, primary anchor */}
+              {/* Status text - minimal during recording */}
               <div className="mt-8 text-center max-w-md">
-                <p className="text-lg font-normal text-foreground leading-relaxed tracking-tight">
-                  {isOrbRecording ? 'listening...' : isOrbProcessing ? 'transcribing...' : focusStatus.text}
-                </p>
+                <AnimatePresence mode="wait">
+                  {isOrbRecording ? (
+                    <motion.p 
+                      key="listening"
+                      className="text-sm font-light text-foreground/40 leading-relaxed tracking-wide"
+                      initial={{ opacity: 0, y: 4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -4 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      listening…
+                    </motion.p>
+                  ) : isOrbProcessing ? (
+                    <motion.p 
+                      key="transcribing"
+                      className="text-sm font-light text-foreground/40 leading-relaxed tracking-wide"
+                      initial={{ opacity: 0, y: 4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -4 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      transcribing…
+                    </motion.p>
+                  ) : (
+                    <motion.p 
+                      key="focus"
+                      className="text-lg font-normal text-foreground leading-relaxed tracking-tight"
+                      initial={{ opacity: 0, y: 4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -4 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      {focusStatus.text}
+                    </motion.p>
+                  )}
+                </AnimatePresence>
               </div>
               
-              {/* Cancel hint when focused */}
-              {isFocused && (
-                <p className="mt-3 text-xs text-foreground/30 text-center animate-fade-in">
-                  tap to stop
-                </p>
-              )}
+              {/* Tap to stop hint - very low contrast */}
+              <AnimatePresence>
+                {isFocused && (
+                  <motion.p 
+                    className="mt-3 text-[10px] text-foreground/20 text-center"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.4, delay: 0.2 }}
+                  >
+                    tap to stop
+                  </motion.p>
+                )}
+              </AnimatePresence>
             </div>
             
-            {/* Start my day button - outlined, invitation not demand */}
-            {!showTinyTaskFiesta && (
-              <button
-                onClick={() => setShowStartMyDay(true)}
-                className="mt-6 flex items-center gap-2 px-5 py-2.5 rounded-full border border-border/50 text-xs text-muted-foreground hover:text-foreground hover:border-border transition-colors"
-              >
-                <Sun className="w-3.5 h-3.5" />
-                Start my day
-              </button>
-            )}
+            {/* Start my day button - hidden during recording */}
+            <AnimatePresence>
+              {!showTinyTaskFiesta && !isOrbRecording && !isOrbProcessing && (
+                <motion.button
+                  onClick={() => setShowStartMyDay(true)}
+                  className="mt-6 flex items-center gap-2 px-5 py-2.5 rounded-full border border-border/50 text-xs text-muted-foreground hover:text-foreground hover:border-border transition-colors"
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 8 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <Sun className="w-3.5 h-3.5" />
+                  Start my day
+                </motion.button>
+              )}
+            </AnimatePresence>
             
-            {/* Tiny Task Fiesta Card - shows after Start My Day flow */}
-            {showTinyTaskFiesta && (
-              <div className="mt-6">
-                <TinyTaskFiestaCard
-                  onDismiss={() => setShowTinyTaskFiesta(false)}
-                  onStart={() => {
-                    setShowTinyTaskParty(true);
-                    setShowTinyTaskFiesta(false);
-                  }}
-                />
-              </div>
-            )}
+            {/* Tiny Task Fiesta Card - hidden during recording */}
+            <AnimatePresence>
+              {showTinyTaskFiesta && !isOrbRecording && !isOrbProcessing && (
+                <motion.div 
+                  className="mt-6"
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 8 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <TinyTaskFiestaCard
+                    onDismiss={() => setShowTinyTaskFiesta(false)}
+                    onStart={() => {
+                      setShowTinyTaskParty(true);
+                      setShowTinyTaskFiesta(false);
+                    }}
+                  />
+                </motion.div>
+              )}
+            </AnimatePresence>
             
-            {/* Search hint - quiet utility */}
-            <p className="mt-4 text-[10px] text-muted-foreground/25">
-              Press / to search
-            </p>
+            {/* Search hint - hidden during recording */}
+            <AnimatePresence>
+              {!isOrbRecording && !isOrbProcessing && (
+                <motion.p 
+                  className="mt-4 text-[10px] text-muted-foreground/25"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  Press / to search
+                </motion.p>
+              )}
+            </AnimatePresence>
           </div>
         </HomeShell>
       )}
