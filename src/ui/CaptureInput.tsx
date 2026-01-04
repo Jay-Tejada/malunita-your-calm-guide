@@ -25,13 +25,7 @@ export function CaptureInput({
 
   return (
     <div
-      className="flex items-center gap-3"
-      style={{
-        backgroundColor: colors.bg.elevated,
-        borderRadius: layout.radius.md,
-        padding: "12px 16px",
-        border: `1px solid ${colors.border.subtle}`,
-      }}
+      className="flex items-center gap-3 bg-surface border border-border rounded-xl p-3 px-4"
     >
       <input
         type="text"
@@ -39,24 +33,21 @@ export function CaptureInput({
         onChange={(e) => setValue(e.target.value)}
         onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
         placeholder={placeholder}
-        className="flex-1 bg-transparent outline-none"
+        className="flex-1 bg-transparent outline-none text-foreground placeholder:text-muted-foreground"
         style={{
           fontFamily: typography.fontFamily,
           fontSize: typography.bodyM.size,
-          color: colors.text.primary,
         }}
         disabled={isLoading}
       />
       <button
         onClick={handleSubmit}
         disabled={!value.trim() || isLoading}
-        className="flex-shrink-0 transition-opacity"
+        className="flex-shrink-0 transition-opacity text-primary font-medium"
         style={{
           opacity: value.trim() ? 1 : 0.4,
-          color: colors.accent.primary,
           fontFamily: typography.fontFamily,
           fontSize: typography.bodyS.size,
-          fontWeight: 500,
         }}
       >
         {isLoading ? "..." : "Add"}
