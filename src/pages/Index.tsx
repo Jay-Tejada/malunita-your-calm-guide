@@ -79,6 +79,8 @@ const Index = () => {
   const [isOrbRecording, setIsOrbRecording] = useState(false);
   const [isOrbProcessing, setIsOrbProcessing] = useState(false);
   const [recordingDuration, setRecordingDuration] = useState(0);
+  const [wasAutoStopped, setWasAutoStopped] = useState(false);
+  const [showContinueThought, setShowContinueThought] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -257,14 +259,28 @@ const Index = () => {
     }
     
     if (isFocused) {
-      // If focused, stop recording and exit focus
+      // If focused, stop recording and exit focus (manual stop)
+      setWasAutoStopped(false); // Clear auto-stop flag for manual stops
       stopOrbRecording();
       setIsFocused(false);
     } else if (!isOrbProcessing) {
       // If not focused, enter focus and start recording
+      setShowContinueThought(false); // Hide continue affordance when starting new recording
       setIsFocused(true);
       startOrbRecording();
     }
+  };
+
+  // Handler for "Continue this thought" - starts new linked recording
+  const handleContinueThought = async () => {
+    try {
+      await Haptics.impact({ style: ImpactStyle.Light });
+    } catch {
+      // Haptics not available
+    }
+    setShowContinueThought(false);
+    setIsFocused(true);
+    startOrbRecording();
   };
 
   const startOrbRecording = async () => {
@@ -331,6 +347,8 @@ const Index = () => {
   // Auto-stop recording gracefully at 60 seconds
   useEffect(() => {
     if (isOrbRecording && recordingDuration >= 60) {
+      // Mark as auto-stopped (not manual)
+      setWasAutoStopped(true);
       // Graceful stop - no hard cut
       stopOrbRecording();
       setIsFocused(false);
@@ -377,6 +395,11 @@ const Index = () => {
       });
     } finally {
       setIsOrbProcessing(false);
+      // Show "Continue this thought" only if recording was auto-stopped
+      if (wasAutoStopped) {
+        setShowContinueThought(true);
+        setWasAutoStopped(false);
+      }
     }
   };
 
@@ -516,9 +539,25 @@ const Index = () => {
               </AnimatePresence>
             </div>
             
-            {/* Start my day button - hidden during recording */}
+            {/* Continue this thought - only after auto-stop at 60s */}
             <AnimatePresence>
-              {!showTinyTaskFiesta && !isOrbRecording && !isOrbProcessing && (
+              {showContinueThought && !isOrbRecording && !isOrbProcessing && (
+                <motion.button
+                  onClick={handleContinueThought}
+                  className="mt-5 text-[11px] text-foreground/35 hover:text-foreground/50 transition-colors"
+                  initial={{ opacity: 0, y: 4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -4 }}
+                  transition={{ duration: 0.4, delay: 0.3 }}
+                >
+                  Continue this thought
+                </motion.button>
+              )}
+            </AnimatePresence>
+            
+            {/* Start my day button - hidden during recording and when continue thought is shown */}
+            <AnimatePresence>
+              {!showTinyTaskFiesta && !isOrbRecording && !isOrbProcessing && !showContinueThought && (
                 <motion.button
                   onClick={() => setShowStartMyDay(true)}
                   className="mt-5 flex items-center gap-2 px-5 py-2.5 rounded-full border border-border/50 text-xs text-muted-foreground hover:text-foreground hover:border-border transition-colors"
@@ -667,9 +706,25 @@ const Index = () => {
               </AnimatePresence>
             </div>
             
-            {/* Start my day button - hidden during recording */}
+            {/* Continue this thought - only after auto-stop at 60s */}
             <AnimatePresence>
-              {!showTinyTaskFiesta && !isOrbRecording && !isOrbProcessing && (
+              {showContinueThought && !isOrbRecording && !isOrbProcessing && (
+                <motion.button
+                  onClick={handleContinueThought}
+                  className="mt-5 text-[11px] text-foreground/35 hover:text-foreground/50 transition-colors"
+                  initial={{ opacity: 0, y: 4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -4 }}
+                  transition={{ duration: 0.4, delay: 0.3 }}
+                >
+                  Continue this thought
+                </motion.button>
+              )}
+            </AnimatePresence>
+            
+            {/* Start my day button - hidden during recording and when continue thought is shown */}
+            <AnimatePresence>
+              {!showTinyTaskFiesta && !isOrbRecording && !isOrbProcessing && !showContinueThought && (
                 <motion.button
                   onClick={() => setShowStartMyDay(true)}
                   className="mt-6 flex items-center gap-2 px-5 py-2.5 rounded-full border border-border/50 text-xs text-muted-foreground hover:text-foreground hover:border-border transition-colors"
