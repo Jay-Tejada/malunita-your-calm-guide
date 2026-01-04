@@ -2299,6 +2299,42 @@ export type Database = {
         }
         Relationships: []
       }
+      weekly_priorities: {
+        Row: {
+          calendar_blocks_accepted: boolean | null
+          created_at: string
+          id: string
+          priority_one: string | null
+          priority_three: string | null
+          priority_two: string | null
+          updated_at: string
+          user_id: string
+          week_start: string
+        }
+        Insert: {
+          calendar_blocks_accepted?: boolean | null
+          created_at?: string
+          id?: string
+          priority_one?: string | null
+          priority_three?: string | null
+          priority_two?: string | null
+          updated_at?: string
+          user_id: string
+          week_start: string
+        }
+        Update: {
+          calendar_blocks_accepted?: boolean | null
+          created_at?: string
+          id?: string
+          priority_one?: string | null
+          priority_three?: string | null
+          priority_two?: string | null
+          updated_at?: string
+          user_id?: string
+          week_start?: string
+        }
+        Relationships: []
+      }
       weekly_quests: {
         Row: {
           claimed: boolean

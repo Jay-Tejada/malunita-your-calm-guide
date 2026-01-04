@@ -10,11 +10,12 @@ import { CreatureSprite } from '@/components/CreatureSprite';
 import { useProfile } from '@/hooks/useProfile';
 import WeeklyRemind from '@/components/weekly-review/WeeklyRemind';
 import WeeklyReflect from '@/components/weekly-review/WeeklyReflect';
+import WeeklyPlan from '@/components/weekly-review/WeeklyPlan';
 import { useWeeklyRemindData } from '@/hooks/useWeeklyRemindData';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
-type ReviewStage = 'remind' | 'reflect' | 'review';
+type ReviewStage = 'remind' | 'reflect' | 'plan' | 'review';
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const DAY_NAMES: Record<string, string> = {
@@ -78,7 +79,7 @@ const WeeklyReview = () => {
           themes_extracted: themes,
         }, { onConflict: 'user_id,week_start' });
 
-      setStage('review');
+      setStage('plan');
     } catch (error) {
       console.error('Error saving reflection:', error);
       toast({
@@ -92,6 +93,10 @@ const WeeklyReview = () => {
   };
 
   const handleSkipReflection = () => {
+    setStage('plan');
+  };
+
+  const handlePlanComplete = () => {
     setStage('review');
   };
 
@@ -190,6 +195,17 @@ const WeeklyReview = () => {
             Reflect
           </button>
           <span className="text-foreground/20">→</span>
+          <button
+            onClick={() => setStage('plan')}
+            className={`px-3 py-1 text-xs rounded-full transition-colors ${
+              stage === 'plan'
+                ? 'bg-foreground/10 text-foreground'
+                : 'text-foreground/40'
+            }`}
+          >
+            Plan
+          </button>
+          <span className="text-foreground/20">→</span>
           <span className="px-3 py-1 text-xs text-foreground/30">Review</span>
         </div>
       )}
@@ -227,6 +243,11 @@ const WeeklyReview = () => {
             onSkip={handleSkipReflection}
             isSaving={isSavingReflection}
           />
+        )}
+
+        {/* Plan Stage */}
+        {stage === 'plan' && (
+          <WeeklyPlan onComplete={handlePlanComplete} />
         )}
 
         {/* Review Stage (existing content) */}
