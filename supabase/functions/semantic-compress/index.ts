@@ -32,7 +32,20 @@ BAD OUTPUT:
 - Multi-sentence summaries
 - Vague phrasing like "handle the thing"
 - Repeating filler words from original
-- Adding strategy or steps`;
+- Adding strategy or steps
+
+OUTPUT FORMAT (JSON):
+{
+  "ai_summary": "Your single compressed sentence here",
+  "confidence_score": 0.85
+}
+
+Set confidence_score based on how clearly you understood the intent:
+- 0.9-1.0: Crystal clear, unambiguous input
+- 0.7-0.89: Clear input with minor ambiguity
+- 0.5-0.69: Some ambiguity, made reasonable assumptions
+- 0.3-0.49: Significant ambiguity, low confidence
+- Below 0.3: Very unclear, mostly guessing`;
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
