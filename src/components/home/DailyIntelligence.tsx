@@ -4,7 +4,7 @@ import { Lightbulb, Target, Zap, Map } from "lucide-react";
 import { useTaskPlan } from "@/hooks/useTaskPlan";
 import { TaskPlanPanel } from "@/components/planning/TaskPlanPanel";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { useTasks } from "@/hooks/useTasks";
+import { useCapture } from "@/hooks/useAICapture";
 import { useToast } from "@/hooks/use-toast";
 
 interface DailyIntelligenceProps {
@@ -16,7 +16,7 @@ interface DailyIntelligenceProps {
 
 export function DailyIntelligence({ summary, quickWins, focusMessage, oneThing }: DailyIntelligenceProps) {
   const { isLoading, isPanelOpen, currentQuest, buildFullQuest, closePanel } = useTaskPlan();
-  const { createTasks } = useTasks();
+  const { capture } = useCapture();
   const { toast } = useToast();
 
   const handleTaskClick = async (stepId: string) => {
@@ -38,13 +38,11 @@ export function DailyIntelligence({ summary, quickWins, focusMessage, oneThing }
     if (!foundStep) return;
 
     try {
-      // Create the task from the plan step
-      await createTasks([{
-        title: foundStep.title,
+      // Route through AI pipeline for full enrichment
+      await capture({
+        text: foundStep.title,
         category: 'inbox',
-        context: foundStep.reason,
-        is_tiny_task: foundStep.tiny || false,
-      }]);
+      });
 
       toast({
         title: "Task created!",
