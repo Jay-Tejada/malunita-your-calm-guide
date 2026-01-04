@@ -73,7 +73,7 @@ serve(async (req) => {
   
   // Create FormData
   const formData = new FormData()
-  const blob = new Blob([binaryAudio.buffer], { type: 'audio/webm' })
+  const blob = new Blob([binaryAudio as unknown as BlobPart], { type: 'audio/webm' })
     formData.append('file', blob, 'recording.webm')
     formData.append('model', 'whisper-large-v3-turbo')
     formData.append('response_format', 'json')
