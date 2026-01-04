@@ -22,6 +22,7 @@ import { deduplicateTasks } from '@/utils/duplicateDetection';
 import { InboxPreviewRow } from '@/components/today/InboxPreviewRow';
 import { TaskEditDialog } from '@/components/TaskEditDialog';
 import WeeklyPrioritiesCard from '@/components/today/WeeklyPrioritiesCard';
+import { captureLearnSignal } from '@/hooks/useLearnSignal';
 
 const Today = () => {
   const navigate = useNavigate();
@@ -164,7 +165,19 @@ const Today = () => {
   };
 
   const handleDeleteTask = async (taskId: string) => {
+    // Find task for learning signal
+    const deletedTask = tasks?.find(t => t.id === taskId);
+    
     await supabase.from('tasks').delete().eq('id', taskId);
+    
+    // Capture decomposition rejection if subtask was deleted
+    if (deletedTask?.parent_task_id) {
+      captureLearnSignal({
+        type: 'decomposition_rejection',
+        action: 'delete',
+      }, deletedTask.parent_task_id);
+    }
+    
     toast({
       description: "Task deleted",
     });

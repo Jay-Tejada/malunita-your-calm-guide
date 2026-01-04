@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, Star, Briefcase, Home, Moon, Trash2, Pencil, ChevronLeft as SwipeIcon, CheckSquare, X, Check, ChevronDown } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -9,6 +9,7 @@ import { AppLayout } from '@/ui/AppLayout';
 import { hapticSwipe, hapticHint, hapticLight, hapticMedium, hapticCompleteInbox } from '@/utils/haptics';
 import { getDualLayerDisplay } from '@/hooks/useDualLayerDisplay';
 import { cn } from '@/lib/utils';
+import { captureLearnSignal } from '@/hooks/useLearnSignal';
 import {
   Dialog,
   DialogContent,
@@ -556,6 +557,10 @@ const Inbox = () => {
   };
 
   const moveTask = async (taskId: string, destination: string) => {
+    // Find original task for learning signal
+    const originalTask = tasks.find(t => t.id === taskId);
+    const fromSpace = originalTask?.category || 'inbox';
+    
     setTasks(prev => prev.filter(t => t.id !== taskId));
     setExpandedTask(null);
 
@@ -573,9 +578,21 @@ const Inbox = () => {
       .from('tasks')
       .update(updates)
       .eq('id', taskId);
+
+    // Capture destination correction signal (fire and forget)
+    if (fromSpace !== destination) {
+      captureLearnSignal({
+        type: 'destination_correction',
+        from: fromSpace,
+        to: destination,
+      }, taskId);
+    }
   };
 
   const deleteTask = async (taskId: string) => {
+    // Find task for learning signal
+    const deletedTask = tasks.find(t => t.id === taskId);
+    
     setTasks(prev => prev.filter(t => t.id !== taskId));
     setExpandedTask(null);
 
@@ -583,6 +600,14 @@ const Inbox = () => {
       .from('tasks')
       .delete()
       .eq('id', taskId);
+
+    // Capture decomposition rejection if subtask was deleted
+    if (deletedTask?.parent_task_id) {
+      captureLearnSignal({
+        type: 'decomposition_rejection',
+        action: 'delete',
+      }, deletedTask.parent_task_id);
+    }
   };
 
   // Batch actions
@@ -590,6 +615,9 @@ const Inbox = () => {
     const idsToMove = Array.from(selectedIds);
     if (idsToMove.length === 0) return;
 
+    // Capture signals for each moved task
+    const tasksToMove = tasks.filter(t => selectedIds.has(t.id));
+    
     // Optimistically update UI
     setTasks(prev => prev.filter(t => !selectedIds.has(t.id)));
     setSelectedIds(new Set());
@@ -607,6 +635,18 @@ const Inbox = () => {
       .from('tasks')
       .update(updates)
       .in('id', idsToMove);
+
+    // Capture destination correction signals for each task (fire and forget)
+    tasksToMove.forEach(task => {
+      const fromSpace = task.category || 'inbox';
+      if (fromSpace !== destination) {
+        captureLearnSignal({
+          type: 'destination_correction',
+          from: fromSpace,
+          to: destination,
+        }, task.id);
+      }
+    });
   };
 
   const batchDelete = async () => {
@@ -638,15 +678,29 @@ const Inbox = () => {
   const saveEdit = async (taskId: string) => {
     if (!editValue.trim()) return;
     
+    // Find original title for learning signal
+    const originalTask = tasks.find(t => t.id === taskId);
+    const originalTitle = originalTask?.title || '';
+    const newTitle = editValue.trim();
+    
     setTasks(prev => prev.map(t => 
-      t.id === taskId ? { ...t, title: editValue.trim() } : t
+      t.id === taskId ? { ...t, title: newTitle } : t
     ));
     setEditingTask(null);
 
     await supabase
       .from('tasks')
-      .update({ title: editValue.trim() })
+      .update({ title: newTitle })
       .eq('id', taskId);
+
+    // Capture summary edit signal (fire and forget)
+    if (originalTitle !== newTitle) {
+      captureLearnSignal({
+        type: 'summary_edit',
+        original: originalTitle.substring(0, 50),
+        edited: newTitle.substring(0, 50),
+      }, taskId);
+    }
   };
 
   return (
