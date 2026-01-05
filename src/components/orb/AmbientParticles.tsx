@@ -17,6 +17,7 @@ interface AmbientParticlesProps {
   isActive: boolean;
   orbSize: number;
   color?: string;
+  isProcessing?: boolean; // Slower, more meditative particles during transcription
 }
 
 /**
@@ -32,7 +33,8 @@ interface AmbientParticlesProps {
 export const AmbientParticles = ({ 
   isActive, 
   orbSize,
-  color = 'hsl(35, 30%, 60%)'
+  color = 'hsl(35, 30%, 60%)',
+  isProcessing = false,
 }: AmbientParticlesProps) => {
   const [particles, setParticles] = useState<Particle[]>([]);
   
@@ -40,30 +42,40 @@ export const AmbientParticles = ({
   const fieldRadius = orbSize * 0.9;
   
   // Generate particles when active
+  // Processing mode: fewer, slower particles for meditative feel
   const baseParticles = useMemo(() => {
-    const count = 18; // Base particle count
+    const count = isProcessing ? 12 : 18; // Fewer particles when processing
     return Array.from({ length: count }, (_, i) => {
       // Random angle for initial position
       const angle = Math.random() * Math.PI * 2;
       // Random distance from center (weighted toward edges)
       const distance = (0.3 + Math.random() * 0.7) * fieldRadius;
       
+      // Processing mode: slower drift, lower opacity
+      const driftMultiplier = isProcessing ? 0.6 : 1;
+      const opacityBase = isProcessing ? 0.08 : 0.05;
+      const opacityRange = isProcessing ? 0.08 : 0.07;
+      const durationBase = isProcessing ? 12 : 8;
+      const durationRange = isProcessing ? 8 : 6;
+      
       return {
         id: i,
         x: Math.cos(angle) * distance,
         y: Math.sin(angle) * distance,
         size: 2 + Math.random() * 2, // 2-4px
-        opacity: 0.05 + Math.random() * 0.07, // 5-12%
-        driftX: (Math.random() - 0.5) * 40, // Slow horizontal drift
-        driftY: (Math.random() - 0.5) * 40, // Slow vertical drift
-        duration: 8 + Math.random() * 6, // 8-14s per drift cycle
+        opacity: opacityBase + Math.random() * opacityRange,
+        driftX: (Math.random() - 0.5) * 40 * driftMultiplier, // Slower when processing
+        driftY: (Math.random() - 0.5) * 40 * driftMultiplier,
+        duration: durationBase + Math.random() * durationRange, // Slower when processing
         delay: Math.random() * 2, // Staggered appearance
       };
     });
-  }, [fieldRadius]);
+  }, [fieldRadius, isProcessing]);
 
-  // Additional particles that appear when recording starts
+  // Additional particles that appear when recording (not during processing)
   const boostParticles = useMemo(() => {
+    if (isProcessing) return []; // No boost particles during processing - keep it calm
+    
     const count = 6; // Extra particles during recording
     return Array.from({ length: count }, (_, i) => {
       const angle = Math.random() * Math.PI * 2;
@@ -81,7 +93,7 @@ export const AmbientParticles = ({
         delay: 0.5 + Math.random() * 1.5,
       };
     });
-  }, [fieldRadius]);
+  }, [fieldRadius, isProcessing]);
 
   // Combine particles when active
   useEffect(() => {

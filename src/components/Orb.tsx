@@ -180,9 +180,9 @@ const Orb = ({
         };
       case 'processing':
         return {
-          scaleBoost: 0,
-          glowBoost: 0.1,
-          motionBoost: 0.4,      // Internal motion increases slightly
+          scaleBoost: 0.01,         // Subtle expansion - "thinking"
+          glowBoost: 0.2,           // Gentle glow increase
+          motionBoost: 0.5,         // Gentle internal motion
         };
       default: // idle
         return {
@@ -238,11 +238,12 @@ const Orb = ({
         'Malunita orb - tap to interact'
       }
     >
-      {/* Ambient particles - appears during listening state */}
+      {/* Ambient particles - appears during listening AND processing states */}
       <AmbientParticles 
-        isActive={effectiveInteractionState === 'listening'} 
+        isActive={effectiveInteractionState === 'listening' || effectiveInteractionState === 'processing'} 
         orbSize={size}
         color={colors.edge}
+        isProcessing={effectiveInteractionState === 'processing'}
       />
 
       {/* Outer ambient glow - soft halo (visibility based on confidence) */}
@@ -376,29 +377,49 @@ const Orb = ({
           />
         )}
 
-        {/* Processing state: subtle internal motion increase */}
+        {/* Processing state: meditative breathing glow - slow 3-4 second cycle */}
         {effectiveInteractionState === 'processing' && (
-          <motion.div
-            className="absolute inset-[15%] rounded-full pointer-events-none"
-            style={{
-              background: `conic-gradient(
-                from 0deg,
-                transparent 0%,
-                ${colors.inner} 15%,
-                transparent 30%,
-                ${colors.inner} 45%,
-                transparent 60%
-              )`,
-              filter: 'blur(12px)',
-              opacity: 0.2,
-            }}
-            animate={{ rotate: 360 }}
-            transition={{
-              duration: 12, // Slow, no spinners
-              repeat: Infinity,
-              ease: 'linear',
-            }}
-          />
+          <>
+            {/* Slow breathing pulse - the "thinking" effect */}
+            <motion.div
+              className="absolute inset-[5%] rounded-full pointer-events-none"
+              style={{
+                background: `radial-gradient(circle at 45% 45%, ${colors.inner} 0%, transparent 65%)`,
+                filter: 'blur(18px)',
+              }}
+              animate={{
+                opacity: [0.25, 0.45, 0.25],
+                scale: [1, 1.04, 1],
+              }}
+              transition={{
+                duration: 3.5, // Slow 3.5s breathing cycle - meditative
+                repeat: Infinity,
+                ease: 'easeInOut',
+              }}
+            />
+            {/* Subtle internal rotation - very slow */}
+            <motion.div
+              className="absolute inset-[15%] rounded-full pointer-events-none"
+              style={{
+                background: `conic-gradient(
+                  from 0deg,
+                  transparent 0%,
+                  ${colors.inner} 15%,
+                  transparent 30%,
+                  ${colors.inner} 45%,
+                  transparent 60%
+                )`,
+                filter: 'blur(14px)',
+                opacity: 0.18,
+              }}
+              animate={{ rotate: 360 }}
+              transition={{
+                duration: 16, // Very slow rotation - feels like thinking, not loading
+                repeat: Infinity,
+                ease: 'linear',
+              }}
+            />
+          </>
         )}
       </div>
 
