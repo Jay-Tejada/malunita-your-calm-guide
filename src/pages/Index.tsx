@@ -84,6 +84,7 @@ const Index = () => {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const isProcessingRef = useRef(false); // Guard against duplicate processing
   
   // Start my day modal state
   const [showStartMyDay, setShowStartMyDay] = useState(false);
@@ -314,6 +315,9 @@ const Index = () => {
 
   const startOrbRecording = async () => {
     try {
+      // Reset processing guard for new recording
+      isProcessingRef.current = false;
+      
       // Request wake lock to prevent screen timeout during recording
       await requestWakeLock();
       
@@ -329,6 +333,13 @@ const Index = () => {
       };
 
       mediaRecorder.onstop = async () => {
+        // Guard against duplicate processing (can fire multiple times from auto-stop + manual stop)
+        if (isProcessingRef.current) {
+          stream.getTracks().forEach(track => track.stop());
+          return;
+        }
+        isProcessingRef.current = true;
+        
         // Release wake lock when recording stops
         await releaseWakeLock();
         const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
@@ -375,6 +386,8 @@ const Index = () => {
 
   const processOrbRecording = async (audioBlob: Blob) => {
     try {
+      // Additional guard - reset after processing completes
+      // (isProcessingRef is set in onstop handler)
       // Convert to base64
       const arrayBuffer = await audioBlob.arrayBuffer();
       const bytes = new Uint8Array(arrayBuffer);
@@ -413,6 +426,7 @@ const Index = () => {
       });
     } finally {
       setIsOrbProcessing(false);
+      isProcessingRef.current = false; // Reset guard for next recording
       // Show "Continue this thought" only if recording was auto-stopped
       if (wasAutoStopped) {
         setShowContinueThought(true);
