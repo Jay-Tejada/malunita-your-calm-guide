@@ -79,11 +79,13 @@ const Index = () => {
   const [isOrbRecording, setIsOrbRecording] = useState(false);
   const [isOrbProcessing, setIsOrbProcessing] = useState(false);
   const [recordingDuration, setRecordingDuration] = useState(0);
+  const [processingDuration, setProcessingDuration] = useState(0); // Track transcription time
   const [wasAutoStopped, setWasAutoStopped] = useState(false);
   const [showContinueThought, setShowContinueThought] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const processingTimerRef = useRef<NodeJS.Timeout | null>(null); // Timer for processing duration
   const isProcessingRef = useRef(false); // Guard against duplicate processing
   
   // Start my day modal state
@@ -203,6 +205,28 @@ const Index = () => {
       releaseWakeLock();
     }
   }, [isOrbRecording, recordingDuration, releaseWakeLock]);
+
+  // Track processing/transcription duration for meditative elapsed time display
+  useEffect(() => {
+    if (isOrbProcessing) {
+      setProcessingDuration(0);
+      processingTimerRef.current = setInterval(() => {
+        setProcessingDuration(prev => prev + 1);
+      }, 1000);
+    } else {
+      if (processingTimerRef.current) {
+        clearInterval(processingTimerRef.current);
+        processingTimerRef.current = null;
+      }
+      setProcessingDuration(0);
+    }
+    
+    return () => {
+      if (processingTimerRef.current) {
+        clearInterval(processingTimerRef.current);
+      }
+    };
+  }, [isOrbProcessing]);
 
   const handleCompanionComplete = async (name: string, personality: PersonalityType) => {
     const colorwayMap = {
@@ -518,16 +542,25 @@ const Index = () => {
                       listening…
                     </motion.p>
                   ) : isOrbProcessing ? (
-                    <motion.p 
+                    <motion.div 
                       key="transcribing"
-                      className="text-sm font-light text-foreground/40 leading-relaxed tracking-wide"
+                      className="flex flex-col items-center gap-1"
                       initial={{ opacity: 0, y: 4 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -4 }}
                       transition={{ duration: 0.3 }}
                     >
-                      transcribing…
-                    </motion.p>
+                      <motion.p 
+                        className="text-sm font-light text-foreground/40 leading-relaxed tracking-wide"
+                        animate={{ opacity: [0.4, 0.6, 0.4] }}
+                        transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
+                      >
+                        transcribing
+                      </motion.p>
+                      <p className="text-[10px] font-mono text-foreground/25 tabular-nums">
+                        0:{processingDuration.toString().padStart(2, '0')}
+                      </p>
+                    </motion.div>
                   ) : (
                     <motion.p 
                       key="focus"
@@ -685,16 +718,25 @@ const Index = () => {
                       listening…
                     </motion.p>
                   ) : isOrbProcessing ? (
-                    <motion.p 
+                    <motion.div 
                       key="transcribing"
-                      className="text-sm font-light text-foreground/40 leading-relaxed tracking-wide"
+                      className="flex flex-col items-center gap-1"
                       initial={{ opacity: 0, y: 4 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -4 }}
                       transition={{ duration: 0.3 }}
                     >
-                      transcribing…
-                    </motion.p>
+                      <motion.p 
+                        className="text-sm font-light text-foreground/40 leading-relaxed tracking-wide"
+                        animate={{ opacity: [0.4, 0.6, 0.4] }}
+                        transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
+                      >
+                        transcribing
+                      </motion.p>
+                      <p className="text-[10px] font-mono text-foreground/25 tabular-nums">
+                        0:{processingDuration.toString().padStart(2, '0')}
+                      </p>
+                    </motion.div>
                   ) : (
                     <motion.p 
                       key="focus"
