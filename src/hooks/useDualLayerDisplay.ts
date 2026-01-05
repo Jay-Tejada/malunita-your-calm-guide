@@ -27,20 +27,28 @@ export function useDualLayerDisplay(task: Task): DualLayerState {
   const confidence = (task as any).ai_confidence ?? 1.0;
   const lowConfidence = confidence < LOW_CONFIDENCE_THRESHOLD;
   
-  // Check if this is a pending voice note
+  // Check if this is a pending/processing voice note (still in pipeline)
   const processingStatus = (task as any).processing_status || null;
-  const isPending = processingStatus === 'pending' || processingStatus === 'processing';
+  const isPending = ['pending', 'processing', 'transcribed', 'summarized'].includes(processingStatus);
   
   // Raw content: original unmodified input
   const rawContent = (task as any).raw_content || task.title || '';
   
   // Display text logic:
-  // - For pending voice notes, show a special message
+  // - For pending/processing voice notes, show status-specific message
   // - Use ai_summary if available and confidence >= 0.6
   // - Otherwise fallback to raw_content or title
   let displayText: string;
-  if (isPending) {
-    displayText = processingStatus === 'processing' ? 'Transcribing voice note…' : 'Voice note processing…';
+  if (processingStatus === 'pending') {
+    displayText = 'Voice note added…';
+  } else if (processingStatus === 'processing') {
+    displayText = 'Transcribing…';
+  } else if (processingStatus === 'transcribed') {
+    // Show raw transcript while AI compression runs
+    displayText = rawContent || 'Processing…';
+  } else if (processingStatus === 'summarized') {
+    // AI summary available, indexing in progress
+    displayText = hasAiSummary && !lowConfidence ? (task as any).ai_summary : rawContent;
   } else if (hasAiSummary && !lowConfidence) {
     displayText = (task as any).ai_summary;
   } else {
@@ -84,14 +92,20 @@ export function getDualLayerDisplay(task: Task): DualLayerState {
   const lowConfidence = confidence < LOW_CONFIDENCE_THRESHOLD;
   const rawContent = (task as any).raw_content || task.title || '';
   
-  // Check if this is a pending voice note
+  // Check if this is a pending/processing voice note (still in pipeline)
   const processingStatus = (task as any).processing_status || null;
-  const isPending = processingStatus === 'pending' || processingStatus === 'processing';
+  const isPending = ['pending', 'processing', 'transcribed', 'summarized'].includes(processingStatus);
   
-  // Display text logic
+  // Display text logic with progressive status
   let displayText: string;
-  if (isPending) {
-    displayText = processingStatus === 'processing' ? 'Transcribing voice note…' : 'Voice note processing…';
+  if (processingStatus === 'pending') {
+    displayText = 'Voice note added…';
+  } else if (processingStatus === 'processing') {
+    displayText = 'Transcribing…';
+  } else if (processingStatus === 'transcribed') {
+    displayText = rawContent || 'Processing…';
+  } else if (processingStatus === 'summarized') {
+    displayText = hasAiSummary && !lowConfidence ? (task as any).ai_summary : rawContent;
   } else if (hasAiSummary && !lowConfidence) {
     displayText = (task as any).ai_summary;
   } else {
