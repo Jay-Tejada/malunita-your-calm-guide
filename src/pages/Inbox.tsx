@@ -91,6 +91,7 @@ const SwipeableTaskRow = ({
     lowConfidence,
     hasAiSummary,
     showExpandIndicator,
+    isPending,
   } = getDualLayerDisplay(task);
   
   // Reset text expansion when actions panel closes
@@ -295,7 +296,8 @@ const SwipeableTaskRow = ({
                 className={cn(
                   "text-sm leading-relaxed tracking-wide whitespace-pre-wrap transition-all ease-out",
                   isLongEntry && !isTextExpanded && "line-clamp-2",
-                  isCompleting ? "text-text-muted" : "text-text-secondary"
+                  isCompleting ? "text-text-muted" : "text-text-secondary",
+                  isPending && "italic text-text-muted" // Pending voice notes styled differently
                 )}
                 style={{ transitionDuration: '100ms' }}
               >

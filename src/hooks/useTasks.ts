@@ -71,6 +71,13 @@ export interface Task {
     subtasks?: string[];
     scheduled_bucket?: string;
   } | null;
+  // Async voice processing fields
+  pending_audio_path?: string | null;
+  processing_status?: 'pending' | 'processing' | 'completed' | 'failed' | null;
+  // Raw content and AI summary
+  raw_content?: string | null;
+  ai_summary?: string | null;
+  ai_confidence?: number | null;
   // Optimistic update flag - task is pending server confirmation
   _optimistic?: boolean;
 }
