@@ -4,7 +4,8 @@ import { AmbientParticles } from './orb/AmbientParticles';
 
 type TimeOfDay = 'morning' | 'midday' | 'evening' | 'night';
 type AIConfidence = 'low' | 'medium' | 'high';
-type InteractionState = 'idle' | 'listening' | 'processing';
+// Updated: 'processing' replaced with 'saving' (brief pulse, no blocking)
+type InteractionState = 'idle' | 'listening' | 'saving';
 
 interface OrbProps {
   size?: number;
@@ -16,7 +17,7 @@ interface OrbProps {
   isPassive?: boolean;
   // Legacy props for backward compatibility
   isRecording?: boolean;
-  isProcessing?: boolean;
+  isProcessing?: boolean; // Now maps to 'saving' (brief pulse, not blocking)
   isFocused?: boolean;
   // Recording duration in seconds - used for subtle winding down behavior
   recordingDuration?: number;
@@ -49,10 +50,11 @@ const Orb = ({
   const [breathPhase, setBreathPhase] = useState(0);
 
   // Map legacy props to new system
+  // Note: isProcessing now maps to 'saving' (brief pulse, not blocking)
   const effectiveInteractionState: InteractionState = useMemo(() => {
     if (interactionState !== 'idle') return interactionState;
     if (isRecording) return 'listening';
-    if (isProcessing) return 'processing';
+    if (isProcessing) return 'saving'; // Brief pulse, releases immediately
     return 'idle';
   }, [interactionState, isRecording, isProcessing]);
   
@@ -178,11 +180,12 @@ const Orb = ({
           glowBoost: isWindingDown ? 0.15 : 0.3,         // Glow tightens inward
           motionBoost: 0,
         };
-      case 'processing':
+      case 'saving':
+        // Brief pulse (<300ms feel) - confirms capture, no blocking
         return {
-          scaleBoost: 0.01,         // Subtle expansion - "thinking"
-          glowBoost: 0.2,           // Gentle glow increase
-          motionBoost: 0.5,         // Gentle internal motion
+          scaleBoost: 0.02,         // Quick pulse
+          glowBoost: 0.15,          // Subtle glow bump
+          motionBoost: 0,           // No motion - just settle
         };
       default: // idle
         return {
@@ -234,16 +237,16 @@ const Orb = ({
       tabIndex={onClick ? 0 : undefined}
       aria-label={
         effectiveInteractionState === 'listening' ? 'Listening...' : 
-        effectiveInteractionState === 'processing' ? 'Processing...' : 
+        effectiveInteractionState === 'saving' ? 'Saved' : 
         'Malunita orb - tap to interact'
       }
     >
-      {/* Ambient particles - appears during listening AND processing states */}
+      {/* Ambient particles - only during listening (not saving - too brief) */}
       <AmbientParticles 
-        isActive={effectiveInteractionState === 'listening' || effectiveInteractionState === 'processing'} 
+        isActive={effectiveInteractionState === 'listening'} 
         orbSize={size}
         color={colors.edge}
-        isProcessing={effectiveInteractionState === 'processing'}
+        isProcessing={false} // Never show processing particles
       />
 
       {/* Outer ambient glow - soft halo (visibility based on confidence) */}
@@ -377,49 +380,21 @@ const Orb = ({
           />
         )}
 
-        {/* Processing state: meditative breathing glow - slow 3-4 second cycle */}
-        {effectiveInteractionState === 'processing' && (
-          <>
-            {/* Slow breathing pulse - the "thinking" effect */}
-            <motion.div
-              className="absolute inset-[5%] rounded-full pointer-events-none"
-              style={{
-                background: `radial-gradient(circle at 45% 45%, ${colors.inner} 0%, transparent 65%)`,
-                filter: 'blur(18px)',
-              }}
-              animate={{
-                opacity: [0.25, 0.45, 0.25],
-                scale: [1, 1.04, 1],
-              }}
-              transition={{
-                duration: 3.5, // Slow 3.5s breathing cycle - meditative
-                repeat: Infinity,
-                ease: 'easeInOut',
-              }}
-            />
-            {/* Subtle internal rotation - very slow */}
-            <motion.div
-              className="absolute inset-[15%] rounded-full pointer-events-none"
-              style={{
-                background: `conic-gradient(
-                  from 0deg,
-                  transparent 0%,
-                  ${colors.inner} 15%,
-                  transparent 30%,
-                  ${colors.inner} 45%,
-                  transparent 60%
-                )`,
-                filter: 'blur(14px)',
-                opacity: 0.18,
-              }}
-              animate={{ rotate: 360 }}
-              transition={{
-                duration: 16, // Very slow rotation - feels like thinking, not loading
-                repeat: Infinity,
-                ease: 'linear',
-              }}
-            />
-          </>
+        {/* Saving state: brief pulse to confirm capture - no blocking animation */}
+        {effectiveInteractionState === 'saving' && (
+          <motion.div
+            className="absolute inset-[5%] rounded-full pointer-events-none"
+            style={{
+              background: `radial-gradient(circle at 50% 50%, ${colors.inner} 0%, transparent 60%)`,
+              filter: 'blur(12px)',
+            }}
+            initial={{ opacity: 0.6, scale: 1.02 }}
+            animate={{ opacity: 0.2, scale: 1 }}
+            transition={{
+              duration: 0.25, // Quick 250ms settle - confirms save
+              ease: 'easeOut',
+            }}
+          />
         )}
       </div>
 
