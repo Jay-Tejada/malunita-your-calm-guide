@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, Star, Briefcase, Home, Moon, Trash2, Pencil, ChevronLeft as SwipeIcon, CheckSquare, X, Check, ChevronDown } from 'lucide-react';
+import { ChevronLeft, Star, Briefcase, Home, Moon, Trash2, Pencil, ChevronLeft as SwipeIcon, CheckSquare, X, Check, ChevronDown, RotateCcw, Play, AlertCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useSwipeable } from 'react-swipeable';
 import { CaptureInput } from '@/ui/CaptureInput';
@@ -19,6 +19,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 
 const SWIPE_HINT_KEY = 'malunita_inbox_swipe_hint_seen';
 
@@ -38,6 +39,7 @@ interface SwipeableTaskRowProps {
   onSaveEdit: () => void;
   onCancelEdit: () => void;
   onToggleSelect: () => void;
+  onRetry: () => void;
 }
 
 // Threshold for collapsing long entries
@@ -74,6 +76,7 @@ const SwipeableTaskRow = ({
   onSaveEdit,
   onCancelEdit,
   onToggleSelect,
+  onRetry,
 }: SwipeableTaskRowProps) => {
   const [swipeOffset, setSwipeOffset] = useState(0);
   const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | null>(null);
@@ -92,7 +95,15 @@ const SwipeableTaskRow = ({
     hasAiSummary,
     showExpandIndicator,
     isPending,
+    isFailed,
+    memoryTags,
+    pendingAudioPath,
+    processingStatus,
   } = getDualLayerDisplay(task);
+  
+  // Audio playback state for failed items
+  const [isPlayingAudio, setIsPlayingAudio] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   
   // Reset text expansion when actions panel closes
   useEffect(() => {
@@ -297,25 +308,105 @@ const SwipeableTaskRow = ({
                   "text-sm leading-relaxed tracking-wide whitespace-pre-wrap transition-all ease-out",
                   isLongEntry && !isTextExpanded && "line-clamp-2",
                   isCompleting ? "text-text-muted" : "text-text-secondary",
-                  isPending && "italic text-text-muted" // Pending voice notes styled differently
+                  isPending && "italic text-text-muted", // Pending voice notes styled differently
+                  isFailed && "text-destructive/70" // Failed items styled differently
                 )}
                 style={{ transitionDuration: '100ms' }}
               >
                 {displayText}
               </p>
               
+              {/* Memory tags / context chips for indexed items */}
+              {memoryTags.length > 0 && !isPending && !isFailed && (
+                <div className="flex flex-wrap gap-1 mt-2">
+                  {memoryTags.slice(0, 3).map((tag, i) => (
+                    <span 
+                      key={i}
+                      className="px-1.5 py-0.5 text-[10px] rounded bg-accent/10 text-accent-foreground/60"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              )}
+              
               {/* Expand indicator */}
               {showExpandIndicator && !isTextExpanded && !isCompleting && (
                 <div className="flex items-center gap-1 mt-1.5">
                   <ChevronDown className="w-3 h-3 text-text-muted" />
                   <span className="text-xs text-text-muted">
-                    {hasDualLayer ? 'Show original' : 'Show more'}
+                    {isFailed ? 'Show options' : hasDualLayer ? 'Show original' : 'Show more'}
                   </span>
                 </div>
               )}
               
+              {/* Expanded view for FAILED items */}
+              {isTextExpanded && isFailed && (
+                <div 
+                  className="mt-3 pt-3 border-t border-border-subtle animate-fade-in"
+                  style={{ animationDuration: '150ms' }}
+                >
+                  <div className="flex items-center gap-2 text-destructive/70 mb-3">
+                    <AlertCircle className="w-4 h-4" />
+                    <span className="text-xs">Processing failed. You can retry or play the audio.</span>
+                  </div>
+                  
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={(e) => { 
+                        e.stopPropagation(); 
+                        onRetry();
+                      }}
+                      className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-primary/10 text-primary rounded hover:bg-primary/20 transition-colors"
+                    >
+                      <RotateCcw className="w-3 h-3" />
+                      Retry
+                    </button>
+                    
+                    {pendingAudioPath && (
+                      <button
+                        onClick={async (e) => { 
+                          e.stopPropagation();
+                          if (isPlayingAudio && audioRef.current) {
+                            audioRef.current.pause();
+                            setIsPlayingAudio(false);
+                          } else {
+                            try {
+                              const { data } = supabase.storage
+                                .from('voice-notes')
+                                .getPublicUrl(pendingAudioPath);
+                              if (data?.publicUrl) {
+                                const audio = new Audio(data.publicUrl);
+                                audioRef.current = audio;
+                                audio.onended = () => setIsPlayingAudio(false);
+                                await audio.play();
+                                setIsPlayingAudio(true);
+                              }
+                            } catch (err) {
+                              console.error('Failed to play audio:', err);
+                            }
+                          }
+                        }}
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-bg-surface-2 text-text-muted rounded hover:text-text-secondary transition-colors"
+                      >
+                        <Play className="w-3 h-3" />
+                        {isPlayingAudio ? 'Stop' : 'Play audio'}
+                      </button>
+                    )}
+                  </div>
+                  
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); setIsTextExpanded(false); }}
+                    className="flex items-center gap-1 mt-3 text-xs text-text-muted hover:text-text-secondary transition-colors"
+                  >
+                    <ChevronDown className="w-3 h-3 rotate-180" />
+                    Collapse
+                  </button>
+                </div>
+              )}
+              
               {/* Expanded view: Show raw content below summary */}
-              {isTextExpanded && hasDualLayer && (
+              {isTextExpanded && hasDualLayer && !isFailed && (
                 <div 
                   className="mt-3 pt-3 border-t border-border-subtle animate-fade-in"
                   style={{ animationDuration: '150ms' }}
@@ -335,7 +426,7 @@ const SwipeableTaskRow = ({
               )}
               
               {/* Expanded view for long entries without dual layer */}
-              {isTextExpanded && !hasDualLayer && isLongEntry && (
+              {isTextExpanded && !hasDualLayer && isLongEntry && !isFailed && (
                 <button 
                   onClick={(e) => { e.stopPropagation(); setIsTextExpanded(false); }}
                   className="flex items-center gap-1 mt-2 text-xs text-muted-foreground/40 hover:text-muted-foreground/60 transition-colors"
@@ -346,7 +437,7 @@ const SwipeableTaskRow = ({
               )}
               
               {/* Low confidence indicator */}
-              {hasAiSummary && lowConfidence && !isTextExpanded && (
+              {hasAiSummary && lowConfidence && !isTextExpanded && !isFailed && (
                 <p className="text-xs text-text-muted mt-1">Low confidence summary</p>
               )}
               
@@ -503,6 +594,42 @@ const Inbox = () => {
     fetchTasks();
   }, []);
 
+  // Realtime subscription for task updates (processing status changes)
+  useEffect(() => {
+    const setupRealtime = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const channel = supabase
+        .channel('inbox-task-updates')
+        .on(
+          'postgres_changes',
+          {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'tasks',
+            filter: `user_id=eq.${user.id}`,
+          },
+          (payload) => {
+            // Update task in place without disruption
+            setTasks(prev => prev.map(t => 
+              t.id === payload.new.id ? { ...t, ...payload.new } : t
+            ));
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    };
+    
+    const cleanup = setupRealtime();
+    return () => {
+      cleanup.then(fn => fn?.());
+    };
+  }, []);
+
   const toggleSelectionMode = () => {
     setIsSelectionMode(!isSelectionMode);
     setSelectedIds(new Set());
@@ -609,6 +736,38 @@ const Inbox = () => {
         type: 'decomposition_rejection',
         action: 'delete',
       }, deletedTask.parent_task_id);
+    }
+  };
+
+  // Retry failed voice note processing
+  const retryVoiceNote = async (taskId: string) => {
+    const task = tasks.find(t => t.id === taskId);
+    if (!task?.pending_audio_path) {
+      toast.error('No audio to retry');
+      return;
+    }
+
+    // Reset status to pending
+    await supabase
+      .from('tasks')
+      .update({ processing_status: 'pending' })
+      .eq('id', taskId);
+
+    // Trigger processing edge function
+    try {
+      const response = await supabase.functions.invoke('process-voice-note', {
+        body: { taskId }
+      });
+      
+      if (response.error) {
+        console.error('Retry failed:', response.error);
+        toast.error('Retry failed. Please try again.');
+      } else {
+        toast.success('Retrying transcription...');
+      }
+    } catch (err) {
+      console.error('Retry error:', err);
+      toast.error('Failed to retry. Please try again.');
     }
   };
 
@@ -788,6 +947,7 @@ const Inbox = () => {
                 onSaveEdit={() => saveEdit(task.id)}
                 onCancelEdit={() => setEditingTask(null)}
                 onToggleSelect={() => toggleSelect(task.id)}
+                onRetry={() => retryVoiceNote(task.id)}
               />
             </div>
           </div>

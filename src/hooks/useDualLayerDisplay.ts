@@ -3,6 +3,8 @@ import { Task } from '@/hooks/useTasks';
 const COLLAPSE_CHAR_THRESHOLD = 100;
 const LOW_CONFIDENCE_THRESHOLD = 0.6;
 
+export type ProcessingStatus = 'pending' | 'processing' | 'transcribed' | 'summarized' | 'indexed' | 'failed' | 'completed' | null;
+
 export interface DualLayerState {
   displayText: string;
   rawContent: string;
@@ -14,7 +16,11 @@ export interface DualLayerState {
   showExpandIndicator: boolean;
   isEmpty: boolean;
   isPending: boolean; // Voice note still processing
-  processingStatus: 'pending' | 'processing' | 'completed' | 'failed' | null;
+  isFailed: boolean;
+  isCompleted: boolean;
+  processingStatus: ProcessingStatus;
+  memoryTags: string[];
+  pendingAudioPath: string | null;
 }
 
 /**
@@ -22,65 +28,7 @@ export interface DualLayerState {
  * Returns display text, raw content, and expansion state info.
  */
 export function useDualLayerDisplay(task: Task): DualLayerState {
-  // Extract AI summary and confidence from task
-  const hasAiSummary = !!(task as any).ai_summary;
-  const confidence = (task as any).ai_confidence ?? 1.0;
-  const lowConfidence = confidence < LOW_CONFIDENCE_THRESHOLD;
-  
-  // Check if this is a pending/processing voice note (still in pipeline)
-  const processingStatus = (task as any).processing_status || null;
-  const isPending = ['pending', 'processing', 'transcribed', 'summarized'].includes(processingStatus);
-  
-  // Raw content: original unmodified input
-  const rawContent = (task as any).raw_content || task.title || '';
-  
-  // Display text logic:
-  // - For pending/processing voice notes, show status-specific message
-  // - Use ai_summary if available and confidence >= 0.6
-  // - Otherwise fallback to raw_content or title
-  let displayText: string;
-  if (processingStatus === 'pending') {
-    displayText = 'Voice note added…';
-  } else if (processingStatus === 'processing') {
-    displayText = 'Transcribing…';
-  } else if (processingStatus === 'transcribed') {
-    // Show raw transcript while AI compression runs
-    displayText = rawContent || 'Processing…';
-  } else if (processingStatus === 'summarized') {
-    // AI summary available, indexing in progress
-    displayText = hasAiSummary && !lowConfidence ? (task as any).ai_summary : rawContent;
-  } else if (hasAiSummary && !lowConfidence) {
-    displayText = (task as any).ai_summary;
-  } else {
-    displayText = rawContent;
-  }
-  
-  // Has dual layer if ai_summary exists AND differs from raw_content
-  const hasDualLayer = hasAiSummary && rawContent !== (task as any).ai_summary;
-  
-  // Long entry: either display text or raw content exceeds threshold
-  const isLongEntry = displayText.length > COLLAPSE_CHAR_THRESHOLD || 
-    (hasDualLayer && rawContent.length > COLLAPSE_CHAR_THRESHOLD);
-  
-  // Show expand indicator if has dual layer OR is long entry (but not for pending items)
-  const showExpandIndicator = !isPending && (hasDualLayer || isLongEntry);
-  
-  // Both empty check
-  const isEmpty = !displayText && !rawContent;
-  
-  return {
-    displayText: isEmpty ? 'Empty capture' : displayText,
-    rawContent,
-    hasAiSummary,
-    hasDualLayer,
-    isLongEntry,
-    lowConfidence,
-    confidence,
-    showExpandIndicator,
-    isEmpty,
-    isPending,
-    processingStatus,
-  };
+  return getDualLayerDisplay(task);
 }
 
 /**
@@ -92,19 +40,33 @@ export function getDualLayerDisplay(task: Task): DualLayerState {
   const lowConfidence = confidence < LOW_CONFIDENCE_THRESHOLD;
   const rawContent = (task as any).raw_content || task.title || '';
   
-  // Check if this is a pending/processing voice note (still in pipeline)
-  const processingStatus = (task as any).processing_status || null;
-  const isPending = ['pending', 'processing', 'transcribed', 'summarized'].includes(processingStatus);
+  // Check processing status
+  const processingStatus: ProcessingStatus = (task as any).processing_status || null;
+  const isPending = ['pending', 'processing', 'transcribed', 'summarized'].includes(processingStatus || '');
+  const isFailed = processingStatus === 'failed';
+  const isCompleted = processingStatus === 'indexed' || processingStatus === 'completed' || processingStatus === null;
+  
+  // Extract memory tags from ai_metadata
+  const aiMetadata = (task as any).ai_metadata || {};
+  const memoryTags: string[] = aiMetadata.memory_tags || [];
+  
+  // Pending audio path for failed items
+  const pendingAudioPath: string | null = (task as any).pending_audio_path || null;
   
   // Display text logic with progressive status
   let displayText: string;
-  if (processingStatus === 'pending') {
+  if (isFailed) {
+    displayText = 'Voice note (processing failed)';
+  } else if (processingStatus === 'pending') {
     displayText = 'Voice note added…';
   } else if (processingStatus === 'processing') {
     displayText = 'Transcribing…';
   } else if (processingStatus === 'transcribed') {
-    displayText = rawContent || 'Processing…';
-  } else if (processingStatus === 'summarized') {
+    // Show first line of transcript, truncated
+    const firstLine = rawContent.split('\n')[0] || 'Processing…';
+    displayText = firstLine.length > 80 ? firstLine.slice(0, 77) + '…' : firstLine;
+  } else if (processingStatus === 'summarized' || processingStatus === 'indexed') {
+    // AI summary available
     displayText = hasAiSummary && !lowConfidence ? (task as any).ai_summary : rawContent;
   } else if (hasAiSummary && !lowConfidence) {
     displayText = (task as any).ai_summary;
@@ -115,8 +77,15 @@ export function getDualLayerDisplay(task: Task): DualLayerState {
   const hasDualLayer = hasAiSummary && rawContent !== (task as any).ai_summary;
   const isLongEntry = displayText.length > COLLAPSE_CHAR_THRESHOLD || 
     (hasDualLayer && rawContent.length > COLLAPSE_CHAR_THRESHOLD);
-  const showExpandIndicator = !isPending && (hasDualLayer || isLongEntry);
-  const isEmpty = !displayText && !rawContent;
+  
+  // Show expand indicator if:
+  // - Has dual layer (summary + original)
+  // - Is long entry
+  // - Has failed (to show retry/audio)
+  // But NOT for pending items still processing
+  const showExpandIndicator = !isPending && (hasDualLayer || isLongEntry || isFailed);
+  
+  const isEmpty = !displayText && !rawContent && !pendingAudioPath;
   
   return {
     displayText: isEmpty ? 'Empty capture' : displayText,
@@ -129,6 +98,10 @@ export function getDualLayerDisplay(task: Task): DualLayerState {
     showExpandIndicator,
     isEmpty,
     isPending,
+    isFailed,
+    isCompleted,
     processingStatus,
+    memoryTags,
+    pendingAudioPath,
   };
 }
