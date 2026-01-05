@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, Star, Briefcase, Home, Moon, Trash2, Pencil, ChevronLeft as SwipeIcon, CheckSquare, X, Check, ChevronDown, RotateCcw, Play, AlertCircle } from 'lucide-react';
+import { ChevronLeft, Star, Briefcase, Home, Moon, Trash2, Pencil, ChevronLeft as SwipeIcon, CheckSquare, X, Check, ChevronDown, RotateCcw, Play, AlertCircle, Sparkles } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useSwipeable } from 'react-swipeable';
 import { CaptureInput } from '@/ui/CaptureInput';
@@ -40,6 +40,7 @@ interface SwipeableTaskRowProps {
   onCancelEdit: () => void;
   onToggleSelect: () => void;
   onRetry: () => void;
+  onSummarizeNow: () => void;
 }
 
 // Threshold for collapsing long entries
@@ -77,6 +78,7 @@ const SwipeableTaskRow = ({
   onCancelEdit,
   onToggleSelect,
   onRetry,
+  onSummarizeNow,
 }: SwipeableTaskRowProps) => {
   const [swipeOffset, setSwipeOffset] = useState(0);
   const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | null>(null);
@@ -337,6 +339,63 @@ const SwipeableTaskRow = ({
                   <span className="text-xs text-text-muted">
                     {isFailed ? 'Show options' : hasDualLayer ? 'Show original' : 'Show more'}
                   </span>
+                </div>
+              )}
+              
+              {/* Expanded view for PENDING items */}
+              {isTextExpanded && isPending && processingStatus === 'pending' && (
+                <div 
+                  className="mt-3 pt-3 border-t border-border-subtle animate-fade-in"
+                  style={{ animationDuration: '150ms' }}
+                >
+                  <p className="text-xs text-text-muted italic mb-3">Processing...</p>
+                  <button
+                    onClick={(e) => { 
+                      e.stopPropagation(); 
+                      onSummarizeNow();
+                    }}
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-primary/10 text-primary rounded hover:bg-primary/20 transition-colors"
+                  >
+                    <Sparkles className="w-3 h-3" />
+                    Summarize now
+                  </button>
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); setIsTextExpanded(false); }}
+                    className="flex items-center gap-1 mt-3 text-xs text-text-muted hover:text-text-secondary transition-colors"
+                  >
+                    <ChevronDown className="w-3 h-3 rotate-180" />
+                    Collapse
+                  </button>
+                </div>
+              )}
+              
+              {/* Expanded view for TRANSCRIBED items - show full transcript + summarize button */}
+              {isTextExpanded && processingStatus === 'transcribed' && (
+                <div 
+                  className="mt-3 pt-3 border-t border-border-subtle animate-fade-in"
+                  style={{ animationDuration: '150ms' }}
+                >
+                  <p className="text-xs text-text-muted mb-1.5 uppercase tracking-wide">Full transcript</p>
+                  <p className="text-sm text-text-secondary leading-relaxed max-h-32 overflow-y-auto whitespace-pre-wrap mb-3">
+                    {rawContent}
+                  </p>
+                  <button
+                    onClick={(e) => { 
+                      e.stopPropagation(); 
+                      onSummarizeNow();
+                    }}
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-primary/10 text-primary rounded hover:bg-primary/20 transition-colors"
+                  >
+                    <Sparkles className="w-3 h-3" />
+                    Summarize now
+                  </button>
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); setIsTextExpanded(false); }}
+                    className="flex items-center gap-1 mt-3 text-xs text-text-muted hover:text-text-secondary transition-colors"
+                  >
+                    <ChevronDown className="w-3 h-3 rotate-180" />
+                    Collapse
+                  </button>
                 </div>
               )}
               
@@ -771,6 +830,36 @@ const Inbox = () => {
     }
   };
 
+  // Manual trigger to summarize pending/transcribed items now
+  const summarizeNow = async (taskId: string) => {
+    const task = tasks.find(t => t.id === taskId);
+    if (!task) return;
+    
+    const status = task.processing_status;
+    
+    // Only allow for pending or transcribed items
+    if (!['pending', 'processing', 'transcribed'].includes(status)) {
+      return;
+    }
+
+    // Trigger processing edge function
+    try {
+      const response = await supabase.functions.invoke('process-voice-note', {
+        body: { taskId }
+      });
+      
+      if (response.error) {
+        console.error('Summarize now failed:', response.error);
+        toast.error('Failed to process. Please try again.');
+      } else {
+        toast.success('Processing started…');
+      }
+    } catch (err) {
+      console.error('Summarize error:', err);
+      toast.error('Failed to process. Please try again.');
+    }
+  };
+
   // Batch actions
   const batchMove = async (destination: string) => {
     const idsToMove = Array.from(selectedIds);
@@ -948,6 +1037,7 @@ const Inbox = () => {
                 onCancelEdit={() => setEditingTask(null)}
                 onToggleSelect={() => toggleSelect(task.id)}
                 onRetry={() => retryVoiceNote(task.id)}
+                onSummarizeNow={() => summarizeNow(task.id)}
               />
             </div>
           </div>

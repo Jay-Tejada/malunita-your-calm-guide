@@ -82,8 +82,9 @@ export function getDualLayerDisplay(task: Task): DualLayerState {
   // - Has dual layer (summary + original)
   // - Is long entry
   // - Has failed (to show retry/audio)
-  // But NOT for pending items still processing
-  const showExpandIndicator = !isPending && (hasDualLayer || isLongEntry || isFailed);
+  // - Is pending/transcribed (to show "Summarize now" button)
+  const canExpand = hasDualLayer || isLongEntry || isFailed || processingStatus === 'pending' || processingStatus === 'transcribed';
+  const showExpandIndicator = canExpand;
   
   const isEmpty = !displayText && !rawContent && !pendingAudioPath;
   
