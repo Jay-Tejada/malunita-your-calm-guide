@@ -1835,8 +1835,10 @@ export type Database = {
           location_lat: number | null
           location_lng: number | null
           parent_task_id: string | null
+          pending_audio_path: string | null
           plan_id: string | null
           primary_focus_alignment: string | null
+          processing_status: string | null
           project_id: string | null
           raw_content: string | null
           recurrence_day: number | null
@@ -1881,8 +1883,10 @@ export type Database = {
           location_lat?: number | null
           location_lng?: number | null
           parent_task_id?: string | null
+          pending_audio_path?: string | null
           plan_id?: string | null
           primary_focus_alignment?: string | null
+          processing_status?: string | null
           project_id?: string | null
           raw_content?: string | null
           recurrence_day?: number | null
@@ -1927,8 +1931,10 @@ export type Database = {
           location_lat?: number | null
           location_lng?: number | null
           parent_task_id?: string | null
+          pending_audio_path?: string | null
           plan_id?: string | null
           primary_focus_alignment?: string | null
+          processing_status?: string | null
           project_id?: string | null
           raw_content?: string | null
           recurrence_day?: number | null

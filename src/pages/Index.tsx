@@ -77,15 +77,12 @@ const Index = () => {
   
   // Direct orb recording state (kept for legacy/desktop direct recording)
   const [isOrbRecording, setIsOrbRecording] = useState(false);
-  const [isOrbProcessing, setIsOrbProcessing] = useState(false);
   const [recordingDuration, setRecordingDuration] = useState(0);
-  const [processingDuration, setProcessingDuration] = useState(0); // Track transcription time
   const [wasAutoStopped, setWasAutoStopped] = useState(false);
   const [showContinueThought, setShowContinueThought] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const processingTimerRef = useRef<NodeJS.Timeout | null>(null); // Timer for processing duration
   const isProcessingRef = useRef(false); // Guard against duplicate processing
   
   // Start my day modal state
@@ -195,9 +192,8 @@ const Index = () => {
         mediaRecorderRef.current.stop();
       }
       
-      // Update states
+      // Update states - don't set isOrbProcessing, capture is now instant
       setIsOrbRecording(false);
-      setIsOrbProcessing(true);
       setRecordingDuration(0);
       setIsFocused(false);
       
@@ -206,27 +202,7 @@ const Index = () => {
     }
   }, [isOrbRecording, recordingDuration, releaseWakeLock]);
 
-  // Track processing/transcription duration for meditative elapsed time display
-  useEffect(() => {
-    if (isOrbProcessing) {
-      setProcessingDuration(0);
-      processingTimerRef.current = setInterval(() => {
-        setProcessingDuration(prev => prev + 1);
-      }, 1000);
-    } else {
-      if (processingTimerRef.current) {
-        clearInterval(processingTimerRef.current);
-        processingTimerRef.current = null;
-      }
-      setProcessingDuration(0);
-    }
-    
-    return () => {
-      if (processingTimerRef.current) {
-        clearInterval(processingTimerRef.current);
-      }
-    };
-  }, [isOrbProcessing]);
+  // Processing timer removed - capture is now instant, no waiting state needed
 
   const handleCompanionComplete = async (name: string, personality: PersonalityType) => {
     const colorwayMap = {
@@ -317,7 +293,7 @@ const Index = () => {
       setWasAutoStopped(false); // Clear auto-stop flag for manual stops
       stopOrbRecording();
       setIsFocused(false);
-    } else if (!isOrbProcessing) {
+    } else if (!isProcessingRef.current) {
       // If not focused, enter focus and start recording
       setShowContinueThought(false); // Hide continue affordance when starting new recording
       setIsFocused(true);
@@ -404,54 +380,111 @@ const Index = () => {
     // Ensure wake lock is released
     await releaseWakeLock();
     setIsOrbRecording(false);
-    setIsOrbProcessing(true);
+    // Don't set isOrbProcessing - capture is now instant
     setRecordingDuration(0);
   };
 
   const processOrbRecording = async (audioBlob: Blob) => {
+    // INSTANT CAPTURE: Create task immediately, process in background
+    // User should NEVER wait on AI
+    
     try {
-      // Additional guard - reset after processing completes
-      // (isProcessingRef is set in onstop handler)
-      // Convert to base64
-      const arrayBuffer = await audioBlob.arrayBuffer();
-      const bytes = new Uint8Array(arrayBuffer);
-      let binary = '';
-      for (let i = 0; i < bytes.length; i++) {
-        binary += String.fromCharCode(bytes[i]);
-      }
-      const base64Audio = btoa(binary);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
 
-      // Transcribe via edge function
-      const { data, error } = await supabase.functions.invoke('transcribe-audio', {
-        body: { audio: base64Audio }
-      });
-
-      if (error) throw error;
-
-      const text = data?.text?.trim();
-      if (text) {
-        // Route through AI pipeline for full processing
-        await capture({
-          text,
+      // Generate unique filename for audio
+      const audioFileName = `${user.id}/${Date.now()}.webm`;
+      
+      // 1. Create pending task IMMEDIATELY (< 100ms)
+      const { data: pendingTask, error: createError } = await supabase
+        .from('tasks')
+        .insert({
+          user_id: user.id,
+          title: 'Voice note processing…',
           category: 'inbox',
-        });
-        
-        toast({
-          description: "Added to inbox",
-        });
-        handleTaskCreated();
+          input_method: 'voice',
+          pending_audio_path: audioFileName,
+          processing_status: 'pending',
+          ai_confidence: 0,
+        })
+        .select()
+        .single();
+
+      if (createError) throw createError;
+
+      // 2. Exit capture mode INSTANTLY - don't wait for upload or transcription
+      isProcessingRef.current = false;
+      isProcessingRef.current = false;
+      
+      // Show success feedback immediately
+      toast({
+        description: "Voice note captured",
+      });
+      handleTaskCreated();
+      
+      // Handle "Continue this thought" affordance
+      if (wasAutoStopped) {
+        setShowContinueThought(true);
+        setWasAutoStopped(false);
       }
+
+      // 3. Upload audio to storage in background (fire and forget)
+      const uploadAndProcess = async () => {
+        try {
+          // Upload audio blob to storage
+          const { error: uploadError } = await supabase
+            .storage
+            .from('voice-notes')
+            .upload(audioFileName, audioBlob, {
+              contentType: 'audio/webm',
+              upsert: false,
+            });
+
+          if (uploadError) {
+            console.error('❌ Audio upload failed:', uploadError);
+            // Update task to show upload failed
+            await supabase
+              .from('tasks')
+              .update({ 
+                title: 'Voice note (upload failed)',
+                processing_status: 'failed' 
+              })
+              .eq('id', pendingTask.id);
+            return;
+          }
+
+          console.log('✅ Audio uploaded, triggering background processing');
+
+          // 4. Trigger background processing edge function (fire and forget)
+          supabase.functions.invoke('process-voice-note', {
+            body: {
+              task_id: pendingTask.id,
+              audio_path: audioFileName,
+              user_id: user.id,
+            },
+          }).catch(err => {
+            console.error('❌ Background processing trigger failed:', err);
+          });
+
+        } catch (err) {
+          console.error('❌ Background upload/processing error:', err);
+        }
+      };
+
+      // Fire background processing - don't await
+      uploadAndProcess();
+
     } catch (error) {
-      console.error('Error processing voice:', error);
+      console.error('Error creating voice note:', error);
+      isProcessingRef.current = false;
+      isProcessingRef.current = false;
+      
       toast({
         title: "Error",
-        description: "Failed to process voice. Please try again.",
+        description: "Failed to save voice note. Please try again.",
         variant: "destructive"
       });
-    } finally {
-      setIsOrbProcessing(false);
-      isProcessingRef.current = false; // Reset guard for next recording
-      // Show "Continue this thought" only if recording was auto-stopped
+      
       if (wasAutoStopped) {
         setShowContinueThought(true);
         setWasAutoStopped(false);
@@ -503,7 +536,7 @@ const Index = () => {
         /* MOBILE LAYOUT - Minimal & Centered */
         <div className="mobile-home min-h-screen bg-background flex flex-col">
           {/* Listening overlay - soft background dim */}
-          <ListeningOverlay isActive={isOrbRecording || isOrbProcessing} />
+          <ListeningOverlay isActive={isOrbRecording} />
           
           {/* Offline banner */}
           {!isOnline && (
@@ -521,7 +554,6 @@ const Index = () => {
                 size={120}
                 onClick={handleVoiceCapture}
                 isRecording={isOrbRecording}
-                isProcessing={isOrbProcessing}
                 isFocused={isFocused}
                 isPassive={isAnyDrawerOpen}
                 recordingDuration={recordingDuration}
@@ -541,26 +573,6 @@ const Index = () => {
                     >
                       listening…
                     </motion.p>
-                  ) : isOrbProcessing ? (
-                    <motion.div 
-                      key="transcribing"
-                      className="flex flex-col items-center gap-1"
-                      initial={{ opacity: 0, y: 4 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -4 }}
-                      transition={{ duration: 0.3 }}
-                    >
-                      <motion.p 
-                        className="text-sm font-light text-foreground/40 leading-relaxed tracking-wide"
-                        animate={{ opacity: [0.4, 0.6, 0.4] }}
-                        transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
-                      >
-                        transcribing
-                      </motion.p>
-                      <p className="text-[10px] font-mono text-foreground/25 tabular-nums">
-                        0:{processingDuration.toString().padStart(2, '0')}
-                      </p>
-                    </motion.div>
                   ) : (
                     <motion.p 
                       key="focus"
@@ -606,7 +618,7 @@ const Index = () => {
             
             {/* Continue this thought - only after auto-stop at 60s */}
             <AnimatePresence>
-              {showContinueThought && !isOrbRecording && !isOrbProcessing && (
+              {showContinueThought && !isOrbRecording && (
                 <motion.button
                   onClick={handleContinueThought}
                   className="mt-5 text-[11px] text-foreground/35 hover:text-foreground/50 transition-colors"
@@ -622,7 +634,7 @@ const Index = () => {
             
             {/* Start my day button - hidden during recording and when continue thought is shown */}
             <AnimatePresence>
-              {!showTinyTaskFiesta && !isOrbRecording && !isOrbProcessing && !showContinueThought && (
+              {!showTinyTaskFiesta && !isOrbRecording && !showContinueThought && (
                 <motion.button
                   onClick={() => setShowStartMyDay(true)}
                   className="mt-5 flex items-center gap-2 px-5 py-2.5 rounded-full border border-border/50 text-xs text-muted-foreground hover:text-foreground hover:border-border transition-colors"
@@ -639,7 +651,7 @@ const Index = () => {
             
             {/* Tiny Task Fiesta Card - hidden during recording */}
             <AnimatePresence>
-              {showTinyTaskFiesta && !isOrbRecording && !isOrbProcessing && (
+              {showTinyTaskFiesta && !isOrbRecording && (
                 <motion.div 
                   className="mt-5"
                   initial={{ opacity: 0, y: 8 }}
@@ -660,7 +672,7 @@ const Index = () => {
             
             {/* Search hint - hidden during recording */}
             <AnimatePresence>
-              {!isOrbRecording && !isOrbProcessing && (
+              {!isOrbRecording && (
                 <motion.p 
                   className="mt-4 text-[10px] text-muted-foreground/25"
                   initial={{ opacity: 0 }}
@@ -686,7 +698,7 @@ const Index = () => {
           activeCategory={activeCategory}
         >
           {/* Listening overlay - soft background dim */}
-          <ListeningOverlay isActive={isOrbRecording || isOrbProcessing} />
+          <ListeningOverlay isActive={isOrbRecording} />
           
           {/* Minimal centered content - Rebalanced layout */}
           <div className="min-h-[85vh] flex flex-col items-center justify-center">
@@ -697,7 +709,6 @@ const Index = () => {
                 size={155}
                 onClick={handleVoiceCapture}
                 isRecording={isOrbRecording}
-                isProcessing={isOrbProcessing}
                 isFocused={isFocused}
                 isPassive={isAnyDrawerOpen}
                 recordingDuration={recordingDuration}
@@ -717,26 +728,6 @@ const Index = () => {
                     >
                       listening…
                     </motion.p>
-                  ) : isOrbProcessing ? (
-                    <motion.div 
-                      key="transcribing"
-                      className="flex flex-col items-center gap-1"
-                      initial={{ opacity: 0, y: 4 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -4 }}
-                      transition={{ duration: 0.3 }}
-                    >
-                      <motion.p 
-                        className="text-sm font-light text-foreground/40 leading-relaxed tracking-wide"
-                        animate={{ opacity: [0.4, 0.6, 0.4] }}
-                        transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
-                      >
-                        transcribing
-                      </motion.p>
-                      <p className="text-[10px] font-mono text-foreground/25 tabular-nums">
-                        0:{processingDuration.toString().padStart(2, '0')}
-                      </p>
-                    </motion.div>
                   ) : (
                     <motion.p 
                       key="focus"
@@ -782,7 +773,7 @@ const Index = () => {
             
             {/* Continue this thought - only after auto-stop at 60s */}
             <AnimatePresence>
-              {showContinueThought && !isOrbRecording && !isOrbProcessing && (
+              {showContinueThought && !isOrbRecording && (
                 <motion.button
                   onClick={handleContinueThought}
                   className="mt-5 text-[11px] text-foreground/35 hover:text-foreground/50 transition-colors"
@@ -798,7 +789,7 @@ const Index = () => {
             
             {/* Start my day button - hidden during recording and when continue thought is shown */}
             <AnimatePresence>
-              {!showTinyTaskFiesta && !isOrbRecording && !isOrbProcessing && !showContinueThought && (
+              {!showTinyTaskFiesta && !isOrbRecording && !showContinueThought && (
                 <motion.button
                   onClick={() => setShowStartMyDay(true)}
                   className="mt-6 flex items-center gap-2 px-5 py-2.5 rounded-full border border-border/50 text-xs text-muted-foreground hover:text-foreground hover:border-border transition-colors"
@@ -815,7 +806,7 @@ const Index = () => {
             
             {/* Tiny Task Fiesta Card - hidden during recording */}
             <AnimatePresence>
-              {showTinyTaskFiesta && !isOrbRecording && !isOrbProcessing && (
+              {showTinyTaskFiesta && !isOrbRecording && (
                 <motion.div 
                   className="mt-6"
                   initial={{ opacity: 0, y: 8 }}
@@ -836,7 +827,7 @@ const Index = () => {
             
             {/* Search hint - hidden during recording */}
             <AnimatePresence>
-              {!isOrbRecording && !isOrbProcessing && (
+              {!isOrbRecording && (
                 <motion.p 
                   className="mt-4 text-[10px] text-muted-foreground/25"
                   initial={{ opacity: 0 }}
