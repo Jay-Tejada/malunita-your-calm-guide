@@ -2,19 +2,18 @@ import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, Plus } from 'lucide-react';
 import { useTasks, Task } from '@/hooks/useTasks';
-import { useCapture } from '@/hooks/useAICapture';
 import { useProjects, Project } from '@/hooks/useProjects';
 import { useDeleteTaskWithUndo } from '@/hooks/useDeleteTaskWithUndo';
 import { ProjectSection } from '@/components/projects/ProjectSection';
 import { NewProjectModal } from '@/components/projects/NewProjectModal';
+import { QuickAddInput } from '@/components/shared/QuickAddInput';
+import { supabase } from '@/integrations/supabase/client';
 
 const HomeTasks = () => {
   const navigate = useNavigate();
   const { tasks, updateTask } = useTasks();
-  const { capture } = useCapture();
   const { projects, createProject, updateProject, deleteProject, toggleCollapsed } = useProjects('home');
   const { deleteTaskWithUndo } = useDeleteTaskWithUndo();
-  const [input, setInput] = useState('');
   const [showCompleted, setShowCompleted] = useState(false);
   const [showNewProject, setShowNewProject] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
@@ -46,22 +45,6 @@ const HomeTasks = () => {
     return grouped;
   }, [homeTasks, projects]);
 
-  const handleCapture = async (text: string, projectId?: string) => {
-    // Route through AI pipeline for full processing
-    await capture({
-      text,
-      category: 'home',
-      project_id: projectId || undefined
-    });
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && input.trim()) {
-      handleCapture(input.trim());
-      setInput('');
-    }
-  };
-
   const handleCreateProject = async (project: { name: string; space: string; icon?: string; color?: string }) => {
     await createProject(project);
     setShowNewProject(false);
@@ -75,14 +58,41 @@ const HomeTasks = () => {
     updateTask({ id: taskId, updates: { title } });
   };
 
+  // Instant add for project section inline inputs
+  const handleAddTask = async (text: string, projectId: string) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    await supabase
+      .from('tasks')
+      .insert({
+        user_id: user.id,
+        title: text.trim(),
+        raw_content: text.trim(),
+        category: 'home',
+        project_id: projectId,
+        processing_status: 'pending',
+      });
+  };
+
+  // Instant add for subtasks
   const handleAddSubtask = async (parentId: string, title: string) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
     const parentTask = tasks?.find(t => t.id === parentId);
-    // Route subtask through AI pipeline for enrichment
-    await capture({
-      text: title,
-      category: 'home',
-      project_id: parentTask?.project_id || undefined
-    });
+
+    await supabase
+      .from('tasks')
+      .insert({
+        user_id: user.id,
+        title: title.trim(),
+        raw_content: title.trim(),
+        category: 'home',
+        project_id: parentTask?.project_id || null,
+        parent_task_id: parentId,
+        processing_status: 'pending',
+      });
   };
 
   const handleDeleteTask = async (taskId: string) => {
@@ -109,14 +119,10 @@ const HomeTasks = () => {
       </div>
 
       <div className="px-4 pt-4 pb-4">
-        {/* Capture input */}
-        <input
-          type="text"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={handleKeyDown}
+        {/* Quick Add Input - always visible at top */}
+        <QuickAddInput
           placeholder="Add a home task..."
-          className="w-full bg-transparent border-b-2 border-border py-3 font-mono text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-accent transition-colors"
+          category="home"
         />
       </div>
 
@@ -130,7 +136,7 @@ const HomeTasks = () => {
             allTasks={tasks || []}
             onToggleCollapse={() => toggleCollapsed(project.id)}
             onToggleTask={handleToggleTask}
-            onAddTask={(text, projectId) => handleCapture(text, projectId)}
+            onAddTask={handleAddTask}
             onUpdateTask={handleUpdateTask}
             onAddSubtask={handleAddSubtask}
             onDeleteTask={handleDeleteTask}
