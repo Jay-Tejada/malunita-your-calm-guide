@@ -138,6 +138,16 @@ All colors MUST be HSL.
     --surface: 0 0% 100%;
     --sidebar-bg: 48 33% 97%;
     --sidebar-active: 48 20% 96%;
+    
+    /* Shadcn Sidebar Component Tokens */
+    --sidebar-background: 48 33% 97%;
+    --sidebar-foreground: 0 0% 29%;
+    --sidebar-primary: 0 0% 10%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 48 20% 94%;
+    --sidebar-accent-foreground: 0 0% 10%;
+    --sidebar-border: 40 10% 90%;
+    --sidebar-ring: 0 0% 13%;
 
     /* Canvas Design System */
     --canvas-bg: 48 33% 97%;
@@ -212,6 +222,16 @@ All colors MUST be HSL.
     --surface: 0 0% 10%;
     --sidebar-bg: 220 10% 5%;
     --sidebar-active: 0 0% 15%;
+    
+    /* Shadcn Sidebar Component Tokens - Dark */
+    --sidebar-background: 220 10% 7%;
+    --sidebar-foreground: 0 0% 69%;
+    --sidebar-primary: 0 0% 96%;
+    --sidebar-primary-foreground: 0 0% 10%;
+    --sidebar-accent: 0 0% 13%;
+    --sidebar-accent-foreground: 0 0% 96%;
+    --sidebar-border: 0 0% 18%;
+    --sidebar-ring: 0 0% 96%;
 
     /* Canvas Design System - Dark Mode */
     --canvas-bg: 220 10% 5%;

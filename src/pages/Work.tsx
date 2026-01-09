@@ -102,12 +102,12 @@ const Work = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 h-14 border-b border-border">
-        <button onClick={() => navigate('/')} className="text-muted-foreground hover:text-foreground transition-colors">
+      {/* Page Header - visible on mobile, simplified on desktop */}
+      <div className="flex items-center justify-between px-4 h-14 border-b border-border md:border-b-0">
+        <button onClick={() => navigate('/')} className="text-muted-foreground hover:text-foreground transition-colors md:hidden">
           <ChevronLeft className="w-5 h-5" />
         </button>
-        <span className="font-mono text-foreground font-medium">Work</span>
+        <span className="font-semibold text-lg text-foreground md:text-xl">Work</span>
         <button 
           onClick={() => setShowNewProject(true)}
           className="text-muted-foreground hover:text-foreground transition-colors"

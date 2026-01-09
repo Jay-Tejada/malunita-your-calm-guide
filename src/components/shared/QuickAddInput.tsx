@@ -132,6 +132,7 @@ export const QuickAddInput = forwardRef<QuickAddInputRef, QuickAddInputProps>(({
         onKeyDown={handleKeyDown}
         placeholder={isListening ? "Listening..." : placeholder}
         disabled={isSaving}
+        data-quick-add="true"
         className={`
           w-full py-3 pr-10 
           bg-transparent 
