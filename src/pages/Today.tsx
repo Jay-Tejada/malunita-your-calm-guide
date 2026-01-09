@@ -5,8 +5,7 @@ import { useTasks, Task } from '@/hooks/useTasks';
 import { useCapture } from '@/hooks/useAICapture';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { MobileTaskCapture } from '@/components/shared/MobileTaskCapture';
-import { DesktopTaskCapture } from '@/components/shared/DesktopTaskCapture';
+import { QuickAddInput } from '@/components/shared/QuickAddInput';
 import FlowTimeline from '@/components/FlowTimeline';
 import { useFlowSessions } from '@/hooks/useFlowSessions';
 import { generateFlowSessions } from '@/utils/taskCategorizer';
@@ -215,6 +214,12 @@ const Today = () => {
   return (
     <AppLayout title="Today" showBack>
       <div className="px-4 pt-4 pb-24 md:pb-20 space-y-4">
+        {/* Quick Add Input - always visible at top */}
+        <QuickAddInput
+          placeholder="Add task..."
+          scheduled_bucket="today"
+        />
+        
         {/* Date */}
         <p className="text-xs text-muted-foreground text-center">{today}</p>
 
@@ -329,15 +334,7 @@ const Today = () => {
           </TaskGroup>
         )}
 
-        {/* Desktop quick add - moved to bottom */}
-        {todayTasks.length > 0 && (
-          <div className="mt-6 pt-4 border-t border-border">
-            <DesktopTaskCapture 
-              placeholder="Add to today..." 
-              onCapture={handleQuickAdd} 
-            />
-          </div>
-        )}
+        {/* Removed - Quick Add is now at top */}
 
         {/* Show completed toggle */}
         {completedTasks.length > 0 && (
@@ -363,24 +360,10 @@ const Today = () => {
           </TaskGroup>
         )}
 
-        {/* Desktop quick add - moved to bottom */}
-        {todayTasks.length > 0 && (
-          <div className="mt-6 pt-4 border-t border-border hidden md:block">
-            <DesktopTaskCapture 
-              placeholder="Add to today..." 
-              onCapture={handleQuickAdd} 
-            />
-          </div>
-        )}
+        {/* Removed duplicate - Quick Add is at top */}
       </div>
 
-      {/* Mobile quick add at bottom */}
-      {todayTasks.length > 0 && (
-        <MobileTaskCapture 
-          placeholder="Add to today..." 
-          onCapture={handleQuickAdd} 
-        />
-      )}
+      {/* Removed mobile capture - Quick Add is at top */}
       
       {/* Tiny Task Party overlay */}
       <TinyTaskParty
