@@ -1,143 +1,87 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, Plus } from 'lucide-react';
+import { ChevronLeft, Plus, ChevronDown } from 'lucide-react';
 import { useTasks, Task } from '@/hooks/useTasks';
-import { useCapture } from '@/hooks/useAICapture';
 import { useProjects, Project } from '@/hooks/useProjects';
 import { useDeleteTaskWithUndo } from '@/hooks/useDeleteTaskWithUndo';
-import {
-  DndContext,
-  closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  DragEndEvent,
-  DragOverlay,
-  DragStartEvent,
-} from '@dnd-kit/core';
-import {
-  arrayMove,
-  SortableContext,
-  sortableKeyboardCoordinates,
-  verticalListSortingStrategy,
-} from '@dnd-kit/sortable';
-import { QuickAddInput } from '@/components/shared/QuickAddInput';
-import { SortableProjectSection } from '@/components/projects/SortableProjectSection';
+import { QuickAddInput, QuickAddInputRef } from '@/components/shared/QuickAddInput';
+import { TaskRow } from '@/components/shared/TaskRow';
 import { NewProjectModal } from '@/components/projects/NewProjectModal';
+import { cn } from '@/lib/utils';
 
 const Work = () => {
   const navigate = useNavigate();
   const { tasks, updateTask } = useTasks();
-  const { capture, isCapturing } = useCapture();
-  const { projects, createProject, updateProject, deleteProject, toggleCollapsed, reorderProjects } = useProjects('work');
+  const { projects, createProject, toggleCollapsed } = useProjects('work');
   const { deleteTaskWithUndo } = useDeleteTaskWithUndo();
   const [showCompleted, setShowCompleted] = useState(false);
   const [showNewProject, setShowNewProject] = useState(false);
-  const [editingProject, setEditingProject] = useState<Project | null>(null);
-  const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<QuickAddInputRef>(null);
 
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 8,
-      },
-    }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
-  );
-
-  // 'q' key focuses the input for quick capture - use capture phase to intercept before global handler
+  // 'q' key focuses the input for quick capture
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
       if (e.key === 'q' && !e.metaKey && !e.ctrlKey && !e.shiftKey) {
         e.preventDefault();
-        e.stopImmediatePropagation(); // Stop global handler from firing
+        e.stopImmediatePropagation();
         inputRef.current?.focus();
       }
     };
-    window.addEventListener('keydown', handleKeyDown, true); // capture phase
+    window.addEventListener('keydown', handleKeyDown, true);
     return () => window.removeEventListener('keydown', handleKeyDown, true);
   }, []);
   
-  const workTasks = tasks?.filter(t => 
-    t.category === 'work' && !t.completed
-  ) || [];
+  // All work tasks (incomplete)
+  const workTasks = useMemo(() => 
+    (tasks || []).filter(t => t.category === 'work' && !t.completed),
+    [tasks]
+  );
   
-  const completedTasks = tasks?.filter(t => 
-    t.category === 'work' && t.completed
-  ) || [];
+  // Completed work tasks
+  const completedTasks = useMemo(() => 
+    (tasks || []).filter(t => t.category === 'work' && t.completed),
+    [tasks]
+  );
 
-  // Debug: Log projects loaded
-  console.log('📂 Projects loaded:', projects.map(p => ({ id: p.id, name: p.name })));
-
-  // Group tasks by project, sorted by display_order
-  const tasksByProject = useMemo(() => {
-    const grouped: Record<string, Task[]> = { uncategorized: [] };
+  // Group tasks by project - uncategorized first for task-first feel
+  const { ungroupedTasks, projectGroups } = useMemo(() => {
+    const ungrouped: Task[] = [];
+    const grouped: Record<string, Task[]> = {};
     
     // Initialize groups for each project
     projects.forEach(p => {
       grouped[p.id] = [];
     });
     
-    // Sort by display_order first
+    // Sort by display_order
     const sortedTasks = [...workTasks].sort((a, b) => 
       (a.display_order ?? 0) - (b.display_order ?? 0)
     );
     
     sortedTasks.forEach(task => {
-      const projectExists = task.project_id && grouped[task.project_id] !== undefined;
-      
-      // Debug: Log task grouping decision
-      if (task.project_id) {
-        console.log(`📋 Task "${task.title.substring(0, 30)}..." has project_id: ${task.project_id}, project exists: ${projectExists}`);
-      }
-      
-      if (projectExists) {
-        grouped[task.project_id!].push(task);
+      if (task.project_id && grouped[task.project_id] !== undefined) {
+        grouped[task.project_id].push(task);
       } else {
-        grouped.uncategorized.push(task);
+        ungrouped.push(task);
       }
     });
     
-    console.log('📊 Tasks grouped:', Object.entries(grouped).map(([k, v]) => `${k}: ${v.length} tasks`));
-    
-    return grouped;
+    return { ungroupedTasks: ungrouped, projectGroups: grouped };
   }, [workTasks, projects]);
-
-  const handleCapture = async (text: string, projectId?: string) => {
-    console.log('📝 Creating work task via AI pipeline, project_id:', projectId);
-    // Route through AI pipeline for full processing
-    await capture({
-      text,
-      category: 'work',
-      project_id: projectId || undefined
-    });
-  };
 
   const handleCreateProject = async (project: { name: string; space: string; icon?: string; color?: string }) => {
     await createProject(project);
     setShowNewProject(false);
   };
 
-  const handleToggleTask = (taskId: string) => {
-    updateTask({ id: taskId, updates: { completed: true } });
-  };
-
-  const handleUpdateTask = (taskId: string, title: string) => {
-    updateTask({ id: taskId, updates: { title } });
-  };
-
-  const handleAddSubtask = async (parentId: string, title: string) => {
-    const parentTask = tasks?.find(t => t.id === parentId);
-    // Route subtask through AI pipeline for enrichment
-    await capture({
-      text: title,
-      category: 'work',
-      project_id: parentTask?.project_id || undefined
+  const handleCompleteTask = async (taskId: string) => {
+    await updateTask({ 
+      id: taskId, 
+      updates: { 
+        completed: true,
+        completed_at: new Date().toISOString()
+      } 
     });
   };
 
@@ -148,31 +92,12 @@ const Work = () => {
     }
   };
 
-  const handleReorderTasks = async (taskIds: string[]) => {
-    // Update display_order for each task
-    await Promise.all(
-      taskIds.map((id, index) =>
-        updateTask({ id, updates: { display_order: index } })
-      )
-    );
+  const handleEditTask = (taskId: string) => {
+    console.log('Edit task:', taskId);
   };
 
-  const handleProjectDragStart = (event: DragStartEvent) => {
-    setActiveProjectId(event.active.id as string);
-  };
-
-  const handleProjectDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-    setActiveProjectId(null);
-    if (over && active.id !== over.id) {
-      const oldIndex = projects.findIndex((p) => p.id === active.id);
-      const newIndex = projects.findIndex((p) => p.id === over.id);
-      const reordered = arrayMove(projects, oldIndex, newIndex);
-      reorderProjects(reordered.map(p => p.id));
-    }
-  };
-
-  const activeProject = activeProjectId ? projects.find(p => p.id === activeProjectId) : null;
+  // Count total work tasks
+  const totalTasks = workTasks.length;
 
   return (
     <div className="min-h-screen bg-background">
@@ -185,6 +110,7 @@ const Work = () => {
         <button 
           onClick={() => setShowNewProject(true)}
           className="text-muted-foreground hover:text-foreground transition-colors"
+          title="New project"
         >
           <Plus className="w-5 h-5" />
         </button>
@@ -192,85 +118,101 @@ const Work = () => {
 
       <div className="pb-24 md:pb-4">
         {/* Quick Add Input - always visible at top */}
-        <div className="px-4 pt-4">
+        <div className="px-4 pt-4 pb-2">
           <QuickAddInput 
+            ref={inputRef}
             placeholder="Add a work task..." 
             category="work"
           />
         </div>
 
-        {/* Projects */}
-        <div className="mt-4">
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragStart={handleProjectDragStart}
-            onDragEnd={handleProjectDragEnd}
-          >
-            <SortableContext
-              items={projects.map(p => p.id)}
-              strategy={verticalListSortingStrategy}
-            >
-              {projects.map(project => (
-                <SortableProjectSection
-                  key={project.id}
-                  project={project}
-                  tasks={tasksByProject[project.id] || []}
-                  allTasks={tasks || []}
-                  onToggleCollapse={() => toggleCollapsed(project.id)}
-                  onToggleTask={handleToggleTask}
-                  onAddTask={(text, projectId) => handleCapture(text, projectId)}
-                  onUpdateTask={handleUpdateTask}
-                  onAddSubtask={handleAddSubtask}
-                  onDeleteTask={handleDeleteTask}
-                  onEditProject={setEditingProject}
-                  onDeleteProject={deleteProject}
-                  onReorderTasks={handleReorderTasks}
-                />
-              ))}
-            </SortableContext>
-            <DragOverlay dropAnimation={{
-              duration: 200,
-              easing: 'cubic-bezier(0.18, 0.67, 0.6, 1.22)',
-            }}>
-              {activeProject && (
-                <div className="bg-background/95 backdrop-blur-sm border border-primary/40 rounded-lg shadow-xl px-4 py-3 scale-105 ring-2 ring-primary/20">
-                  <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 rounded bg-primary/20 flex items-center justify-center">
-                      <span className="text-xs">{activeProject.icon || '📁'}</span>
-                    </div>
-                    <span className="font-medium text-sm text-foreground">
-                      {activeProject.name}
-                    </span>
-                  </div>
-                </div>
-              )}
-            </DragOverlay>
-          </DndContext>
-
-          {/* Uncategorized tasks */}
-          {tasksByProject.uncategorized.length > 0 && (
-            <div className="px-4 py-3">
+        {/* Task-first layout: Show all tasks immediately */}
+        <div className="mt-2">
+          {/* Ungrouped tasks first (no project) */}
+          {ungroupedTasks.length > 0 && (
+            <div className="px-4 mb-4">
               {projects.length > 0 && (
-                <p className="text-[10px] uppercase tracking-widest text-accent font-medium mb-3">
-                  Other
+                <p className="text-[10px] uppercase tracking-widest text-muted-foreground/60 font-medium mb-2">
+                  Tasks
                 </p>
               )}
-              {tasksByProject.uncategorized.map(task => (
-                <div key={task.id} className="flex items-start gap-3 py-2">
-                  <button
-                    onClick={() => handleToggleTask(task.id)}
-                    className="w-4 h-4 rounded-full border border-muted-foreground hover:border-foreground flex-shrink-0 mt-0.5 transition-colors"
+              <div className="space-y-0">
+                {ungroupedTasks.map(task => (
+                  <TaskRow
+                    key={task.id}
+                    task={task}
+                    onComplete={handleCompleteTask}
+                    onDelete={handleDeleteTask}
+                    onEdit={handleEditTask}
                   />
-                  <span className="font-mono text-sm text-foreground">{task.title}</span>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           )}
 
-          {/* Empty state */}
-          {projects.length === 0 && tasksByProject.uncategorized.length === 0 && (
-            <p className="text-muted-foreground text-center py-12">No work tasks</p>
+          {/* Project groups - collapsible sections */}
+          {projects.map(project => {
+            const projectTasks = projectGroups[project.id] || [];
+            if (projectTasks.length === 0 && project.is_collapsed) return null;
+            
+            return (
+              <div key={project.id} className="mb-3">
+                {/* Project header - collapsible */}
+                <button
+                  onClick={() => toggleCollapsed(project.id)}
+                  className="w-full flex items-center gap-2 px-4 py-2 hover:bg-muted/30 transition-colors group"
+                >
+                  <ChevronDown 
+                    className={cn(
+                      "w-3 h-3 text-muted-foreground transition-transform",
+                      project.is_collapsed && "-rotate-90"
+                    )}
+                  />
+                  <span className="text-xs">{project.icon || '📁'}</span>
+                  <span className="text-xs font-medium text-foreground/80 uppercase tracking-wide">
+                    {project.name}
+                  </span>
+                  <span className="text-[10px] text-muted-foreground/60 ml-1">
+                    {projectTasks.length}
+                  </span>
+                </button>
+
+                {/* Project tasks */}
+                {!project.is_collapsed && (
+                  <div className="px-4 pl-8">
+                    {projectTasks.length > 0 ? (
+                      <div className="space-y-0">
+                        {projectTasks.map(task => (
+                          <TaskRow
+                            key={task.id}
+                            task={task}
+                            onComplete={handleCompleteTask}
+                            onDelete={handleDeleteTask}
+                            onEdit={handleEditTask}
+                          />
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-xs text-muted-foreground/40 py-2 italic">
+                        No tasks
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+
+          {/* Empty state - task-first, not project-first */}
+          {totalTasks === 0 && (
+            <div className="text-center py-16 px-4">
+              <p className="text-muted-foreground/60 text-sm">
+                No work tasks yet
+              </p>
+              <p className="text-muted-foreground/40 text-xs mt-1">
+                Add one above to get started
+              </p>
+            </div>
           )}
         </div>
 
@@ -283,9 +225,22 @@ const Work = () => {
             {showCompleted ? 'Hide' : 'Show'} completed ({completedTasks.length})
           </button>
         )}
-      </div>
 
-      {/* Removed - Quick Add is at top */}
+        {/* Completed tasks */}
+        {showCompleted && completedTasks.length > 0 && (
+          <div className="px-4 opacity-50">
+            {completedTasks.map(task => (
+              <TaskRow
+                key={task.id}
+                task={task}
+                onComplete={() => {}}
+                onDelete={handleDeleteTask}
+                onEdit={handleEditTask}
+              />
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* New project modal */}
       {showNewProject && (

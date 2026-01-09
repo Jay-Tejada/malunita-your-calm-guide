@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { Mic, MicOff } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { startVoiceInput, stopVoiceInput, isVoiceInputSupported } from '@/utils/voiceInput';
@@ -11,18 +11,27 @@ interface QuickAddInputProps {
   autoFocus?: boolean;
 }
 
-export const QuickAddInput = ({
+export interface QuickAddInputRef {
+  focus: () => void;
+}
+
+export const QuickAddInput = forwardRef<QuickAddInputRef, QuickAddInputProps>(({
   placeholder = "Add task...",
   category = 'inbox',
   scheduled_bucket,
   project_id,
   autoFocus = false,
-}: QuickAddInputProps) => {
+}, ref) => {
   const [input, setInput] = useState('');
   const [isListening, setIsListening] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const voiceSupported = isVoiceInputSupported();
+
+  // Expose focus method to parent via ref
+  useImperativeHandle(ref, () => ({
+    focus: () => inputRef.current?.focus(),
+  }));
 
   // Focus input on mount if autoFocus
   useEffect(() => {
@@ -162,4 +171,6 @@ export const QuickAddInput = ({
       )}
     </div>
   );
-};
+});
+
+QuickAddInput.displayName = 'QuickAddInput';
