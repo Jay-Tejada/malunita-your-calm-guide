@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, Star, Briefcase, Home, Moon, Trash2, Pencil, ChevronLeft as SwipeIcon, CheckSquare, X, Check, ChevronDown, RotateCcw, Play, AlertCircle, Sparkles } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useSwipeable } from 'react-swipeable';
-import { CaptureInput } from '@/ui/CaptureInput';
+import { QuickAddInput } from '@/components/shared/QuickAddInput';
 import { colors } from '@/ui/tokens';
 import { AppLayout } from '@/ui/AppLayout';
 import { hapticSwipe, hapticHint, hapticLight, hapticMedium, hapticCompleteInbox } from '@/utils/haptics';
@@ -985,15 +985,16 @@ const Inbox = () => {
         )}
       </div>
 
-      {/* Quick capture - animated hide in selection mode */}
+      {/* Quick Add Input - always visible at top */}
       <div 
         className={`px-5 overflow-hidden transition-all duration-300 ease-out ${
           isSelectionMode ? 'max-h-0 opacity-0 pb-0' : 'max-h-20 opacity-100 pb-5'
         }`}
       >
-        <CaptureInput
-          placeholder="Capture a thought..."
-          onSubmit={(value) => addTask(value)}
+        <QuickAddInput
+          placeholder="Add task..."
+          category="inbox"
+          autoFocus
         />
       </div>
 

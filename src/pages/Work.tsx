@@ -22,8 +22,7 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
-import { MobileTaskCapture } from '@/components/shared/MobileTaskCapture';
-import { DesktopTaskCapture } from '@/components/shared/DesktopTaskCapture';
+import { QuickAddInput } from '@/components/shared/QuickAddInput';
 import { SortableProjectSection } from '@/components/projects/SortableProjectSection';
 import { NewProjectModal } from '@/components/projects/NewProjectModal';
 
@@ -192,12 +191,11 @@ const Work = () => {
       </div>
 
       <div className="pb-24 md:pb-4">
-        {/* Desktop capture input */}
+        {/* Quick Add Input - always visible at top */}
         <div className="px-4 pt-4">
-          <DesktopTaskCapture 
-            ref={inputRef}
+          <QuickAddInput 
             placeholder="Add a work task..." 
-            onCapture={handleCapture} 
+            category="work"
           />
         </div>
 
@@ -286,12 +284,8 @@ const Work = () => {
           </button>
         )}
       </div>
-      
-      {/* Mobile capture input */}
-      <MobileTaskCapture 
-        placeholder="Add a work task..." 
-        onCapture={handleCapture} 
-      />
+
+      {/* Removed - Quick Add is at top */}
 
       {/* New project modal */}
       {showNewProject && (
