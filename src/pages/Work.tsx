@@ -2,11 +2,12 @@ import { useState, useMemo, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, Plus, ChevronDown } from 'lucide-react';
 import { useTasks, Task } from '@/hooks/useTasks';
-import { useProjects, Project } from '@/hooks/useProjects';
+import { useProjects } from '@/hooks/useProjects';
 import { useDeleteTaskWithUndo } from '@/hooks/useDeleteTaskWithUndo';
 import { QuickAddInput, QuickAddInputRef } from '@/components/shared/QuickAddInput';
-import { TaskRow } from '@/components/shared/TaskRow';
+import { SimpleTaskRow } from '@/components/shared/SimpleTaskRow';
 import { NewProjectModal } from '@/components/projects/NewProjectModal';
+import { deduplicateTasks } from '@/utils/duplicateDetection';
 import { cn } from '@/lib/utils';
 
 const Work = () => {
@@ -32,11 +33,11 @@ const Work = () => {
     return () => window.removeEventListener('keydown', handleKeyDown, true);
   }, []);
   
-  // All work tasks (incomplete)
-  const workTasks = useMemo(() => 
-    (tasks || []).filter(t => t.category === 'work' && !t.completed),
-    [tasks]
-  );
+  // All work tasks (incomplete) - deduplicated
+  const workTasks = useMemo(() => {
+    const filtered = (tasks || []).filter(t => t.category === 'work' && !t.completed);
+    return deduplicateTasks(filtered);
+  }, [tasks]);
   
   // Completed work tasks
   const completedTasks = useMemo(() => 
@@ -138,7 +139,7 @@ const Work = () => {
               )}
               <div className="space-y-0">
                 {ungroupedTasks.map(task => (
-                  <TaskRow
+                  <SimpleTaskRow
                     key={task.id}
                     task={task}
                     onComplete={handleCompleteTask}
@@ -157,23 +158,22 @@ const Work = () => {
             
             return (
               <div key={project.id} className="mb-3">
-                {/* Project header - collapsible */}
+                {/* Project header - cleaner Todoist style */}
                 <button
                   onClick={() => toggleCollapsed(project.id)}
-                  className="w-full flex items-center gap-2 px-4 py-2 hover:bg-muted/30 transition-colors group"
+                  className="w-full flex items-center gap-2 px-4 py-2.5 hover:bg-muted/20 transition-colors"
                 >
                   <ChevronDown 
                     className={cn(
-                      "w-3 h-3 text-muted-foreground transition-transform",
+                      "w-3 h-3 text-muted-foreground/50 transition-transform",
                       project.is_collapsed && "-rotate-90"
                     )}
                   />
-                  <span className="text-xs">{project.icon || '📁'}</span>
-                  <span className="text-xs font-medium text-foreground/80 uppercase tracking-wide">
+                  <span className="text-sm font-semibold text-foreground">
                     {project.name}
                   </span>
-                  <span className="text-[10px] text-muted-foreground/60 ml-1">
-                    {projectTasks.length}
+                  <span className="text-xs text-muted-foreground/50">
+                    · {projectTasks.length}
                   </span>
                 </button>
 
@@ -183,7 +183,7 @@ const Work = () => {
                     {projectTasks.length > 0 ? (
                       <div className="space-y-0">
                         {projectTasks.map(task => (
-                          <TaskRow
+                          <SimpleTaskRow
                             key={task.id}
                             task={task}
                             onComplete={handleCompleteTask}
@@ -230,7 +230,7 @@ const Work = () => {
         {showCompleted && completedTasks.length > 0 && (
           <div className="px-4 opacity-50">
             {completedTasks.map(task => (
-              <TaskRow
+              <SimpleTaskRow
                 key={task.id}
                 task={task}
                 onComplete={() => {}}
