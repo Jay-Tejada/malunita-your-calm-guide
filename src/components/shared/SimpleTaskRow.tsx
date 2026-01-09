@@ -58,8 +58,8 @@ export const SimpleTaskRow = memo(({
   return (
     <div
       className={cn(
-        "flex items-center gap-3 py-2.5 group transition-all ease-out overflow-hidden",
-        isExiting ? 'max-h-0 opacity-0 py-0' : 'max-h-16'
+        "flex items-start gap-3 py-2.5 group transition-all ease-out overflow-hidden",
+        isExiting ? 'max-h-0 opacity-0 py-0' : 'max-h-32'
       )}
       style={{
         transitionDuration: isExiting ? `${config.collapseDuration}ms` : '200ms',
@@ -73,7 +73,7 @@ export const SimpleTaskRow = memo(({
         onClick={handleComplete}
         disabled={isCompleting}
         className={cn(
-          "relative flex items-center justify-center w-[18px] h-[18px] rounded-full border transition-all flex-shrink-0",
+          "relative flex items-center justify-center w-[18px] h-[18px] rounded-full border transition-all flex-shrink-0 mt-0.5",
           isCompleting 
             ? "border-success bg-success" 
             : "border-muted-foreground/30 hover:border-muted-foreground/50 bg-transparent"
@@ -89,10 +89,10 @@ export const SimpleTaskRow = memo(({
         )}
       </button>
 
-      {/* Task text - single line, uniform styling */}
+      {/* Task text - wrapping enabled */}
       <span 
         className={cn(
-          "flex-1 text-sm leading-normal truncate transition-colors",
+          "flex-1 text-sm leading-relaxed transition-colors break-words",
           isCompleting 
             ? "text-muted-foreground line-through" 
             : isPending 
@@ -109,7 +109,7 @@ export const SimpleTaskRow = memo(({
       {/* Overflow menu - only visible on hover */}
       <div 
         className={cn(
-          "transition-opacity duration-150 flex-shrink-0",
+          "transition-opacity duration-150 flex-shrink-0 self-start mt-0.5",
           isHovered && !isCompleting ? 'opacity-100' : 'opacity-0'
         )}
       >
