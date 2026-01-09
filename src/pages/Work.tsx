@@ -1,23 +1,31 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, Plus, ChevronDown } from 'lucide-react';
-import { useTasks, Task } from '@/hooks/useTasks';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { ChevronLeft, Plus } from 'lucide-react';
+import { useTasks } from '@/hooks/useTasks';
 import { useProjects } from '@/hooks/useProjects';
 import { useDeleteTaskWithUndo } from '@/hooks/useDeleteTaskWithUndo';
 import { QuickAddInput, QuickAddInputRef } from '@/components/shared/QuickAddInput';
 import { SimpleTaskRow } from '@/components/shared/SimpleTaskRow';
 import { NewProjectModal } from '@/components/projects/NewProjectModal';
 import { deduplicateTasks } from '@/utils/duplicateDetection';
-import { cn } from '@/lib/utils';
 
 const Work = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const selectedProjectId = searchParams.get('project');
+  
   const { tasks, updateTask } = useTasks();
-  const { projects, createProject, toggleCollapsed } = useProjects('work');
+  const { projects, createProject } = useProjects('work');
   const { deleteTaskWithUndo } = useDeleteTaskWithUndo();
   const [showCompleted, setShowCompleted] = useState(false);
   const [showNewProject, setShowNewProject] = useState(false);
   const inputRef = useRef<QuickAddInputRef>(null);
+
+  // Find selected project if any
+  const selectedProject = useMemo(() => 
+    selectedProjectId ? projects.find(p => p.id === selectedProjectId) : null,
+    [selectedProjectId, projects]
+  );
 
   // 'q' key focuses the input for quick capture
   useEffect(() => {
@@ -33,43 +41,32 @@ const Work = () => {
     return () => window.removeEventListener('keydown', handleKeyDown, true);
   }, []);
   
-  // All work tasks (incomplete) - deduplicated
+  // All work tasks (incomplete) - deduplicated, filtered by project if selected
   const workTasks = useMemo(() => {
-    const filtered = (tasks || []).filter(t => t.category === 'work' && !t.completed);
+    let filtered = (tasks || []).filter(t => t.category === 'work' && !t.completed);
+    
+    // If a specific project is selected, only show that project's tasks
+    if (selectedProjectId) {
+      filtered = filtered.filter(t => t.project_id === selectedProjectId);
+    }
+    
     return deduplicateTasks(filtered);
-  }, [tasks]);
+  }, [tasks, selectedProjectId]);
   
-  // Completed work tasks
-  const completedTasks = useMemo(() => 
-    (tasks || []).filter(t => t.category === 'work' && t.completed),
-    [tasks]
-  );
+  // Completed work tasks (filtered by project if selected)
+  const completedTasks = useMemo(() => {
+    let filtered = (tasks || []).filter(t => t.category === 'work' && t.completed);
+    if (selectedProjectId) {
+      filtered = filtered.filter(t => t.project_id === selectedProjectId);
+    }
+    return filtered;
+  }, [tasks, selectedProjectId]);
 
-  // Group tasks by project - uncategorized first for task-first feel
-  const { ungroupedTasks, projectGroups } = useMemo(() => {
-    const ungrouped: Task[] = [];
-    const grouped: Record<string, Task[]> = {};
-    
-    // Initialize groups for each project
-    projects.forEach(p => {
-      grouped[p.id] = [];
-    });
-    
-    // Sort by display_order
-    const sortedTasks = [...workTasks].sort((a, b) => 
-      (a.display_order ?? 0) - (b.display_order ?? 0)
-    );
-    
-    sortedTasks.forEach(task => {
-      if (task.project_id && grouped[task.project_id] !== undefined) {
-        grouped[task.project_id].push(task);
-      } else {
-        ungrouped.push(task);
-      }
-    });
-    
-    return { ungroupedTasks: ungrouped, projectGroups: grouped };
-  }, [workTasks, projects]);
+  // Sort tasks by display_order
+  const sortedTasks = useMemo(() => 
+    [...workTasks].sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0)),
+    [workTasks]
+  );
 
   const handleCreateProject = async (project: { name: string; space: string; icon?: string; color?: string }) => {
     await createProject(project);
@@ -97,17 +94,20 @@ const Work = () => {
     console.log('Edit task:', taskId);
   };
 
-  // Count total work tasks
-  const totalTasks = workTasks.length;
+  // Page title
+  const pageTitle = selectedProject ? selectedProject.name : 'Work';
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Page Header - visible on mobile, simplified on desktop */}
+      {/* Page Header */}
       <div className="flex items-center justify-between px-4 h-14 border-b border-border md:border-b-0">
-        <button onClick={() => navigate('/')} className="text-muted-foreground hover:text-foreground transition-colors md:hidden">
+        <button 
+          onClick={() => selectedProjectId ? navigate('/work') : navigate('/')} 
+          className="text-muted-foreground hover:text-foreground transition-colors md:hidden"
+        >
           <ChevronLeft className="w-5 h-5" />
         </button>
-        <span className="font-semibold text-lg text-foreground md:text-xl">Work</span>
+        <span className="font-semibold text-lg text-foreground md:text-xl">{pageTitle}</span>
         <button 
           onClick={() => setShowNewProject(true)}
           className="text-muted-foreground hover:text-foreground transition-colors"
@@ -118,96 +118,34 @@ const Work = () => {
       </div>
 
       <div className="pb-24 md:pb-4">
-        {/* Quick Add Input - always visible at top */}
+        {/* Quick Add Input */}
         <div className="px-4 pt-4 pb-2">
           <QuickAddInput 
             ref={inputRef}
-            placeholder="Add a work task..." 
+            placeholder={selectedProject ? `Add to ${selectedProject.name}...` : "Add a work task..."} 
             category="work"
+            project_id={selectedProjectId || undefined}
           />
         </div>
 
-        {/* Task-first layout: Show all tasks immediately */}
-        <div className="mt-2">
-          {/* Ungrouped tasks first (no project) */}
-          {ungroupedTasks.length > 0 && (
-            <div className="px-4 mb-4">
-              {projects.length > 0 && (
-                <p className="text-[10px] uppercase tracking-widest text-muted-foreground/60 font-medium mb-2">
-                  Tasks
-                </p>
-              )}
-              <div className="space-y-0">
-                {ungroupedTasks.map(task => (
-                  <SimpleTaskRow
-                    key={task.id}
-                    task={task}
-                    onComplete={handleCompleteTask}
-                    onDelete={handleDeleteTask}
-                    onEdit={handleEditTask}
-                  />
-                ))}
-              </div>
+        {/* Task list - flat, simple */}
+        <div className="mt-2 px-4">
+          {sortedTasks.length > 0 ? (
+            <div className="space-y-0">
+              {sortedTasks.map(task => (
+                <SimpleTaskRow
+                  key={task.id}
+                  task={task}
+                  onComplete={handleCompleteTask}
+                  onDelete={handleDeleteTask}
+                  onEdit={handleEditTask}
+                />
+              ))}
             </div>
-          )}
-
-          {/* Project groups - collapsible sections */}
-          {projects.map(project => {
-            const projectTasks = projectGroups[project.id] || [];
-            if (projectTasks.length === 0 && project.is_collapsed) return null;
-            
-            return (
-              <div key={project.id} className="mb-3">
-                {/* Project header - cleaner Todoist style */}
-                <button
-                  onClick={() => toggleCollapsed(project.id)}
-                  className="w-full flex items-center gap-2 px-4 py-2.5 hover:bg-muted/20 transition-colors"
-                >
-                  <ChevronDown 
-                    className={cn(
-                      "w-3 h-3 text-muted-foreground/50 transition-transform",
-                      project.is_collapsed && "-rotate-90"
-                    )}
-                  />
-                  <span className="text-sm font-semibold text-foreground">
-                    {project.name}
-                  </span>
-                  <span className="text-xs text-muted-foreground/50">
-                    · {projectTasks.length}
-                  </span>
-                </button>
-
-                {/* Project tasks */}
-                {!project.is_collapsed && (
-                  <div className="px-4 pl-8">
-                    {projectTasks.length > 0 ? (
-                      <div className="space-y-0">
-                        {projectTasks.map(task => (
-                          <SimpleTaskRow
-                            key={task.id}
-                            task={task}
-                            onComplete={handleCompleteTask}
-                            onDelete={handleDeleteTask}
-                            onEdit={handleEditTask}
-                          />
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-xs text-muted-foreground/40 py-2 italic">
-                        No tasks
-                      </p>
-                    )}
-                  </div>
-                )}
-              </div>
-            );
-          })}
-
-          {/* Empty state - task-first, not project-first */}
-          {totalTasks === 0 && (
-            <div className="text-center py-16 px-4">
+          ) : (
+            <div className="text-center py-16">
               <p className="text-muted-foreground/60 text-sm">
-                No work tasks yet
+                No tasks yet
               </p>
               <p className="text-muted-foreground/40 text-xs mt-1">
                 Add one above to get started
