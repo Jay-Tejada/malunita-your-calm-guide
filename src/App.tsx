@@ -15,6 +15,7 @@ import { useRitualTrigger } from "@/hooks/useRitualTrigger";
 import { EveningRitual } from "@/features/rituals/EveningRitual";
 import { questTracker } from "@/lib/questTracker";
 import { Layout } from "@/components/Layout";
+import { SplitPanelLayout } from "@/components/layout/SplitPanelLayout";
 import PageLoader from "@/components/PageLoader";
 import { useCutsceneManager } from "./features/cutscenes/useCutsceneManager";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -294,7 +295,7 @@ const App = () => {
           <BrowserRouter>
             <Suspense fallback={<PageLoader />}>
               <Routes>
-                <Route element={<Layout />}>
+                <Route element={<SplitPanelLayout />}>
                   <Route path="/" element={<Index />} />
                   <Route path="/today" element={<Today />} />
                   <Route path="/inbox" element={<Inbox />} />

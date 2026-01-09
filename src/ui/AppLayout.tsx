@@ -33,21 +33,22 @@ export function AppLayout({
   };
   return (
     <div className="min-h-screen flex flex-col bg-background font-mono">
-      {/* Header */}
+      {/* Header - simplified on desktop since sidebar handles nav */}
       {title && (
-        <header className="flex items-center justify-between px-5 py-4 sticky top-0 z-30 bg-background border-b border-border">
+        <header className="flex items-center justify-between px-5 py-4 sticky top-0 z-30 bg-background border-b border-border md:border-b-0">
           <div className="w-10">
+            {/* Back button only on mobile */}
             {showBack && (
               <button
                 onClick={handleBack}
-                className="p-2 -ml-2 text-muted-foreground"
+                className="p-2 -ml-2 text-muted-foreground md:hidden"
                 aria-label="Go back"
               >
                 ←
               </button>
             )}
           </div>
-          <h1 className="text-xl font-medium text-foreground">
+          <h1 className="text-xl font-semibold text-foreground md:text-left md:flex-1 md:ml-0">
             {title}
           </h1>
           <div className="w-10 flex justify-end">
@@ -55,7 +56,7 @@ export function AppLayout({
               (showBack ? (
                 <button
                   onClick={goHome}
-                  className="p-2 -mr-2 text-muted-foreground"
+                  className="p-2 -mr-2 text-muted-foreground md:hidden"
                   aria-label="Go home"
                 >
                   <Home className="h-4 w-4" />
